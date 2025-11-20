@@ -1,10 +1,9 @@
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://flyndme-backend.onrender.com/api/flights/multi-origin";
-  
+const API_URL = "https://flyndme-backend.onrender.com/api/flights/multi-origin";
+
+
 
 import FlightResults from "./components/FlightResults";
 
