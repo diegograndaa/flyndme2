@@ -14,6 +14,11 @@ app.get("/", (req, res) => {
   res.send("✅ FlyndMe API funcionando correctamente!");
 });
 
+// 🔥 Ruta para mantener Render despierto
+app.get("/api/ping", (req, res) => {
+  res.json({ message: "pong", timestamp: Date.now() });
+});
+
 app.use("/api/flights", flightsRoutes);
 
 app.listen(PORT, () => {
