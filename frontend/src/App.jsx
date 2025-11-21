@@ -1,9 +1,9 @@
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-
-const API_URL = "https://flyndme-backend.onrender.com/api/flights/multi-origin";
-
 import FlightResults from "./components/FlightResults";
+
+const API_URL =
+  "https://flyndme-backend.onrender.com/api/flights/multi-origin";
 
 const AVAILABLE_AIRPORTS = [
   { code: "MAD", city: "Madrid", country: "España" },
@@ -92,8 +92,7 @@ function App() {
     });
   };
 
-  // Ahora el botón solo inicia la app y, opcionalmente, pone fecha,
-  // pero no rellena MAD, BCN, LON.
+  // El botón de inicio solo activa la app y, si no hay fecha, propone una por defecto
   const loadDemo = () => {
     setHasStarted(true);
     if (!departureDate) {
@@ -206,8 +205,12 @@ function App() {
                   </p>
                   <ul className="text-secondary mb-3">
                     <li>Introduce los aeropuertos de origen de cada persona.</li>
-                    <li>Elegimos los mejores destinos comunes según tu criterio.</li>
-                    <li>Compara por precio total o por justicia entre viajeros.</li>
+                    <li>
+                      Elegimos los mejores destinos comunes según tu criterio.
+                    </li>
+                    <li>
+                      Compara por precio total o por justicia entre viajeros.
+                    </li>
                   </ul>
                   <div className="d-flex flex-wrap gap-2">
                     <button
@@ -222,7 +225,8 @@ function App() {
                       Empezar a buscar vuelos
                     </button>
                     <span className="text-secondary align-self-center">
-                      O escribe tus propios aeropuertos en la pantalla de búsqueda 👇
+                      O escribe tus propios aeropuertos en la pantalla de
+                      búsqueda 👇
                     </span>
                   </div>
                 </div>
@@ -234,17 +238,18 @@ function App() {
                     <div className="card-body">
                       <h2 className="h5 mb-3">Pensado como producto real</h2>
                       <p className="text-secondary mb-2">
-                        • <strong>Casos de uso:</strong> grupos de amigos, viajes de
-                        empresa, eventos internacionales.
+                        • <strong>Casos de uso:</strong> grupos de amigos,
+                        viajes de empresa, eventos internacionales.
                       </p>
                       <p className="text-secondary mb-2">
-                        • <strong>Diferencial:</strong> no solo encontramos lo más
-                        barato, también el destino más equilibrado para todos.
+                        • <strong>Diferencial:</strong> no solo encontramos lo
+                        más barato, también el destino más equilibrado para
+                        todos.
                       </p>
                       <p className="text-secondary mb-0">
-                        • <strong>Integrable:</strong> este prototipo está pensado
-                        para conectarse con motores de búsqueda de vuelos como
-                        Google Flights, Skyscanner o Kiwi.
+                        • <strong>Integrable:</strong> este prototipo está
+                        pensado para conectarse con motores de búsqueda de
+                        vuelos como Google Flights, Skyscanner o Kiwi.
                       </p>
                     </div>
                   </div>
@@ -252,6 +257,214 @@ function App() {
               </div>
             </div>
           </section>
+
+          {/* COMO FUNCIONA */}
+          <section className="py-5">
+            <div className="container" style={{ maxWidth: "1100px" }}>
+              <h2 className="h4 fw-semibold text-center mb-4">
+                Cómo funciona FlyndMe
+              </h2>
+              <div className="row g-4">
+                <div className="col-md-4">
+                  <div className="h-100 text-center p-3 bg-white border rounded-3">
+                    <div className="fs-3 mb-2">✍️</div>
+                    <h3 className="h6 fw-semibold mb-2">
+                      1. Indica los orígenes
+                    </h3>
+                    <p className="text-secondary small mb-0">
+                      Añade los aeropuertos desde los que viaja cada persona.
+                      Puedes mezclar ciudades y países sin problema.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="h-100 text-center p-3 bg-white border rounded-3">
+                    <div className="fs-3 mb-2">🧮</div>
+                    <h3 className="h6 fw-semibold mb-2">
+                      2. Calculamos los destinos óptimos
+                    </h3>
+                    <p className="text-secondary small mb-0">
+                      Analizamos combinaciones de vuelos para encontrar destinos
+                      comunes que minimicen el coste o mejoren la equidad.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="h-100 text-center p-3 bg-white border rounded-3">
+                    <div className="fs-3 mb-2">🤝</div>
+                    <h3 className="h6 fw-semibold mb-2">
+                      3. Elegís el punto de encuentro
+                    </h3>
+                    <p className="text-secondary small mb-0">
+                      Comparad precios, equidad y enlaces directos a buscadores
+                      de vuelos para cerrar la reserva en pocos clics.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* POR QUE FLYNDME */}
+          <section className="py-5 bg-white border-top border-bottom">
+            <div className="container" style={{ maxWidth: "1100px" }}>
+              <div className="row g-4 align-items-center">
+                <div className="col-md-6">
+                  <h2 className="h4 fw-semibold mb-3">Por qué FlyndMe</h2>
+                  <ul className="text-secondary small mb-0">
+                    <li className="mb-2">
+                      <strong>Pensado para grupos distribuidos:</strong> amigos,
+                      parejas a distancia, equipos remotos o estudiantes
+                      Erasmus.
+                    </li>
+                    <li className="mb-2">
+                      <strong>Más que el vuelo más barato:</strong> medimos la
+                      equidad para que nadie pague muchísimo más que el resto.
+                    </li>
+                    <li className="mb-2">
+                      <strong>Prototipo listo para producto:</strong> construido
+                      con React, Node y Amadeus para integrarse en motores de
+                      búsqueda de vuelos reales.
+                    </li>
+                    <li className="mb-0">
+                      <strong>Transparente:</strong> ves el coste por origen,
+                      medias por persona y resumen comparado entre destinos.
+                    </li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <div
+                    className="p-3 border rounded-3"
+                    style={{ backgroundColor: "#F3F8FF" }}
+                  >
+                    <p className="small text-secondary mb-2">Ejemplo rápido:</p>
+                    <p className="small mb-2">
+                      <strong>Orígenes:</strong> Madrid y Barcelona
+                      <br />
+                      <strong>Fecha:</strong> un fin de semana dentro de un mes
+                    </p>
+                    <p className="small mb-2">
+                      FlyndMe podría recomendar{" "}
+                      <strong>Lisboa</strong> como destino óptimo porque
+                      combina:
+                    </p>
+                    <ul className="small text-secondary mb-0">
+                      <li>Precio total más bajo para el grupo.</li>
+                      <li>
+                        Diferencia razonable entre quien más y quien menos paga.
+                      </li>
+                      <li>
+                        Enlaces directos a Skyscanner, Kiwi y Google Flights.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* INTEGRACIONES */}
+          <section className="py-4">
+            <div className="container" style={{ maxWidth: "1100px" }}>
+              <div className="row align-items-center g-3">
+                <div className="col-md-4">
+                  <h2 className="h6 fw-semibold mb-2">
+                    Diseñado para integrarse con buscadores de vuelos
+                  </h2>
+                  <p className="text-secondary small mb-0">
+                    FlyndMe no sustituye a los grandes buscadores. Les añade una
+                    capa de inteligencia para grupos que viven en ciudades
+                    distintas.
+                  </p>
+                </div>
+                <div className="col-md-8">
+                  <div className="d-flex flex-wrap gap-2">
+                    <span className="badge bg-white border text-secondary">
+                      Google Flights
+                    </span>
+                    <span className="badge bg-white border text-secondary">
+                      Skyscanner
+                    </span>
+                    <span className="badge bg-white border text-secondary">
+                      Kiwi.com
+                    </span>
+                    <span className="badge bg-white border text-secondary">
+                      Amadeus API
+                    </span>
+                    <span className="badge bg-white border text-secondary">
+                      Otros motores de vuelo
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* PARA QUIEN ES */}
+          <section className="py-5 bg-white border-top">
+            <div className="container" style={{ maxWidth: "1100px" }}>
+              <h2 className="h4 fw-semibold text-center mb-4">
+                ¿Para quién es FlyndMe?
+              </h2>
+              <div className="row g-4">
+                <div className="col-md-3 col-6">
+                  <div className="h-100 text-center p-3 border rounded-3">
+                    <div className="fs-3 mb-1">👥</div>
+                    <p className="small mb-0">
+                      Grupos de amigos que viven en ciudades distintas.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-6">
+                  <div className="h-100 text-center p-3 border rounded-3">
+                    <div className="fs-3 mb-1">💼</div>
+                    <p className="small mb-0">
+                      Equipos remotos que se reúnen unas pocas veces al año.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-6">
+                  <div className="h-100 text-center p-3 border rounded-3">
+                    <div className="fs-3 mb-1">🎓</div>
+                    <p className="small mb-0">
+                      Estudiantes Erasmus o internacionales que planean
+                      escapadas.
+                    </p>
+                  </div>
+                </div>
+                <div className="col-md-3 col-6">
+                  <div className="h-100 text-center p-3 border rounded-3">
+                    <div className="fs-3 mb-1">🏟️</div>
+                    <p className="small mb-0">
+                      Eventos, congresos o encuentros en un punto intermedio.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* FOOTER LANDING */}
+          <footer className="py-4 border-top">
+            <div className="container" style={{ maxWidth: "1100px" }}>
+              <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+                <div className="small text-secondary">
+                  <div className="fw-semibold">FlyndMe · MVP 2025</div>
+                  <div>
+                    Construido con React, Vite, Node.js, Express y la API de
+                    Amadeus.
+                  </div>
+                </div>
+                <div className="small text-secondary text-sm-end">
+                  <div>
+                    Proyecto personal orientado a integraciones con motores de
+                    vuelos.
+                  </div>
+                  <div>Ideal como concepto para Skyscanner, Kiwi o Google Flights.</div>
+                </div>
+              </div>
+            </div>
+          </footer>
         </>
       ) : (
         <>
@@ -427,11 +640,11 @@ function App() {
                                   <tr
                                     key={a.code}
                                     style={{ cursor: "pointer" }}
-                                    onClick={() => handleClickSuggestion(a.code)}
+                                    onClick={() =>
+                                      handleClickSuggestion(a.code)
+                                    }
                                   >
-                                    <td className="fw-semibold">
-                                      {a.code}
-                                    </td>
+                                    <td className="fw-semibold">{a.code}</td>
                                     <td>{a.city}</td>
                                     <td className="text-end text-secondary small">
                                       {a.country}
