@@ -134,6 +134,7 @@ function FlightResults({
   const [surpriseDest, setSurpriseDest] = useState(null);
   const [compareSelection, setCompareSelection] = useState([]); // destinos seleccionados para comparar
   const [sortBy, setSortBy] = useState("default"); // criterio de ordenacion
+  const [openIndex, setOpenIndex] = useState(null); // destino desplegado en el listado detalle
 
   if (loading || error) return null;
 
@@ -266,6 +267,10 @@ function FlightResults({
     compareSelection.includes(dest.destination)
   );
 
+  const toggleOpen = (index) => {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  };
+
   return (
     <section className="mt-4" ref={resultsRef}>
       {/* MAPA DEL ENCUENTRO */}
@@ -332,7 +337,6 @@ function FlightResults({
                       borderRadius: "12px",
                       overflow: "hidden",
                       border: "1px solid #D0D8E5",
-
                     }}
                   >
                     <iframe
@@ -676,10 +680,7 @@ function FlightResults({
         </h2>
 
         <div className="d-flex align-items-center gap-2">
-          <label
-            className="form-label small mb-0"
-            htmlFor="sortBySelect"
-          >
+          <label className="form-label small mb-0" htmlFor="sortBySelect">
             Ordenar por:
           </label>
           <select
@@ -688,24 +689,12 @@ function FlightResults({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="default">
-              Criterio principal del grupo
-            </option>
-            <option value="priceAsc">
-              Precio total (mas barato primero)
-            </option>
-            <option value="priceDesc">
-              Precio total (mas caro primero)
-            </option>
-            <option value="perPerson">
-              Precio medio por persona
-            </option>
-            <option value="fairness">
-              Mayor equidad del grupo
-            </option>
-            <option value="co2">
-              Menor CO2 aproximado
-            </option>
+            <option value="default">Criterio principal del grupo</option>
+            <option value="priceAsc">Precio total (mas barato primero)</option>
+            <option value="priceDesc">Precio total (mas caro primero)</option>
+            <option value="perPerson">Precio medio por persona</option>
+            <option value="fairness">Mayor equidad del grupo</option>
+            <option value="co2">Menor CO2 aproximado</option>
           </select>
         </div>
       </div>
@@ -718,6 +707,7 @@ function FlightResults({
         const isSelectedForCompare = compareSelection.includes(
           dest.destination
         );
+        const isOpen = openIndex === index;
 
         return (
           <div
@@ -731,8 +721,14 @@ function FlightResults({
             }}
           >
             <div className="card-body">
+              {/* CABECERA: siempre visible */}
               <div className="d-flex justify-content-between align-items-start mb-2">
-                <div>
+                {/* Bloque clicable (nombre destino, medias, equidad...) */}
+                <div
+                  className="me-3 flex-grow-1"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => toggleOpen(index)}
+                >
                   <div className="d-flex align-items-center gap-2 mb-1">
                     <h3 className="h5 mb-0">{dest.destination}</h3>
                     {isBest && (
@@ -780,6 +776,7 @@ function FlightResults({
                   )}
                 </div>
 
+                {/* Coste total + checkbox comparar */}
                 <div className="text-end">
                   <div className="fw-bold fs-5">
                     {dest.totalCostEUR.toFixed(2)} EUR
@@ -788,7 +785,6 @@ function FlightResults({
                     Coste total del grupo
                   </small>
 
-                  {/* Checkbox para comparar */}
                   <div className="form-check d-inline-flex align-items-center justify-content-end">
                     <input
                       className="form-check-input"
@@ -804,72 +800,91 @@ function FlightResults({
                       Comparar
                     </label>
                   </div>
+
+                  {/* Texto para indicar si esta desplegado o no */}
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm p-0 d-block mt-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleOpen(index);
+                    }}
+                  >
+                    {isOpen ? "Ocultar detalles ▲" : "Ver detalles ▼"}
+                  </button>
                 </div>
               </div>
 
-              <p className="mb-2 text-secondary">Detalle por origen:</p>
+              {/* DETALLE: solo se muestra si isOpen === true */}
+              {isOpen && (
+                <>
+                  <p className="mb-2 text-secondary">Detalle por origen:</p>
 
-              <ul className="list-group list-group-flush">
-                {dest.flights.map((flight, i) => {
-                  const { skyscanner, kiwi, google } = buildBookingLinks(
-                    flight.origin,
-                    dest.destination,
-                    travelDate
-                  );
+                  <ul className="list-group list-group-flush">
+                    {dest.flights.map((flight, i) => {
+                      const { skyscanner, kiwi, google } = buildBookingLinks(
+                        flight.origin,
+                        dest.destination,
+                        travelDate
+                      );
 
-                  return (
-                    <li
-                      key={i}
-                      className="list-group-item"
-                      style={{
-                        backgroundColor: "#FFFFFF",
-                        color: "#1E293B",
-                        borderColor: "#D0D8E5",
-                      }}
-                    >
-                      <div className="d-flex justify-content-between">
-                        <span className="fw-semibold">{flight.origin}</span>
-                        {typeof flight.price === "number" ? (
-                          <span>{flight.price.toFixed(2)} EUR</span>
-                        ) : (
-                          <span className="text-warning">
-                            {flight.error || "Sin datos"}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-2 d-flex flex-wrap gap-2">
-                        <a
-                          href={skyscanner}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-outline-primary btn-sm"
+                      return (
+                        <li
+                          key={i}
+                          className="list-group-item"
+                          style={{
+                            backgroundColor: "#FFFFFF",
+                            color: "#1E293B",
+                            borderColor: "#D0D8E5",
+                          }}
                         >
-                          Ver en Skyscanner
-                        </a>
+                          <div className="d-flex justify-content-between">
+                            <span className="fw-semibold">
+                              {flight.origin}
+                            </span>
+                            {typeof flight.price === "number" ? (
+                              <span>{flight.price.toFixed(2)} EUR</span>
+                            ) : (
+                              <span className="text-warning">
+                                {flight.error || "Sin datos"}
+                              </span>
+                            )}
+                          </div>
 
-                        <a
-                          href={kiwi}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-outline-secondary btn-sm"
-                        >
-                          Ver en Kiwi
-                        </a>
+                          <div className="mt-2 d-flex flex-wrap gap-2">
+                            <a
+                              href={skyscanner}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-primary btn-sm"
+                            >
+                              Ver en Skyscanner
+                            </a>
 
-                        <a
-                          href={google}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-outline-dark btn-sm"
-                        >
-                          Ver en Google Flights
-                        </a>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                            <a
+                              href={kiwi}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-secondary btn-sm"
+                            >
+                              Ver en Kiwi
+                            </a>
+
+                            <a
+                              href={google}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-dark btn-sm"
+                            >
+                              Ver en Google Flights
+                            </a>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
             </div>
           </div>
         );
