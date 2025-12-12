@@ -1,4 +1,14 @@
 const axios = require("axios");
+const https = require("https");
+
+// Reutiliza conexiones (reduce latencia cuando hay muchas llamadas seguidas)
+const httpsAgent = new https.Agent({ keepAlive: true });
+
+// Instancia HTTP dedicada para Amadeus (keep-alive + timeout coherente)
+const http = axios.create({
+  httpsAgent,
+  timeout: 15000,
+});
 
 // Variables de entorno
 const AMADEUS_API_KEY = process.env.AMADEUS_API_KEY;
@@ -34,17 +44,14 @@ async function getAccessToken() {
   }
 
   try {
-    const response = await axios.post(
+    const response = await http.post(
       `${BASE_URL}/v1/security/oauth2/token`,
       new URLSearchParams({
         grant_type: "client_credentials",
         client_id: AMADEUS_API_KEY,
         client_secret: AMADEUS_API_SECRET,
       }),
-      {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        timeout: 10000,
-      }
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
     const { access_token, expires_in } = response.data;
@@ -113,9 +120,10 @@ async function searchFlightOffer(
     params.returnDate = options.returnDate;
   }
 
-  if (options.max) {
-    params.max = options.max;
-  }
+  // Reducimos payload por defecto (mejora latencia): pedimos pocos resultados.
+  // Si el caller especifica max, lo respetamos.
+  params.max =
+    typeof options.max === "number" && options.max > 0 ? options.max : 5;
 
   // Limpieza por si acaso
   Object.keys(params).forEach((key) => {
@@ -125,12 +133,11 @@ async function searchFlightOffer(
   });
 
   try {
-    const response = await axios.get(
+    const response = await http.get(
       `${BASE_URL}/v2/shopping/flight-offers`,
       {
         headers: { Authorization: `Bearer ${token}` },
         params,
-        timeout: 15000,
       }
     );
 

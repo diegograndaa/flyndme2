@@ -4,9 +4,60 @@ const { getCheapestPrice } = require("../services/amadeusService");
 
 const DEFAULT_DESTINATIONS = ["LON", "PAR", "AMS", "ROM", "BCN", "BER", "LIS", "DUB", "MIL", "VIE"];
 
+// --- Rendimiento ------------------------------------------------------------
+// Cache en memoria (útil para búsquedas repetidas durante unos minutos)
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
+const responseCache = new Map();
+
+function getCached(key) {
+  const hit = responseCache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    responseCache.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+function setCached(key, value) {
+  responseCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+// Ejecuta mapeos en paralelo con límite de concurrencia (evita rate limits)
+async function mapWithConcurrency(items, limit, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= items.length) return;
+      try {
+        results[i] = await mapper(items[i], i);
+      } catch (e) {
+        results[i] = { __error: e };
+      }
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 router.post("/multi-origin", async (req, res) => {
   try {
     let { origins, destinations, departureDate, nonStop, optimizeBy } = req.body;
+
+    // Cache por payload (incluye nonStop/optimizeBy/destinations si se envían)
+    const cacheKey = JSON.stringify({ origins, destinations, departureDate, nonStop, optimizeBy });
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
 
     if (!Array.isArray(origins) || origins.length === 0) {
       return res.status(400).json({ message: "Debes indicar al menos un origen" });
@@ -25,46 +76,42 @@ router.post("/multi-origin", async (req, res) => {
         ? destinations.map((d) => String(d).trim().toUpperCase()).filter(Boolean)
         : DEFAULT_DESTINATIONS;
 
-    const options = { nonStop };
-    const destinationResults = [];
+    const options = { nonStop, max: 5 };
 
+    // 1) Creamos todas las combinaciones origen-destino
+    const tasks = [];
     for (const dest of destinationList) {
-      const flightsForDestination = [];
-
       for (const origin of originList) {
-        try {
-          const price = await getCheapestPrice(origin, dest, departureDate, options);
-
-          if (price === null || Number.isNaN(price)) {
-            flightsForDestination.push({
-              origin,
-              price: null,
-              error: "No hay vuelos disponibles",
-            });
-          } else {
-            flightsForDestination.push({
-              origin,
-              price,
-            });
-          }
-        } catch (error) {
-          console.error(
-            `❌ Error buscando vuelos ${origin} -> ${dest}:`,
-            error.response?.data || error.message
-          );
-          flightsForDestination.push({
-            origin,
-            price: null,
-            error: "Error al consultar Amadeus",
-          });
-        }
+        tasks.push({ origin, dest });
       }
-
-      destinationResults.push({
-        destination: dest,
-        flights: flightsForDestination,
-      });
     }
+
+    // 2) Consultamos en paralelo con límite (ajusta si ves rate limiting)
+    const CONCURRENCY = 6;
+    const taskResults = await mapWithConcurrency(tasks, CONCURRENCY, async ({ origin, dest }) => {
+      const price = await getCheapestPrice(origin, dest, departureDate, options);
+      return { origin, dest, price: typeof price === "number" && !Number.isNaN(price) ? price : null };
+    });
+
+    // 3) Reagrupamos por destino
+    const destMap = new Map();
+    for (const dest of destinationList) {
+      destMap.set(dest, []);
+    }
+    for (const r of taskResults) {
+      const flightsForDestination = destMap.get(r.dest) || [];
+      flightsForDestination.push(
+        r.price === null
+          ? { origin: r.origin, price: null, error: "No hay vuelos disponibles" }
+          : { origin: r.origin, price: r.price }
+      );
+      destMap.set(r.dest, flightsForDestination);
+    }
+
+    const destinationResults = destinationList.map((dest) => ({
+      destination: dest,
+      flights: destMap.get(dest) || [],
+    }));
 
     // Solo consideramos destinos con precio válido para todos los orígenes
     const validDestinations = destinationResults.filter((dest) =>
@@ -72,7 +119,9 @@ router.post("/multi-origin", async (req, res) => {
     );
 
     if (!validDestinations.length) {
-      return res.json({ flights: [] });
+      const payload = { flights: [] };
+      setCached(cacheKey, payload);
+      return res.json(payload);
     }
 
     const enriched = validDestinations.map((dest) => {
@@ -145,7 +194,9 @@ router.post("/multi-origin", async (req, res) => {
       return b.fairnessScore - a.fairnessScore; // desempate por equidad
     });
 
-    res.json({ flights: sorted });
+    const payload = { flights: sorted };
+    setCached(cacheKey, payload);
+    res.json(payload);
   } catch (err) {
     console.error("💥 Error en /api/flights/multi-origin:", err.response?.data || err.message);
     res.status(500).json({ message: "Error interno al buscar vuelos" });

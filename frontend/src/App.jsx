@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import FlightResults from "./components/FlightResults";
 
-const API_URL =
-  "https://flyndme-backend.onrender.com/api/flights/multi-origin";
+const API_BASE = "https://flyndme-backend.onrender.com";
+const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
 const AVAILABLE_AIRPORTS = [
   { code: "MAD", city: "Madrid", country: "España" },
@@ -33,6 +33,23 @@ function App() {
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Mantiene el backend "caliente" en Render para evitar el cold-start.
+  useEffect(() => {
+    let timer;
+    const ping = async () => {
+      try {
+        await fetch(`${API_BASE}/api/ping`, { cache: "no-store" });
+      } catch (_) {
+        // Silencioso: el ping no debe romper UX
+      }
+    };
+
+    ping();
+    timer = setInterval(ping, 8 * 60 * 1000); // cada 8 min
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Índice seguro para leer el valor que usará el filtro
   const safeActiveIndex =
