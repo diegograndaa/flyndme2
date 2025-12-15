@@ -38,7 +38,7 @@ function App() {
   const [hasSearched, setHasSearched] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // Controla si estamos en modo "búsqueda" o modo "resultados"
+  // Modo búsqueda vs modo resultados
   const [showSearchPanel, setShowSearchPanel] = useState(true);
 
   // Alternativas ocultas por defecto
@@ -142,6 +142,69 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Fallback: calcula el mejor destino desde flights si el backend no manda bestDestination
+  const computeBestDestinationFromFlights = (flightsArr, mode) => {
+    if (!Array.isArray(flightsArr) || flightsArr.length === 0) return null;
+
+    const safeNumber = (v) =>
+      typeof v === "number" && !Number.isNaN(v) ? v : null;
+
+    const getTotal = (f) =>
+      safeNumber(f.totalCostEUR) ??
+      safeNumber(f.totalCost) ??
+      safeNumber(f.total) ??
+      null;
+
+    const getFairness = (f) =>
+      safeNumber(f.fairnessScore) ??
+      safeNumber(f.fairness) ??
+      null;
+
+    const getAvg = (f) =>
+      safeNumber(f.averageCostPerTraveler) ??
+      safeNumber(f.avgCostPerTraveler) ??
+      safeNumber(f.avgPerTraveler) ??
+      null;
+
+    const getSpread = (f) =>
+      safeNumber(f.priceSpread) ??
+      safeNumber(f.spread) ??
+      null;
+
+    const getDest = (f) =>
+      f.destination || f.dest || f.arrival || f.arrivalCode || null;
+
+    let best = flightsArr[0];
+
+    for (const f of flightsArr) {
+      if (mode === "fairness") {
+        const fa = getFairness(f);
+        const fb = getFairness(best);
+        const ta = getTotal(f);
+        const tb = getTotal(best);
+
+        if (fa !== null && fb !== null) {
+          if (fa > fb) best = f;
+          else if (fa === fb && ta !== null && tb !== null && ta < tb) best = f;
+        } else if (ta !== null && tb !== null && ta < tb) {
+          best = f;
+        }
+      } else {
+        const ta = getTotal(f);
+        const tb = getTotal(best);
+        if (ta !== null && tb !== null && ta < tb) best = f;
+      }
+    }
+
+    return {
+      destination: getDest(best) || "Destino",
+      totalCostEUR: getTotal(best) ?? 0,
+      averageCostPerTraveler: getAvg(best) ?? 0,
+      fairnessScore: getFairness(best) ?? 0,
+      priceSpread: getSpread(best) ?? 0,
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -156,10 +219,12 @@ function App() {
 
     if (!cleanedOrigins.length) {
       setError("Introduce al menos un aeropuerto de origen.");
+      setShowSearchPanel(true);
       return;
     }
     if (!departureDate) {
       setError("Selecciona una fecha de salida.");
+      setShowSearchPanel(true);
       return;
     }
 
@@ -183,10 +248,24 @@ function App() {
 
       const data = await res.json();
 
-      setFlights(data.flights || []);
-      setBestDestination(data.bestDestination || null);
+      const flightsArr = Array.isArray(data.flights) ? data.flights : [];
+      setFlights(flightsArr);
 
-      // CLAVE: al tener resultados, ocultamos búsqueda y alternativas
+      const best =
+        data.bestDestination ||
+        computeBestDestinationFromFlights(flightsArr, optimizeBy);
+
+      setBestDestination(best);
+
+      // Si no hay resultados, no ocultamos la búsqueda (evita pantalla en blanco)
+      if (!flightsArr.length || !best) {
+        setError("No se han encontrado resultados para esos orígenes y fecha.");
+        setShowSearchPanel(true);
+        setShowComplementary(false);
+        return;
+      }
+
+      // Hay resultados: ocultamos búsqueda y alternativas por defecto
       setShowSearchPanel(false);
       setShowComplementary(false);
 
@@ -194,9 +273,8 @@ function App() {
     } catch (err) {
       console.error(err);
       setError(err.message || "Error inesperado al buscar vuelos.");
-
-      // Si hay error, dejamos el panel visible para corregir
       setShowSearchPanel(true);
+      setShowComplementary(false);
     } finally {
       setLoading(false);
     }
@@ -240,71 +318,60 @@ function App() {
       </header>
 
       {!hasStarted ? (
-        <>
-          <section className="py-5 border-bottom border-secondary">
-            <div className="container" style={{ maxWidth: "1100px" }}>
-              <div className="row align-items-center g-4">
-                <div className="col-md-7">
-                  <h1 className="display-5 fw-bold mb-3">
-                    FlyndMe · El punto de encuentro perfecto
-                  </h1>
-                  <p className="lead mb-3 text-secondary">
-                    Tres amigos, tres ciudades, un solo destino. FlyndMe calcula
-                    en segundos a qué ciudad es más barato o más justo que vuele
-                    todo el grupo.
-                  </p>
-                  <ul className="text-secondary mb-3">
-                    <li>Introduce los aeropuertos de origen de cada persona.</li>
-                    <li>Elegimos los mejores destinos comunes según tu criterio.</li>
-                    <li>Compara por precio total o por justicia entre viajeros.</li>
-                  </ul>
-                  <div className="d-flex flex-wrap gap-2">
-                    <button
-                      className="btn btn-primary btn-lg"
-                      style={{
-                        backgroundColor: "#3B82F6",
-                        borderColor: "#3B82F6",
-                      }}
-                      onClick={loadDemo}
-                      type="button"
-                    >
-                      Empezar a buscar vuelos
-                    </button>
-                    <span className="text-secondary align-self-center">
-                      O escribe tus propios aeropuertos en la pantalla de búsqueda 👇
-                    </span>
-                  </div>
-                </div>
-                <div className="col-md-5">
-                  <div
-                    className="card bg-white border"
-                    style={{ borderColor: "#D0D8E5" }}
+        <section className="py-5 border-bottom border-secondary">
+          <div className="container" style={{ maxWidth: "1100px" }}>
+            <div className="row align-items-center g-4">
+              <div className="col-md-7">
+                <h1 className="display-5 fw-bold mb-3">
+                  FlyndMe · El punto de encuentro perfecto
+                </h1>
+                <p className="lead mb-3 text-secondary">
+                  Tres amigos, tres ciudades, un solo destino. FlyndMe calcula en
+                  segundos a qué ciudad es más barato o más justo que vuele todo
+                  el grupo.
+                </p>
+                <ul className="text-secondary mb-3">
+                  <li>Introduce los aeropuertos de origen de cada persona.</li>
+                  <li>Elegimos los mejores destinos comunes según tu criterio.</li>
+                  <li>Compara por precio total o por justicia entre viajeros.</li>
+                </ul>
+                <div className="d-flex flex-wrap gap-2">
+                  <button
+                    className="btn btn-primary btn-lg"
+                    style={{ backgroundColor: "#3B82F6", borderColor: "#3B82F6" }}
+                    onClick={loadDemo}
+                    type="button"
                   >
-                    <div className="card-body">
-                      <h2 className="h5 mb-3">Pensado como producto real</h2>
-                      <p className="text-secondary mb-2">
-                        • <strong>Casos de uso:</strong> grupos de amigos,
-                        viajes de empresa, eventos internacionales.
-                      </p>
-                      <p className="text-secondary mb-2">
-                        • <strong>Diferencial:</strong> no solo encontramos lo
-                        más barato, también el destino más equilibrado para todos.
-                      </p>
-                      <p className="text-secondary mb-0">
-                        • <strong>Integrable:</strong> listo para conectarse con
-                        Google Flights, Skyscanner o Kiwi.
-                      </p>
-                    </div>
+                    Empezar a buscar vuelos
+                  </button>
+                  <span className="text-secondary align-self-center">
+                    O escribe tus propios aeropuertos en la pantalla de búsqueda 👇
+                  </span>
+                </div>
+              </div>
+              <div className="col-md-5">
+                <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
+                  <div className="card-body">
+                    <h2 className="h5 mb-3">Pensado como producto real</h2>
+                    <p className="text-secondary mb-2">
+                      • <strong>Casos de uso:</strong> grupos de amigos, viajes de empresa, eventos internacionales.
+                    </p>
+                    <p className="text-secondary mb-2">
+                      • <strong>Diferencial:</strong> no solo encontramos lo más barato, también el destino más equilibrado para todos.
+                    </p>
+                    <p className="text-secondary mb-0">
+                      • <strong>Integrable:</strong> listo para conectarse con Google Flights, Skyscanner o Kiwi.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
-        </>
+          </div>
+        </section>
       ) : (
         <main className="py-4">
           <div className="container" style={{ maxWidth: "960px" }}>
-            {/* MODO RESULTADOS: solo protagonista el mejor destino */}
+            {/* RESULTADOS: solo protagonista el mejor destino */}
             {hasSearched && !loading && !error && bestDestination && !showSearchPanel ? (
               <>
                 <section className="mb-4">
@@ -321,11 +388,7 @@ function App() {
                         <div>
                           <div
                             className="text-uppercase"
-                            style={{
-                              opacity: 0.9,
-                              fontSize: 12,
-                              letterSpacing: 0.4,
-                            }}
+                            style={{ opacity: 0.9, fontSize: 12, letterSpacing: 0.4 }}
                           >
                             Mejor destino según{" "}
                             {optimizeBy === "fairness" ? "equidad" : "precio total"}
@@ -337,17 +400,16 @@ function App() {
 
                           <div className="d-flex flex-wrap gap-2">
                             <span className="badge bg-light text-dark">
-                              Coste total: {bestDestination.totalCostEUR.toFixed(2)} EUR
+                              Coste total: {Number(bestDestination.totalCostEUR || 0).toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
-                              Media por persona:{" "}
-                              {bestDestination.averageCostPerTraveler.toFixed(2)} EUR
+                              Media por persona: {Number(bestDestination.averageCostPerTraveler || 0).toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
-                              Equidad: {bestDestination.fairnessScore}/100
+                              Equidad: {Number(bestDestination.fairnessScore || 0).toFixed(0)}/100
                             </span>
                             <span className="badge bg-light text-dark">
-                              Diferencia máx.: {bestDestination.priceSpread.toFixed(2)} EUR
+                              Diferencia máx.: {Number(bestDestination.priceSpread || 0).toFixed(2)} EUR
                             </span>
                           </div>
 
@@ -382,7 +444,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* Alternativas ocultas por defecto */}
                 <section className="mb-4">
                   {showComplementary ? (
                     <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
@@ -421,7 +482,7 @@ function App() {
                 </section>
               </>
             ) : (
-              /* MODO BÚSQUEDA: formulario */
+              /* BÚSQUEDA */
               <div className="card bg-white border mb-4" style={{ borderColor: "#D0D8E5" }}>
                 <div className="card-body">
                   <div className="row g-4">
@@ -433,18 +494,13 @@ function App() {
                           </label>
 
                           {origins.map((origin, index) => (
-                            <div
-                              key={index}
-                              className="d-flex align-items-center gap-2 mb-2"
-                            >
+                            <div key={index} className="d-flex align-items-center gap-2 mb-2">
                               <input
                                 type="text"
                                 className="form-control text-uppercase"
                                 placeholder="Ej: MAD, BCN, LON..."
                                 value={origin}
-                                onChange={(e) =>
-                                  handleOriginChange(index, e.target.value)
-                                }
+                                onChange={(e) => handleOriginChange(index, e.target.value)}
                                 onFocus={() => setActiveOriginIndex(index)}
                                 disabled={loading}
                               />
@@ -521,14 +577,13 @@ function App() {
                               </label>
                             </div>
                           </div>
+
                           <small className="text-secondary">
                             Actualmente estamos priorizando la {optimizeLabel}.
                           </small>
                         </div>
 
-                        {error && (
-                          <div className="alert alert-danger py-2">{error}</div>
-                        )}
+                        {error && <div className="alert alert-danger py-2">{error}</div>}
 
                         <div className="d-grid">
                           <SearchButton loading={loading}>
@@ -543,14 +598,10 @@ function App() {
                         <div className="card-body p-3">
                           <h2 className="h6 mb-2">Aeropuertos disponibles</h2>
                           <p className="text-secondary small mb-2">
-                            El listado se filtra según el campo de origen que tengas activo.
-                            Haz clic en una fila para rellenarlo.
+                            El listado se filtra según el campo activo. Haz clic para rellenarlo.
                           </p>
 
-                          <div
-                            className="table-responsive"
-                            style={{ maxHeight: "260px", overflowY: "auto" }}
-                          >
+                          <div className="table-responsive" style={{ maxHeight: "260px", overflowY: "auto" }}>
                             <table className="table table-sm mb-0">
                               <thead>
                                 <tr>
@@ -568,17 +619,12 @@ function App() {
                                   >
                                     <td className="fw-semibold">{a.code}</td>
                                     <td>{a.city}</td>
-                                    <td className="text-end text-secondary small">
-                                      {a.country}
-                                    </td>
+                                    <td className="text-end text-secondary small">{a.country}</td>
                                   </tr>
                                 ))}
                                 {filteredAirports.length === 0 && (
                                   <tr>
-                                    <td
-                                      colSpan={3}
-                                      className="text-center text-secondary small"
-                                    >
+                                    <td colSpan={3} className="text-center text-secondary small">
                                       No hay aeropuertos que coincidan.
                                     </td>
                                   </tr>
@@ -600,8 +646,7 @@ function App() {
 
             <footer className="mt-5 pt-3 border-top border-secondary">
               <p className="text-secondary small mb-1">
-                FlyndMe es un prototipo funcional construido con React, Vite,
-                Node.js, Express y la API de Amadeus.
+                FlyndMe es un prototipo funcional construido con React, Vite, Node.js, Express y la API de Amadeus.
               </p>
             </footer>
           </div>
