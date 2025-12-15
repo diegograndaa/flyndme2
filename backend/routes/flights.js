@@ -2,7 +2,18 @@ const express = require("express");
 const router = express.Router();
 const { getCheapestPrice } = require("../services/amadeusService");
 
-const DEFAULT_DESTINATIONS = ["LON", "PAR", "AMS", "ROM", "BCN", "BER", "LIS", "DUB", "MIL", "VIE"];
+const DEFAULT_DESTINATIONS = [
+  "LON",
+  "PAR",
+  "AMS",
+  "ROM",
+  "BCN",
+  "BER",
+  "LIS",
+  "DUB",
+  "MIL",
+  "VIE",
+];
 
 // Cache en memoria
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
@@ -38,7 +49,10 @@ async function mapWithConcurrency(items, limit, mapper) {
     }
   }
 
-  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => worker()
+  );
   await Promise.all(workers);
   return results;
 }
@@ -51,8 +65,9 @@ function toISODate(d) {
 }
 
 function parseISODate(s) {
-  // s: YYYY-MM-DD
-  const [y, m, d] = String(s).split("-").map((x) => parseInt(x, 10));
+  const [y, m, d] = String(s)
+    .split("-")
+    .map((x) => parseInt(x, 10));
   return new Date(y, (m || 1) - 1, d || 1);
 }
 
@@ -74,20 +89,42 @@ router.post("/multi-origin", async (req, res) => {
       destinations,
       departureDate,
       returnDate,
-      tripType,   // "oneway" | "roundtrip"
-      dateMode,   // "exact" | "flex"
-      flexDays,   // number
+      tripType,
+      dateMode,
+      flexDays,
       nonStop,
-      optimizeBy
+      optimizeBy,
+      maxBudgetPerTraveler,   // media por persona
+      maxBudgetPerFlight,     // NUEVO: presupuesto máximo por vuelo individual
     } = req.body;
 
-    // defaults seguros
+    // defaults
     tripType = tripType === "roundtrip" ? "roundtrip" : "oneway";
     dateMode = dateMode === "flex" ? "flex" : "exact";
-    flexDays = typeof flexDays === "number" && flexDays >= 0 ? Math.min(flexDays, 7) : 3;
+    flexDays =
+      typeof flexDays === "number" && flexDays >= 0 ? Math.min(flexDays, 7) : 3;
+
+    const parsedAvg = Number(maxBudgetPerTraveler);
+    const parsedFlight = Number(maxBudgetPerFlight);
+
+    const safeMaxAvg =
+      Number.isFinite(parsedAvg) && parsedAvg > 0 ? parsedAvg : null;
+
+    const safeMaxFlight =
+      Number.isFinite(parsedFlight) && parsedFlight > 0 ? parsedFlight : null;
 
     const cacheKey = JSON.stringify({
-      origins, destinations, departureDate, returnDate, tripType, dateMode, flexDays, nonStop, optimizeBy
+      origins,
+      destinations,
+      departureDate,
+      returnDate,
+      tripType,
+      dateMode,
+      flexDays,
+      nonStop,
+      optimizeBy,
+      maxBudgetPerTraveler: safeMaxAvg,
+      maxBudgetPerFlight: safeMaxFlight,
     });
 
     const cached = getCached(cacheKey);
@@ -98,11 +135,13 @@ router.post("/multi-origin", async (req, res) => {
     }
 
     if (!departureDate) {
-      return res.status(400).json({ message: "Debes indicar departureDate (YYYY-MM-DD)" });
+      return res.status(400).json({ message: "Debes indicar departureDate" });
     }
 
     if (tripType === "roundtrip" && !returnDate) {
-      return res.status(400).json({ message: "Debes indicar returnDate (YYYY-MM-DD) para ida y vuelta" });
+      return res.status(400).json({
+        message: "Debes indicar returnDate para ida y vuelta",
+      });
     }
 
     const originList = origins
@@ -111,12 +150,11 @@ router.post("/multi-origin", async (req, res) => {
 
     const destinationList =
       Array.isArray(destinations) && destinations.length > 0
-        ? destinations.map((d) => String(d).trim().toUpperCase()).filter(Boolean)
+        ? destinations.map((d) => String(d).trim().toUpperCase())
         : DEFAULT_DESTINATIONS;
 
     const optionsBase = { nonStop, max: 5 };
 
-    // 1) Generar fechas candidatas
     const depBase = parseISODate(departureDate);
     let tripLenDays = 0;
 
@@ -124,20 +162,21 @@ router.post("/multi-origin", async (req, res) => {
       const retBase = parseISODate(returnDate);
       tripLenDays = diffDays(depBase, retBase);
       if (tripLenDays <= 0) {
-        return res.status(400).json({ message: "returnDate debe ser posterior a departureDate" });
+        return res.status(400).json({
+          message: "returnDate debe ser posterior a departureDate",
+        });
       }
     }
 
     const dateCandidates = [];
     if (dateMode === "flex") {
-      for (let delta = -flexDays; delta <= flexDays; delta++) {
-        dateCandidates.push({ delta, dep: toISODate(addDays(depBase, delta)) });
+      for (let d = -flexDays; d <= flexDays; d++) {
+        dateCandidates.push({ dep: toISODate(addDays(depBase, d)) });
       }
     } else {
-      dateCandidates.push({ delta: 0, dep: departureDate });
+      dateCandidates.push({ dep: departureDate });
     }
 
-    // 2) Construir tasks: destino x fecha x origen
     const tasks = [];
     for (const dest of destinationList) {
       for (const dc of dateCandidates) {
@@ -153,152 +192,104 @@ router.post("/multi-origin", async (req, res) => {
       }
     }
 
-    // 3) Consultas en paralelo con límite
-    const CONCURRENCY = 6;
-
-    const taskResults = await mapWithConcurrency(tasks, CONCURRENCY, async (t) => {
+    const results = await mapWithConcurrency(tasks, 6, async (t) => {
       const options = { ...optionsBase };
       if (tripType === "roundtrip" && t.ret) options.returnDate = t.ret;
-
       const price = await getCheapestPrice(t.origin, t.dest, t.dep, options);
-
       return {
         origin: t.origin,
         dest: t.dest,
         dep: t.dep,
         ret: t.ret,
-        price: typeof price === "number" && !Number.isNaN(price) ? price : null
+        price: typeof price === "number" ? price : null,
       };
     });
 
-    // 4) Agrupar por destino y fecha (dep)
-    // structure: dest -> dep -> { flights: [...], ret }
     const byDestDate = new Map();
+    destinationList.forEach((d) => byDestDate.set(d, new Map()));
 
-    for (const dest of destinationList) {
-      byDestDate.set(dest, new Map());
-    }
-
-    for (const r of taskResults) {
-      const mapForDest = byDestDate.get(r.dest) || new Map();
-      const current = mapForDest.get(r.dep) || { flights: [], ret: r.ret || null };
-
+    for (const r of results) {
+      const map = byDestDate.get(r.dest);
+      const current = map.get(r.dep) || { flights: [], ret: r.ret };
       current.flights.push(
         r.price === null
-          ? { origin: r.origin, price: null, error: "No hay vuelos disponibles" }
+          ? { origin: r.origin, price: null, error: "No hay vuelos" }
           : { origin: r.origin, price: r.price }
       );
-
-      // conservar returnDate asociado a esa dep (roundtrip)
-      current.ret = r.ret || current.ret;
-
-      mapForDest.set(r.dep, current);
-      byDestDate.set(r.dest, mapForDest);
+      map.set(r.dep, current);
     }
 
-    // 5) Para cada destino, elegir la mejor fecha (si flex) donde haya precio válido para TODOS los orígenes
-    const enrichedDestinations = [];
+    const enriched = [];
 
     for (const dest of destinationList) {
-      const datesMap = byDestDate.get(dest) || new Map();
-      const options = [];
+      const dates = byDestDate.get(dest);
 
-      for (const [dep, payload] of datesMap.entries()) {
-        const flightsForDate = Array.isArray(payload.flights) ? payload.flights : [];
-        // Asegurar 1 vuelo por origen. Si faltan, no sirve.
-        if (flightsForDate.length !== originList.length) continue;
+      for (const [dep, payload] of dates.entries()) {
+        const flights = payload.flights;
+        if (flights.length !== originList.length) continue;
+        if (!flights.every((f) => typeof f.price === "number")) continue;
 
-        const allHavePrice = flightsForDate.every((f) => typeof f.price === "number");
-        if (!allHavePrice) continue;
-
-        const prices = flightsForDate.map((f) => f.price);
-        const totalCostEUR = prices.reduce((sum, p) => sum + p, 0);
-        const averageCostPerTraveler = totalCostEUR / originList.length;
-
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceSpread = maxPrice - minPrice;
-
-        let fairnessScore;
-        if (averageCostPerTraveler <= 0) fairnessScore = 0;
-        else {
-          const ratio = priceSpread / averageCostPerTraveler;
-          const raw = 100 - ratio * 100;
-          fairnessScore = Math.max(0, Math.min(100, raw));
+        // FILTRO: presupuesto máximo por vuelo individual
+        if (
+          safeMaxFlight !== null &&
+          flights.some((f) => f.price > safeMaxFlight)
+        ) {
+          continue;
         }
 
-        // Proxy CO2
-        const approxCo2Score = Number(averageCostPerTraveler.toFixed(2));
+        const prices = flights.map((f) => f.price);
+        const total = prices.reduce((a, b) => a + b, 0);
+        const avg = total / originList.length;
 
-        options.push({
+        // FILTRO: presupuesto medio por persona
+        if (safeMaxAvg !== null && avg > safeMaxAvg) continue;
+
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        const spread = max - min;
+
+        const fairness =
+          avg > 0 ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100)) : 0;
+
+        enriched.push({
           destination: dest,
           bestDate: dep,
-          bestReturnDate: payload.ret || null,
-          flights: flightsForDate,
-          totalCostEUR,
-          averageCostPerTraveler: Number(averageCostPerTraveler.toFixed(2)),
-          minPrice,
-          maxPrice,
-          priceSpread: Number(priceSpread.toFixed(2)),
-          fairnessScore: Number(fairnessScore.toFixed(1)),
-          approxCo2Score
+          bestReturnDate: payload.ret,
+          flights,
+          totalCostEUR: total,
+          averageCostPerTraveler: Number(avg.toFixed(2)),
+          priceSpread: Number(spread.toFixed(2)),
+          fairnessScore: Number(fairness.toFixed(1)),
         });
       }
-
-      if (!options.length) continue;
-
-      const criterion =
-        optimizeBy === "fairness" ? "fairness" : optimizeBy === "co2" ? "co2" : "total";
-
-      // elegir mejor opción de fecha
-      options.sort((a, b) => {
-        if (criterion === "fairness") {
-          if (b.fairnessScore !== a.fairnessScore) return b.fairnessScore - a.fairnessScore;
-          return a.totalCostEUR - b.totalCostEUR;
-        }
-        if (criterion === "co2") {
-          if (a.approxCo2Score !== b.approxCo2Score) return a.approxCo2Score - b.approxCo2Score;
-          if (a.totalCostEUR !== b.totalCostEUR) return a.totalCostEUR - b.totalCostEUR;
-          return b.fairnessScore - a.fairnessScore;
-        }
-        if (a.totalCostEUR !== b.totalCostEUR) return a.totalCostEUR - b.totalCostEUR;
-        return b.fairnessScore - a.fairnessScore;
-      });
-
-      enrichedDestinations.push(options[0]);
     }
 
-    if (!enrichedDestinations.length) {
+    if (!enriched.length) {
       const payload = { flights: [], bestDestination: null };
       setCached(cacheKey, payload);
       return res.json(payload);
     }
 
-    // 6) Orden final de destinos
-    const criterion =
-      optimizeBy === "fairness" ? "fairness" : optimizeBy === "co2" ? "co2" : "total";
-
-    const sorted = enrichedDestinations.sort((a, b) => {
-      if (criterion === "fairness") {
-        if (b.fairnessScore !== a.fairnessScore) return b.fairnessScore - a.fairnessScore;
+    enriched.sort((a, b) => {
+      if (optimizeBy === "fairness") {
+        if (b.fairnessScore !== a.fairnessScore)
+          return b.fairnessScore - a.fairnessScore;
         return a.totalCostEUR - b.totalCostEUR;
       }
-      if (criterion === "co2") {
-        if (a.approxCo2Score !== b.approxCo2Score) return a.approxCo2Score - b.approxCo2Score;
-        if (a.totalCostEUR !== b.totalCostEUR) return a.totalCostEUR - b.totalCostEUR;
-        return b.fairnessScore - a.fairnessScore;
-      }
-      if (a.totalCostEUR !== b.totalCostEUR) return a.totalCostEUR - b.totalCostEUR;
-      return b.fairnessScore - a.fairnessScore;
+      return a.totalCostEUR - b.totalCostEUR;
     });
 
-    const bestDestination = sorted[0];
+    const payload = {
+      flights: enriched,
+      bestDestination: enriched[0],
+      appliedMaxBudgetPerTraveler: safeMaxAvg,
+      appliedMaxBudgetPerFlight: safeMaxFlight,
+    };
 
-    const payload = { flights: sorted, bestDestination };
     setCached(cacheKey, payload);
     return res.json(payload);
   } catch (err) {
-    console.error("💥 Error en /api/flights/multi-origin:", err.response?.data || err.message);
+    console.error("💥 Error en multi-origin:", err.message);
     res.status(500).json({ message: "Error interno al buscar vuelos" });
   }
 });
