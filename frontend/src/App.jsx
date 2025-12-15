@@ -28,19 +28,23 @@ function App() {
 
   const [departureDate, setDepartureDate] = useState("");
   const [optimizeBy, setOptimizeBy] = useState("total");
+
   const [flights, setFlights] = useState([]);
   const [bestDestination, setBestDestination] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [hasSearched, setHasSearched] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  // NUEVO: control de visibilidad del panel de búsqueda tras resultados
+  // Controla si estamos en modo "búsqueda" o modo "resultados"
   const [showSearchPanel, setShowSearchPanel] = useState(true);
 
-  // NUEVO: plegable para resultados complementarios
+  // Alternativas ocultas por defecto
   const [showComplementary, setShowComplementary] = useState(false);
 
+  // Mantiene el backend "caliente" en Render
   useEffect(() => {
     let timer;
     const ping = async () => {
@@ -116,18 +120,13 @@ function App() {
     setBestDestination(null);
     setHasSearched(false);
     setError("");
-
-    // NUEVO
     setShowSearchPanel(true);
     setShowComplementary(false);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const loadDemo = () => {
     setHasStarted(true);
-
-    // NUEVO
     setShowSearchPanel(true);
     setShowComplementary(false);
 
@@ -139,6 +138,7 @@ function App() {
       const dd = String(in30.getDate()).padStart(2, "0");
       setDepartureDate(`${yyyy}-${mm}-${dd}`);
     }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -146,11 +146,9 @@ function App() {
     e.preventDefault();
     setError("");
     setHasSearched(true);
+
     setFlights([]);
     setBestDestination(null);
-
-    // NUEVO
-    setShowComplementary(false);
 
     const cleanedOrigins = origins
       .map((o) => o.trim().toUpperCase())
@@ -188,15 +186,16 @@ function App() {
       setFlights(data.flights || []);
       setBestDestination(data.bestDestination || null);
 
-      // NUEVO: tras resultados, ocultamos el panel de búsqueda
+      // CLAVE: al tener resultados, ocultamos búsqueda y alternativas
       setShowSearchPanel(false);
+      setShowComplementary(false);
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error(err);
       setError(err.message || "Error inesperado al buscar vuelos.");
 
-      // Si hay error, mantenemos visible el panel para corregir
+      // Si hay error, dejamos el panel visible para corregir
       setShowSearchPanel(true);
     } finally {
       setLoading(false);
@@ -289,13 +288,11 @@ function App() {
                       </p>
                       <p className="text-secondary mb-2">
                         • <strong>Diferencial:</strong> no solo encontramos lo
-                        más barato, también el destino más equilibrado para
-                        todos.
+                        más barato, también el destino más equilibrado para todos.
                       </p>
                       <p className="text-secondary mb-0">
-                        • <strong>Integrable:</strong> este prototipo está
-                        pensado para conectarse con motores de búsqueda de
-                        vuelos como Google Flights, Skyscanner o Kiwi.
+                        • <strong>Integrable:</strong> listo para conectarse con
+                        Google Flights, Skyscanner o Kiwi.
                       </p>
                     </div>
                   </div>
@@ -305,11 +302,11 @@ function App() {
           </section>
         </>
       ) : (
-        <>
-          <main className="py-4">
-            <div className="container" style={{ maxWidth: "960px" }}>
-              {/* HERO: MEJOR DESTINO, protagonista absoluto */}
-              {hasSearched && !loading && !error && bestDestination && (
+        <main className="py-4">
+          <div className="container" style={{ maxWidth: "960px" }}>
+            {/* MODO RESULTADOS: solo protagonista el mejor destino */}
+            {hasSearched && !loading && !error && bestDestination && !showSearchPanel ? (
+              <>
                 <section className="mb-4">
                   <div
                     className="card border-0"
@@ -324,7 +321,11 @@ function App() {
                         <div>
                           <div
                             className="text-uppercase"
-                            style={{ opacity: 0.9, fontSize: 12, letterSpacing: 0.4 }}
+                            style={{
+                              opacity: 0.9,
+                              fontSize: 12,
+                              letterSpacing: 0.4,
+                            }}
                           >
                             Mejor destino según{" "}
                             {optimizeBy === "fairness" ? "equidad" : "precio total"}
@@ -339,7 +340,8 @@ function App() {
                               Coste total: {bestDestination.totalCostEUR.toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
-                              Media por persona: {bestDestination.averageCostPerTraveler.toFixed(2)} EUR
+                              Media por persona:{" "}
+                              {bestDestination.averageCostPerTraveler.toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
                               Equidad: {bestDestination.fairnessScore}/100
@@ -350,7 +352,7 @@ function App() {
                           </div>
 
                           <p className="mt-3 mb-0" style={{ opacity: 0.95 }}>
-                            Este es el destino recomendado para el grupo con tu criterio actual. El resto de resultados quedan como apoyo.
+                            Este es el destino recomendado. El resto son alternativas complementarias.
                           </p>
                         </div>
 
@@ -370,234 +372,34 @@ function App() {
                           <button
                             type="button"
                             className="btn btn-outline-light"
-                            onClick={() => {
-                              setShowComplementary(true);
-                              const el = document.getElementById("complementary-results");
-                              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                            }}
+                            onClick={() => setShowComplementary(true)}
                           >
-                            Ver detalles complementarios
+                            Ver alternativas
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </section>
-              )}
 
-              {/* PANEL DE BÚSQUEDA: oculto tras resultados */}
-              {showSearchPanel && (
-                <div
-                  className="card bg-white border mb-4"
-                  style={{ borderColor: "#D0D8E5" }}
-                >
-                  <div className="card-body">
-                    <div className="row g-4">
-                      <div className="col-md-8">
-                        <form onSubmit={handleSubmit}>
-                          <div className="mb-3">
-                            <label className="form-label fw-semibold">
-                              Aeropuertos de origen
-                            </label>
-                            {origins.map((origin, index) => (
-                              <div
-                                key={index}
-                                className="d-flex align-items-center gap-2 mb-2"
-                              >
-                                <input
-                                  type="text"
-                                  className="form-control text-uppercase"
-                                  placeholder="Ej: MAD, BCN, LON..."
-                                  value={origin}
-                                  onChange={(e) =>
-                                    handleOriginChange(index, e.target.value)
-                                  }
-                                  onFocus={() => setActiveOriginIndex(index)}
-                                  disabled={loading}
-                                />
-                                <button
-                                  type="button"
-                                  className="btn btn-outline-secondary btn-sm"
-                                  onClick={() => removeOrigin(index)}
-                                  disabled={origins.length <= 1 || loading}
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              className="btn btn-outline-secondary btn-sm mt-1"
-                              onClick={addOrigin}
-                              disabled={loading}
-                            >
-                              + Añadir origen
-                            </button>
-                          </div>
-
-                          <div className="row g-3 mb-3">
-                            <div className="col-md-6">
-                              <label className="form-label fw-semibold">
-                                Fecha de salida
-                              </label>
-                              <input
-                                type="date"
-                                className="form-control"
-                                value={departureDate}
-                                onChange={(e) =>
-                                  setDepartureDate(e.target.value)
-                                }
-                                disabled={loading}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mb-3">
-                            <label className="form-label fw-semibold">
-                              Optimizar por
-                            </label>
-                            <div className="d-flex flex-wrap gap-3">
-                              <div className="form-check">
-                                <input
-                                  className="form-check-input"
-                                  type="radio"
-                                  name="optimizeBy"
-                                  id="optTotal"
-                                  value="total"
-                                  checked={optimizeBy === "total"}
-                                  onChange={(e) => setOptimizeBy(e.target.value)}
-                                  disabled={loading}
-                                />
-                                <label
-                                  className="form-check-label"
-                                  htmlFor="optTotal"
-                                >
-                                  Precio total del grupo
-                                </label>
-                              </div>
-                              <div className="form-check">
-                                <input
-                                  className="form-check-input"
-                                  type="radio"
-                                  name="optimizeBy"
-                                  id="optFairness"
-                                  value="fairness"
-                                  checked={optimizeBy === "fairness"}
-                                  onChange={(e) => setOptimizeBy(e.target.value)}
-                                  disabled={loading}
-                                />
-                                <label
-                                  className="form-check-label"
-                                  htmlFor="optFairness"
-                                >
-                                  Equidad entre viajeros
-                                </label>
-                              </div>
-                            </div>
-                            <small className="text-secondary">
-                              Actualmente estamos priorizando la {optimizeLabel}.
-                            </small>
-                          </div>
-
-                          {error && (
-                            <div className="alert alert-danger py-2">
-                              {error}
-                            </div>
-                          )}
-
-                          <div className="d-grid">
-                            <SearchButton loading={loading}>
-                              Buscar destinos comunes
-                            </SearchButton>
-                          </div>
-                        </form>
-                      </div>
-
-                      <div className="col-md-4">
-                        <div className="card h-100 border-0">
-                          <div className="card-body p-3">
-                            <h2 className="h6 mb-2">Aeropuertos disponibles</h2>
-                            <p className="text-secondary small mb-2">
-                              El listado se filtra según el campo de origen que
-                              tengas activo. Haz clic en una fila para rellenarlo.
-                            </p>
-
-                            <div
-                              className="table-responsive"
-                              style={{ maxHeight: "260px", overflowY: "auto" }}
-                            >
-                              <table className="table table-sm mb-0">
-                                <thead>
-                                  <tr>
-                                    <th style={{ width: "70px" }}>Código</th>
-                                    <th>Ciudad</th>
-                                    <th className="text-end">País</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {filteredAirports.map((a) => (
-                                    <tr
-                                      key={a.code}
-                                      style={{ cursor: "pointer" }}
-                                      onClick={() =>
-                                        !loading && handleClickSuggestion(a.code)
-                                      }
-                                    >
-                                      <td className="fw-semibold">{a.code}</td>
-                                      <td>{a.city}</td>
-                                      <td className="text-end text-secondary small">
-                                        {a.country}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                  {filteredAirports.length === 0 && (
-                                    <tr>
-                                      <td
-                                        colSpan={3}
-                                        className="text-center text-secondary small"
-                                      >
-                                        No hay aeropuertos que coincidan.
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-
-                            <p className="text-secondary small mt-2 mb-0">
-                              Consejo: puedes ir cambiando de campo de origen y la
-                              tabla se adaptará a lo que escribas en ese campo.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* COMPLEMENTARIO: plegable, solo si hay búsqueda */}
-              {hasSearched && !loading && !error && (
-                <section id="complementary-results" className="mb-4">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h3 className="h6 fw-semibold mb-0" style={{ color: "#1E293B" }}>
-                      Detalles y alternativas (complementario)
-                    </h3>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setShowComplementary((v) => !v)}
-                    >
-                      {showComplementary ? "Ocultar" : "Mostrar"}
-                    </button>
-                  </div>
-
+                {/* Alternativas ocultas por defecto */}
+                <section className="mb-4">
                   {showComplementary ? (
-                    <div
-                      className="card bg-white border"
-                      style={{ borderColor: "#D0D8E5" }}
-                    >
+                    <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h3 className="h6 fw-semibold mb-0">
+                            Alternativas (complementario)
+                          </h3>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => setShowComplementary(false)}
+                          >
+                            Ocultar
+                          </button>
+                        </div>
+
                         <FlightResults
                           flights={flights}
                           optimizeBy={optimizeBy}
@@ -613,22 +415,197 @@ function App() {
                     </div>
                   ) : (
                     <div className="text-secondary small">
-                      Oculto para priorizar el destino recomendado.
+                      Alternativas ocultas para priorizar el destino recomendado.
                     </div>
                   )}
                 </section>
-              )}
+              </>
+            ) : (
+              /* MODO BÚSQUEDA: formulario */
+              <div className="card bg-white border mb-4" style={{ borderColor: "#D0D8E5" }}>
+                <div className="card-body">
+                  <div className="row g-4">
+                    <div className="col-md-8">
+                      <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                          <label className="form-label fw-semibold">
+                            Aeropuertos de origen
+                          </label>
 
-              <footer className="mt-5 pt-3 border-top border-secondary">
-                <p className="text-secondary small mb-1">
-                  FlyndMe es un prototipo funcional construido con React, Vite,
-                  Node.js, Express y la API de Amadeus. Está pensado como
-                  concepto de producto para motores de búsqueda de vuelos.
-                </p>
-              </footer>
-            </div>
-          </main>
-        </>
+                          {origins.map((origin, index) => (
+                            <div
+                              key={index}
+                              className="d-flex align-items-center gap-2 mb-2"
+                            >
+                              <input
+                                type="text"
+                                className="form-control text-uppercase"
+                                placeholder="Ej: MAD, BCN, LON..."
+                                value={origin}
+                                onChange={(e) =>
+                                  handleOriginChange(index, e.target.value)
+                                }
+                                onFocus={() => setActiveOriginIndex(index)}
+                                disabled={loading}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm"
+                                onClick={() => removeOrigin(index)}
+                                disabled={origins.length <= 1 || loading}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm mt-1"
+                            onClick={addOrigin}
+                            disabled={loading}
+                          >
+                            + Añadir origen
+                          </button>
+                        </div>
+
+                        <div className="row g-3 mb-3">
+                          <div className="col-md-6">
+                            <label className="form-label fw-semibold">
+                              Fecha de salida
+                            </label>
+                            <input
+                              type="date"
+                              className="form-control"
+                              value={departureDate}
+                              onChange={(e) => setDepartureDate(e.target.value)}
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="form-label fw-semibold">
+                            Optimizar por
+                          </label>
+                          <div className="d-flex flex-wrap gap-3">
+                            <div className="form-check">
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                name="optimizeBy"
+                                id="optTotal"
+                                value="total"
+                                checked={optimizeBy === "total"}
+                                onChange={(e) => setOptimizeBy(e.target.value)}
+                                disabled={loading}
+                              />
+                              <label className="form-check-label" htmlFor="optTotal">
+                                Precio total del grupo
+                              </label>
+                            </div>
+
+                            <div className="form-check">
+                              <input
+                                className="form-check-input"
+                                type="radio"
+                                name="optimizeBy"
+                                id="optFairness"
+                                value="fairness"
+                                checked={optimizeBy === "fairness"}
+                                onChange={(e) => setOptimizeBy(e.target.value)}
+                                disabled={loading}
+                              />
+                              <label className="form-check-label" htmlFor="optFairness">
+                                Equidad entre viajeros
+                              </label>
+                            </div>
+                          </div>
+                          <small className="text-secondary">
+                            Actualmente estamos priorizando la {optimizeLabel}.
+                          </small>
+                        </div>
+
+                        {error && (
+                          <div className="alert alert-danger py-2">{error}</div>
+                        )}
+
+                        <div className="d-grid">
+                          <SearchButton loading={loading}>
+                            Buscar destinos comunes
+                          </SearchButton>
+                        </div>
+                      </form>
+                    </div>
+
+                    <div className="col-md-4">
+                      <div className="card h-100 border-0">
+                        <div className="card-body p-3">
+                          <h2 className="h6 mb-2">Aeropuertos disponibles</h2>
+                          <p className="text-secondary small mb-2">
+                            El listado se filtra según el campo de origen que tengas activo.
+                            Haz clic en una fila para rellenarlo.
+                          </p>
+
+                          <div
+                            className="table-responsive"
+                            style={{ maxHeight: "260px", overflowY: "auto" }}
+                          >
+                            <table className="table table-sm mb-0">
+                              <thead>
+                                <tr>
+                                  <th style={{ width: "70px" }}>Código</th>
+                                  <th>Ciudad</th>
+                                  <th className="text-end">País</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredAirports.map((a) => (
+                                  <tr
+                                    key={a.code}
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => !loading && handleClickSuggestion(a.code)}
+                                  >
+                                    <td className="fw-semibold">{a.code}</td>
+                                    <td>{a.city}</td>
+                                    <td className="text-end text-secondary small">
+                                      {a.country}
+                                    </td>
+                                  </tr>
+                                ))}
+                                {filteredAirports.length === 0 && (
+                                  <tr>
+                                    <td
+                                      colSpan={3}
+                                      className="text-center text-secondary small"
+                                    >
+                                      No hay aeropuertos que coincidan.
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <p className="text-secondary small mt-2 mb-0">
+                            Consejo: cambia de campo y la tabla se adapta.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <footer className="mt-5 pt-3 border-top border-secondary">
+              <p className="text-secondary small mb-1">
+                FlyndMe es un prototipo funcional construido con React, Vite,
+                Node.js, Express y la API de Amadeus.
+              </p>
+            </footer>
+          </div>
+        </main>
       )}
     </div>
   );
