@@ -31,7 +31,6 @@ let tokenExpiresAt = null;
 async function getAccessToken() {
   const now = Date.now();
 
-  // Si ya tenemos token válido en memoria, lo reutilizamos
   if (cachedToken && tokenExpiresAt && now < tokenExpiresAt) {
     return cachedToken;
   }
@@ -57,7 +56,6 @@ async function getAccessToken() {
     const { access_token, expires_in } = response.data;
 
     cachedToken = access_token;
-    // restamos 60s para evitar quedarnos al límite
     tokenExpiresAt = now + (expires_in - 60) * 1000;
 
     console.log(
@@ -84,15 +82,10 @@ async function getAccessToken() {
  *   - adults: número de adultos (por defecto 1)
  *   - nonStop: boolean
  *   - currencyCode: código de moneda (por defecto "EUR")
- *   - returnDate: "YYYY-MM-DD" (opcional)
+ *   - returnDate: "YYYY-MM-DD" (opcional)  -> ida y vuelta
  *   - max: número máximo de resultados (opcional)
  */
-async function searchFlightOffer(
-  origin,
-  destination,
-  departureDate,
-  options = {}
-) {
+async function searchFlightOffer(origin, destination, departureDate, options = {}) {
   if (!origin || !destination || !departureDate) {
     throw new Error(
       "origin, destination y departureDate son obligatorios en searchFlightOffer"
@@ -116,16 +109,14 @@ async function searchFlightOffer(
     params.nonStop = options.nonStop;
   }
 
+  // Si viene returnDate, Amadeus entiende ida y vuelta
   if (options.returnDate) {
     params.returnDate = options.returnDate;
   }
 
-  // Reducimos payload por defecto (mejora latencia): pedimos pocos resultados.
-  // Si el caller especifica max, lo respetamos.
   params.max =
     typeof options.max === "number" && options.max > 0 ? options.max : 5;
 
-  // Limpieza por si acaso
   Object.keys(params).forEach((key) => {
     if (params[key] === undefined || params[key] === null) {
       delete params[key];
@@ -133,13 +124,10 @@ async function searchFlightOffer(
   });
 
   try {
-    const response = await http.get(
-      `${BASE_URL}/v2/shopping/flight-offers`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      }
-    );
+    const response = await http.get(`${BASE_URL}/v2/shopping/flight-offers`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params,
+    });
 
     return response.data;
   } catch (err) {
@@ -147,7 +135,6 @@ async function searchFlightOffer(
       `💥 Error buscando vuelos ${origin} -> ${destination} (${departureDate}):`,
       err.response?.data || err.message
     );
-    // Re-lanzamos un error genérico para que el router lo gestione
     throw new Error("Error al buscar vuelos en Amadeus");
   }
 }
@@ -156,13 +143,7 @@ async function searchFlightOffer(
  * Devuelve el precio mínimo (en EUR) para un origen-destino-fecha.
  * Si no hay vuelos, devuelve null.
  */
-async function getCheapestPrice(
-  origin,
-  destination,
-  departureDate,
-  options = {}
-) {
-  // Evitamos llamadas inválidas cuando origen y destino son iguales
+async function getCheapestPrice(origin, destination, departureDate, options = {}) {
   if (origin === destination) {
     console.log(
       `⏭️ Saltando búsqueda porque origen y destino son iguales (${origin})`
@@ -171,13 +152,7 @@ async function getCheapestPrice(
   }
 
   try {
-    const data = await searchFlightOffer(
-      origin,
-      destination,
-      departureDate,
-      options
-    );
-
+    const data = await searchFlightOffer(origin, destination, departureDate, options);
 
     const offers = data?.data || [];
     if (!offers.length) {
@@ -202,7 +177,6 @@ async function getCheapestPrice(
       `❌ Error en getCheapestPrice para ${origin} -> ${destination}:`,
       err.message
     );
-    // devolvemos null para que el router pueda decidir qué hacer
     return null;
   }
 }
