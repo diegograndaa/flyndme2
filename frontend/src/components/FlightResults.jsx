@@ -1,33 +1,31 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
 function getFairnessStyle(score) {
-  if (score >= 85) return { color: "#16A34A", fontWeight: "600" };
-  if (score >= 65) return { color: "#3B82F6", fontWeight: "600" };
-  if (score >= 45) return { color: "#FACC15", fontWeight: "600" };
+  const s = typeof score === "number" ? score : 0;
+  if (s >= 85) return { color: "#16A34A", fontWeight: "600" };
+  if (s >= 65) return { color: "#3B82F6", fontWeight: "600" };
+  if (s >= 45) return { color: "#FACC15", fontWeight: "600" };
   return { color: "#DC2626", fontWeight: "600" };
 }
 
 // Helper para construir links a comparadores
 function buildBookingLinks(origin, destination, rawDate) {
-  const safeOrigin = encodeURIComponent(origin);
-  const safeDest = encodeURIComponent(destination);
+  const safeOrigin = encodeURIComponent(origin || "");
+  const safeDest = encodeURIComponent(destination || "");
 
   const hasDate = Boolean(rawDate);
   const safeDate = hasDate ? rawDate : "";
   const dateCompact = hasDate ? safeDate.replace(/-/g, "") : "";
 
-  // Skyscanner
   const skyscanner = hasDate
     ? `https://www.skyscanner.es/transporte/vuelos/${safeOrigin}/${safeDest}/${dateCompact}/`
     : `https://www.skyscanner.es/transporte/vuelos/${safeOrigin}/${safeDest}/`;
 
-  // Kiwi
   const kiwi = hasDate
     ? `https://www.kiwi.com/es/search/results/${safeOrigin}/${safeDest}/${safeDate}/`
     : `https://www.kiwi.com/es/search/results/${safeOrigin}/${safeDest}/`;
 
-  // Google Flights: busqueda textual
   const queryText = hasDate
     ? `Vuelos de ${origin} a ${destination} el ${safeDate}`
     : `Vuelos de ${origin} a ${destination}`;
@@ -41,10 +39,16 @@ function buildBookingLinks(origin, destination, rawDate) {
 
 // Generar texto para compartir en grupo
 function buildVotingText(flights) {
+  const list = Array.isArray(flights) ? flights : [];
   let text = "📊 Opciones para el viaje:\n\n";
 
-  flights.slice(0, 5).forEach((dest, i) => {
-    text += `${i + 1}) ${dest.destination} · ${dest.averageCostPerTraveler.toFixed(
+  list.slice(0, 5).forEach((dest, i) => {
+    const avg =
+      typeof dest?.averageCostPerTraveler === "number"
+        ? dest.averageCostPerTraveler
+        : 0;
+
+    text += `${i + 1}) ${dest?.destination || "Destino"} · ${avg.toFixed(
       0
     )} € por persona\n`;
   });
@@ -55,27 +59,49 @@ function buildVotingText(flights) {
 
 // Frase resumen para comparativa cuando hay exactamente 2 destinos
 function describeComparison(destA, destB, optimizeBy) {
+  if (!destA || !destB) return "";
+
   let better;
+
+  const aTotal = typeof destA.totalCostEUR === "number" ? destA.totalCostEUR : 0;
+  const bTotal = typeof destB.totalCostEUR === "number" ? destB.totalCostEUR : 0;
+
+  const aAvg =
+    typeof destA.averageCostPerTraveler === "number"
+      ? destA.averageCostPerTraveler
+      : 0;
+  const bAvg =
+    typeof destB.averageCostPerTraveler === "number"
+      ? destB.averageCostPerTraveler
+      : 0;
+
+  const aFair =
+    typeof destA.fairnessScore === "number" ? destA.fairnessScore : 0;
+  const bFair =
+    typeof destB.fairnessScore === "number" ? destB.fairnessScore : 0;
+
   if (optimizeBy === "fairness") {
-    if (destA.fairnessScore !== destB.fairnessScore) {
-      better = destA.fairnessScore > destB.fairnessScore ? destA : destB;
+    if (aFair !== bFair) {
+      better = aFair > bFair ? destA : destB;
     } else {
-      better = destA.totalCostEUR <= destB.totalCostEUR ? destA : destB;
+      better = aTotal <= bTotal ? destA : destB;
     }
   } else if (optimizeBy === "co2") {
-    const aCo2 = destA.approxCo2Score ?? Infinity;
-    const bCo2 = destB.approxCo2Score ?? Infinity;
+    const aCo2 =
+      typeof destA.approxCo2Score === "number" ? destA.approxCo2Score : Infinity;
+    const bCo2 =
+      typeof destB.approxCo2Score === "number" ? destB.approxCo2Score : Infinity;
+
     if (aCo2 !== bCo2) {
       better = aCo2 < bCo2 ? destA : destB;
     } else {
-      better = destA.totalCostEUR <= destB.totalCostEUR ? destA : destB;
+      better = aTotal <= bTotal ? destA : destB;
     }
   } else {
-    // total
-    if (destA.totalCostEUR !== destB.totalCostEUR) {
-      better = destA.totalCostEUR < destB.totalCostEUR ? destA : destB;
+    if (aTotal !== bTotal) {
+      better = aTotal < bTotal ? destA : destB;
     } else {
-      better = destA.fairnessScore >= destB.fairnessScore ? destA : destB;
+      better = aFair >= bFair ? destA : destB;
     }
   }
 
@@ -83,15 +109,14 @@ function describeComparison(destA, destB, optimizeBy) {
 
   const other = better === destA ? destB : destA;
 
-  const diffPerPerson =
-    better.averageCostPerTraveler - other.averageCostPerTraveler;
+  const diffPerPerson = aAvg - bAvg;
 
   let line = `Para este grupo, ${better.destination} parece una opcion mas interesante que ${other.destination}`;
 
   if (optimizeBy === "fairness") {
-    line += ` porque tiene una equidad mayor (${better.fairnessScore.toFixed(
+    line += ` porque tiene una equidad mayor (${aFair.toFixed(
       1
-    )} frente a ${other.fairnessScore.toFixed(1)}).`;
+    )} frente a ${bFair.toFixed(1)}).`;
   } else if (optimizeBy === "co2") {
     if (
       typeof better.approxCo2Score === "number" &&
@@ -101,18 +126,18 @@ function describeComparison(destA, destB, optimizeBy) {
         2
       )} frente a ${other.approxCo2Score.toFixed(2)}).`;
     } else {
-      line += ` teniendo en cuenta el equilibrio entre precio y CO2 aproximado.`;
+      line += " teniendo en cuenta el equilibrio entre precio y CO2 aproximado.";
     }
   } else {
     if (diffPerPerson !== 0) {
-      const cheaper = diffPerPerson < 0 ? better : other;
-      const moreExpensive = cheaper === better ? other : better;
+      const cheaper = diffPerPerson < 0 ? destA : destB;
+      const moreExpensive = cheaper === destA ? destB : destA;
       const absDiff = Math.abs(diffPerPerson);
       line += ` porque es mas barata por persona (aprox. ${absDiff.toFixed(
         0
       )} € menos frente a ${moreExpensive.destination}).`;
     } else {
-      line += ` porque equilibra mejor precio y equidad para el grupo.`;
+      line += " porque equilibra mejor precio y equidad para el grupo.";
     }
   }
 
@@ -125,20 +150,33 @@ function FlightResults({
   hasSearched,
   loading,
   error,
-  origins = [],
+  origins,
   bestDestination,
   flexRange,
   departureDate,
 }) {
   const resultsRef = useRef(null);
   const [surpriseDest, setSurpriseDest] = useState(null);
-  const [compareSelection, setCompareSelection] = useState([]); // destinos seleccionados para comparar
-  const [sortBy, setSortBy] = useState("default"); // criterio de ordenacion
-  const [openIndex, setOpenIndex] = useState(null); // destino desplegado en el listado detalle
+  const [compareSelection, setCompareSelection] = useState([]);
+  const [sortBy, setSortBy] = useState("default");
+  const [openIndex, setOpenIndex] = useState(null);
 
-  if (loading || error) return null;
+  // Blindaje total de props
+  const safeFlights = useMemo(() => (Array.isArray(flights) ? flights : []), [flights]);
+  const safeOrigins = useMemo(() => (Array.isArray(origins) ? origins : []), [origins]);
 
-  const hasResults = flights && flights.length > 0;
+  // Si hay error, mejor mostrarlo aquí para no dejar pantalla vacía
+  if (loading) return null;
+
+  if (error) {
+    return (
+      <section className="mt-4">
+        <div className="alert alert-danger py-2 mb-0">{error}</div>
+      </section>
+    );
+  }
+
+  const hasResults = safeFlights.length > 0;
 
   if (!hasResults && hasSearched) {
     return (
@@ -154,19 +192,19 @@ function FlightResults({
   if (!hasResults) return null;
 
   // Copia ordenable de los destinos
-  let sortedFlights = Array.isArray(flights) ? [...flights] : [];
+  let sortedFlights = [...safeFlights];
 
   if (sortBy !== "default") {
     sortedFlights.sort((a, b) => {
       switch (sortBy) {
         case "priceAsc":
-          return a.totalCostEUR - b.totalCostEUR;
+          return (a.totalCostEUR ?? 0) - (b.totalCostEUR ?? 0);
         case "priceDesc":
-          return b.totalCostEUR - a.totalCostEUR;
+          return (b.totalCostEUR ?? 0) - (a.totalCostEUR ?? 0);
         case "perPerson":
-          return a.averageCostPerTraveler - b.averageCostPerTraveler;
+          return (a.averageCostPerTraveler ?? 0) - (b.averageCostPerTraveler ?? 0);
         case "fairness":
-          return b.fairnessScore - a.fairnessScore;
+          return (b.fairnessScore ?? 0) - (a.fairnessScore ?? 0);
         case "co2": {
           const aCo2 =
             typeof a.approxCo2Score === "number" ? a.approxCo2Score : Infinity;
@@ -185,9 +223,9 @@ function FlightResults({
 
   // Link rutas Google Maps
   let googleMapsUrl = null;
-  if (primaryDest && origins.length > 0) {
+  if (primaryDest && safeOrigins.length > 0) {
     const parts = [
-      ...origins.map((o) => encodeURIComponent(`${o} airport`)),
+      ...safeOrigins.map((o) => encodeURIComponent(`${o} airport`)),
       encodeURIComponent(`${primaryDest.destination} airport`),
     ];
     googleMapsUrl = `https://www.google.com/maps/dir/${parts.join("/")}`;
@@ -197,7 +235,7 @@ function FlightResults({
   let embedUrl = null;
   if (primaryDest) {
     embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
-      primaryDest.destination + " airport"
+      (primaryDest.destination || "") + " airport"
     )}&output=embed`;
   }
 
@@ -242,28 +280,29 @@ function FlightResults({
 
   // Viaje sorpresa: elige un destino aleatorio del top 5
   const handleSurprise = () => {
-    if (!flights || flights.length === 0) return;
-    const pool = flights.slice(0, Math.min(5, flights.length));
+    if (!safeFlights.length) return;
+    const pool = safeFlights.slice(0, Math.min(5, safeFlights.length));
     const random = pool[Math.floor(Math.random() * pool.length)];
     setSurpriseDest(random);
   };
 
   // Gestion de seleccion para comparar (max 4)
   const toggleCompare = (destinationCode) => {
+    const code = destinationCode || "";
     setCompareSelection((prev) => {
-      if (prev.includes(destinationCode)) {
-        return prev.filter((d) => d !== destinationCode);
+      if (prev.includes(code)) {
+        return prev.filter((d) => d !== code);
       }
       if (prev.length >= 4) {
         alert("Solo puedes comparar hasta 4 destinos a la vez.");
         return prev;
       }
-      return [...prev, destinationCode];
+      return [...prev, code];
     });
   };
 
-  const fairnessTop = flights.slice(0, Math.min(5, flights.length));
-  const selectedForCompare = flights.filter((dest) =>
+  const fairnessTop = safeFlights.slice(0, Math.min(5, safeFlights.length));
+  const selectedForCompare = safeFlights.filter((dest) =>
     compareSelection.includes(dest.destination)
   );
 
@@ -289,31 +328,29 @@ function FlightResults({
                 <h2 className="h5 mb-2">Mapa del encuentro del grupo</h2>
                 <p className="text-secondary mb-2">
                   <strong>Origenes:</strong>{" "}
-                  {origins.length > 0 ? origins.join(", ") : "N/A"} →{" "}
+                  {safeOrigins.length > 0 ? safeOrigins.join(", ") : "N/A"} →{" "}
                   <strong>Destino:</strong> {primaryDest.destination}
-                </p>
-                <p className="text-secondary small mb-2">
-                  Visualmente: grupo repartido por Europa que converge en un
-                  mismo aeropuerto.
                 </p>
 
                 <div className="d-flex flex-wrap gap-2 mb-2">
-                  {primaryDest.flights.map((f, i) => (
-                    <span
-                      key={i}
-                      className="badge rounded-pill"
-                      style={{
-                        backgroundColor: "#EBF2FF",
-                        color: "#1E293B",
-                        border: "1px solid #D0D8E5",
-                      }}
-                    >
-                      {f.origin} → {primaryDest.destination} ·{" "}
-                      {typeof f.price === "number"
-                        ? `${f.price.toFixed(0)} €`
-                        : "sin datos"}
-                    </span>
-                  ))}
+                  {(Array.isArray(primaryDest.flights) ? primaryDest.flights : []).map(
+                    (f, i) => (
+                      <span
+                        key={i}
+                        className="badge rounded-pill"
+                        style={{
+                          backgroundColor: "#EBF2FF",
+                          color: "#1E293B",
+                          border: "1px solid #D0D8E5",
+                        }}
+                      >
+                        {f.origin} → {primaryDest.destination} ·{" "}
+                        {typeof f.price === "number"
+                          ? `${f.price.toFixed(0)} €`
+                          : "sin datos"}
+                      </span>
+                    )
+                  )}
                 </div>
 
                 {googleMapsUrl && (
@@ -409,14 +446,14 @@ function FlightResults({
                       )}
                     </td>
                     <td className="text-end">
-                      {dest.averageCostPerTraveler.toFixed(2)} EUR
+                      {Number(dest.averageCostPerTraveler ?? 0).toFixed(2)} EUR
                     </td>
                     <td className="text-end">
-                      {dest.totalCostEUR.toFixed(2)} EUR
+                      {Number(dest.totalCostEUR ?? 0).toFixed(2)} EUR
                     </td>
                     <td className="text-end">
                       <span style={getFairnessStyle(dest.fairnessScore)}>
-                        {dest.fairnessScore.toFixed(1)} / 100
+                        {Number(dest.fairnessScore ?? 0).toFixed(1)} / 100
                       </span>
                     </td>
                   </tr>
@@ -438,45 +475,43 @@ function FlightResults({
           }}
         >
           <div className="card-body">
-            <h2 className="h6 mb-3">
-              Comparativa de equidad entre destinos (top 5)
-            </h2>
-            {fairnessTop.map((dest, index) => (
-              <div key={index} className="mb-2">
-                <div className="d-flex justify-content-between mb-1 small">
-                  <span>{dest.destination}</span>
-                  <span>{dest.fairnessScore.toFixed(1)} / 100</span>
-                </div>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    backgroundColor: "#E5E7EB",
-                    borderRadius: "999px",
-                    overflow: "hidden",
-                  }}
-                >
+            <h2 className="h6 mb-3">Comparativa de equidad entre destinos (top 5)</h2>
+            {fairnessTop.map((dest, index) => {
+              const score = Number(dest.fairnessScore ?? 0);
+              return (
+                <div key={index} className="mb-2">
+                  <div className="d-flex justify-content-between mb-1 small">
+                    <span>{dest.destination}</span>
+                    <span>{score.toFixed(1)} / 100</span>
+                  </div>
                   <div
                     style={{
-                      width: `${Math.max(
-                        0,
-                        Math.min(100, dest.fairnessScore)
-                      )}%`,
-                      height: "100%",
+                      width: "100%",
+                      height: "8px",
+                      backgroundColor: "#E5E7EB",
                       borderRadius: "999px",
-                      backgroundColor:
-                        dest.fairnessScore >= 85
-                          ? "#16A34A"
-                          : dest.fairnessScore >= 65
-                          ? "#3B82F6"
-                          : dest.fairnessScore >= 45
-                          ? "#FACC15"
-                          : "#DC2626",
+                      overflow: "hidden",
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        width: `${Math.max(0, Math.min(100, score))}%`,
+                        height: "100%",
+                        borderRadius: "999px",
+                        backgroundColor:
+                          score >= 85
+                            ? "#16A34A"
+                            : score >= 65
+                            ? "#3B82F6"
+                            : score >= 45
+                            ? "#FACC15"
+                            : "#DC2626",
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -486,7 +521,7 @@ function FlightResults({
         <button
           className="btn btn-primary btn-sm"
           onClick={() => {
-            const text = buildVotingText(flights);
+            const text = buildVotingText(safeFlights);
             navigator.clipboard.writeText(text);
             alert("Texto copiado. Pegalo en tu grupo para que voten.");
           }}
@@ -501,45 +536,40 @@ function FlightResults({
           💾 Guardar resultados como imagen
         </button>
 
-        <button
-          className="btn btn-outline-success btn-sm"
-          onClick={handleSurprise}
-        >
+        <button className="btn btn-outline-success btn-sm" onClick={handleSurprise}>
           🎲 Elegir destino sorpresa
         </button>
       </div>
 
       {surpriseDest && (
         <div className="alert alert-info py-2">
-          <strong>Destino sorpresa sugerido:</strong>{" "}
-          {surpriseDest.destination} ·{" "}
-          {surpriseDest.averageCostPerTraveler.toFixed(0)} € por persona
+          <strong>Destino sorpresa sugerido:</strong> {surpriseDest.destination} ·{" "}
+          {Number(surpriseDest.averageCostPerTraveler ?? 0).toFixed(0)} € por persona
         </div>
       )}
 
       {/* MODO COMPARAR VARIOS DESTINOS (hasta 4) */}
       <div className="mb-3">
         <p className="text-secondary small mb-1">
-          Selecciona hasta <strong>4 destinos</strong> para compararlos cara a
-          cara.
+          Selecciona hasta <strong>4 destinos</strong> para compararlos cara a cara.
         </p>
+
         {selectedForCompare.length === 1 && (
           <p className="text-secondary small mb-0">
-            Has seleccionado{" "}
-            <strong>{selectedForCompare[0].destination}</strong>. Selecciona uno
-            o mas destinos para ver la comparativa.
+            Has seleccionado <strong>{selectedForCompare[0].destination}</strong>.
+            Selecciona uno o mas destinos para ver la comparativa.
           </p>
         )}
+
         {selectedForCompare.length === 0 && (
           <p className="text-secondary small mb-0">
-            Marca la casilla "Comparar" en las tarjetas de destino para ver la
-            comparativa.
+            Marca la casilla "Comparar" en las tarjetas de destino para ver la comparativa.
           </p>
         )}
+
         {selectedForCompare.length > 1 && (
           <p className="text-secondary small mb-0">
-            Estan seleccionados:{" "}
-            {selectedForCompare.map((d) => d.destination).join(", ")}.
+            Estan seleccionados: {selectedForCompare.map((d) => d.destination).join(", ")}.
           </p>
         )}
       </div>
@@ -556,7 +586,6 @@ function FlightResults({
           <div className="card-body">
             <h2 className="h6 mb-3">Comparativa cara a cara</h2>
 
-            {/* Tabla de metricas por destino */}
             <div className="table-responsive mb-3">
               <table className="table table-sm align-middle mb-0">
                 <thead style={{ backgroundColor: "#EBF2FF" }}>
@@ -574,7 +603,7 @@ function FlightResults({
                     <td>Media por persona</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {dest.averageCostPerTraveler.toFixed(2)} EUR
+                        {Number(dest.averageCostPerTraveler ?? 0).toFixed(2)} EUR
                       </td>
                     ))}
                   </tr>
@@ -582,7 +611,7 @@ function FlightResults({
                     <td>Coste total del grupo</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {dest.totalCostEUR.toFixed(2)} EUR
+                        {Number(dest.totalCostEUR ?? 0).toFixed(2)} EUR
                       </td>
                     ))}
                   </tr>
@@ -591,7 +620,7 @@ function FlightResults({
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
                         <span style={getFairnessStyle(dest.fairnessScore)}>
-                          {dest.fairnessScore.toFixed(1)} / 100
+                          {Number(dest.fairnessScore ?? 0).toFixed(1)} / 100
                         </span>
                       </td>
                     ))}
@@ -620,10 +649,8 @@ function FlightResults({
               </table>
             </div>
 
-            {/* Detalle por origen */}
             <p className="text-secondary small mb-2">
-              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero
-              en cada destino seleccionado.
+              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada destino seleccionado.
             </p>
 
             <div className="table-responsive mb-2">
@@ -639,13 +666,13 @@ function FlightResults({
                   </tr>
                 </thead>
                 <tbody>
-                  {origins.map((originCode) => (
+                  {safeOrigins.map((originCode) => (
                     <tr key={originCode}>
                       <td>{originCode}</td>
                       {selectedForCompare.map((dest) => {
-                        const flight = dest.flights.find(
-                          (f) => f.origin === originCode
-                        );
+                        const destFlights = Array.isArray(dest.flights) ? dest.flights : [];
+                        const flight = destFlights.find((f) => f.origin === originCode);
+
                         return (
                           <td key={dest.destination} className="text-end">
                             {flight && typeof flight.price === "number"
@@ -662,11 +689,7 @@ function FlightResults({
 
             {selectedForCompare.length === 2 && (
               <p className="text-secondary small mb-0">
-                {describeComparison(
-                  selectedForCompare[0],
-                  selectedForCompare[1],
-                  optimizeBy
-                )}
+                {describeComparison(selectedForCompare[0], selectedForCompare[1], optimizeBy)}
               </p>
             )}
           </div>
@@ -704,15 +727,15 @@ function FlightResults({
         const isCo2Mode = optimizeBy === "co2";
         const travelDate = dest.bestDate || departureDate || "";
 
-        const isSelectedForCompare = compareSelection.includes(
-          dest.destination
-        );
+        const isSelectedForCompare = compareSelection.includes(dest.destination);
         const isOpen = openIndex === index;
+
+        const destFlights = Array.isArray(dest.flights) ? dest.flights : [];
 
         return (
           <div
             className="card mb-3"
-            key={index}
+            key={`${dest.destination}-${index}`}
             style={{
               backgroundColor: "#FFFFFF",
               borderColor: isBest ? "#3B82F6" : "#D0D8E5",
@@ -721,9 +744,7 @@ function FlightResults({
             }}
           >
             <div className="card-body">
-              {/* CABECERA: siempre visible */}
               <div className="d-flex justify-content-between align-items-start mb-2">
-                {/* Bloque clicable (nombre destino, medias, equidad...) */}
                 <div
                   className="me-3 flex-grow-1"
                   style={{ cursor: "pointer" }}
@@ -739,51 +760,36 @@ function FlightResults({
                           color: "#FFFFFF",
                         }}
                       >
-                        {isCo2Mode
-                          ? "Destino con menos CO2 aproximado"
-                          : "Mejor destino para el grupo"}
+                        {isCo2Mode ? "Destino con menos CO2 aproximado" : "Mejor destino para el grupo"}
                       </span>
                     )}
                   </div>
 
                   <p className="text-secondary mb-1 small">
                     Media por viajero:{" "}
-                    <strong>
-                      {dest.averageCostPerTraveler.toFixed(2)} EUR
-                    </strong>{" "}
-                    · Coste total:{" "}
-                    <strong>{dest.totalCostEUR.toFixed(2)} EUR</strong>
+                    <strong>{Number(dest.averageCostPerTraveler ?? 0).toFixed(2)} EUR</strong> ·
+                    Coste total: <strong>{Number(dest.totalCostEUR ?? 0).toFixed(2)} EUR</strong>
                   </p>
 
                   <p className="text-secondary mb-1 small">
                     Equidad:{" "}
                     <span style={getFairnessStyle(dest.fairnessScore)}>
-                      {dest.fairnessScore.toFixed(1)} / 100
+                      {Number(dest.fairnessScore ?? 0).toFixed(1)} / 100
                     </span>
                     {typeof dest.approxCo2Score === "number" && (
                       <>
                         {" "}
-                        · CO2 aproximado:{" "}
-                        <strong>{dest.approxCo2Score.toFixed(2)}</strong>
+                        · CO2 aproximado: <strong>{dest.approxCo2Score.toFixed(2)}</strong>
                       </>
                     )}
                   </p>
 
-                  {dest.flexNote && (
-                    <p className="text-secondary mb-0 small">
-                      {dest.flexNote}
-                    </p>
-                  )}
+                  {dest.flexNote && <p className="text-secondary mb-0 small">{dest.flexNote}</p>}
                 </div>
 
-                {/* Coste total + checkbox comparar */}
                 <div className="text-end">
-                  <div className="fw-bold fs-5">
-                    {dest.totalCostEUR.toFixed(2)} EUR
-                  </div>
-                  <small className="text-secondary d-block mb-1">
-                    Coste total del grupo
-                  </small>
+                  <div className="fw-bold fs-5">{Number(dest.totalCostEUR ?? 0).toFixed(2)} EUR</div>
+                  <small className="text-secondary d-block mb-1">Coste total del grupo</small>
 
                   <div className="form-check d-inline-flex align-items-center justify-content-end">
                     <input
@@ -793,15 +799,11 @@ function FlightResults({
                       checked={isSelectedForCompare}
                       onChange={() => toggleCompare(dest.destination)}
                     />
-                    <label
-                      className="form-check-label small ms-1"
-                      htmlFor={`compare-${index}`}
-                    >
+                    <label className="form-check-label small ms-1" htmlFor={`compare-${index}`}>
                       Comparar
                     </label>
                   </div>
 
-                  {/* Texto para indicar si esta desplegado o no */}
                   <button
                     type="button"
                     className="btn btn-link btn-sm p-0 d-block mt-1"
@@ -815,13 +817,12 @@ function FlightResults({
                 </div>
               </div>
 
-              {/* DETALLE: solo se muestra si isOpen === true */}
               {isOpen && (
                 <>
                   <p className="mb-2 text-secondary">Detalle por origen:</p>
 
                   <ul className="list-group list-group-flush">
-                    {dest.flights.map((flight, i) => {
+                    {destFlights.map((flight, i) => {
                       const { skyscanner, kiwi, google } = buildBookingLinks(
                         flight.origin,
                         dest.destination,
@@ -839,9 +840,7 @@ function FlightResults({
                           }}
                         >
                           <div className="d-flex justify-content-between">
-                            <span className="fw-semibold">
-                              {flight.origin}
-                            </span>
+                            <span className="fw-semibold">{flight.origin}</span>
                             {typeof flight.price === "number" ? (
                               <span>{flight.price.toFixed(2)} EUR</span>
                             ) : (
@@ -882,6 +881,12 @@ function FlightResults({
                         </li>
                       );
                     })}
+
+                    {destFlights.length === 0 && (
+                      <li className="list-group-item text-secondary small">
+                        No hay detalle por origen disponible para este destino.
+                      </li>
+                    )}
                   </ul>
                 </>
               )}
