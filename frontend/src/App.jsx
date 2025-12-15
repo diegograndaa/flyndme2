@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import FlightResults from "./components/FlightResults";
 import { LoadingOverlay, SearchButton } from "./components/SearchUX";
@@ -43,6 +43,9 @@ function App() {
 
   // Alternativas ocultas por defecto
   const [showComplementary, setShowComplementary] = useState(false);
+
+  // "Detalles del mejor destino" como panel complementario (sin perder foco)
+  const [showBestDetails, setShowBestDetails] = useState(false);
 
   // Mantiene el backend "caliente" en Render
   useEffect(() => {
@@ -122,6 +125,7 @@ function App() {
     setError("");
     setShowSearchPanel(true);
     setShowComplementary(false);
+    setShowBestDetails(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -129,6 +133,7 @@ function App() {
     setHasStarted(true);
     setShowSearchPanel(true);
     setShowComplementary(false);
+    setShowBestDetails(false);
 
     if (!departureDate) {
       const today = new Date();
@@ -205,6 +210,18 @@ function App() {
     };
   };
 
+  // Derivados para UI: evita renders raros
+  const hasResults = useMemo(() => {
+    return (
+      hasSearched &&
+      !loading &&
+      !error &&
+      bestDestination &&
+      Array.isArray(flights) &&
+      flights.length > 0
+    );
+  }, [hasSearched, loading, error, bestDestination, flights]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -212,6 +229,10 @@ function App() {
 
     setFlights([]);
     setBestDestination(null);
+
+    // Importante: reset de paneles complementarios al lanzar búsqueda
+    setShowComplementary(false);
+    setShowBestDetails(false);
 
     const cleanedOrigins = origins
       .map((o) => o.trim().toUpperCase())
@@ -257,24 +278,20 @@ function App() {
 
       setBestDestination(best);
 
-      // Si no hay resultados, no ocultamos la búsqueda (evita pantalla en blanco)
       if (!flightsArr.length || !best) {
         setError("No se han encontrado resultados para esos orígenes y fecha.");
         setShowSearchPanel(true);
-        setShowComplementary(false);
         return;
       }
 
-      // Hay resultados: ocultamos búsqueda y alternativas por defecto
+      // Hay resultados: ocultamos búsqueda
       setShowSearchPanel(false);
-      setShowComplementary(false);
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error(err);
       setError(err.message || "Error inesperado al buscar vuelos.");
       setShowSearchPanel(true);
-      setShowComplementary(false);
     } finally {
       setLoading(false);
     }
@@ -284,6 +301,27 @@ function App() {
     optimizeBy === "fairness"
       ? "equidad de precio entre el grupo"
       : "precio total del grupo";
+
+  const openAlternatives = () => {
+    setShowComplementary(true);
+    setShowBestDetails(false);
+    // Scroll al panel de alternativas para que el usuario vea que “pasó algo”
+    setTimeout(() => {
+      const el = document.getElementById("alternatives-panel");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const openBestDetails = () => {
+    setShowBestDetails(true);
+    setShowComplementary(false);
+    setTimeout(() => {
+      const el = document.getElementById("best-details-panel");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const normalizeNumber = (v) => Number(v || 0);
 
   return (
     <div
@@ -371,10 +409,10 @@ function App() {
       ) : (
         <main className="py-4">
           <div className="container" style={{ maxWidth: "960px" }}>
-            {/* RESULTADOS: solo protagonista el mejor destino */}
-            {hasSearched && !loading && !error && bestDestination && !showSearchPanel ? (
+            {/* RESULTADOS: hero del mejor destino */}
+            {hasResults && !showSearchPanel ? (
               <>
-                <section className="mb-4">
+                <section className="mb-3">
                   <div
                     className="card border-0"
                     style={{
@@ -400,16 +438,16 @@ function App() {
 
                           <div className="d-flex flex-wrap gap-2">
                             <span className="badge bg-light text-dark">
-                              Coste total: {Number(bestDestination.totalCostEUR || 0).toFixed(2)} EUR
+                              Coste total: {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
-                              Media por persona: {Number(bestDestination.averageCostPerTraveler || 0).toFixed(2)} EUR
+                              Media por persona: {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} EUR
                             </span>
                             <span className="badge bg-light text-dark">
-                              Equidad: {Number(bestDestination.fairnessScore || 0).toFixed(0)}/100
+                              Equidad: {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100
                             </span>
                             <span className="badge bg-light text-dark">
-                              Diferencia máx.: {Number(bestDestination.priceSpread || 0).toFixed(2)} EUR
+                              Diferencia máx.: {normalizeNumber(bestDestination.priceSpread).toFixed(2)} EUR
                             </span>
                           </div>
 
@@ -425,6 +463,7 @@ function App() {
                             onClick={() => {
                               setShowSearchPanel(true);
                               setShowComplementary(false);
+                              setShowBestDetails(false);
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
                           >
@@ -434,7 +473,7 @@ function App() {
                           <button
                             type="button"
                             className="btn btn-outline-light"
-                            onClick={() => setShowComplementary(true)}
+                            onClick={openAlternatives}
                           >
                             Ver alternativas
                           </button>
@@ -444,8 +483,122 @@ function App() {
                   </div>
                 </section>
 
+                {/* BOTONES EXTRA (resto de funcionalidades como complementario) */}
                 <section className="mb-4">
-                  {showComplementary ? (
+                  <div className="d-flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={openBestDetails}
+                    >
+                      Ver detalles del mejor destino
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => {
+                        setShowSearchPanel(true);
+                        setShowComplementary(false);
+                        setShowBestDetails(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      Nueva búsqueda
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={handleGoHome}
+                    >
+                      Volver a la landing
+                    </button>
+                  </div>
+
+                  <div className="text-secondary small mt-2">
+                    Las opciones avanzadas quedan debajo para mantener el foco en el destino recomendado.
+                  </div>
+                </section>
+
+                {/* PANEL: detalles del mejor destino */}
+                {showBestDetails && (
+                  <section id="best-details-panel" className="mb-4">
+                    <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h3 className="h6 fw-semibold mb-0">
+                            Detalles del mejor destino (complementario)
+                          </h3>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => setShowBestDetails(false)}
+                          >
+                            Ocultar
+                          </button>
+                        </div>
+
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Destino</div>
+                              <div className="fw-semibold">{bestDestination.destination}</div>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Criterio principal</div>
+                              <div className="fw-semibold">
+                                {optimizeBy === "fairness" ? "Equidad" : "Precio total"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Coste total</div>
+                              <div className="fw-semibold">
+                                {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} EUR
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Media por persona</div>
+                              <div className="fw-semibold">
+                                {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} EUR
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Equidad</div>
+                              <div className="fw-semibold">
+                                {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="p-3 rounded-3 border">
+                              <div className="text-secondary small">Diferencia máxima</div>
+                              <div className="fw-semibold">
+                                {normalizeNumber(bestDestination.priceSpread).toFixed(2)} EUR
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-secondary small mt-3">
+                          Si quieres, aquí podemos añadir enlaces directos a Google Flights/Skyscanner con el destino recomendado.
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* PANEL: alternativas */}
+                {showComplementary ? (
+                  <section id="alternatives-panel" className="mb-4">
                     <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -461,25 +614,32 @@ function App() {
                           </button>
                         </div>
 
-                        <FlightResults
-                          flights={flights}
-                          optimizeBy={optimizeBy}
-                          hasSearched={hasSearched}
-                          loading={loading}
-                          error={error}
-                          origins={origins}
-                          bestDestination={bestDestination}
-                          flexRange={null}
-                          departureDate={departureDate}
-                        />
+                        {/* Importante: evita blanco si por cualquier motivo flights está vacío */}
+                        {Array.isArray(flights) && flights.length > 0 ? (
+                          <FlightResults
+                            flights={flights}
+                            optimizeBy={optimizeBy}
+                            hasSearched={hasSearched}
+                            loading={loading}
+                            error={error}
+                            origins={origins}
+                            bestDestination={bestDestination}
+                            flexRange={null}
+                            departureDate={departureDate}
+                          />
+                        ) : (
+                          <div className="alert alert-warning py-2 mb-0">
+                            No hay alternativas disponibles para mostrar.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-secondary small">
-                      Alternativas ocultas para priorizar el destino recomendado.
-                    </div>
-                  )}
-                </section>
+                  </section>
+                ) : (
+                  <div className="text-secondary small">
+                    Alternativas ocultas para priorizar el destino recomendado.
+                  </div>
+                )}
               </>
             ) : (
               /* BÚSQUEDA */
