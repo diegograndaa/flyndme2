@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import FlightResults from "./components/FlightResults";
@@ -22,6 +23,45 @@ const AVAILABLE_AIRPORTS = [
   { code: "DUB", city: "Dublín", country: "Irlanda" },
 ];
 
+/**
+ * ErrorBoundary: evita pantalla en blanco si FlightResults rompe en runtime
+ */
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMsg: "" };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMsg: error?.message || "Error desconocido" };
+  }
+  componentDidCatch(error, info) {
+    console.error("[UI ErrorBoundary]", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="alert alert-danger mb-0">
+          <div className="fw-semibold">Ha ocurrido un error al mostrar las alternativas.</div>
+          <div className="small mt-1">
+            {this.state.errorMsg}
+          </div>
+          <div className="small mt-2">
+            Abre la consola del navegador (F12) y revisa el error exacto. Si me lo pegas, lo corregimos en `FlightResults.jsx`.
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline-light btn-sm mt-3"
+            onClick={this.props.onReset}
+          >
+            Volver a la búsqueda
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const [origins, setOrigins] = useState(["", ""]);
   const [activeOriginIndex, setActiveOriginIndex] = useState(0);
@@ -44,7 +84,7 @@ function App() {
   // Alternativas ocultas por defecto
   const [showComplementary, setShowComplementary] = useState(false);
 
-  // "Detalles del mejor destino" como panel complementario (sin perder foco)
+  // "Detalles del mejor destino" como panel complementario
   const [showBestDetails, setShowBestDetails] = useState(false);
 
   // Mantiene el backend "caliente" en Render
@@ -115,6 +155,13 @@ function App() {
       }
       return copy;
     });
+  };
+
+  const resetToSearch = () => {
+    setShowSearchPanel(true);
+    setShowComplementary(false);
+    setShowBestDetails(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleGoHome = () => {
@@ -210,7 +257,6 @@ function App() {
     };
   };
 
-  // Derivados para UI: evita renders raros
   const hasResults = useMemo(() => {
     return (
       hasSearched &&
@@ -230,7 +276,6 @@ function App() {
     setFlights([]);
     setBestDestination(null);
 
-    // Importante: reset de paneles complementarios al lanzar búsqueda
     setShowComplementary(false);
     setShowBestDetails(false);
 
@@ -284,9 +329,7 @@ function App() {
         return;
       }
 
-      // Hay resultados: ocultamos búsqueda
       setShowSearchPanel(false);
-
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error(err);
@@ -305,7 +348,6 @@ function App() {
   const openAlternatives = () => {
     setShowComplementary(true);
     setShowBestDetails(false);
-    // Scroll al panel de alternativas para que el usuario vea que “pasó algo”
     setTimeout(() => {
       const el = document.getElementById("alternatives-panel");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -409,7 +451,7 @@ function App() {
       ) : (
         <main className="py-4">
           <div className="container" style={{ maxWidth: "960px" }}>
-            {/* RESULTADOS: hero del mejor destino */}
+            {/* RESULTADOS */}
             {hasResults && !showSearchPanel ? (
               <>
                 <section className="mb-3">
@@ -460,12 +502,7 @@ function App() {
                           <button
                             type="button"
                             className="btn btn-light fw-semibold"
-                            onClick={() => {
-                              setShowSearchPanel(true);
-                              setShowComplementary(false);
-                              setShowBestDetails(false);
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
+                            onClick={resetToSearch}
                           >
                             Cambiar búsqueda
                           </button>
@@ -483,7 +520,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* BOTONES EXTRA (resto de funcionalidades como complementario) */}
                 <section className="mb-4">
                   <div className="d-flex flex-wrap gap-2">
                     <button
@@ -497,12 +533,7 @@ function App() {
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
-                      onClick={() => {
-                        setShowSearchPanel(true);
-                        setShowComplementary(false);
-                        setShowBestDetails(false);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
+                      onClick={resetToSearch}
                     >
                       Nueva búsqueda
                     </button>
@@ -521,7 +552,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* PANEL: detalles del mejor destino */}
                 {showBestDetails && (
                   <section id="best-details-panel" className="mb-4">
                     <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
@@ -589,16 +619,15 @@ function App() {
                         </div>
 
                         <div className="text-secondary small mt-3">
-                          Si quieres, aquí podemos añadir enlaces directos a Google Flights/Skyscanner con el destino recomendado.
+                          Aquí podemos añadir enlaces directos a buscadores para el destino recomendado.
                         </div>
                       </div>
                     </div>
                   </section>
                 )}
 
-                {/* PANEL: alternativas */}
-                {showComplementary ? (
-                  <section id="alternatives-panel" className="mb-4">
+                <section id="alternatives-panel" className="mb-4">
+                  {showComplementary ? (
                     <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -614,19 +643,20 @@ function App() {
                           </button>
                         </div>
 
-                        {/* Importante: evita blanco si por cualquier motivo flights está vacío */}
                         {Array.isArray(flights) && flights.length > 0 ? (
-                          <FlightResults
-                            flights={flights}
-                            optimizeBy={optimizeBy}
-                            hasSearched={hasSearched}
-                            loading={loading}
-                            error={error}
-                            origins={origins}
-                            bestDestination={bestDestination}
-                            flexRange={null}
-                            departureDate={departureDate}
-                          />
+                          <ErrorBoundary onReset={resetToSearch}>
+                            <FlightResults
+                              flights={flights}
+                              optimizeBy={optimizeBy}
+                              hasSearched={hasSearched}
+                              loading={loading}
+                              error={error}
+                              origins={origins}
+                              bestDestination={bestDestination}
+                              flexRange={null}
+                              departureDate={departureDate}
+                            />
+                          </ErrorBoundary>
                         ) : (
                           <div className="alert alert-warning py-2 mb-0">
                             No hay alternativas disponibles para mostrar.
@@ -634,12 +664,12 @@ function App() {
                         )}
                       </div>
                     </div>
-                  </section>
-                ) : (
-                  <div className="text-secondary small">
-                    Alternativas ocultas para priorizar el destino recomendado.
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-secondary small">
+                      Alternativas ocultas para priorizar el destino recomendado.
+                    </div>
+                  )}
+                </section>
               </>
             ) : (
               /* BÚSQUEDA */
