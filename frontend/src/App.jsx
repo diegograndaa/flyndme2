@@ -444,63 +444,134 @@ function App() {
       </header>
 
       {!hasStarted ? (
-        <section className="py-5 border-bottom border-secondary">
-          <div className="container" style={{ maxWidth: "1100px" }}>
-            <div className="row align-items-center g-4">
-              <div className="col-md-7">
-                <h1 className="display-5 fw-bold mb-3">
-                  FlyndMe · El punto de encuentro perfecto
-                </h1>
-                <p className="lead mb-3 text-secondary">
-                  Tres amigos, tres ciudades, un solo destino. FlyndMe calcula en
-                  segundos a qué ciudad es más barato o más justo que vuele todo
-                  el grupo.
-                </p>
-                <ul className="text-secondary mb-3">
-                  <li>Introduce los aeropuertos de origen de cada persona.</li>
-                  <li>Elegimos los mejores destinos comunes según tu criterio.</li>
-                  <li>
-                    Puedes elegir: ida o ida y vuelta, fechas flexibles o exactas,
-                    y presupuesto máximo por persona.
-                  </li>
-                </ul>
-                <div className="d-flex flex-wrap gap-2">
-                  <button
-                    className="btn btn-primary btn-lg"
-                    style={{ backgroundColor: "#3B82F6", borderColor: "#3B82F6" }}
-                    onClick={loadDemo}
-                    type="button"
-                  >
-                    Empezar a buscar vuelos
-                  </button>
-                </div>
-              </div>
+  <>
+    {/* LANDING PRINCIPAL */}
+    <section className="py-5 border-bottom border-secondary">
+      <div className="container" style={{ maxWidth: "1100px" }}>
+        <div className="row align-items-center g-4">
+          <div className="col-md-7">
+            <h1 className="display-5 fw-bold mb-3">
+              FlyndMe · El punto de encuentro perfecto
+            </h1>
+            <p className="lead mb-3 text-secondary">
+              Tres amigos, tres ciudades, un solo destino. FlyndMe calcula en
+              segundos a qué ciudad es más barato o más justo que vuele todo
+              el grupo.
+            </p>
+            <ul className="text-secondary mb-3">
+              <li>Introduce los aeropuertos de origen de cada persona.</li>
+              <li>Elegimos los mejores destinos comunes según tu criterio.</li>
+              <li>
+                Puedes elegir: ida o ida y vuelta, fechas flexibles o exactas,
+                y presupuesto máximo por persona.
+              </li>
+            </ul>
+            <div className="d-flex flex-wrap gap-2">
+              <button
+                className="btn btn-primary btn-lg"
+                style={{ backgroundColor: "#3B82F6", borderColor: "#3B82F6" }}
+                onClick={loadDemo}
+                type="button"
+              >
+                Empezar a buscar vuelos
+              </button>
+            </div>
+          </div>
 
-              <div className="col-md-5">
-                <div
-                  className="card bg-white border"
-                  style={{ borderColor: "#D0D8E5" }}
-                >
-                  <div className="card-body">
-                    <h2 className="h5 mb-3">Pensado como producto real</h2>
-                    <p className="text-secondary mb-2">
-                      • <strong>Casos de uso:</strong> grupos de amigos, viajes de
-                      empresa, eventos internacionales.
-                    </p>
-                    <p className="text-secondary mb-2">
-                      • <strong>Diferencial:</strong> no solo encontramos lo más
-                      barato, también el destino más equilibrado para todos.
-                    </p>
-                    <p className="text-secondary mb-0">
-                      • <strong>Integrable:</strong> listo para conectarse con
-                      Google Flights, Skyscanner o Kiwi.
-                    </p>
-                  </div>
-                </div>
+          <div className="col-md-5">
+            <div
+              className="card bg-white border"
+              style={{ borderColor: "#D0D8E5" }}
+            >
+              <div className="card-body">
+                <h2 className="h5 mb-3">Pensado como producto real</h2>
+                <p className="text-secondary mb-2">
+                  • <strong>Casos de uso:</strong> grupos de amigos, viajes de
+                  empresa, eventos internacionales.
+                </p>
+                <p className="text-secondary mb-2">
+                  • <strong>Diferencial:</strong> no solo encontramos lo más
+                  barato, también el destino más equilibrado para todos.
+                </p>
+                <p className="text-secondary mb-0">
+                  • <strong>Integrable:</strong> listo para conectarse con
+                  Google Flights, Skyscanner o Kiwi.
+                </p>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
+
+    {/* FAQS */}
+    <section className="py-5">
+      <div className="container" style={{ maxWidth: "1100px" }}>
+        <h2 className="h3 fw-bold mb-3">Preguntas frecuentes</h2>
+        <p className="text-secondary mb-4">
+          Todo lo que necesitas saber antes de buscar el mejor destino para tu grupo.
+        </p>
+
+        <div className="accordion" id="flyndmeFaq">
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                ¿Cómo funciona FlyndMe?
+              </button>
+            </h2>
+            <div id="faq1" className="accordion-collapse collapse show">
+              <div className="accordion-body text-secondary">
+                Introduces los aeropuertos de origen del grupo y una fecha.
+                FlyndMe compara precios y propone destinos donde todos pueden volar.
+              </div>
+            </div>
+          </div>
+
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                ¿Qué significa “equidad”?
+              </button>
+            </h2>
+            <div id="faq2" className="accordion-collapse collapse">
+              <div className="accordion-body text-secondary">
+                Es una puntuación que mide lo parecidos que son los precios entre viajeros.
+                Cuanto más alta, más justo es el destino para el grupo.
+              </div>
+            </div>
+          </div>
+
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                ¿Cómo funciona el presupuesto máximo?
+              </button>
+            </h2>
+            <div id="faq3" className="accordion-collapse collapse">
+              <div className="accordion-body text-secondary">
+                Solo se muestran destinos donde ninguno de los viajeros supera
+                el presupuesto indicado.
+              </div>
+            </div>
+          </div>
+
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                ¿FlyndMe vende billetes?
+              </button>
+            </h2>
+            <div id="faq4" className="accordion-collapse collapse">
+              <div className="accordion-body text-secondary">
+                No. FlyndMe te ayuda a decidir el destino. La reserva se hace en
+                buscadores externos como Skyscanner o Google Flights.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </>
       ) : (
         <main className="py-4">
           <div className="container" style={{ maxWidth: "960px" }}>
