@@ -1,6 +1,32 @@
 import React, { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
+/* ✅ NUEVO: mapping simple para fotos por destino (puedes ampliar) */
+const DESTINATION_META = {
+  LON: { label: "London", query: "london,city,skyline" },
+  PAR: { label: "Paris", query: "paris,eiffel,city" },
+  AMS: { label: "Amsterdam", query: "amsterdam,canals,city" },
+  ROM: { label: "Rome", query: "rome,colosseum,city" },
+  BCN: { label: "Barcelona", query: "barcelona,sagrada,familia,city" },
+  BER: { label: "Berlin", query: "berlin,city" },
+  LIS: { label: "Lisbon", query: "lisbon,city" },
+  DUB: { label: "Dublin", query: "dublin,city" },
+  MIL: { label: "Milan", query: "milan,duomo,city" },
+  VIE: { label: "Vienna", query: "vienna,city" },
+};
+
+function getDestinationImageUrl(destCode, seed = "") {
+  const code = String(destCode || "").trim().toUpperCase();
+  const meta = DESTINATION_META[code];
+  const query = meta?.query || `${code},city`;
+  const sig = `${code}-${seed || "default"}`;
+
+  // Unsplash sin API key (imagen aleatoria por "sig")
+  return `https://source.unsplash.com/600x400/?${encodeURIComponent(
+    query
+  )}&sig=${encodeURIComponent(sig)}`;
+}
+
 function getFairnessStyle(score) {
   if (score >= 85) return { color: "#16A34A", fontWeight: "600" };
   if (score >= 65) return { color: "#3B82F6", fontWeight: "600" };
@@ -158,7 +184,9 @@ function FlightResults({
         </p>
         {budgetEnabled && (
           <p className="text-center text-secondary small mb-0">
-            Presupuesto activo: max {Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR por persona. Prueba a subirlo o quitar el filtro.
+            Presupuesto activo: max{" "}
+            {Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR por persona. Prueba
+            a subirlo o quitar el filtro.
           </p>
         )}
       </section>
@@ -193,7 +221,6 @@ function FlightResults({
 
   const top3 = sortedFlights.slice(0, 3);
   const primaryDest = bestDestination || sortedFlights[0];
-
   const primaryFlights = Array.isArray(primaryDest?.flights) ? primaryDest.flights : [];
 
   let googleMapsUrl = null;
@@ -268,7 +295,6 @@ function FlightResults({
 
   const selectedForCompare = safeFlights.filter((dest) => compareSelection.includes(dest.destination));
   const fairnessTop = safeFlights.slice(0, Math.min(5, safeFlights.length));
-
   const toggleOpen = (index) => setOpenIndex((prev) => (prev === index ? null : index));
 
   const mainDate = primaryDest?.bestDate || departureDate || "";
@@ -279,29 +305,37 @@ function FlightResults({
     <section className="mt-4" ref={resultsRef}>
       {budgetEnabled && (
         <div className="alert alert-warning py-2">
-          Presupuesto activo: max <strong>{Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR</strong> por persona (filtrado por media por persona).
+          Presupuesto activo: max{" "}
+          <strong>{Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR</strong> por
+          persona (filtrado por media por persona).
         </div>
       )}
 
       {primaryDest && (
         <div
           className="card mb-4"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderColor: "#D0D8E5",
+            color: "#1E293B",
+          }}
         >
           <div className="card-body">
             <div className="row g-3 align-items-stretch">
               <div className="col-md-6">
                 <h2 className="h5 mb-2">Mapa del encuentro del grupo</h2>
                 <p className="text-secondary mb-2">
-                  <strong>Origenes:</strong> {origins.length > 0 ? origins.join(", ") : "N/A"}{" "}
-                  → <strong>Destino:</strong> {primaryDest.destination}
+                  <strong>Origenes:</strong>{" "}
+                  {origins.length > 0 ? origins.join(", ") : "N/A"} →{" "}
+                  <strong>Destino:</strong> {primaryDest.destination}
                 </p>
 
                 <p className="text-secondary small mb-2">
-                  <strong>Fechas:</strong>{" "}
-                  {mainDate ? mainDate : "N/A"}
+                  <strong>Fechas:</strong> {mainDate ? mainDate : "N/A"}
                   {tripType === "roundtrip" && mainReturn ? ` → ${mainReturn}` : ""}
-                  {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
+                  {typeof flexRange === "number" && flexRange > 0
+                    ? ` (flex ±${flexRange})`
+                    : ""}
                 </p>
 
                 <div className="d-flex flex-wrap gap-2 mb-2">
@@ -363,17 +397,18 @@ function FlightResults({
 
       <div
         className="card mb-4"
-        style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderColor: "#D0D8E5",
+          color: "#1E293B",
+        }}
       >
         <div className="card-body">
           <h2 className="h5 mb-3">Top 3 destinos para el grupo</h2>
           <p className="text-secondary small mb-3">Ordenados por {currentOrderLabel}.</p>
 
           <div className="table-responsive">
-            <table
-              className="table table-sm align-middle mb-0"
-              style={{ backgroundColor: "#FFFFFF", color: "#1E293B", borderColor: "#D0D8E5" }}
-            >
+            <table className="table table-sm align-middle mb-0">
               <thead style={{ backgroundColor: "#EBF2FF" }}>
                 <tr>
                   <th style={{ width: "40px" }}>#</th>
@@ -390,7 +425,10 @@ function FlightResults({
                     <td>
                       <span className="fw-semibold">{dest.destination}</span>
                       {index === 0 && (
-                        <span className="badge ms-2" style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}>
+                        <span
+                          className="badge ms-2"
+                          style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}
+                        >
                           Destino principal
                         </span>
                       )}
@@ -398,12 +436,18 @@ function FlightResults({
                       {(dest.bestDate || dest.bestReturnDate) && (
                         <div className="text-secondary small mt-1">
                           {dest.bestDate ? `Fecha: ${dest.bestDate}` : ""}
-                          {tripType === "roundtrip" && dest.bestReturnDate ? ` → ${dest.bestReturnDate}` : ""}
+                          {tripType === "roundtrip" && dest.bestReturnDate
+                            ? ` → ${dest.bestReturnDate}`
+                            : ""}
                         </div>
                       )}
                     </td>
-                    <td className="text-end">{Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR</td>
-                    <td className="text-end">{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</td>
+                    <td className="text-end">
+                      {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
+                    </td>
+                    <td className="text-end">
+                      {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
+                    </td>
                     <td className="text-end">
                       <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
                         {Number(dest.fairnessScore || 0).toFixed(1)} / 100
@@ -426,7 +470,11 @@ function FlightResults({
       {fairnessTop.length > 0 && (
         <div
           className="card mb-4"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderColor: "#D0D8E5",
+            color: "#1E293B",
+          }}
         >
           <div className="card-body">
             <h2 className="h6 mb-3">Comparativa de equidad entre destinos (top 5)</h2>
@@ -447,7 +495,10 @@ function FlightResults({
                 >
                   <div
                     style={{
-                      width: `${Math.max(0, Math.min(100, Number(dest.fairnessScore || 0)))}%`,
+                      width: `${Math.max(
+                        0,
+                        Math.min(100, Number(dest.fairnessScore || 0))
+                      )}%`,
                       height: "100%",
                       borderRadius: "999px",
                       backgroundColor:
@@ -519,7 +570,11 @@ function FlightResults({
       {selectedForCompare.length >= 2 && (
         <div
           className="card mb-4"
-          style={{ backgroundColor: "#FFFFFF", borderColor: "#3B82F6", color: "#1E293B" }}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderColor: "#3B82F6",
+            color: "#1E293B",
+          }}
         >
           <div className="card-body">
             <h2 className="h6 mb-3">Comparativa cara a cara</h2>
@@ -567,7 +622,9 @@ function FlightResults({
                     <td>Diferencia max dentro del grupo</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {typeof dest.priceSpread === "number" ? `${dest.priceSpread.toFixed(2)} EUR` : "N/A"}
+                        {typeof dest.priceSpread === "number"
+                          ? `${dest.priceSpread.toFixed(2)} EUR`
+                          : "N/A"}
                       </td>
                     ))}
                   </tr>
@@ -575,7 +632,9 @@ function FlightResults({
                     <td>CO2 aproximado (indice interno)</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {typeof dest.approxCo2Score === "number" ? dest.approxCo2Score.toFixed(2) : "N/A"}
+                        {typeof dest.approxCo2Score === "number"
+                          ? dest.approxCo2Score.toFixed(2)
+                          : "N/A"}
                       </td>
                     ))}
                   </tr>
@@ -584,7 +643,8 @@ function FlightResults({
             </div>
 
             <p className="text-secondary small mb-2">
-              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada destino seleccionado.
+              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada
+              destino seleccionado.
             </p>
 
             <div className="table-responsive mb-2">
@@ -608,7 +668,9 @@ function FlightResults({
                         const flight = df.find((f) => f.origin === originCode);
                         return (
                           <td key={dest.destination} className="text-end">
-                            {flight && typeof flight.price === "number" ? `${flight.price.toFixed(2)} EUR` : "N/A"}
+                            {flight && typeof flight.price === "number"
+                              ? `${flight.price.toFixed(2)} EUR`
+                              : "N/A"}
                           </td>
                         );
                       })}
@@ -657,10 +719,17 @@ function FlightResults({
         const isCo2Mode = optimizeBy === "co2";
         const destFlights = Array.isArray(dest.flights) ? dest.flights : [];
         const travelDate = dest.bestDate || departureDate || "";
-        const travelReturn = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
+        const travelReturn =
+          dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
 
         const isSelectedForCompare = compareSelection.includes(dest.destination);
         const isOpen = openIndex === index;
+
+        // ✅ NUEVO: url de imagen por destino
+        const imgUrl = getDestinationImageUrl(
+          dest.destination,
+          dest.bestDate || departureDate || ""
+        );
 
         return (
           <div
@@ -674,79 +743,163 @@ function FlightResults({
             }}
           >
             <div className="card-body">
-              <div className="d-flex justify-content-between align-items-start mb-2">
-                <div className="me-3 flex-grow-1" style={{ cursor: "pointer" }} onClick={() => toggleOpen(index)}>
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <h3 className="h5 mb-0">{dest.destination}</h3>
-                    {isBest && (
-                      <span className="badge" style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}>
-                        {isCo2Mode ? "Destino con menos CO2 aproximado" : "Mejor destino para el grupo"}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-secondary mb-1 small">
-                    Media por viajero: <strong>{Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR</strong> ·{" "}
-                    Coste total: <strong>{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</strong>
-                    {budgetEnabled && (
-                      <>
-                        {" "}
-                        · Presupuesto max: <strong>{Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR</strong>
-                      </>
-                    )}
-                  </p>
-
-                  <p className="text-secondary mb-1 small">
-                    Equidad:{" "}
-                    <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
-                      {Number(dest.fairnessScore || 0).toFixed(1)} / 100
-                    </span>
-                    {typeof dest.approxCo2Score === "number" && (
-                      <>
-                        {" "}
-                        · CO2 aproximado: <strong>{dest.approxCo2Score.toFixed(2)}</strong>
-                      </>
-                    )}
-                  </p>
-
-                  {(travelDate || travelReturn) && (
-                    <p className="text-secondary mb-0 small">
-                      Fecha: {travelDate || "N/A"}
-                      {tripType === "roundtrip" && travelReturn ? ` → ${travelReturn}` : ""}
-                      {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
-                    </p>
-                  )}
-                </div>
-
-                <div className="text-end">
-                  <div className="fw-bold fs-5">{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</div>
-                  <small className="text-secondary d-block mb-1">Coste total del grupo</small>
-
-                  <div className="form-check d-inline-flex align-items-center justify-content-end">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id={`compare-${index}`}
-                      checked={isSelectedForCompare}
-                      onChange={() => toggleCompare(dest.destination)}
-                    />
-                    <label className="form-check-label small ms-1" htmlFor={`compare-${index}`}>
-                      Comparar
-                    </label>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm p-0 d-block mt-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleOpen(index);
+              {/* ✅ NUEVO: Header con imagen mini (izquierda) */}
+              <div className="row g-3 align-items-start">
+                <div className="col-12 col-md-4">
+                  <div
+                    style={{
+                      width: "100%",
+                      height: 120,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      border: "1px solid #D0D8E5",
+                      position: "relative",
+                      backgroundColor: "#F8FAFC",
                     }}
                   >
-                    {isOpen ? "Ocultar detalles ▲" : "Ver detalles ▼"}
-                  </button>
+                    <img
+                      src={imgUrl}
+                      alt={`Foto de ${dest.destination}`}
+                      loading="lazy"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => {
+                        // fallback básico si Unsplash falla
+                        e.currentTarget.src = `https://via.placeholder.com/600x400?text=${encodeURIComponent(
+                          dest.destination
+                        )}`;
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background:
+                          "linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.28) 100%)",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 10,
+                        bottom: 8,
+                        right: 10,
+                        fontSize: 12,
+                        color: "#fff",
+                        opacity: 0.95,
+                        textShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      {dest.destination}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-8">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div
+                      className="me-3 flex-grow-1"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => toggleOpen(index)}
+                    >
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <h3 className="h5 mb-0">{dest.destination}</h3>
+                        {isBest && (
+                          <span
+                            className="badge"
+                            style={{
+                              backgroundColor: "#3B82F6",
+                              color: "#FFFFFF",
+                            }}
+                          >
+                            {isCo2Mode
+                              ? "Destino con menos CO2 aproximado"
+                              : "Mejor destino para el grupo"}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-secondary mb-1 small">
+                        Media por viajero:{" "}
+                        <strong>
+                          {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
+                        </strong>{" "}
+                        · Coste total:{" "}
+                        <strong>{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</strong>
+                        {budgetEnabled && (
+                          <>
+                            {" "}
+                            · Presupuesto max:{" "}
+                            <strong>
+                              {Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR
+                            </strong>
+                          </>
+                        )}
+                      </p>
+
+                      <p className="text-secondary mb-1 small">
+                        Equidad:{" "}
+                        <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
+                          {Number(dest.fairnessScore || 0).toFixed(1)} / 100
+                        </span>
+                        {typeof dest.approxCo2Score === "number" && (
+                          <>
+                            {" "}
+                            · CO2 aproximado:{" "}
+                            <strong>{dest.approxCo2Score.toFixed(2)}</strong>
+                          </>
+                        )}
+                      </p>
+
+                      {(travelDate || travelReturn) && (
+                        <p className="text-secondary mb-0 small">
+                          Fecha: {travelDate || "N/A"}
+                          {tripType === "roundtrip" && travelReturn ? ` → ${travelReturn}` : ""}
+                          {typeof flexRange === "number" && flexRange > 0
+                            ? ` (flex ±${flexRange})`
+                            : ""}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-end">
+                      <div className="fw-bold fs-5">
+                        {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
+                      </div>
+                      <small className="text-secondary d-block mb-1">
+                        Coste total del grupo
+                      </small>
+
+                      <div className="form-check d-inline-flex align-items-center justify-content-end">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`compare-${index}`}
+                          checked={isSelectedForCompare}
+                          onChange={() => toggleCompare(dest.destination)}
+                        />
+                        <label
+                          className="form-check-label small ms-1"
+                          htmlFor={`compare-${index}`}
+                        >
+                          Comparar
+                        </label>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm p-0 d-block mt-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOpen(index);
+                        }}
+                      >
+                        {isOpen ? "Ocultar detalles ▲" : "Ver detalles ▼"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+              {/* ✅ FIN header con imagen */}
 
               {isOpen && (
                 <>
@@ -776,7 +929,9 @@ function FlightResults({
                             {typeof flight.price === "number" ? (
                               <span>{flight.price.toFixed(2)} EUR</span>
                             ) : (
-                              <span className="text-warning">{flight.error || "Sin datos"}</span>
+                              <span className="text-warning">
+                                {flight.error || "Sin datos"}
+                              </span>
                             )}
                           </div>
 
