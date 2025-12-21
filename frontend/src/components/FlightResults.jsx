@@ -1,30 +1,14 @@
 import React, { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
-/* ✅ NUEVO: mapping simple para fotos por destino (puedes ampliar) */
-const DESTINATION_META = {
-  LON: { label: "London", query: "london,city,skyline" },
-  PAR: { label: "Paris", query: "paris,eiffel,city" },
-  AMS: { label: "Amsterdam", query: "amsterdam,canals,city" },
-  ROM: { label: "Rome", query: "rome,colosseum,city" },
-  BCN: { label: "Barcelona", query: "barcelona,sagrada,familia,city" },
-  BER: { label: "Berlin", query: "berlin,city" },
-  LIS: { label: "Lisbon", query: "lisbon,city" },
-  DUB: { label: "Dublin", query: "dublin,city" },
-  MIL: { label: "Milan", query: "milan,duomo,city" },
-  VIE: { label: "Vienna", query: "vienna,city" },
-};
-
-function getDestinationImageUrl(destCode, seed = "") {
+/**
+ * ✅ Imágenes locales desde:
+ * frontend/public/destinations/<CODE>.jpg
+ * Ej: /destinations/LIS.jpg
+ */
+function getDestinationImageUrl(destCode) {
   const code = String(destCode || "").trim().toUpperCase();
-  const meta = DESTINATION_META[code];
-  const query = meta?.query || `${code},city`;
-  const sig = `${code}-${seed || "default"}`;
-
-  // Unsplash sin API key (imagen aleatoria por "sig")
-  return `https://source.unsplash.com/600x400/?${encodeURIComponent(
-    query
-  )}&sig=${encodeURIComponent(sig)}`;
+  return `/destinations/${code}.jpg`;
 }
 
 function getFairnessStyle(score) {
@@ -160,7 +144,7 @@ function FlightResults({
   tripType = "oneway",
   returnDate = "",
 
-  // ✅ NUEVO: presupuesto
+  // ✅ presupuesto
   budgetEnabled = false,
   maxBudgetPerTraveler = null,
 }) {
@@ -293,7 +277,10 @@ function FlightResults({
     });
   };
 
-  const selectedForCompare = safeFlights.filter((dest) => compareSelection.includes(dest.destination));
+  const selectedForCompare = safeFlights.filter((dest) =>
+    compareSelection.includes(dest.destination)
+  );
+
   const fairnessTop = safeFlights.slice(0, Math.min(5, safeFlights.length));
   const toggleOpen = (index) => setOpenIndex((prev) => (prev === index ? null : index));
 
@@ -314,11 +301,7 @@ function FlightResults({
       {primaryDest && (
         <div
           className="card mb-4"
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderColor: "#D0D8E5",
-            color: "#1E293B",
-          }}
+          style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}
         >
           <div className="card-body">
             <div className="row g-3 align-items-stretch">
@@ -333,9 +316,7 @@ function FlightResults({
                 <p className="text-secondary small mb-2">
                   <strong>Fechas:</strong> {mainDate ? mainDate : "N/A"}
                   {tripType === "roundtrip" && mainReturn ? ` → ${mainReturn}` : ""}
-                  {typeof flexRange === "number" && flexRange > 0
-                    ? ` (flex ±${flexRange})`
-                    : ""}
+                  {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
                 </p>
 
                 <div className="d-flex flex-wrap gap-2 mb-2">
@@ -395,14 +376,7 @@ function FlightResults({
         </div>
       )}
 
-      <div
-        className="card mb-4"
-        style={{
-          backgroundColor: "#FFFFFF",
-          borderColor: "#D0D8E5",
-          color: "#1E293B",
-        }}
-      >
+      <div className="card mb-4" style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}>
         <div className="card-body">
           <h2 className="h5 mb-3">Top 3 destinos para el grupo</h2>
           <p className="text-secondary small mb-3">Ordenados por {currentOrderLabel}.</p>
@@ -425,10 +399,7 @@ function FlightResults({
                     <td>
                       <span className="fw-semibold">{dest.destination}</span>
                       {index === 0 && (
-                        <span
-                          className="badge ms-2"
-                          style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}
-                        >
+                        <span className="badge ms-2" style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}>
                           Destino principal
                         </span>
                       )}
@@ -436,18 +407,12 @@ function FlightResults({
                       {(dest.bestDate || dest.bestReturnDate) && (
                         <div className="text-secondary small mt-1">
                           {dest.bestDate ? `Fecha: ${dest.bestDate}` : ""}
-                          {tripType === "roundtrip" && dest.bestReturnDate
-                            ? ` → ${dest.bestReturnDate}`
-                            : ""}
+                          {tripType === "roundtrip" && dest.bestReturnDate ? ` → ${dest.bestReturnDate}` : ""}
                         </div>
                       )}
                     </td>
-                    <td className="text-end">
-                      {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
-                    </td>
-                    <td className="text-end">
-                      {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
-                    </td>
+                    <td className="text-end">{Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR</td>
+                    <td className="text-end">{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</td>
                     <td className="text-end">
                       <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
                         {Number(dest.fairnessScore || 0).toFixed(1)} / 100
@@ -468,14 +433,7 @@ function FlightResults({
       </div>
 
       {fairnessTop.length > 0 && (
-        <div
-          className="card mb-4"
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderColor: "#D0D8E5",
-            color: "#1E293B",
-          }}
-        >
+        <div className="card mb-4" style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}>
           <div className="card-body">
             <h2 className="h6 mb-3">Comparativa de equidad entre destinos (top 5)</h2>
             {fairnessTop.map((dest, index) => (
@@ -495,10 +453,7 @@ function FlightResults({
                 >
                   <div
                     style={{
-                      width: `${Math.max(
-                        0,
-                        Math.min(100, Number(dest.fairnessScore || 0))
-                      )}%`,
+                      width: `${Math.max(0, Math.min(100, Number(dest.fairnessScore || 0)))}%`,
                       height: "100%",
                       borderRadius: "999px",
                       backgroundColor:
@@ -568,14 +523,7 @@ function FlightResults({
       </div>
 
       {selectedForCompare.length >= 2 && (
-        <div
-          className="card mb-4"
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderColor: "#3B82F6",
-            color: "#1E293B",
-          }}
-        >
+        <div className="card mb-4" style={{ backgroundColor: "#FFFFFF", borderColor: "#3B82F6", color: "#1E293B" }}>
           <div className="card-body">
             <h2 className="h6 mb-3">Comparativa cara a cara</h2>
 
@@ -622,9 +570,7 @@ function FlightResults({
                     <td>Diferencia max dentro del grupo</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {typeof dest.priceSpread === "number"
-                          ? `${dest.priceSpread.toFixed(2)} EUR`
-                          : "N/A"}
+                        {typeof dest.priceSpread === "number" ? `${dest.priceSpread.toFixed(2)} EUR` : "N/A"}
                       </td>
                     ))}
                   </tr>
@@ -632,9 +578,7 @@ function FlightResults({
                     <td>CO2 aproximado (indice interno)</td>
                     {selectedForCompare.map((dest) => (
                       <td key={dest.destination} className="text-end">
-                        {typeof dest.approxCo2Score === "number"
-                          ? dest.approxCo2Score.toFixed(2)
-                          : "N/A"}
+                        {typeof dest.approxCo2Score === "number" ? dest.approxCo2Score.toFixed(2) : "N/A"}
                       </td>
                     ))}
                   </tr>
@@ -643,8 +587,7 @@ function FlightResults({
             </div>
 
             <p className="text-secondary small mb-2">
-              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada
-              destino seleccionado.
+              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada destino seleccionado.
             </p>
 
             <div className="table-responsive mb-2">
@@ -668,9 +611,7 @@ function FlightResults({
                         const flight = df.find((f) => f.origin === originCode);
                         return (
                           <td key={dest.destination} className="text-end">
-                            {flight && typeof flight.price === "number"
-                              ? `${flight.price.toFixed(2)} EUR`
-                              : "N/A"}
+                            {flight && typeof flight.price === "number" ? `${flight.price.toFixed(2)} EUR` : "N/A"}
                           </td>
                         );
                       })}
@@ -725,11 +666,8 @@ function FlightResults({
         const isSelectedForCompare = compareSelection.includes(dest.destination);
         const isOpen = openIndex === index;
 
-        // ✅ NUEVO: url de imagen por destino
-        const imgUrl = getDestinationImageUrl(
-          dest.destination,
-          dest.bestDate || departureDate || ""
-        );
+        // ✅ Imagen local + fallback
+        const imgUrl = getDestinationImageUrl(dest.destination);
 
         return (
           <div
@@ -743,7 +681,6 @@ function FlightResults({
             }}
           >
             <div className="card-body">
-              {/* ✅ NUEVO: Header con imagen mini (izquierda) */}
               <div className="row g-3 align-items-start">
                 <div className="col-12 col-md-4">
                   <div
@@ -763,10 +700,8 @@ function FlightResults({
                       loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => {
-                        // fallback básico si Unsplash falla
-                        e.currentTarget.src = `https://via.placeholder.com/600x400?text=${encodeURIComponent(
-                          dest.destination
-                        )}`;
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/destinations/placeholder.jpg";
                       }}
                     />
                     <div
@@ -806,10 +741,7 @@ function FlightResults({
                         {isBest && (
                           <span
                             className="badge"
-                            style={{
-                              backgroundColor: "#3B82F6",
-                              color: "#FFFFFF",
-                            }}
+                            style={{ backgroundColor: "#3B82F6", color: "#FFFFFF" }}
                           >
                             {isCo2Mode
                               ? "Destino con menos CO2 aproximado"
@@ -820,18 +752,13 @@ function FlightResults({
 
                       <p className="text-secondary mb-1 small">
                         Media por viajero:{" "}
-                        <strong>
-                          {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
-                        </strong>{" "}
-                        · Coste total:{" "}
-                        <strong>{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</strong>
+                        <strong>{Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR</strong> ·{" "}
+                        Coste total: <strong>{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</strong>
                         {budgetEnabled && (
                           <>
                             {" "}
                             · Presupuesto max:{" "}
-                            <strong>
-                              {Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR
-                            </strong>
+                            <strong>{Number(maxBudgetPerTraveler || 0).toFixed(0)} EUR</strong>
                           </>
                         )}
                       </p>
@@ -844,8 +771,7 @@ function FlightResults({
                         {typeof dest.approxCo2Score === "number" && (
                           <>
                             {" "}
-                            · CO2 aproximado:{" "}
-                            <strong>{dest.approxCo2Score.toFixed(2)}</strong>
+                            · CO2 aproximado: <strong>{dest.approxCo2Score.toFixed(2)}</strong>
                           </>
                         )}
                       </p>
@@ -854,20 +780,14 @@ function FlightResults({
                         <p className="text-secondary mb-0 small">
                           Fecha: {travelDate || "N/A"}
                           {tripType === "roundtrip" && travelReturn ? ` → ${travelReturn}` : ""}
-                          {typeof flexRange === "number" && flexRange > 0
-                            ? ` (flex ±${flexRange})`
-                            : ""}
+                          {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
                         </p>
                       )}
                     </div>
 
                     <div className="text-end">
-                      <div className="fw-bold fs-5">
-                        {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
-                      </div>
-                      <small className="text-secondary d-block mb-1">
-                        Coste total del grupo
-                      </small>
+                      <div className="fw-bold fs-5">{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</div>
+                      <small className="text-secondary d-block mb-1">Coste total del grupo</small>
 
                       <div className="form-check d-inline-flex align-items-center justify-content-end">
                         <input
@@ -877,10 +797,7 @@ function FlightResults({
                           checked={isSelectedForCompare}
                           onChange={() => toggleCompare(dest.destination)}
                         />
-                        <label
-                          className="form-check-label small ms-1"
-                          htmlFor={`compare-${index}`}
-                        >
+                        <label className="form-check-label small ms-1" htmlFor={`compare-${index}`}>
                           Comparar
                         </label>
                       </div>
@@ -899,7 +816,6 @@ function FlightResults({
                   </div>
                 </div>
               </div>
-              {/* ✅ FIN header con imagen */}
 
               {isOpen && (
                 <>
@@ -929,37 +845,20 @@ function FlightResults({
                             {typeof flight.price === "number" ? (
                               <span>{flight.price.toFixed(2)} EUR</span>
                             ) : (
-                              <span className="text-warning">
-                                {flight.error || "Sin datos"}
-                              </span>
+                              <span className="text-warning">{flight.error || "Sin datos"}</span>
                             )}
                           </div>
 
                           <div className="mt-2 d-flex flex-wrap gap-2">
-                            <a
-                              href={skyscanner}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-outline-primary btn-sm"
-                            >
+                            <a href={skyscanner} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
                               Ver en Skyscanner
                             </a>
 
-                            <a
-                              href={kiwi}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-outline-secondary btn-sm"
-                            >
+                            <a href={kiwi} target="_blank" rel="noreferrer" className="btn btn-outline-secondary btn-sm">
                               Ver en Kiwi
                             </a>
 
-                            <a
-                              href={google}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-outline-dark btn-sm"
-                            >
+                            <a href={google} target="_blank" rel="noreferrer" className="btn btn-outline-dark btn-sm">
                               Ver en Google Flights
                             </a>
                           </div>
