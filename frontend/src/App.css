@@ -104,31 +104,36 @@
   margin: 14px 0;
 }
 
-/* Pills (IMPORTANT: active must be visible, not white-on-white) */
+/* =========================
+   PILLS (FIX DEFINITIVO)
+   ========================= */
+
+/* group */
 .fm-pill-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-/* base pill */
+/* base pill - fuerza forma/estilo en TODOS */
 .fm-pill {
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-weight: 800;
-  font-size: 14px;
+  border-radius: 999px !important;
+  padding: 10px 14px !important;
+  font-weight: 900 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
 
-  /* force visibility */
   border: 1px solid rgba(208, 216, 229, 0.95) !important;
   background: #ffffff !important;
   color: #0f172a !important;
 
   transition: transform 0.06s ease, box-shadow 0.12s ease, background 0.12s ease,
-    border-color 0.12s ease;
+    border-color 0.12s ease, color 0.12s ease;
 }
 
 .fm-pill:hover {
-  background: rgba(2, 6, 23, 0.03) !important;
+  background: rgba(59, 130, 246, 0.06) !important;
+  border-color: rgba(59, 130, 246, 0.30) !important;
   transform: translateY(-1px);
 }
 
@@ -136,34 +141,49 @@
   transform: translateY(0px);
 }
 
-/* outline inactive state (Bootstrap compatibility) */
+/* Inactive (Bootstrap compatibility) */
 .fm-pill.btn-outline-secondary {
   border-color: rgba(208, 216, 229, 0.95) !important;
   background: #ffffff !important;
   color: #0f172a !important;
 }
 
-/* ACTIVE state: clear blue fill + border + shadow */
+/* ACTIVE = AZUL (muy visible) */
 .fm-pill-active {
-  background: var(--fm-soft-2) !important;
-  border-color: rgba(59, 130, 246, 0.65) !important;
-  color: var(--fm-primary-ink) !important;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18) !important;
+  background: linear-gradient(
+    180deg,
+    var(--fm-primary),
+    var(--fm-primary-dark)
+  ) !important;
+  border-color: rgba(37, 99, 235, 0.95) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgba(59, 130, 246, 0.28) !important;
 }
 
-/* ensure btn-light doesn't override active */
+/* Si en JSX aún existe btn-light, que NO lo rompa */
 .fm-pill-active.btn-light {
-  background: var(--fm-soft-2) !important;
-  border-color: rgba(59, 130, 246, 0.65) !important;
-  color: var(--fm-primary-ink) !important;
+  background: linear-gradient(
+    180deg,
+    var(--fm-primary),
+    var(--fm-primary-dark)
+  ) !important;
+  border-color: rgba(37, 99, 235, 0.95) !important;
+  color: #ffffff !important;
+}
+
+/* Hover del activo */
+.fm-pill-active:hover {
+  background: linear-gradient(180deg, var(--fm-primary-dark), #1d4ed8) !important;
+  border-color: rgba(29, 78, 216, 0.95) !important;
+  transform: translateY(-1px);
 }
 
 /* Focus visible */
 .fm-pill:focus,
 .fm-pill:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 0.2rem var(--fm-focus) !important;
-  border-color: rgba(59, 130, 246, 0.7) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 0.22rem var(--fm-focus) !important;
+  border-color: rgba(59, 130, 246, 0.70) !important;
 }
 
 /* Grid layout */
@@ -242,8 +262,8 @@
   overflow: auto;
   padding-right: 4px;
 
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: rgba(148, 163, 184, 0.7) transparent; /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
 }
 
 /* Scrollbar (Chrome) */
@@ -389,7 +409,7 @@
   border-radius: 12px;
 }
 
-/* Make toggle switch a bit more “brand blue” */
+/* Toggle switch brand blue */
 .fm-card .form-check-input:checked {
   background-color: var(--fm-primary) !important;
   border-color: var(--fm-primary) !important;
