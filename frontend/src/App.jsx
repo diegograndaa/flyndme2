@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./App.css";
 import FlightResults from "./components/FlightResults";
-import { LoadingOverlay, SearchButton } from "./components/SearchUX";
+import { LoadingOverlay } from "./components/SearchUX";
 
 const API_BASE =
   (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "") ||
@@ -155,6 +155,326 @@ class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+/* LANDING SIMPLIFICADA, ESTILO SKYSCANNER */
+function Landing({ onStart }) {
+  return (
+    <>
+      <section
+        className="py-5"
+        style={{
+          background:
+            "radial-gradient(1200px 400px at 20% 10%, rgba(59,130,246,0.20) 0%, rgba(243,248,255,1) 55%), radial-gradient(900px 400px at 90% 0%, rgba(11,94,215,0.12) 0%, rgba(243,248,255,1) 60%)",
+          borderBottom: "1px solid #E2E8F0",
+        }}
+      >
+        <div className="container" style={{ maxWidth: "1100px" }}>
+          <div className="row g-4 align-items-center">
+            <div className="col-lg-7">
+              <div
+                className="text-uppercase"
+                style={{
+                  fontSize: 12,
+                  letterSpacing: 0.6,
+                  color: "#64748B",
+                  fontWeight: 700,
+                }}
+              >
+                FlyndMe
+              </div>
+
+              <h1 className="display-5 fw-bold mb-3" style={{ color: "#0F172A" }}>
+                Encuentra el mejor destino para quedar
+              </h1>
+
+              <p className="lead mb-4" style={{ color: "#475569" }}>
+                Introduce varios orígenes y te devolvemos el destino común óptimo:
+                el más barato para el grupo o el más equilibrado entre viajeros.
+              </p>
+
+              <div className="d-flex flex-wrap gap-2">
+                <button
+                  className="btn btn-primary btn-lg"
+                  style={{
+                    backgroundColor: "#3B82F6",
+                    borderColor: "#3B82F6",
+                    boxShadow: "0 12px 28px rgba(59,130,246,0.25)",
+                  }}
+                  onClick={onStart}
+                  type="button"
+                >
+                  Empezar a buscar
+                </button>
+
+                <a
+                  href="#como-funciona"
+                  className="btn btn-outline-secondary btn-lg"
+                  style={{ borderColor: "#CBD5E1" }}
+                >
+                  Ver cómo funciona
+                </a>
+              </div>
+
+              <div className="mt-4 d-flex flex-wrap gap-2">
+                <span
+                  className="badge text-bg-light"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    padding: "10px 12px",
+                    color: "#0F172A",
+                  }}
+                >
+                  Multi origen
+                </span>
+                <span
+                  className="badge text-bg-light"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    padding: "10px 12px",
+                    color: "#0F172A",
+                  }}
+                >
+                  Mejor precio total
+                </span>
+                <span
+                  className="badge text-bg-light"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    padding: "10px 12px",
+                    color: "#0F172A",
+                  }}
+                >
+                  Opción más equilibrada
+                </span>
+                <span
+                  className="badge text-bg-light"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    padding: "10px 12px",
+                    color: "#0F172A",
+                  }}
+                >
+                  Presupuesto por persona
+                </span>
+              </div>
+            </div>
+
+            <div className="col-lg-5">
+              <div
+                className="card border-0"
+                style={{
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  boxShadow: "0 18px 45px rgba(2,6,23,0.08)",
+                }}
+              >
+                <div
+                  className="card-body p-4"
+                  style={{
+                    background: "white",
+                    border: "1px solid #E2E8F0",
+                  }}
+                >
+                  <div className="fw-bold mb-2" style={{ color: "#0F172A" }}>
+                    Cómo lo usamos en la vida real
+                  </div>
+
+                  <div className="small" style={{ color: "#475569" }}>
+                    <div className="d-flex gap-2 mb-2">
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          backgroundColor: "#3B82F6",
+                          marginTop: 6,
+                          flex: "0 0 auto",
+                        }}
+                      />
+                      <div>
+                        Un grupo vive en ciudades distintas y quiere quedar un fin de
+                        semana.
+                      </div>
+                    </div>
+
+                    <div className="d-flex gap-2 mb-2">
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          backgroundColor: "#3B82F6",
+                          marginTop: 6,
+                          flex: "0 0 auto",
+                        }}
+                      />
+                      <div>
+                        FlyndMe calcula destinos posibles y elige el óptimo según tu
+                        criterio.
+                      </div>
+                    </div>
+
+                    <div className="d-flex gap-2">
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          backgroundColor: "#3B82F6",
+                          marginTop: 6,
+                          flex: "0 0 auto",
+                        }}
+                      />
+                      <div>
+                        Abres Skyscanner por origen para reservar (FlyndMe no vende
+                        billetes).
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3" style={{ borderTop: "1px solid #E2E8F0" }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="small" style={{ color: "#64748B" }}>
+                        Fuente de precios
+                      </div>
+                      <div className="small fw-semibold" style={{ color: "#0F172A" }}>
+                        Amadeus API
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mt-1">
+                      <div className="small" style={{ color: "#64748B" }}>
+                        Tiempo típico
+                      </div>
+                      <div className="small fw-semibold" style={{ color: "#0F172A" }}>
+                        5 a 10 s
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="mt-3 small"
+                style={{ color: "#64748B", textAlign: "center" }}
+              >
+                Prototipo funcional con React + Node + Amadeus
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="py-5">
+        <div className="container" style={{ maxWidth: "1100px" }}>
+          <div className="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h2 className="h3 fw-bold mb-1" style={{ color: "#0F172A" }}>
+                Preguntas frecuentes
+              </h2>
+              <div style={{ color: "#64748B" }}>
+                Lo esencial, sin ruido.
+              </div>
+            </div>
+          </div>
+
+          <div className="row g-3">
+            <div className="col-md-6">
+              <div
+                className="p-4 bg-white"
+                style={{
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  boxShadow: "0 10px 24px rgba(2,6,23,0.04)",
+                }}
+              >
+                <div className="fw-semibold mb-2" style={{ color: "#0F172A" }}>
+                  ¿Qué significa “equidad”?
+                </div>
+                <div className="small" style={{ color: "#475569" }}>
+                  Es una puntuación (0 a 100) que mide lo parecidos que son los
+                  precios entre viajeros. Más alto significa que el grupo paga de
+                  forma más similar.
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div
+                className="p-4 bg-white"
+                style={{
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  boxShadow: "0 10px 24px rgba(2,6,23,0.04)",
+                }}
+              >
+                <div className="fw-semibold mb-2" style={{ color: "#0F172A" }}>
+                  ¿Cómo funciona el presupuesto máximo?
+                </div>
+                <div className="small" style={{ color: "#475569" }}>
+                  Filtra destinos donde la media por persona no supera el límite.
+                  Si no hay destinos dentro de ese máximo, no se muestra ninguno.
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div
+                className="p-4 bg-white"
+                style={{
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  boxShadow: "0 10px 24px rgba(2,6,23,0.04)",
+                }}
+              >
+                <div className="fw-semibold mb-2" style={{ color: "#0F172A" }}>
+                  ¿FlyndMe vende billetes?
+                </div>
+                <div className="small" style={{ color: "#475569" }}>
+                  No. FlyndMe decide el destino. La reserva se hace en buscadores
+                  externos como Skyscanner o Google Flights.
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div
+                className="p-4 bg-white"
+                style={{
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  boxShadow: "0 10px 24px rgba(2,6,23,0.04)",
+                }}
+              >
+                <div className="fw-semibold mb-2" style={{ color: "#0F172A" }}>
+                  ¿Qué hace distinto a FlyndMe?
+                </div>
+                <div className="small" style={{ color: "#475569" }}>
+                  Además del precio total del grupo, puedes priorizar el destino
+                  más justo para todos.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 d-flex justify-content-center">
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              style={{
+                backgroundColor: "#3B82F6",
+                borderColor: "#3B82F6",
+                boxShadow: "0 12px 28px rgba(59,130,246,0.22)",
+              }}
+              onClick={onStart}
+            >
+              Empezar a buscar
+            </button>
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }
 
 function App() {
@@ -538,7 +858,17 @@ function App() {
       return;
     }
 
-    openBestDetails();
+    openBestDetails_toggle();
+  };
+
+  // Pequeña mejora: no repetir lógica
+  const openBestDetails_toggle = () => {
+    setShowBestDetails(true);
+    setShowComplementary(false);
+    setTimeout(() => {
+      const el = document.getElementById("best-details-panel");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const buildShareText = () => {
@@ -680,9 +1010,7 @@ function App() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          errData.message || errData.error || "Error al buscar vuelos."
-        );
+        throw new Error(errData.message || errData.error || "Error al buscar vuelos.");
       }
 
       const data = await res.json();
@@ -731,15 +1059,10 @@ function App() {
   };
 
   const optimizeLabel =
-    optimizeBy === "fairness"
-      ? "equidad de precio entre el grupo"
-      : "precio total del grupo";
+    optimizeBy === "fairness" ? "equidad de precio entre el grupo" : "precio total del grupo";
 
   return (
-    <div
-      className="min-vh-100"
-      style={{ backgroundColor: "#F3F8FF", color: "#1E293B" }}
-    >
+    <div className="min-vh-100" style={{ backgroundColor: "#F3F8FF", color: "#1E293B" }}>
       <LoadingOverlay loading={loading} />
 
       <header className="bg-white border-bottom">
@@ -768,180 +1091,7 @@ function App() {
       </header>
 
       {!hasStarted ? (
-        <>
-          <section className="py-5 border-bottom border-secondary">
-            <div className="container" style={{ maxWidth: "1100px" }}>
-              <div className="row align-items-center g-4">
-                <div className="col-md-7">
-                  <h1 className="display-5 fw-bold mb-3">
-                    FlyndMe · El punto de encuentro perfecto
-                  </h1>
-                  <p className="lead mb-3 text-secondary">
-                    Tres amigos, tres ciudades, un solo destino. FlyndMe calcula en
-                    segundos a qué ciudad es más barato o más justo que vuele todo
-                    el grupo.
-                  </p>
-                  <ul className="text-secondary mb-3">
-                    <li>Introduce los aeropuertos de origen de cada persona.</li>
-                    <li>Elegimos los mejores destinos comunes según tu criterio.</li>
-                    <li>
-                      Puedes elegir: ida o ida y vuelta, fechas flexibles o exactas,
-                      y presupuesto máximo por persona.
-                    </li>
-                  </ul>
-                  <div className="d-flex flex-wrap gap-2">
-                    <button
-                      className="btn btn-primary btn-lg"
-                      style={{ backgroundColor: "#3B82F6", borderColor: "#3B82F6" }}
-                      onClick={loadDemo}
-                      type="button"
-                    >
-                      Empezar a buscar vuelos
-                    </button>
-                  </div>
-                </div>
-
-                <div className="col-md-5">
-                  <div
-                    className="card bg-white border"
-                    style={{ borderColor: "#D0D8E5" }}
-                  >
-                    <div className="card-body">
-                      <h2 className="h5 mb-3">Pensado como producto real</h2>
-                      <p className="text-secondary mb-2">
-                        • <strong>Casos de uso:</strong> grupos de amigos, viajes de
-                        empresa, eventos internacionales.
-                      </p>
-                      <p className="text-secondary mb-2">
-                        • <strong>Diferencial:</strong> no solo encontramos lo más
-                        barato, también el destino más equilibrado para todos.
-                      </p>
-                      <p className="text-secondary mb-0">
-                        • <strong>Integrable:</strong> listo para conectarse con
-                        Google Flights, Skyscanner o Kiwi.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="py-5">
-            <div className="container" style={{ maxWidth: "1100px" }}>
-              <h2 className="h3 fw-bold mb-3">Preguntas frecuentes</h2>
-              <p className="text-secondary mb-4">
-                Todo lo que necesitas saber antes de buscar el mejor destino para tu grupo.
-              </p>
-
-              <div className="accordion" id="flyndmeFaq">
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="faqHead1">
-                    <button
-                      className="accordion-button"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#faq1"
-                      aria-expanded="true"
-                      aria-controls="faq1"
-                    >
-                      ¿Cómo funciona FlyndMe?
-                    </button>
-                  </h2>
-                  <div
-                    id="faq1"
-                    className="accordion-collapse collapse show"
-                    aria-labelledby="faqHead1"
-                    data-bs-parent="#flyndmeFaq"
-                  >
-                    <div className="accordion-body text-secondary">
-                      Introduces los aeropuertos de origen del grupo y una fecha. FlyndMe
-                      compara precios y propone destinos donde todos pueden volar.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="faqHead2">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#faq2"
-                      aria-expanded="false"
-                      aria-controls="faq2"
-                    >
-                      ¿Qué significa “equidad”?
-                    </button>
-                  </h2>
-                  <div
-                    id="faq2"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="faqHead2"
-                    data-bs-parent="#flyndmeFaq"
-                  >
-                    <div className="accordion-body text-secondary">
-                      Es una puntuación que mide lo parecidos que son los precios entre viajeros.
-                      Cuanto más alta, más justo es el destino para el grupo.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="faqHead3">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#faq3"
-                      aria-expanded="false"
-                      aria-controls="faq3"
-                    >
-                      ¿Cómo funciona el presupuesto máximo?
-                    </button>
-                  </h2>
-                  <div
-                    id="faq3"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="faqHead3"
-                    data-bs-parent="#flyndmeFaq"
-                  >
-                    <div className="accordion-body text-secondary">
-                      Solo se muestran destinos donde la <strong>media por persona</strong> no supera el
-                      presupuesto indicado. Si no hay destinos dentro de ese límite, no se muestra ninguno.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="faqHead4">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#faq4"
-                      aria-expanded="false"
-                      aria-controls="faq4"
-                    >
-                      ¿FlyndMe vende billetes?
-                    </button>
-                  </h2>
-                  <div
-                    id="faq4"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="faqHead4"
-                    data-bs-parent="#flyndmeFaq"
-                  >
-                    <div className="accordion-body text-secondary">
-                      No. FlyndMe te ayuda a decidir el destino. La reserva se hace en buscadores externos
-                      como Skyscanner o Google Flights.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </>
+        <Landing onStart={loadDemo} />
       ) : (
         <main className="py-4">
           <div className="container" style={{ maxWidth: "960px" }}>
@@ -982,9 +1132,7 @@ function App() {
                                   <button
                                     type="button"
                                     className={`btn ${
-                                      uiCriterion === "total"
-                                        ? "btn-light"
-                                        : "btn-outline-light"
+                                      uiCriterion === "total" ? "btn-light" : "btn-outline-light"
                                     }`}
                                     onClick={() => handleToggleCriterion("total")}
                                   >
@@ -993,9 +1141,7 @@ function App() {
                                   <button
                                     type="button"
                                     className={`btn ${
-                                      uiCriterion === "fairness"
-                                        ? "btn-light"
-                                        : "btn-outline-light"
+                                      uiCriterion === "fairness" ? "btn-light" : "btn-outline-light"
                                     }`}
                                     onClick={() => handleToggleCriterion("fairness")}
                                   >
@@ -1019,9 +1165,7 @@ function App() {
                                   <>
                                     {" "}
                                     y con presupuesto máximo de{" "}
-                                    <strong>
-                                      {Number(maxBudgetPerTraveler).toFixed(0)} EUR
-                                    </strong>{" "}
+                                    <strong>{Number(maxBudgetPerTraveler).toFixed(0)} EUR</strong>{" "}
                                     por persona.
                                   </>
                                 ) : (
@@ -1047,25 +1191,16 @@ function App() {
                               )}
 
                               <div className="mb-3">
-                                <div
-                                  className="fw-semibold"
-                                  style={{ fontSize: 12, opacity: 0.95 }}
-                                >
+                                <div className="fw-semibold" style={{ fontSize: 12, opacity: 0.95 }}>
                                   Precio total estimado
                                 </div>
 
                                 <div className="d-flex align-items-end gap-2 flex-wrap">
-                                  <div
-                                    className="fw-bold"
-                                    style={{ fontSize: 44, lineHeight: 1 }}
-                                  >
+                                  <div className="fw-bold" style={{ fontSize: 44, lineHeight: 1 }}>
                                     {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} €
                                   </div>
 
-                                  <div
-                                    className="small"
-                                    style={{ opacity: 0.95, paddingBottom: 8 }}
-                                  >
+                                  <div className="small" style={{ opacity: 0.95, paddingBottom: 8 }}>
                                     {travelerCount > 0
                                       ? `para ${travelerCount} viajero${travelerCount > 1 ? "s" : ""}`
                                       : "para el grupo"}
@@ -1073,44 +1208,40 @@ function App() {
                                 </div>
                               </div>
 
-                              {Array.isArray(bestBreakdownFlights) &&
-                                bestBreakdownFlights.length > 0 && (
-                                  <div className="mb-3">
-                                    <div
-                                      className="fw-semibold"
-                                      style={{ fontSize: 12, opacity: 0.95 }}
-                                    >
-                                      Coste por origen
-                                    </div>
-
-                                    <div className="d-flex flex-wrap gap-2 mt-2">
-                                      {bestBreakdownFlights.map((f, i) => (
-                                        <span
-                                          key={i}
-                                          className="badge bg-light text-dark"
-                                          style={{
-                                            border: "1px solid rgba(255,255,255,0.35)",
-                                            padding: "8px 10px",
-                                          }}
-                                        >
-                                          <span className="fw-semibold">
-                                            {String(f.origin || "").toUpperCase()}
-                                          </span>{" "}
-                                          →{" "}
-                                          <span className="fw-semibold">
-                                            {bestDestination.destination}
-                                          </span>{" "}
-                                          <span style={{ opacity: 0.85 }}>·</span>{" "}
-                                          <span className="fw-semibold">
-                                            {typeof f.price === "number"
-                                              ? `${f.price.toFixed(0)} €`
-                                              : "sin datos"}
-                                          </span>
-                                        </span>
-                                      ))}
-                                    </div>
+                              {Array.isArray(bestBreakdownFlights) && bestBreakdownFlights.length > 0 && (
+                                <div className="mb-3">
+                                  <div className="fw-semibold" style={{ fontSize: 12, opacity: 0.95 }}>
+                                    Coste por origen
                                   </div>
-                                )}
+
+                                  <div className="d-flex flex-wrap gap-2 mt-2">
+                                    {bestBreakdownFlights.map((f, i) => (
+                                      <span
+                                        key={i}
+                                        className="badge bg-light text-dark"
+                                        style={{
+                                          border: "1px solid rgba(255,255,255,0.35)",
+                                          padding: "8px 10px",
+                                        }}
+                                      >
+                                        <span className="fw-semibold">
+                                          {String(f.origin || "").toUpperCase()}
+                                        </span>{" "}
+                                        →{" "}
+                                        <span className="fw-semibold">
+                                          {bestDestination.destination}
+                                        </span>{" "}
+                                        <span style={{ opacity: 0.85 }}>·</span>{" "}
+                                        <span className="fw-semibold">
+                                          {typeof f.price === "number"
+                                            ? `${f.price.toFixed(0)} €`
+                                            : "sin datos"}
+                                        </span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
                               <div className="row g-2 mt-1">
                                 <div className="col-12 col-lg-6">
@@ -1125,9 +1256,9 @@ function App() {
                                       Media por persona
                                     </div>
                                     <div className="fw-bold">
-                                      {normalizeNumber(
-                                        bestDestination.averageCostPerTraveler
-                                      ).toFixed(2)}{" "}
+                                      {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(
+                                        2
+                                      )}{" "}
                                       €
                                     </div>
                                   </div>
@@ -1145,8 +1276,7 @@ function App() {
                                       Diferencia máxima entre viajeros
                                     </div>
                                     <div className="fw-bold">
-                                      {normalizeNumber(bestDestination.priceSpread).toFixed(2)}{" "}
-                                      €
+                                      {normalizeNumber(bestDestination.priceSpread).toFixed(2)} €
                                     </div>
                                   </div>
                                 </div>
@@ -1179,17 +1309,13 @@ function App() {
                                       <div className="small" style={{ opacity: 0.95 }}>
                                         <div>
                                           <strong>Viaje:</strong>{" "}
-                                          {tripType === "roundtrip"
-                                            ? "ida y vuelta"
-                                            : "solo ida"}
+                                          {tripType === "roundtrip" ? "ida y vuelta" : "solo ida"}
                                         </div>
                                         <div>
                                           <strong>Salida:</strong>{" "}
                                           {dateMode === "flex"
                                             ? `flexible (±${flexDays} días), mejor fecha: ${
-                                                formatDateEs(
-                                                  bestDestination.bestDate || departureDate
-                                                ) ||
+                                                formatDateEs(bestDestination.bestDate || departureDate) ||
                                                 (bestDestination.bestDate || departureDate)
                                               }`
                                             : formatDateEs(departureDate) || departureDate}
@@ -1230,11 +1356,7 @@ function App() {
                                 Ver otros destinos
                               </button>
 
-                              <button
-                                type="button"
-                                className="btn btn-outline-light"
-                                onClick={handleShare}
-                              >
+                              <button type="button" className="btn btn-outline-light" onClick={handleShare}>
                                 Compartir
                               </button>
 
@@ -1371,9 +1493,7 @@ function App() {
                         </div>
 
                         <div className="mt-3">
-                          <div className="text-secondary small mb-2">
-                            Abrir en Skyscanner por origen
-                          </div>
+                          <div className="text-secondary small mb-2">Abrir en Skyscanner por origen</div>
 
                           {(() => {
                             const dep = bestDestination?.bestDate || departureDate;
@@ -1427,7 +1547,7 @@ function App() {
                         </div>
 
                         <div className="text-secondary small mt-2">
-                          Skyscanner abre un enlace por origen (no existe un enlace único multi-origen).
+                          Skyscanner abre un enlace por origen (no existe un enlace único multi origen).
                         </div>
                       </div>
                     </div>
@@ -1439,9 +1559,7 @@ function App() {
                     <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
-                          <h3 className="h6 fw-semibold mb-0">
-                            Otros destinos (alternativas)
-                          </h3>
+                          <h3 className="h6 fw-semibold mb-0">Otros destinos (alternativas)</h3>
                           <button
                             type="button"
                             className="btn btn-outline-secondary btn-sm"
@@ -1531,18 +1649,13 @@ function App() {
                                   disabled={origins.length <= 1 || loading}
                                   title="Eliminar origen"
                                 >
-                                  ✕
+                                  X
                                 </button>
                               </div>
                             ))}
 
                             <div className="fm-origin-actions">
-                              <button
-                                type="button"
-                                className="fm-linklike"
-                                onClick={addOrigin}
-                                disabled={loading}
-                              >
+                              <button type="button" className="fm-linklike" onClick={addOrigin} disabled={loading}>
                                 + Añadir origen
                               </button>
 
@@ -1560,9 +1673,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                tripType === "oneway"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                tripType === "oneway" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => setTripType("oneway")}
                               disabled={loading}
@@ -1573,9 +1684,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                tripType === "roundtrip"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                tripType === "roundtrip" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => setTripType("roundtrip")}
                               disabled={loading}
@@ -1591,9 +1700,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                dateMode === "exact"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                dateMode === "exact" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => setDateMode("exact")}
                               disabled={loading}
@@ -1604,9 +1711,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                dateMode === "flex"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                dateMode === "flex" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => setDateMode("flex")}
                               disabled={loading}
@@ -1721,9 +1826,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                optimizeBy === "total"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                optimizeBy === "total" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => {
                                 setOptimizeBy("total");
@@ -1737,9 +1840,7 @@ function App() {
                             <button
                               type="button"
                               className={`btn fm-pill ${
-                                optimizeBy === "fairness"
-                                  ? "btn-light fm-pill-active"
-                                  : "btn-outline-secondary"
+                                optimizeBy === "fairness" ? "btn-light fm-pill-active" : "btn-outline-secondary"
                               }`}
                               onClick={() => {
                                 setOptimizeBy("fairness");
@@ -1760,7 +1861,6 @@ function App() {
 
                         {/* CTA */}
                         <div className="mt-3">
-                          {/* Puedes usar tu SearchButton si quieres, pero aquí dejamos un CTA más estético */}
                           <button type="submit" className="btn btn-primary w-100 fm-cta" disabled={loading}>
                             Buscar destinos comunes
                           </button>
@@ -1782,9 +1882,7 @@ function App() {
                             Filtra según el campo activo. Haz clic para rellenarlo.
                           </div>
                         </div>
-                        <div className="small fm-muted">
-                          Activo: Viajero {safeActiveIndex + 1}
-                        </div>
+                        <div className="small fm-muted">Activo: Viajero {safeActiveIndex + 1}</div>
                       </div>
 
                       <div className="fm-list">
@@ -1814,9 +1912,7 @@ function App() {
                         )}
                       </div>
 
-                      <div className="small fm-muted mt-2">
-                        Consejo: cambia de campo y la lista se adapta.
-                      </div>
+                      <div className="small fm-muted mt-2">Consejo: cambia de campo y la lista se adapta.</div>
                     </aside>
                   </div>
                 </div>
@@ -1825,8 +1921,7 @@ function App() {
 
             <footer className="mt-5 pt-3 border-top border-secondary">
               <p className="text-secondary small mb-1">
-                FlyndMe es un prototipo funcional construido con React, Vite,
-                Node.js, Express y la API de Amadeus.
+                FlyndMe es un prototipo funcional construido con React, Vite, Node.js, Express y la API de Amadeus.
               </p>
             </footer>
           </div>

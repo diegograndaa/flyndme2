@@ -435,3 +435,153 @@
     width: calc(100% - 52px);
   }
 }
+
+/* =========================
+   ADD-ON: Skyscanner polish
+   Pegar AL FINAL de tu CSS
+   ========================= */
+
+/* 1) Tipografía y jerarquía general */
+.fm-title {
+  font-size: 20px;
+  letter-spacing: -0.2px;
+}
+
+.fm-subtitle {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* 2) Contenedor más “app” y menos “web genérica” */
+.fm-container {
+  max-width: 1020px;
+}
+
+/* 3) Hero (landing) minimalista si la tienes en JSX
+   (Si no la tienes, no afecta)
+*/
+.fm-hero {
+  padding: 44px 0;
+}
+
+.fm-hero-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.84)
+  );
+  border: 1px solid rgba(208, 216, 229, 0.85);
+  border-radius: 18px;
+  box-shadow: 0 22px 44px rgba(2, 6, 23, 0.06);
+  overflow: hidden;
+}
+
+/* “Imagen/preview” tipo Skyscanner (placeholder de mapa / cielo)
+   Úsalo en un div si quieres añadir un panel visual a la derecha.
+*/
+.fm-hero-visual {
+  border-radius: 16px;
+  min-height: 240px;
+  background: radial-gradient(
+      1200px 240px at 20% 0%,
+      rgba(59, 130, 246, 0.30),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 260px at 80% 30%,
+      rgba(37, 99, 235, 0.22),
+      transparent 55%
+    ),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.00));
+  border: 1px solid rgba(208, 216, 229, 0.85);
+}
+
+/* 4) Pills: ajuste fino para que “respiren” y no parezcan botones bootstrap */
+.fm-pill {
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  letter-spacing: -0.1px;
+}
+
+/* 5) Inputs: un poco más “Skyscanner” (altura y placeholder) */
+.fm-card .form-control {
+  height: 44px;
+}
+
+.fm-card .form-control::placeholder {
+  color: rgba(100, 116, 139, 0.85);
+}
+
+/* 6) “Chips”/badges suaves para listas (si las usas) */
+.fm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--fm-primary-ink);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+/* 7) Right panel: un poco más compacto y “app-like” */
+.fm-right-card {
+  border-radius: 18px;
+}
+
+.fm-list {
+  max-height: 340px;
+}
+
+/* 8) Items aeropuertos: mejor separación visual */
+.fm-airport-item {
+  padding: 12px 12px;
+}
+
+.fm-airport-country {
+  opacity: 0.92;
+}
+
+/* 9) CTA: microinteracción extra (no cambia tu diseño) */
+.fm-cta {
+  transform: translateY(0);
+  transition: transform 0.06s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.fm-cta:active {
+  transform: translateY(1px);
+}
+
+/* 10) Secciones: menos “caja” y más “panel suave” */
+.fm-section {
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* 11) Compactar texto secundario (para que no parezca “mucho texto”) */
+.fm-section .small {
+  line-height: 1.25;
+}
+
+/* 12) Si tienes una landing con listas/FAQ, este estilo la hace más ligera */
+.fm-faq {
+  margin-top: 18px;
+}
+
+.fm-faq .accordion-item {
+  border: 1px solid rgba(208, 216, 229, 0.80);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.fm-faq .accordion-button {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fm-faq .accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.14);
+}
