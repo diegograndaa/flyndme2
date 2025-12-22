@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js"; // ✅ IMPORTANTE para que funcione el accordion (collapse)
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import FlightResults from "./components/FlightResults";
 import { LoadingOverlay, SearchButton } from "./components/SearchUX";
 
@@ -37,24 +37,11 @@ const AVAILABLE_AIRPORTS = [
   { code: "DUB", city: "Dublín", country: "Irlanda" },
 ];
 
-/**
- * ✅ CAMBIO CLAVE:
- * En vez de Unsplash (que a veces bloquea / rate limit / CORS),
- * usamos tus imágenes locales en: frontend/public/destinations/
- *
- * Rutas correctas en Vite:
- *  - /destinations/LON.jpg
- *  - /destinations/placeholder.jpg
- * y para que funcione también en deploy con base path:
- *  import.meta.env.BASE_URL
- */
-
 function getBaseUrl() {
   return import.meta.env.BASE_URL || "/";
 }
 
 function normalizeDestCode(value) {
-  // Por si te llega "LON - Londres" o "London (LON)" etc.
   const raw = String(value || "").trim().toUpperCase();
   const match = raw.match(/\b[A-Z]{3}\b/);
   return match ? match[0] : raw.slice(0, 3);
@@ -80,15 +67,13 @@ function formatDateEs(yyyyMmDd) {
   });
 }
 
-/* ✅ SKYSCANNER (CÓDIGO DE CIUDAD) */
+/* SKYSCANNER (CÓDIGO DE CIUDAD) */
 function toSkyscannerDate(yyyyMmDd) {
-  // Skyscanner acepta YYYYMMDD (sin guiones)
   if (!yyyyMmDd) return "";
   return String(yyyyMmDd).replaceAll("-", "");
 }
 
 function normalizeIataForSkyscanner(code) {
-  // Con códigos de ciudad: ROM, LON, PAR...
   return String(code || "").trim().toLowerCase();
 }
 
@@ -107,15 +92,12 @@ function buildSkyscannerUrl({
 
   if (!from || !to || !dep) return "";
 
-  // One-way:   https://www.skyscanner.es/transport/flights/{from}/{to}/{dep}/
-  // Roundtrip: https://www.skyscanner.es/transport/flights/{from}/{to}/{dep}/{ret}/
   const base = "https://www.skyscanner.es/transport/flights";
   const path =
     tripType === "roundtrip" && ret
       ? `${base}/${from}/${to}/${dep}/${ret}/`
       : `${base}/${from}/${to}/${dep}/`;
 
-  // Parámetros mínimos, sin complicar
   const params = new URLSearchParams({
     adultsv2: "1",
     cabinclass: "economy",
@@ -123,6 +105,31 @@ function buildSkyscannerUrl({
   });
 
   return `${path}?${params.toString()}`;
+}
+
+async function copyToClipboard(text) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_) {}
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 class ErrorBoundary extends React.Component {
@@ -166,7 +173,6 @@ function App() {
   const [origins, setOrigins] = useState(["", ""]);
   const [activeOriginIndex, setActiveOriginIndex] = useState(0);
 
-  // tipo de viaje y modo fechas
   const [tripType, setTripType] = useState("oneway"); // "oneway" | "roundtrip"
   const [dateMode, setDateMode] = useState("exact"); // "exact" | "flex"
   const flexDays = 3;
@@ -174,10 +180,21 @@ function App() {
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
+  // "total" | "fairness"
+  // Se usa para la búsqueda al backend
   const [optimizeBy, setOptimizeBy] = useState("total");
+
+  // UI toggle post-búsqueda (no rehace fetch)
+  const [uiCriterion, setUiCriterion] = useState("total");
 
   const [flights, setFlights] = useState([]);
   const [bestDestination, setBestDestination] = useState(null);
+
+  // Guardamos best calculado para ambos criterios, así el toggle es instantáneo
+  const [bestByCriterion, setBestByCriterion] = useState({
+    total: null,
+    fairness: null,
+  });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -189,11 +206,13 @@ function App() {
   const [showComplementary, setShowComplementary] = useState(false);
   const [showBestDetails, setShowBestDetails] = useState(false);
 
-  // ✅ NUEVO: Presupuesto máximo por persona
+  // Presupuesto
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudgetPerTraveler, setMaxBudgetPerTraveler] = useState(150);
 
-  // límites y pasos del slider (ajústalos si quieres)
+  // UX feedback
+  const [shareStatus, setShareStatus] = useState(""); // "" | "ok" | "fail"
+
   const BUDGET_MIN = 20;
   const BUDGET_MAX = 600;
   const BUDGET_STEP = 5;
@@ -271,6 +290,7 @@ function App() {
     setShowSearchPanel(true);
     setShowComplementary(false);
     setShowBestDetails(false);
+    setShareStatus("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -278,11 +298,13 @@ function App() {
     setHasStarted(false);
     setFlights([]);
     setBestDestination(null);
+    setBestByCriterion({ total: null, fairness: null });
     setHasSearched(false);
     setError("");
     setShowSearchPanel(true);
     setShowComplementary(false);
     setShowBestDetails(false);
+    setShareStatus("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -311,6 +333,8 @@ function App() {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const normalizeNumber = (v) => Number(v || 0);
 
   const computeBestDestinationFromFlights = (flightsArr, mode) => {
     if (!Array.isArray(flightsArr) || flightsArr.length === 0) return null;
@@ -355,10 +379,51 @@ function App() {
       bestDate: best.bestDate || departureDate || "",
       bestReturnDate:
         best.bestReturnDate || (tripType === "roundtrip" ? returnDate : null),
-      // ✅ si el backend trae desglose por origen, lo conservamos
       flights: Array.isArray(best.flights) ? best.flights : null,
     };
   };
+
+  const rankFlights = (flightsArr, mode) => {
+    const safe = Array.isArray(flightsArr) ? [...flightsArr] : [];
+    const num = (v) => (typeof v === "number" && !Number.isNaN(v) ? v : null);
+
+    if (mode === "fairness") {
+      safe.sort((a, b) => {
+        const fa = num(a?.fairnessScore);
+        const fb = num(b?.fairnessScore);
+        const ta = num(a?.totalCostEUR);
+        const tb = num(b?.totalCostEUR);
+
+        if (fa !== null && fb !== null && fa !== fb) return fb - fa; // desc
+        if (ta !== null && tb !== null && ta !== tb) return ta - tb; // asc
+        return 0;
+      });
+      return safe;
+    }
+
+    safe.sort((a, b) => {
+      const ta = num(a?.totalCostEUR);
+      const tb = num(b?.totalCostEUR);
+      if (ta !== null && tb !== null && ta !== tb) return ta - tb;
+      return 0;
+    });
+    return safe;
+  };
+
+  const fairnessLabel = (score) => {
+    const s = Number(score || 0);
+    if (s >= 85) return "muy equilibrado";
+    if (s >= 65) return "bastante equilibrado";
+    if (s >= 45) return "algo desigual";
+    return "desigual";
+  };
+
+  const travelerCount = useMemo(() => {
+    const n = (origins || [])
+      .map((o) => String(o || "").trim())
+      .filter(Boolean).length;
+    return n || 0;
+  }, [origins]);
 
   const hasResults = useMemo(() => {
     return (
@@ -371,22 +436,204 @@ function App() {
     );
   }, [hasSearched, loading, error, bestDestination, flights]);
 
+  const clampBudget = (v) => {
+    const n = Number(v);
+    if (Number.isNaN(n)) return BUDGET_MIN;
+    return Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, n));
+  };
+
+  // Intentamos sacar desglose por origen sin romper nada
+  const bestBreakdownFlights = useMemo(() => {
+    if (!bestDestination) return [];
+    if (Array.isArray(bestDestination.flights) && bestDestination.flights.length) {
+      return bestDestination.flights;
+    }
+    const dest = bestDestination.destination;
+    const match = Array.isArray(flights)
+      ? flights.find((f) => String(f?.destination || "") === String(dest || ""))
+      : null;
+    if (match && Array.isArray(match.flights)) return match.flights;
+    return [];
+  }, [bestDestination, flights]);
+
+  const bestExplanation = useMemo(() => {
+    if (!Array.isArray(flights) || flights.length < 2 || !bestDestination) return "";
+
+    const mode = uiCriterion;
+    const ranked = rankFlights(flights, mode);
+    if (ranked.length < 2) return "";
+
+    const best = ranked[0];
+    const second = ranked[1];
+
+    const bestCode = normalizeDestCode(best?.destination || bestDestination?.destination);
+    const secondCode = normalizeDestCode(second?.destination);
+
+    if (!secondCode) return "";
+
+    const bestTotal = normalizeNumber(best?.totalCostEUR);
+    const secondTotal = normalizeNumber(second?.totalCostEUR);
+    const bestFair = normalizeNumber(best?.fairnessScore);
+    const secondFair = normalizeNumber(second?.fairnessScore);
+
+    if (mode === "total") {
+      const diff = secondTotal - bestTotal;
+      if (diff > 0.5) {
+        return `Es aproximadamente ${diff.toFixed(0)} € más barato que ${secondCode}.`;
+      }
+      return `Es la opción más barata frente a ${secondCode} por muy poca diferencia.`;
+    }
+
+    const fairDiff = bestFair - secondFair;
+    const totalDiff = bestTotal - secondTotal;
+
+    if (fairDiff >= 1 && Math.abs(totalDiff) <= 10) {
+      return `Tiene +${fairDiff.toFixed(0)} puntos de equilibrio frente a ${secondCode} y un precio muy similar.`;
+    }
+
+    if (fairDiff >= 1 && totalDiff <= 0) {
+      return `Tiene +${fairDiff.toFixed(0)} puntos de equilibrio frente a ${secondCode} y además es más barato.`;
+    }
+
+    if (fairDiff >= 1 && totalDiff > 0) {
+      return `Tiene +${fairDiff.toFixed(0)} puntos de equilibrio frente a ${secondCode}, a cambio de unos ${totalDiff.toFixed(
+        0
+      )} € más.`;
+    }
+
+    return `Es la opción más equilibrada frente a ${secondCode}.`;
+  }, [flights, bestDestination, uiCriterion]);
+
+  const openAlternatives = () => {
+    setShowComplementary(true);
+    setShowBestDetails(false);
+    setTimeout(() => {
+      const el = document.getElementById("alternatives-panel");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const openBestDetails = () => {
+    setShowBestDetails(true);
+    setShowComplementary(false);
+    setTimeout(() => {
+      const el = document.getElementById("best-details-panel");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const cleanedOrigins = useMemo(() => {
+    return (origins || [])
+      .map((o) => String(o || "").trim().toUpperCase())
+      .filter(Boolean);
+  }, [origins]);
+
+  const primarySkyscannerAction = () => {
+    // Si hay un solo origen, abrimos directamente. Si hay varios, mostramos panel por origen.
+    if (!bestDestination) return;
+    const dep = bestDestination.bestDate || departureDate;
+    const dest = bestDestination.destination;
+
+    if (!cleanedOrigins.length || !dep || !dest) {
+      openBestDetails();
+      return;
+    }
+
+    if (cleanedOrigins.length === 1) {
+      const url = buildSkyscannerUrl({
+        origin: cleanedOrigins[0],
+        destination: dest,
+        departureDate: dep,
+        returnDate,
+        tripType,
+      });
+      if (url) window.open(url, "_blank", "noreferrer");
+      return;
+    }
+
+    openBestDetails();
+  };
+
+  const buildShareText = () => {
+    if (!bestDestination) return "";
+
+    const destCode = normalizeDestCode(bestDestination.destination);
+    const dep = bestDestination.bestDate || departureDate;
+
+    const lines = [];
+    lines.push(`FlyndMe · Destino recomendado: ${destCode}`);
+    lines.push(
+      `Total grupo: ${normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} € · Media: ${normalizeNumber(
+        bestDestination.averageCostPerTraveler
+      ).toFixed(2)} €`
+    );
+    lines.push(
+      `Equilibrio: ${normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100 · Dif. máx: ${normalizeNumber(
+        bestDestination.priceSpread
+      ).toFixed(2)} €`
+    );
+
+    if (tripType === "roundtrip") {
+      lines.push(`Fechas: ${dep} -> ${returnDate}`);
+    } else {
+      lines.push(`Fecha: ${dep}`);
+    }
+
+    if (Array.isArray(bestBreakdownFlights) && bestBreakdownFlights.length > 0) {
+      const byOrigin = bestBreakdownFlights
+        .map((f) => {
+          const o = String(f?.origin || "").toUpperCase();
+          const p = typeof f?.price === "number" ? `${f.price.toFixed(0)} €` : "sin datos";
+          return `${o}: ${p}`;
+        })
+        .join(" · ");
+      lines.push(`Por origen: ${byOrigin}`);
+    } else if (cleanedOrigins.length) {
+      lines.push(`Orígenes: ${cleanedOrigins.join(", ")}`);
+    }
+
+    lines.push("Enlaces de reserva: abre FlyndMe y usa 'Ver vuelos en Skyscanner'.");
+    return lines.join("\n");
+  };
+
+  const handleShare = async () => {
+    setShareStatus("");
+    const text = buildShareText();
+    if (!text) return;
+
+    const ok = await copyToClipboard(text);
+    setShareStatus(ok ? "ok" : "fail");
+    setTimeout(() => setShareStatus(""), 2500);
+  };
+
+  const handleToggleCriterion = (mode) => {
+    if (mode !== "total" && mode !== "fairness") return;
+    setUiCriterion(mode);
+
+    const next = bestByCriterion?.[mode] || null;
+    if (next) {
+      setBestDestination(next);
+      setShowBestDetails(false);
+      setShowComplementary(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setHasSearched(true);
+    setShareStatus("");
 
     setFlights([]);
     setBestDestination(null);
+    setBestByCriterion({ total: null, fairness: null });
 
     setShowComplementary(false);
     setShowBestDetails(false);
 
-    const cleanedOrigins = origins
-      .map((o) => o.trim().toUpperCase())
-      .filter(Boolean);
+    const o = cleanedOrigins;
 
-    if (!cleanedOrigins.length) {
+    if (!o.length) {
       setError("Introduce al menos un aeropuerto de origen.");
       setShowSearchPanel(true);
       return;
@@ -411,7 +658,6 @@ function App() {
       }
     }
 
-    // Validación presupuesto
     if (budgetEnabled) {
       const n = Number(maxBudgetPerTraveler);
       if (Number.isNaN(n) || n <= 0) {
@@ -425,9 +671,9 @@ function App() {
 
     try {
       const body = {
-        origins: cleanedOrigins,
+        origins: o,
         departureDate,
-        optimizeBy,
+        optimizeBy, // criterio usado en backend
         tripType,
         dateMode,
         flexDays: dateMode === "flex" ? flexDays : 0,
@@ -435,7 +681,6 @@ function App() {
 
       if (tripType === "roundtrip") body.returnDate = returnDate;
 
-      // ✅ Enviar presupuesto solo si está activado
       if (budgetEnabled) {
         body.maxBudgetPerTraveler = Number(maxBudgetPerTraveler);
       }
@@ -458,12 +703,26 @@ function App() {
       const flightsArr = Array.isArray(data.flights) ? data.flights : [];
       setFlights(flightsArr);
 
-      const best =
+      // Calculamos best para ambos criterios con los mismos resultados
+      const bestTotal =
+        computeBestDestinationFromFlights(flightsArr, "total") ||
         data.bestDestination ||
-        computeBestDestinationFromFlights(flightsArr, optimizeBy);
-      setBestDestination(best);
+        null;
 
-      if (!flightsArr.length || !best) {
+      const bestFair = computeBestDestinationFromFlights(flightsArr, "fairness");
+
+      const map = {
+        total: bestTotal,
+        fairness: bestFair,
+      };
+
+      setBestByCriterion(map);
+
+      // Destino mostrado: el del toggle UI (por defecto total)
+      const initial = map[uiCriterion] || map.total || data.bestDestination || null;
+      setBestDestination(initial);
+
+      if (!flightsArr.length || !initial) {
         setError(
           budgetEnabled
             ? "No se han encontrado resultados con ese presupuesto. Prueba a subir el máximo o quitar el filtro."
@@ -488,61 +747,6 @@ function App() {
     optimizeBy === "fairness"
       ? "equidad de precio entre el grupo"
       : "precio total del grupo";
-
-  const openAlternatives = () => {
-    setShowComplementary(true);
-    setShowBestDetails(false);
-    setTimeout(() => {
-      const el = document.getElementById("alternatives-panel");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
-
-  const openBestDetails = () => {
-    setShowBestDetails(true);
-    setShowComplementary(false);
-    setTimeout(() => {
-      const el = document.getElementById("best-details-panel");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
-
-  const normalizeNumber = (v) => Number(v || 0);
-
-  const clampBudget = (v) => {
-    const n = Number(v);
-    if (Number.isNaN(n)) return BUDGET_MIN;
-    return Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, n));
-  };
-
-  // ✅ intentamos sacar desglose por origen sin romper nada
-  const bestBreakdownFlights = useMemo(() => {
-    if (!bestDestination) return [];
-    if (Array.isArray(bestDestination.flights) && bestDestination.flights.length) {
-      return bestDestination.flights;
-    }
-    const dest = bestDestination.destination;
-    const match = Array.isArray(flights)
-      ? flights.find((f) => String(f?.destination || "") === String(dest || ""))
-      : null;
-    if (match && Array.isArray(match.flights)) return match.flights;
-    return [];
-  }, [bestDestination, flights]);
-
-  const travelerCount = useMemo(() => {
-    const n = (origins || [])
-      .map((o) => String(o || "").trim())
-      .filter(Boolean).length;
-    return n || 0;
-  }, [origins]);
-
-  const fairnessLabel = (score) => {
-    const s = Number(score || 0);
-    if (s >= 85) return "muy equilibrado";
-    if (s >= 65) return "bastante equilibrado";
-    if (s >= 45) return "algo desigual";
-    return "desigual";
-  };
 
   return (
     <div
@@ -578,7 +782,6 @@ function App() {
 
       {!hasStarted ? (
         <>
-          {/* LANDING PRINCIPAL */}
           <section className="py-5 border-bottom border-secondary">
             <div className="container" style={{ maxWidth: "1100px" }}>
               <div className="row align-items-center g-4">
@@ -637,7 +840,6 @@ function App() {
             </div>
           </section>
 
-          {/* FAQS */}
           <section className="py-5">
             <div className="container" style={{ maxWidth: "1100px" }}>
               <h2 className="h3 fw-bold mb-3">Preguntas frecuentes</h2>
@@ -758,7 +960,6 @@ function App() {
           <div className="container" style={{ maxWidth: "960px" }}>
             {hasResults && !showSearchPanel ? (
               <>
-                {/* ✅ RESULTADO MEJORADO */}
                 <section className="mb-3">
                   <div
                     className="card border-0"
@@ -770,29 +971,59 @@ function App() {
                   >
                     <div className="card-body p-4 p-md-5">
                       <div className="row g-4 align-items-stretch">
-                        {/* IZQUIERDA */}
                         <div className="col-md-7">
                           <div className="d-flex flex-column justify-content-between h-100">
                             <div>
                               <div
-                                className="text-uppercase"
-                                style={{
-                                  opacity: 0.9,
-                                  fontSize: 12,
-                                  letterSpacing: 0.4,
-                                }}
+                                className="d-flex flex-wrap align-items-center justify-content-between gap-2"
+                                style={{ marginBottom: 10 }}
                               >
-                                Recomendación para el grupo
+                                <div
+                                  className="text-uppercase"
+                                  style={{
+                                    opacity: 0.9,
+                                    fontSize: 12,
+                                    letterSpacing: 0.4,
+                                  }}
+                                >
+                                  Recomendación para el grupo
+                                </div>
+
+                                {/* TOGGLE UI CRITERIO (SIN NUEVA BÚSQUEDA) */}
+                                <div className="btn-group btn-group-sm" role="group">
+                                  <button
+                                    type="button"
+                                    className={`btn ${
+                                      uiCriterion === "total"
+                                        ? "btn-light"
+                                        : "btn-outline-light"
+                                    }`}
+                                    onClick={() => handleToggleCriterion("total")}
+                                  >
+                                    Mejor precio total
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`btn ${
+                                      uiCriterion === "fairness"
+                                        ? "btn-light"
+                                        : "btn-outline-light"
+                                    }`}
+                                    onClick={() => handleToggleCriterion("fairness")}
+                                  >
+                                    Más equilibrado
+                                  </button>
+                                </div>
                               </div>
 
-                              <h2 className="display-6 fw-bold mt-2 mb-2">
+                              <h2 className="display-6 fw-bold mt-1 mb-2">
                                 {bestDestination.destination}
                               </h2>
 
-                              <div className="small mb-3" style={{ opacity: 0.95 }}>
+                              <div className="small mb-2" style={{ opacity: 0.95 }}>
                                 Basado en{" "}
                                 <strong>
-                                  {optimizeBy === "fairness"
+                                  {uiCriterion === "fairness"
                                     ? "equilibrio entre viajeros"
                                     : "precio total del grupo"}
                                 </strong>
@@ -810,7 +1041,23 @@ function App() {
                                 )}
                               </div>
 
-                              {/* PRECIO PROTAGONISTA */}
+                              {/* POR QUÉ ESTE DESTINO */}
+                              {bestExplanation && (
+                                <div
+                                  className="small mb-3"
+                                  style={{
+                                    background: "rgba(255,255,255,0.14)",
+                                    border: "1px solid rgba(255,255,255,0.18)",
+                                    padding: "10px 12px",
+                                    borderRadius: 10,
+                                    opacity: 0.98,
+                                  }}
+                                >
+                                  <span className="fw-semibold">Por qué este destino:</span>{" "}
+                                  {bestExplanation}
+                                </div>
+                              )}
+
                               <div className="mb-3">
                                 <div
                                   className="fw-semibold"
@@ -838,7 +1085,6 @@ function App() {
                                 </div>
                               </div>
 
-                              {/* DESGLOSE POR ORIGEN (SI EXISTE) */}
                               {Array.isArray(bestBreakdownFlights) &&
                                 bestBreakdownFlights.length > 0 && (
                                   <div className="mb-3">
@@ -878,7 +1124,6 @@ function App() {
                                   </div>
                                 )}
 
-                              {/* MÉTRICAS SECUNDARIAS (ORDENADAS, SIN RUIDO) */}
                               <div className="row g-2 mt-1">
                                 <div className="col-12 col-lg-6">
                                   <div
@@ -974,20 +1219,19 @@ function App() {
                                 </div>
                               </div>
 
-                              {/* NOTA DE CONFIANZA */}
                               <div className="small mt-3" style={{ opacity: 0.9 }}>
                                 Precios estimados con la API de Amadeus. Pueden variar al reservar.
                               </div>
                             </div>
 
-                            {/* CTAs (SIMPLIFICADOS) */}
+                            {/* CTAs: principal claro + secundarios */}
                             <div className="d-flex flex-wrap gap-2 mt-4">
                               <button
                                 type="button"
                                 className="btn btn-light fw-semibold"
-                                onClick={openBestDetails}
+                                onClick={primarySkyscannerAction}
                               >
-                                Ver vuelos y detalles
+                                Ver vuelos en Skyscanner
                               </button>
 
                               <button
@@ -1000,17 +1244,35 @@ function App() {
 
                               <button
                                 type="button"
+                                className="btn btn-outline-light"
+                                onClick={handleShare}
+                              >
+                                Compartir
+                              </button>
+
+                              <button
+                                type="button"
                                 className="btn btn-link text-white text-decoration-none"
                                 onClick={resetToSearch}
                                 style={{ opacity: 0.95 }}
                               >
                                 Cambiar búsqueda
                               </button>
+
+                              {shareStatus === "ok" && (
+                                <div className="small" style={{ opacity: 0.95, paddingTop: 8 }}>
+                                  Copiado
+                                </div>
+                              )}
+                              {shareStatus === "fail" && (
+                                <div className="small" style={{ opacity: 0.95, paddingTop: 8 }}>
+                                  No se pudo copiar
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        {/* DERECHA (IMAGEN) */}
                         <div className="col-md-5">
                           <div
                             className="h-100"
@@ -1061,7 +1323,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* ✅ Acciones secundarias limpias */}
                 <section className="mb-4">
                   <div className="d-flex flex-wrap gap-2 align-items-center">
                     <button
@@ -1126,7 +1387,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* ENLACES A SKYSCANNER (CÓDIGO DE CIUDAD) */}
                         <div className="mt-3">
                           <div className="text-secondary small mb-2">
                             Abrir en Skyscanner por origen
@@ -1136,11 +1396,11 @@ function App() {
                             const dep = bestDestination?.bestDate || departureDate;
                             const dest = bestDestination?.destination;
 
-                            const cleanedOrigins = (origins || [])
-                              .map((o) => String(o || "").trim().toUpperCase())
+                            const o = (origins || [])
+                              .map((x) => String(x || "").trim().toUpperCase())
                               .filter(Boolean);
 
-                            if (!cleanedOrigins.length || !dest || !dep) {
+                            if (!o.length || !dest || !dep) {
                               return (
                                 <div className="text-secondary small">
                                   No hay datos suficientes para generar enlaces.
@@ -1150,9 +1410,9 @@ function App() {
 
                             return (
                               <div className="d-flex flex-wrap gap-2">
-                                {cleanedOrigins.map((o) => {
+                                {o.map((origin) => {
                                   const url = buildSkyscannerUrl({
-                                    origin: o,
+                                    origin,
                                     destination: dest,
                                     departureDate: dep,
                                     returnDate,
@@ -1161,7 +1421,7 @@ function App() {
 
                                   return (
                                     <a
-                                      key={o}
+                                      key={origin}
                                       href={url || "#"}
                                       target="_blank"
                                       rel="noreferrer"
@@ -1176,7 +1436,7 @@ function App() {
                                         if (!url) e.preventDefault();
                                       }}
                                     >
-                                      Ver vuelos {o} → {normalizeDestCode(dest)}
+                                      Ver vuelos {origin} → {normalizeDestCode(dest)}
                                     </a>
                                   );
                                 })}
@@ -1188,30 +1448,6 @@ function App() {
                         <div className="text-secondary small mt-2">
                           Skyscanner abre un enlace por origen (no existe un enlace único multi-origen).
                         </div>
-
-                        {Array.isArray(bestBreakdownFlights) &&
-                          bestBreakdownFlights.length > 0 && (
-                            <div className="mt-3">
-                              <div className="text-secondary small mb-2">
-                                Resumen por origen
-                              </div>
-                              <div className="d-flex flex-wrap gap-2">
-                                {bestBreakdownFlights.map((f, i) => (
-                                  <span key={i} className="badge bg-light text-dark">
-                                    <span className="fw-semibold">
-                                      {String(f.origin || "").toUpperCase()}
-                                    </span>{" "}
-                                    ·{" "}
-                                    <span className="fw-semibold">
-                                      {typeof f.price === "number"
-                                        ? `${f.price.toFixed(0)} €`
-                                        : "sin datos"}
-                                    </span>
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                       </div>
                     </div>
                   </section>
@@ -1320,7 +1556,6 @@ function App() {
                           </button>
                         </div>
 
-                        {/* SOLO IDA vs IDA Y VUELTA */}
                         <div className="mb-3">
                           <label className="form-label fw-semibold">
                             Tipo de viaje
@@ -1366,7 +1601,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* FECHAS EXACTAS vs FLEX */}
                         <div className="mb-3">
                           <label className="form-label fw-semibold">Fechas</label>
                           <div className="d-flex flex-wrap gap-3">
@@ -1443,7 +1677,6 @@ function App() {
                           )}
                         </div>
 
-                        {/* ✅ PRESUPUESTO */}
                         <div className="mb-3">
                           <div className="d-flex justify-content-between align-items-center">
                             <label className="form-label fw-semibold mb-0">
@@ -1529,7 +1762,10 @@ function App() {
                                 id="optTotal"
                                 value="total"
                                 checked={optimizeBy === "total"}
-                                onChange={(e) => setOptimizeBy(e.target.value)}
+                                onChange={(e) => {
+                                  setOptimizeBy(e.target.value);
+                                  setUiCriterion(e.target.value);
+                                }}
                                 disabled={loading}
                               />
                               <label className="form-check-label" htmlFor="optTotal">
@@ -1545,7 +1781,10 @@ function App() {
                                 id="optFairness"
                                 value="fairness"
                                 checked={optimizeBy === "fairness"}
-                                onChange={(e) => setOptimizeBy(e.target.value)}
+                                onChange={(e) => {
+                                  setOptimizeBy(e.target.value);
+                                  setUiCriterion(e.target.value);
+                                }}
                                 disabled={loading}
                               />
                               <label className="form-check-label" htmlFor="optFairness">
