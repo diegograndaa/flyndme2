@@ -937,352 +937,269 @@ function App() {
             {hasResults && !showSearchPanel ? (
               <>
                 {/* HERO RESULTADO PRINCIPAL */}
-                <section className="mb-3">
-                  <div
-                    className="card border-0"
-                    style={{
-                      background: "linear-gradient(135deg, #0B5ED7 0%, #0A4FB5 100%)",
-                      color: "white",
-                      boxShadow: "0 18px 40px rgba(11,94,215,0.25)",
-                    }}
+                {/* RESULTADO PRINCIPAL */}
+<section className="mb-3">
+  <div className="card border-0 fm-hero">
+    <div className="card-body p-4 p-md-5">
+      <div className="row g-4 align-items-stretch">
+        {/* LEFT */}
+        <div className="col-md-7">
+          <div className="d-flex flex-column justify-content-between h-100">
+            <div>
+              {/* header row */}
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <div className="fm-hero-kicker">RECOMENDACIÓN PARA EL GRUPO</div>
+
+                {/* TOGGLE UI CRITERIO */}
+                <div className="btn-group btn-group-sm" role="group">
+                  <button
+                    type="button"
+                    className={`btn ${uiCriterion === "total" ? "btn-light" : "btn-outline-light"}`}
+                    onClick={() => handleToggleCriterion("total")}
                   >
-                    <div className="card-body p-4 p-md-5">
-                      <div className="row g-4 align-items-stretch">
-                        <div className="col-md-7">
-                          <div className="d-flex flex-column justify-content-between h-100">
-                            <div>
-                              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                                <div className="text-uppercase" style={{ opacity: 0.9, fontSize: 12, letterSpacing: 0.4 }}>
-                                  Recomendación para el grupo
-                                </div>
+                    Mejor precio total
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${uiCriterion === "fairness" ? "btn-light" : "btn-outline-light"}`}
+                    onClick={() => handleToggleCriterion("fairness")}
+                  >
+                    Más equilibrado
+                  </button>
+                </div>
+              </div>
 
-                                {/* Toggle UI criterio */}
-                                <div className="btn-group btn-group-sm" role="group">
-                                  <button
-                                    type="button"
-                                    className={`btn ${uiCriterion === "total" ? "btn-light" : "btn-outline-light"}`}
-                                    onClick={() => handleToggleCriterion("total")}
-                                  >
-                                    Mejor precio total
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`btn ${uiCriterion === "fairness" ? "btn-light" : "btn-outline-light"}`}
-                                    onClick={() => handleToggleCriterion("fairness")}
-                                  >
-                                    Más equilibrado
-                                  </button>
-                                </div>
-                              </div>
+              {/* destination + tags */}
+              <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <h2 className="fm-hero-dest mb-0">{bestDestination.destination}</h2>
 
-                              {/* Título + chips */}
-                              <div className="d-flex flex-wrap align-items-end gap-2">
-                                <h2 className="display-6 fw-bold mb-0">{heroDestCode}</h2>
-                                <span
-                                  className="badge"
-                                  style={{
-                                    background: "rgba(255,255,255,0.14)",
-                                    border: "1px solid rgba(255,255,255,0.18)",
-                                    padding: "8px 10px",
-                                  }}
-                                >
-                                  {tripType === "roundtrip" ? "Ida y vuelta" : "Solo ida"}
-                                </span>
+                <span className="fm-chip">
+                  {tripType === "roundtrip" ? "Ida y vuelta" : "Solo ida"}
+                </span>
 
-                                <span
-                                  className="badge"
-                                  style={{
-                                    background: "rgba(255,255,255,0.14)",
-                                    border: "1px solid rgba(255,255,255,0.18)",
-                                    padding: "8px 10px",
-                                  }}
-                                >
-                                  {dateMode === "flex"
-                                    ? `Flex ±${flexDays}`
-                                    : departureDate
-                                    ? formatDateEs(departureDate)
-                                    : "Fecha N/A"}
-                                  {tripType === "roundtrip" && returnDate ? ` · ${formatDateEs(returnDate)}` : ""}
-                                </span>
+                <span className="fm-chip">
+                  {dateMode === "flex"
+                    ? `${formatDateEs(bestDestination.bestDate || departureDate) || (bestDestination.bestDate || departureDate)} (±${flexDays} días)`
+                    : formatDateEs(departureDate) || departureDate}
+                </span>
+              </div>
 
-                                {budgetEnabled && (
-                                  <span
-                                    className="badge"
-                                    style={{
-                                      background: "rgba(255,255,255,0.14)",
-                                      border: "1px solid rgba(255,255,255,0.18)",
-                                      padding: "8px 10px",
-                                    }}
-                                  >
-                                    Presupuesto: {formatEur(Number(maxBudgetPerTraveler || 0), 0)} / persona
-                                  </span>
-                                )}
-                              </div>
+              <div className="fm-hero-sub mb-3">
+                {uiCriterion === "fairness"
+                  ? "Esta es la opción más equilibrada para que todos paguen de forma similar."
+                  : "Esta es la opción más barata para el grupo con los criterios actuales."}
+                {budgetEnabled ? (
+                  <>
+                    {" "}Presupuesto activado: máximo{" "}
+                    <strong>{Number(maxBudgetPerTraveler).toFixed(0)} EUR</strong> por persona.
+                  </>
+                ) : null}
+              </div>
 
-                              <div className="small mt-2" style={{ opacity: 0.95 }}>
-                                Basado en{" "}
-                                <strong>
-                                  {uiCriterion === "fairness" ? "equilibrio entre viajeros" : "precio total del grupo"}
-                                </strong>
-                                .
-                              </div>
+              {/* origins */}
+              {cleanedOrigins?.length > 0 && (
+                <div className="mb-3">
+                  <div className="fm-hero-mini-title">Orígenes del grupo</div>
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {cleanedOrigins.map((o) => (
+                      <span key={o} className="fm-pill-origin">{o}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                              {/* Orígenes (chips) */}
-                              {cleanedOrigins.length > 0 && (
-                                <div className="mt-3">
-                                  <div className="fw-semibold" style={{ fontSize: 12, opacity: 0.95 }}>
-                                    Orígenes del grupo
-                                  </div>
-                                  <div className="d-flex flex-wrap gap-2 mt-2">
-                                    {cleanedOrigins.map((o) => (
-                                      <span
-                                        key={o}
-                                        className="badge"
-                                        style={{
-                                          background: "rgba(255,255,255,0.14)",
-                                          border: "1px solid rgba(255,255,255,0.18)",
-                                          padding: "8px 10px",
-                                        }}
-                                      >
-                                        {o}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Por qué */}
-                              {bestExplanation && (
-                                <div
-                                  className="small mt-3"
-                                  style={{
-                                    background: "rgba(255,255,255,0.14)",
-                                    border: "1px solid rgba(255,255,255,0.18)",
-                                    padding: "10px 12px",
-                                    borderRadius: 10,
-                                    opacity: 0.98,
-                                  }}
-                                >
-                                  <span className="fw-semibold">Por qué este destino:</span> {bestExplanation}
-                                </div>
-                              )}
-
-                              {/* Precio principal */}
-                              <div className="mt-4">
-                                <div className="fw-semibold" style={{ fontSize: 12, opacity: 0.95 }}>
-                                  Coste total estimado del grupo
-                                </div>
-
-                                <div className="d-flex align-items-end gap-2 flex-wrap">
-                                  <div className="fw-bold" style={{ fontSize: 44, lineHeight: 1 }}>
-                                    {formatEur(normalizeNumber(bestDestination.totalCostEUR), 0)}
-                                  </div>
-                                  <div className="small" style={{ opacity: 0.95, paddingBottom: 8 }}>
-                                    {travelerCount > 0
-                                      ? `para ${travelerCount} viajero${travelerCount > 1 ? "s" : ""}`
-                                      : "para el grupo"}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Coste por origen */}
-                              {Array.isArray(bestBreakdownFlights) && bestBreakdownFlights.length > 0 && (
-                                <div className="mt-3">
-                                  <div className="fw-semibold" style={{ fontSize: 12, opacity: 0.95 }}>
-                                    Coste por origen
-                                  </div>
-                                  <div className="d-flex flex-wrap gap-2 mt-2">
-                                    {bestBreakdownFlights.map((f, i) => (
-                                      <span
-                                        key={i}
-                                        className="badge bg-light text-dark"
-                                        style={{
-                                          border: "1px solid rgba(255,255,255,0.35)",
-                                          padding: "8px 10px",
-                                        }}
-                                      >
-                                        <span className="fw-semibold">{String(f.origin || "").toUpperCase()}</span>
-                                        <span style={{ opacity: 0.7 }}> → </span>
-                                        <span className="fw-semibold">{heroDestCode}</span>
-                                        <span style={{ opacity: 0.75 }}> · </span>
-                                        <span className="fw-semibold">
-                                          {typeof f.price === "number" ? formatEur(f.price, 0) : "sin datos"}
-                                        </span>
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* KPIs */}
-                              <div className="row g-2 mt-3">
-                                <div className="col-12 col-lg-6">
-                                  <div
-                                    className="p-3 rounded-3"
-                                    style={{
-                                      background: "rgba(255,255,255,0.12)",
-                                      border: "1px solid rgba(255,255,255,0.18)",
-                                    }}
-                                  >
-                                    <div className="small" style={{ opacity: 0.9 }}>
-                                      Media por persona
-                                    </div>
-                                    <div className="fw-bold">{formatEur(normalizeNumber(bestDestination.averageCostPerTraveler), 0)}</div>
-                                  </div>
-                                </div>
-
-                                <div className="col-12 col-lg-6">
-                                  <div
-                                    className="p-3 rounded-3"
-                                    style={{
-                                      background: "rgba(255,255,255,0.12)",
-                                      border: "1px solid rgba(255,255,255,0.18)",
-                                    }}
-                                  >
-                                    <div className="small" style={{ opacity: 0.9 }}>
-                                      Diferencia máxima entre viajeros
-                                    </div>
-                                    <div className="fw-bold">{formatEur(normalizeNumber(bestDestination.priceSpread), 0)}</div>
-                                  </div>
-                                </div>
-
-                                <div className="col-12">
-                                  <div
-                                    className="p-3 rounded-3"
-                                    style={{
-                                      background: "rgba(255,255,255,0.12)",
-                                      border: "1px solid rgba(255,255,255,0.18)",
-                                    }}
-                                  >
-                                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                                      <div>
-                                        <div className="small" style={{ opacity: 0.9 }}>
-                                          Equilibrio entre viajeros
-                                        </div>
-                                        <div className="fw-bold">
-                                          {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100{" "}
-                                          <span className="fw-normal" style={{ opacity: 0.95 }}>
-                                            ({fairnessLabel(bestDestination.fairnessScore)})
-                                          </span>
-                                        </div>
-                                        <div className="small" style={{ opacity: 0.9 }}>
-                                          Cuanto más alto, más parecido paga cada viajero.
-                                        </div>
-                                      </div>
-
-                                      <div className="small" style={{ opacity: 0.95 }}>
-                                        <div>
-                                          <strong>Salida:</strong>{" "}
-                                          {dateMode === "flex"
-                                            ? `mejor fecha: ${
-                                                formatDateEs(bestDestination.bestDate || departureDate) ||
-                                                (bestDestination.bestDate || departureDate)
-                                              } (flex ±${flexDays})`
-                                            : formatDateEs(departureDate) || departureDate}
-                                        </div>
-                                        {tripType === "roundtrip" && (
-                                          <div>
-                                            <strong>Vuelta:</strong> {formatDateEs(returnDate) || returnDate}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="small mt-3" style={{ opacity: 0.9 }}>
-                                Precios estimados con Amadeus. Pueden variar al reservar.
-                              </div>
-                            </div>
-
-                            {/* CTAs */}
-                            <div className="d-flex flex-wrap gap-2 mt-4">
-                              <button type="button" className="btn btn-light fw-semibold" onClick={primarySkyscannerAction}>
-                                Ver vuelos en Skyscanner
-                              </button>
-
-                              <button type="button" className="btn btn-outline-light" onClick={openAlternatives}>
-                                Ver otros destinos
-                              </button>
-
-                              <button type="button" className="btn btn-outline-light" onClick={handleShare}>
-                                Compartir
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn btn-link text-white text-decoration-none"
-                                onClick={resetToSearch}
-                                style={{ opacity: 0.95 }}
-                              >
-                                Cambiar búsqueda
-                              </button>
-
-                              {shareStatus === "ok" && (
-                                <div className="small" style={{ opacity: 0.95, paddingTop: 8 }}>
-                                  Copiado
-                                </div>
-                              )}
-                              {shareStatus === "fail" && (
-                                <div className="small" style={{ opacity: 0.95, paddingTop: 8 }}>
-                                  No se pudo copiar
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Imagen */}
-                        <div className="col-md-5">
-                          <div
-                            className="h-100"
-                            style={{
-                              borderRadius: 16,
-                              overflow: "hidden",
-                              border: "1px solid rgba(255,255,255,0.25)",
-                              position: "relative",
-                              minHeight: 260,
-                              backgroundColor: "rgba(255,255,255,0.10)",
-                            }}
-                          >
-                            <img
-                              src={heroImage}
-                              alt={`Foto de ${heroDestCode}`}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = getPlaceholderImage();
-                              }}
-                            />
-
-                            <div
-                              style={{
-                                position: "absolute",
-                                inset: 0,
-                                background: "linear-gradient(180deg, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.42) 100%)",
-                              }}
-                            />
-
-                            <div
-                              style={{
-                                position: "absolute",
-                                left: 12,
-                                bottom: 10,
-                                right: 12,
-                                fontSize: 12,
-                                opacity: 0.95,
-                              }}
-                            >
-                              Imagen orientativa del destino
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+              {/* WHY THIS DEST */}
+              {bestExplanation && (
+                <div className="fm-insight mb-3">
+                  <div className="fm-insight-badge">✓</div>
+                  <div>
+                    <div className="fm-insight-title">Por qué este destino</div>
+                    <div className="fm-insight-text">
+                      {uiCriterion === "total"
+                        ? `✔️ ${normalizeDestCode(bestDestination.destination)} es la opción más barata para el grupo. ${bestExplanation}`
+                        : `⚖️ ${normalizeDestCode(bestDestination.destination)} es la opción más equilibrada para el grupo. ${bestExplanation}`}
                     </div>
                   </div>
-                </section>
+                </div>
+              )}
+
+              {/* PRICE */}
+              <div className="mb-3">
+                <div className="fm-hero-mini-title">Coste total estimado del grupo</div>
+
+                <div className="d-flex align-items-end gap-2 flex-wrap">
+                  <div className="fm-price">
+                    {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} €
+                  </div>
+                  <div className="fm-price-sub">
+                    {travelerCount > 0
+                      ? `para ${travelerCount} viajero${travelerCount > 1 ? "s" : ""}`
+                      : "para el grupo"}
+                  </div>
+                </div>
+
+                <div className="fm-price-note mt-1">
+                  Media por persona:{" "}
+                  <strong>{normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} €</strong>
+                </div>
+              </div>
+
+              {/* Breakdown */}
+              {Array.isArray(bestBreakdownFlights) && bestBreakdownFlights.length > 0 && (
+                <div className="mb-3">
+                  <div className="fm-hero-mini-title">Coste por origen</div>
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {bestBreakdownFlights.map((f, i) => (
+                      <span key={i} className="fm-breakdown">
+                        <strong>{String(f.origin || "").toUpperCase()}</strong>
+                        {" "}→{" "}
+                        <strong>{normalizeDestCode(bestDestination.destination)}</strong>
+                        {" "}·{" "}
+                        <strong>
+                          {typeof f.price === "number" ? `${f.price.toFixed(0)} €` : "sin datos"}
+                        </strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Metrics */}
+              <div className="row g-2 mt-1">
+                <div className="col-12 col-lg-6">
+                  <div className="fm-metric">
+                    <div className="fm-metric-title">Diferencia máxima</div>
+                    <div className="fm-metric-value">
+                      {normalizeNumber(bestDestination.priceSpread).toFixed(2)} €
+                    </div>
+                    <div className="fm-metric-sub">
+                      La mayor diferencia de precio dentro del grupo.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-lg-6">
+                  <div className="fm-metric">
+                    <div className="fm-metric-title">Equidad entre viajeros</div>
+                    <div className="d-flex align-items-center justify-content-between gap-2">
+                      <div className="fm-metric-value">
+                        {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100
+                      </div>
+                      <div className="fm-metric-tag">
+                        {fairnessLabel(bestDestination.fairnessScore)}
+                      </div>
+                    </div>
+
+                    {/* visual bar */}
+                    <div className="fm-bar mt-2">
+                      <div
+                        className="fm-bar-fill"
+                        style={{
+                          width: `${Math.max(
+                            0,
+                            Math.min(100, normalizeNumber(bestDestination.fairnessScore))
+                          )}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="fm-metric-sub mt-2">
+                      Cuanto más alto, más parecido paga cada viajero.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* “smart engine” line */}
+              <div className="fm-engine mt-3">
+                FlyndMe ha analizado{" "}
+                <strong>{Array.isArray(flights) ? flights.length : 0}</strong>{" "}
+                destinos posibles con tus criterios para recomendarte esta opción.
+              </div>
+
+              {/* CTA row */}
+              <div className="d-flex flex-wrap gap-2 mt-4">
+                {/* Primary */}
+                <button
+                  type="button"
+                  className="btn btn-light fw-semibold fm-cta-primary"
+                  onClick={primarySkyscannerAction}
+                >
+                  Ver vuelos en Skyscanner
+                </button>
+
+                {/* Secondary */}
+                <button
+                  type="button"
+                  className="btn btn-outline-light fm-cta-secondary"
+                  onClick={handleShare}
+                >
+                  Compartir
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-outline-light fm-cta-secondary"
+                  onClick={openAlternatives}
+                >
+                  Ver otros destinos
+                </button>
+
+                {/* Tertiary */}
+                <button
+                  type="button"
+                  className="btn btn-link text-white text-decoration-none fm-cta-tertiary"
+                  onClick={resetToSearch}
+                >
+                  Cambiar búsqueda
+                </button>
+
+                {shareStatus === "ok" && <div className="fm-toast">Copiado</div>}
+                {shareStatus === "fail" && <div className="fm-toast">No se pudo copiar</div>}
+              </div>
+
+              {/* Next step */}
+              <div className="fm-nextstep mt-3">
+                Siguiente paso: abre Skyscanner y reserva cada origen por separado.
+              </div>
+
+              <div className="fm-disclaimer mt-2">
+                Precios estimados con la API de Amadeus. Pueden variar al reservar.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="col-md-5">
+          <div className="fm-hero-image">
+            <img
+              src={getDestinationLocalImage(bestDestination.destination)}
+              alt={`Foto de ${normalizeDestCode(bestDestination.destination)}`}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = getPlaceholderImage();
+              }}
+            />
+
+            <div className="fm-hero-image-overlay" />
+
+            <div className="fm-hero-image-label">
+              <div className="fm-hero-image-dest">
+                {normalizeDestCode(bestDestination.destination)}
+              </div>
+              <div className="fm-hero-image-sub">
+                Imagen orientativa del destino
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
                 <section className="mb-4">
                   <div className="d-flex flex-wrap gap-2 align-items-center">
