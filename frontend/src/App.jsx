@@ -11,6 +11,19 @@ const API_BASE =
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
+const DESTINATION_CODE_MAP = {
+  Paris: "PAR",
+  London: "LON",
+  Rome: "ROM",
+  Barcelona: "BCN",
+  Berlin: "BER",
+  Milan: "MIL",
+  Lisbon: "LIS",
+  Amsterdam: "AMS",
+  Dublin: "DUB",
+  Vienna: "VIE",
+};
+
 const AVAILABLE_AIRPORTS = [
   { code: "MAD", city: "Madrid", country: "España" },
   { code: "BCN", city: "Barcelona", country: "España" },
@@ -54,6 +67,62 @@ function getDestinationLocalImage(destCode) {
 
 function getPlaceholderImage() {
   return `${getBaseUrl()}destinations/placeholder.jpg`;
+}
+
+function formatDateEs(yyyyMmDd) {
+  if (!yyyyMmDd) return "";
+  const d = new Date(`${yyyyMmDd}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return yyyyMmDd;
+  return d.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/* ✅ SKYSCANNER (CÓDIGO DE CIUDAD) */
+function toSkyscannerDate(yyyyMmDd) {
+  // Skyscanner acepta YYYYMMDD (sin guiones)
+  if (!yyyyMmDd) return "";
+  return String(yyyyMmDd).replaceAll("-", "");
+}
+
+function normalizeIataForSkyscanner(code) {
+  // Con códigos de ciudad: ROM, LON, PAR...
+  return String(code || "").trim().toLowerCase();
+}
+
+function buildSkyscannerUrl({
+  origin,
+  destination,
+  departureDate,
+  returnDate,
+  tripType,
+}) {
+  const from = normalizeIataForSkyscanner(origin);
+  const to = normalizeIataForSkyscanner(destination);
+
+  const dep = toSkyscannerDate(departureDate);
+  const ret = tripType === "roundtrip" ? toSkyscannerDate(returnDate) : "";
+
+  if (!from || !to || !dep) return "";
+
+  // One-way:   https://www.skyscanner.es/transport/flights/{from}/{to}/{dep}/
+  // Roundtrip: https://www.skyscanner.es/transport/flights/{from}/{to}/{dep}/{ret}/
+  const base = "https://www.skyscanner.es/transport/flights";
+  const path =
+    tripType === "roundtrip" && ret
+      ? `${base}/${from}/${to}/${dep}/${ret}/`
+      : `${base}/${from}/${to}/${dep}/`;
+
+  // Parámetros mínimos, sin complicar
+  const params = new URLSearchParams({
+    adultsv2: "1",
+    cabinclass: "economy",
+    rtn: tripType === "roundtrip" ? "1" : "0",
+  });
+
+  return `${path}?${params.toString()}`;
 }
 
 class ErrorBoundary extends React.Component {
@@ -286,6 +355,8 @@ function App() {
       bestDate: best.bestDate || departureDate || "",
       bestReturnDate:
         best.bestReturnDate || (tripType === "roundtrip" ? returnDate : null),
+      // ✅ si el backend trae desglose por origen, lo conservamos
+      flights: Array.isArray(best.flights) ? best.flights : null,
     };
   };
 
@@ -442,6 +513,35 @@ function App() {
     const n = Number(v);
     if (Number.isNaN(n)) return BUDGET_MIN;
     return Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, n));
+  };
+
+  // ✅ intentamos sacar desglose por origen sin romper nada
+  const bestBreakdownFlights = useMemo(() => {
+    if (!bestDestination) return [];
+    if (Array.isArray(bestDestination.flights) && bestDestination.flights.length) {
+      return bestDestination.flights;
+    }
+    const dest = bestDestination.destination;
+    const match = Array.isArray(flights)
+      ? flights.find((f) => String(f?.destination || "") === String(dest || ""))
+      : null;
+    if (match && Array.isArray(match.flights)) return match.flights;
+    return [];
+  }, [bestDestination, flights]);
+
+  const travelerCount = useMemo(() => {
+    const n = (origins || [])
+      .map((o) => String(o || "").trim())
+      .filter(Boolean).length;
+    return n || 0;
+  }, [origins]);
+
+  const fairnessLabel = (score) => {
+    const s = Number(score || 0);
+    if (s >= 85) return "muy equilibrado";
+    if (s >= 65) return "bastante equilibrado";
+    if (s >= 45) return "algo desigual";
+    return "desigual";
   };
 
   return (
@@ -658,6 +758,7 @@ function App() {
           <div className="container" style={{ maxWidth: "960px" }}>
             {hasResults && !showSearchPanel ? (
               <>
+                {/* ✅ RESULTADO MEJORADO */}
                 <section className="mb-3">
                   <div
                     className="card border-0"
@@ -668,8 +769,8 @@ function App() {
                     }}
                   >
                     <div className="card-body p-4 p-md-5">
-                      {/* ✅ CAMBIO: imagen local con fallback */}
-                      <div className="row g-3 align-items-stretch">
+                      <div className="row g-4 align-items-stretch">
+                        {/* IZQUIERDA */}
                         <div className="col-md-7">
                           <div className="d-flex flex-column justify-content-between h-100">
                             <div>
@@ -681,64 +782,212 @@ function App() {
                                   letterSpacing: 0.4,
                                 }}
                               >
-                                Mejor destino según{" "}
-                                {optimizeBy === "fairness" ? "equidad" : "precio total"}
+                                Recomendación para el grupo
                               </div>
 
-                              <h2 className="display-6 fw-bold mt-2 mb-3">
+                              <h2 className="display-6 fw-bold mt-2 mb-2">
                                 {bestDestination.destination}
                               </h2>
 
-                              <div className="d-flex flex-wrap gap-2">
-                                <span className="badge bg-light text-dark">
-                                  Coste total:{" "}
-                                  {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} EUR
-                                </span>
-                                <span className="badge bg-light text-dark">
-                                  Media por persona:{" "}
-                                  {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} EUR
-                                </span>
-                                <span className="badge bg-light text-dark">
-                                  Equidad:{" "}
-                                  {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100
-                                </span>
-                                <span className="badge bg-light text-dark">
-                                  Diferencia máx.:{" "}
-                                  {normalizeNumber(bestDestination.priceSpread).toFixed(2)} EUR
-                                </span>
-
-                                {budgetEnabled && (
-                                  <span className="badge bg-warning text-dark">
-                                    Presupuesto máx/persona: {Number(maxBudgetPerTraveler).toFixed(0)} EUR
-                                  </span>
+                              <div className="small mb-3" style={{ opacity: 0.95 }}>
+                                Basado en{" "}
+                                <strong>
+                                  {optimizeBy === "fairness"
+                                    ? "equilibrio entre viajeros"
+                                    : "precio total del grupo"}
+                                </strong>
+                                {budgetEnabled ? (
+                                  <>
+                                    {" "}
+                                    y con presupuesto máximo de{" "}
+                                    <strong>
+                                      {Number(maxBudgetPerTraveler).toFixed(0)} EUR
+                                    </strong>{" "}
+                                    por persona.
+                                  </>
+                                ) : (
+                                  "."
                                 )}
                               </div>
 
-                              <div className="mt-3 small" style={{ opacity: 0.95 }}>
-                                <div>
-                                  <strong>Viaje:</strong>{" "}
-                                  {tripType === "roundtrip" ? "Ida y vuelta" : "Solo ida"}
+                              {/* PRECIO PROTAGONISTA */}
+                              <div className="mb-3">
+                                <div
+                                  className="fw-semibold"
+                                  style={{ fontSize: 12, opacity: 0.95 }}
+                                >
+                                  Precio total estimado
                                 </div>
-                                <div>
-                                  <strong>Fechas:</strong>{" "}
-                                  {dateMode === "flex"
-                                    ? `Flexibles (±${flexDays} días). Mejor fecha: ${
-                                        bestDestination.bestDate || departureDate
-                                      }`
-                                    : `Concretas (${departureDate}${
-                                        tripType === "roundtrip" ? ` → ${returnDate}` : ""
-                                      })`}
+
+                                <div className="d-flex align-items-end gap-2 flex-wrap">
+                                  <div
+                                    className="fw-bold"
+                                    style={{ fontSize: 44, lineHeight: 1 }}
+                                  >
+                                    {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} €
+                                  </div>
+
+                                  <div
+                                    className="small"
+                                    style={{ opacity: 0.95, paddingBottom: 8 }}
+                                  >
+                                    {travelerCount > 0
+                                      ? `para ${travelerCount} viajero${travelerCount > 1 ? "s" : ""}`
+                                      : "para el grupo"}
+                                  </div>
                                 </div>
+                              </div>
+
+                              {/* DESGLOSE POR ORIGEN (SI EXISTE) */}
+                              {Array.isArray(bestBreakdownFlights) &&
+                                bestBreakdownFlights.length > 0 && (
+                                  <div className="mb-3">
+                                    <div
+                                      className="fw-semibold"
+                                      style={{ fontSize: 12, opacity: 0.95 }}
+                                    >
+                                      Coste por origen
+                                    </div>
+
+                                    <div className="d-flex flex-wrap gap-2 mt-2">
+                                      {bestBreakdownFlights.map((f, i) => (
+                                        <span
+                                          key={i}
+                                          className="badge bg-light text-dark"
+                                          style={{
+                                            border: "1px solid rgba(255,255,255,0.35)",
+                                            padding: "8px 10px",
+                                          }}
+                                        >
+                                          <span className="fw-semibold">
+                                            {String(f.origin || "").toUpperCase()}
+                                          </span>{" "}
+                                          →{" "}
+                                          <span className="fw-semibold">
+                                            {bestDestination.destination}
+                                          </span>{" "}
+                                          <span style={{ opacity: 0.85 }}>·</span>{" "}
+                                          <span className="fw-semibold">
+                                            {typeof f.price === "number"
+                                              ? `${f.price.toFixed(0)} €`
+                                              : "sin datos"}
+                                          </span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                              {/* MÉTRICAS SECUNDARIAS (ORDENADAS, SIN RUIDO) */}
+                              <div className="row g-2 mt-1">
+                                <div className="col-12 col-lg-6">
+                                  <div
+                                    className="p-3 rounded-3"
+                                    style={{
+                                      background: "rgba(255,255,255,0.12)",
+                                      border: "1px solid rgba(255,255,255,0.18)",
+                                    }}
+                                  >
+                                    <div className="small" style={{ opacity: 0.9 }}>
+                                      Media por persona
+                                    </div>
+                                    <div className="fw-bold">
+                                      {normalizeNumber(
+                                        bestDestination.averageCostPerTraveler
+                                      ).toFixed(2)}{" "}
+                                      €
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="col-12 col-lg-6">
+                                  <div
+                                    className="p-3 rounded-3"
+                                    style={{
+                                      background: "rgba(255,255,255,0.12)",
+                                      border: "1px solid rgba(255,255,255,0.18)",
+                                    }}
+                                  >
+                                    <div className="small" style={{ opacity: 0.9 }}>
+                                      Diferencia máxima entre viajeros
+                                    </div>
+                                    <div className="fw-bold">
+                                      {normalizeNumber(bestDestination.priceSpread).toFixed(2)}{" "}
+                                      €
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="col-12">
+                                  <div
+                                    className="p-3 rounded-3"
+                                    style={{
+                                      background: "rgba(255,255,255,0.12)",
+                                      border: "1px solid rgba(255,255,255,0.18)",
+                                    }}
+                                  >
+                                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                      <div>
+                                        <div className="small" style={{ opacity: 0.9 }}>
+                                          Equilibrio entre viajeros
+                                        </div>
+                                        <div className="fw-bold">
+                                          {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}
+                                          /100{" "}
+                                          <span className="fw-normal" style={{ opacity: 0.95 }}>
+                                            ({fairnessLabel(bestDestination.fairnessScore)})
+                                          </span>
+                                        </div>
+                                        <div className="small" style={{ opacity: 0.9 }}>
+                                          Cuanto más alto, más parecido paga cada viajero.
+                                        </div>
+                                      </div>
+
+                                      <div className="small" style={{ opacity: 0.95 }}>
+                                        <div>
+                                          <strong>Viaje:</strong>{" "}
+                                          {tripType === "roundtrip"
+                                            ? "ida y vuelta"
+                                            : "solo ida"}
+                                        </div>
+                                        <div>
+                                          <strong>Salida:</strong>{" "}
+                                          {dateMode === "flex"
+                                            ? `flexible (±${flexDays} días), mejor fecha: ${
+                                                formatDateEs(
+                                                  bestDestination.bestDate || departureDate
+                                                ) ||
+                                                (bestDestination.bestDate || departureDate)
+                                              }`
+                                            : formatDateEs(departureDate) || departureDate}
+                                        </div>
+
+                                        {tripType === "roundtrip" && (
+                                          <div>
+                                            <strong>Vuelta:</strong>{" "}
+                                            {formatDateEs(returnDate) || returnDate}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* NOTA DE CONFIANZA */}
+                              <div className="small mt-3" style={{ opacity: 0.9 }}>
+                                Precios estimados con la API de Amadeus. Pueden variar al reservar.
                               </div>
                             </div>
 
-                            <div className="d-flex flex-wrap gap-2 mt-3">
+                            {/* CTAs (SIMPLIFICADOS) */}
+                            <div className="d-flex flex-wrap gap-2 mt-4">
                               <button
                                 type="button"
                                 className="btn btn-light fw-semibold"
-                                onClick={resetToSearch}
+                                onClick={openBestDetails}
                               >
-                                Cambiar búsqueda
+                                Ver vuelos y detalles
                               </button>
 
                               <button
@@ -746,12 +995,22 @@ function App() {
                                 className="btn btn-outline-light"
                                 onClick={openAlternatives}
                               >
-                                Ver alternativas
+                                Ver otros destinos
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn btn-link text-white text-decoration-none"
+                                onClick={resetToSearch}
+                                style={{ opacity: 0.95 }}
+                              >
+                                Cambiar búsqueda
                               </button>
                             </div>
                           </div>
                         </div>
 
+                        {/* DERECHA (IMAGEN) */}
                         <div className="col-md-5">
                           <div
                             className="h-100"
@@ -760,7 +1019,7 @@ function App() {
                               overflow: "hidden",
                               border: "1px solid rgba(255,255,255,0.25)",
                               position: "relative",
-                              minHeight: 220,
+                              minHeight: 240,
                               backgroundColor: "rgba(255,255,255,0.10)",
                             }}
                           >
@@ -779,7 +1038,7 @@ function App() {
                                 position: "absolute",
                                 inset: 0,
                                 background:
-                                  "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.35) 100%)",
+                                  "linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.40) 100%)",
                               }}
                             />
 
@@ -798,27 +1057,13 @@ function App() {
                           </div>
                         </div>
                       </div>
-                      {/* ✅ FIN CAMBIO */}
                     </div>
                   </div>
                 </section>
 
+                {/* ✅ Acciones secundarias limpias */}
                 <section className="mb-4">
-                  <div className="d-flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={openBestDetails}
-                    >
-                      Ver detalles del mejor destino
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={resetToSearch}
-                    >
-                      Nueva búsqueda
-                    </button>
+                  <div className="d-flex flex-wrap gap-2 align-items-center">
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
@@ -829,8 +1074,7 @@ function App() {
                   </div>
 
                   <div className="text-secondary small mt-2">
-                    Las opciones avanzadas quedan debajo para mantener el foco en el
-                    destino recomendado.
+                    Las opciones avanzadas aparecen debajo para mantener el foco en el destino recomendado.
                   </div>
                 </section>
 
@@ -843,7 +1087,7 @@ function App() {
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <h3 className="h6 fw-semibold mb-0">
-                            Detalles del mejor destino (complementario)
+                            Vuelos y detalles del destino recomendado
                           </h3>
                           <button
                             type="button"
@@ -863,24 +1107,111 @@ function App() {
                               </div>
                             </div>
                           </div>
+
                           <div className="col-md-6">
                             <div className="p-3 rounded-3 border">
-                              <div className="text-secondary small">Mejor fecha</div>
+                              <div className="text-secondary small">Fechas</div>
                               <div className="fw-semibold">
-                                {bestDestination.bestDate || departureDate}
-                                {tripType === "roundtrip" &&
-                                (bestDestination.bestReturnDate || returnDate)
-                                  ? ` → ${bestDestination.bestReturnDate || returnDate}`
+                                {dateMode === "flex"
+                                  ? `Flexible (±${flexDays} días). Mejor salida: ${
+                                      formatDateEs(bestDestination.bestDate || departureDate) ||
+                                      (bestDestination.bestDate || departureDate)
+                                    }`
+                                  : `Salida: ${formatDateEs(departureDate) || departureDate}`}
+                                {tripType === "roundtrip"
+                                  ? ` | Vuelta: ${formatDateEs(returnDate) || returnDate}`
                                   : ""}
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-secondary small mt-3">
-                          Ya puedes abrir links de buscadores con la mejor fecha
-                          seleccionada automáticamente.
+                        {/* ENLACES A SKYSCANNER (CÓDIGO DE CIUDAD) */}
+                        <div className="mt-3">
+                          <div className="text-secondary small mb-2">
+                            Abrir en Skyscanner por origen
+                          </div>
+
+                          {(() => {
+                            const dep = bestDestination?.bestDate || departureDate;
+                            const dest = bestDestination?.destination;
+
+                            const cleanedOrigins = (origins || [])
+                              .map((o) => String(o || "").trim().toUpperCase())
+                              .filter(Boolean);
+
+                            if (!cleanedOrigins.length || !dest || !dep) {
+                              return (
+                                <div className="text-secondary small">
+                                  No hay datos suficientes para generar enlaces.
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="d-flex flex-wrap gap-2">
+                                {cleanedOrigins.map((o) => {
+                                  const url = buildSkyscannerUrl({
+                                    origin: o,
+                                    destination: dest,
+                                    departureDate: dep,
+                                    returnDate,
+                                    tripType,
+                                  });
+
+                                  return (
+                                    <a
+                                      key={o}
+                                      href={url || "#"}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className={`btn btn-primary btn-sm ${
+                                        url ? "" : "disabled"
+                                      }`}
+                                      style={{
+                                        backgroundColor: "#3B82F6",
+                                        borderColor: "#3B82F6",
+                                      }}
+                                      onClick={(e) => {
+                                        if (!url) e.preventDefault();
+                                      }}
+                                    >
+                                      Ver vuelos {o} → {normalizeDestCode(dest)}
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                         </div>
+
+                        <div className="text-secondary small mt-2">
+                          Skyscanner abre un enlace por origen (no existe un enlace único multi-origen).
+                        </div>
+
+                        {Array.isArray(bestBreakdownFlights) &&
+                          bestBreakdownFlights.length > 0 && (
+                            <div className="mt-3">
+                              <div className="text-secondary small mb-2">
+                                Resumen por origen
+                              </div>
+                              <div className="d-flex flex-wrap gap-2">
+                                {bestBreakdownFlights.map((f, i) => (
+                                  <span key={i} className="badge bg-light text-dark">
+                                    <span className="fw-semibold">
+                                      {String(f.origin || "").toUpperCase()}
+                                    </span>{" "}
+                                    ·{" "}
+                                    <span className="fw-semibold">
+                                      {typeof f.price === "number"
+                                        ? `${f.price.toFixed(0)} €`
+                                        : "sin datos"}
+                                    </span>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     </div>
                   </section>
@@ -895,7 +1226,7 @@ function App() {
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <h3 className="h6 fw-semibold mb-0">
-                            Alternativas (complementario)
+                            Otros destinos (alternativas)
                           </h3>
                           <button
                             type="button"
