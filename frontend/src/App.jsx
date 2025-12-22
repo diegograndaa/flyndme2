@@ -157,6 +157,53 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+/* LOGO INLINE (estilo simple: rutas convergentes + nodo) */
+function FlyndMeLogo({ size = 32, title = "FlyndMe" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      role="img"
+      aria-label={title}
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "block" }}
+    >
+      <circle cx="32" cy="32" r="32" fill="#3B82F6" />
+
+      <path
+        d="M14 22 C22 22, 24 28, 31 31"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="4"
+        strokeLinecap="round"
+        opacity="0.95"
+      />
+      <path
+        d="M14 42 C22 42, 24 36, 31 33"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="4"
+        strokeLinecap="round"
+        opacity="0.95"
+      />
+      <path
+        d="M50 18 C44 24, 40 27, 34 31"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="4"
+        strokeLinecap="round"
+        opacity="0.95"
+      />
+
+      <circle cx="32" cy="32" r="5.2" fill="#FFFFFF" />
+      <circle cx="14" cy="22" r="2.4" fill="#FFFFFF" opacity="0.85" />
+      <circle cx="14" cy="42" r="2.4" fill="#FFFFFF" opacity="0.85" />
+      <circle cx="50" cy="18" r="2.4" fill="#FFFFFF" opacity="0.85" />
+    </svg>
+  );
+}
+
 /* LANDING SIMPLIFICADA, ESTILO SKYSCANNER */
 function Landing({ onStart }) {
   return (
@@ -372,9 +419,7 @@ function Landing({ onStart }) {
               <h2 className="h3 fw-bold mb-1" style={{ color: "#0F172A" }}>
                 Preguntas frecuentes
               </h2>
-              <div style={{ color: "#64748B" }}>
-                Lo esencial, sin ruido.
-              </div>
+              <div style={{ color: "#64748B" }}>Lo esencial, sin ruido.</div>
             </div>
           </div>
 
@@ -803,7 +848,9 @@ function App() {
     }
 
     if (fairDiff >= 1 && totalDiff > 0) {
-      return `Tiene +${fairDiff.toFixed(0)} puntos de equilibrio frente a ${secondCode}, a cambio de unos ${totalDiff.toFixed(
+      return `Tiene +${fairDiff.toFixed(
+        0
+      )} puntos de equilibrio frente a ${secondCode}, a cambio de unos ${totalDiff.toFixed(
         0
       )} € más.`;
     }
@@ -820,7 +867,7 @@ function App() {
     }, 50);
   };
 
-  const openBestDetails = () => {
+  const openBestDetails_toggle = () => {
     setShowBestDetails(true);
     setShowComplementary(false);
     setTimeout(() => {
@@ -842,7 +889,7 @@ function App() {
     const dest = bestDestination.destination;
 
     if (!cleanedOrigins.length || !dep || !dest) {
-      openBestDetails();
+      openBestDetails_toggle();
       return;
     }
 
@@ -861,16 +908,6 @@ function App() {
     openBestDetails_toggle();
   };
 
-  // Pequeña mejora: no repetir lógica
-  const openBestDetails_toggle = () => {
-    setShowBestDetails(true);
-    setShowComplementary(false);
-    setTimeout(() => {
-      const el = document.getElementById("best-details-panel");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
-
   const buildShareText = () => {
     if (!bestDestination) return "";
 
@@ -880,14 +917,16 @@ function App() {
     const lines = [];
     lines.push(`FlyndMe · Destino recomendado: ${destCode}`);
     lines.push(
-      `Total grupo: ${normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} € · Media: ${normalizeNumber(
-        bestDestination.averageCostPerTraveler
-      ).toFixed(2)} €`
+      `Total grupo: ${normalizeNumber(bestDestination.totalCostEUR).toFixed(
+        2
+      )} € · Media: ${normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(
+        2
+      )} €`
     );
     lines.push(
-      `Equilibrio: ${normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100 · Dif. máx: ${normalizeNumber(
-        bestDestination.priceSpread
-      ).toFixed(2)} €`
+      `Equilibrio: ${normalizeNumber(bestDestination.fairnessScore).toFixed(
+        0
+      )}/100 · Dif. máx: ${normalizeNumber(bestDestination.priceSpread).toFixed(2)} €`
     );
 
     if (tripType === "roundtrip") {
@@ -1059,36 +1098,35 @@ function App() {
   };
 
   const optimizeLabel =
-    optimizeBy === "fairness" ? "equidad de precio entre el grupo" : "precio total del grupo";
+    optimizeBy === "fairness"
+      ? "equidad de precio entre el grupo"
+      : "precio total del grupo";
 
   return (
     <div className="min-vh-100" style={{ backgroundColor: "#F3F8FF", color: "#1E293B" }}>
       <LoadingOverlay loading={loading} />
 
       <header className="bg-white border-bottom">
-        <div className="container" style={{ maxWidth: "1100px" }}>
-          <div
-            className="d-flex align-items-center py-3"
-            onClick={handleGoHome}
-            style={{ cursor: "pointer" }}
-          >
-            <div
-              className="rounded-circle d-flex align-items-center justify-content-center me-2"
-              style={{
-                width: 32,
-                height: 32,
-                backgroundColor: "#3B82F6",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "1.1rem",
-              }}
-            >
-              F
-            </div>
-            <span className="fw-semibold">FlyndMe</span>
-          </div>
-        </div>
-      </header>
+  <div className="container" style={{ maxWidth: "1100px" }}>
+    <div
+      className="d-flex align-items-center py-3"
+      onClick={handleGoHome}
+      style={{ cursor: "pointer" }}
+    >
+      <img
+        src={`${import.meta.env.BASE_URL || "/"}logo-flyndme.svg`}
+        alt="FlyndMe"
+        style={{
+          height: 32,
+          width: "auto",
+          marginRight: 8,
+        }}
+      />
+      <span className="fw-semibold">FlyndMe</span>
+    </div>
+  </div>
+</header>
+
 
       {!hasStarted ? (
         <Landing onStart={loadDemo} />
@@ -1141,7 +1179,9 @@ function App() {
                                   <button
                                     type="button"
                                     className={`btn ${
-                                      uiCriterion === "fairness" ? "btn-light" : "btn-outline-light"
+                                      uiCriterion === "fairness"
+                                        ? "btn-light"
+                                        : "btn-outline-light"
                                     }`}
                                     onClick={() => handleToggleCriterion("fairness")}
                                   >
@@ -1228,14 +1268,10 @@ function App() {
                                           {String(f.origin || "").toUpperCase()}
                                         </span>{" "}
                                         →{" "}
-                                        <span className="fw-semibold">
-                                          {bestDestination.destination}
-                                        </span>{" "}
+                                        <span className="fw-semibold">{bestDestination.destination}</span>{" "}
                                         <span style={{ opacity: 0.85 }}>·</span>{" "}
                                         <span className="fw-semibold">
-                                          {typeof f.price === "number"
-                                            ? `${f.price.toFixed(0)} €`
-                                            : "sin datos"}
+                                          {typeof f.price === "number" ? `${f.price.toFixed(0)} €` : "sin datos"}
                                         </span>
                                       </span>
                                     ))}
@@ -1256,10 +1292,7 @@ function App() {
                                       Media por persona
                                     </div>
                                     <div className="fw-bold">
-                                      {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(
-                                        2
-                                      )}{" "}
-                                      €
+                                      {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} €
                                     </div>
                                   </div>
                                 </div>
@@ -1295,8 +1328,7 @@ function App() {
                                           Equilibrio entre viajeros
                                         </div>
                                         <div className="fw-bold">
-                                          {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}
-                                          /100{" "}
+                                          {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100{" "}
                                           <span className="fw-normal" style={{ opacity: 0.95 }}>
                                             ({fairnessLabel(bestDestination.fairnessScore)})
                                           </span>
@@ -1323,8 +1355,7 @@ function App() {
 
                                         {tripType === "roundtrip" && (
                                           <div>
-                                            <strong>Vuelta:</strong>{" "}
-                                            {formatDateEs(returnDate) || returnDate}
+                                            <strong>Vuelta:</strong> {formatDateEs(returnDate) || returnDate}
                                           </div>
                                         )}
                                       </div>
@@ -1348,11 +1379,7 @@ function App() {
                                 Ver vuelos en Skyscanner
                               </button>
 
-                              <button
-                                type="button"
-                                className="btn btn-outline-light"
-                                onClick={openAlternatives}
-                              >
+                              <button type="button" className="btn btn-outline-light" onClick={openAlternatives}>
                                 Ver otros destinos
                               </button>
 
@@ -1435,11 +1462,7 @@ function App() {
 
                 <section className="mb-4">
                   <div className="d-flex flex-wrap gap-2 align-items-center">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={handleGoHome}
-                    >
+                    <button type="button" className="btn btn-outline-secondary" onClick={handleGoHome}>
                       Volver a la landing
                     </button>
                   </div>
@@ -1912,7 +1935,9 @@ function App() {
                         )}
                       </div>
 
-                      <div className="small fm-muted mt-2">Consejo: cambia de campo y la lista se adapta.</div>
+                      <div className="small fm-muted mt-2">
+                        Consejo: cambia de campo y la lista se adapta.
+                      </div>
                     </aside>
                   </div>
                 </div>
