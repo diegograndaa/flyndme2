@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
 /**
@@ -16,7 +16,6 @@ function getBaseUrl() {
 }
 
 function normalizeDestCode(value) {
-  // Extrae un código IATA (3 letras) aunque te llegue "LON - Londres" o "London (LON)"
   const raw = String(value || "").trim().toUpperCase();
   const match = raw.match(/\b[A-Z]{3}\b/);
   return match ? match[0] : raw.slice(0, 3);
@@ -167,10 +166,29 @@ function FlightResults({
   maxBudgetPerTraveler = null,
 }) {
   const resultsRef = useRef(null);
+
   const [surpriseDest, setSurpriseDest] = useState(null);
-  const [compareSelection, setCompareSelection] = useState([]);
+
+  // Kimovil style compare
+  const [compareSelection, setCompareSelection] = useState([]); // array of dest.destination
+  const [compareOpen, setCompareOpen] = useState(false);
+
   const [sortBy, setSortBy] = useState("default");
   const [openIndex, setOpenIndex] = useState(null);
+
+  // Modal UX: lock scroll when open
+  useEffect(() => {
+    if (compareOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [compareOpen]);
 
   if (loading || error) return null;
 
@@ -295,19 +313,364 @@ function FlightResults({
     });
   };
 
-  const selectedForCompare = safeFlights.filter((dest) =>
-    compareSelection.includes(dest.destination)
-  );
+  const clearCompare = () => {
+    setCompareSelection([]);
+    setCompareOpen(false);
+  };
 
-  const fairnessTop = safeFlights.slice(0, Math.min(5, safeFlights.length));
+  const removeCompare = (destinationCode) => {
+    setCompareSelection((prev) => prev.filter((d) => d !== destinationCode));
+  };
+
+  const selectedForCompare = useMemo(() => {
+    const set = new Set(compareSelection);
+    return safeFlights.filter((dest) => set.has(dest.destination));
+  }, [safeFlights, compareSelection]);
+
   const toggleOpen = (index) => setOpenIndex((prev) => (prev === index ? null : index));
 
   const mainDate = primaryDest?.bestDate || departureDate || "";
   const mainReturn =
     primaryDest?.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
 
+  const canOpenCompare = selectedForCompare.length >= 2;
+
+  const CompareBasket = () => {
+    if (!compareSelection.length) return null;
+
+    const chips = selectedForCompare.map((d) => ({
+      key: d.destination,
+      label: normalizeDestCode(d.destination),
+      full: d.destination,
+    }));
+
+    return (
+      <div
+        style={{
+          position: "fixed",
+          right: 16,
+          top: 78,
+          zIndex: 1080,
+          width: 320,
+          maxWidth: "calc(100vw - 32px)",
+        }}
+      >
+        <div
+          className="bg-white"
+          style={{
+            borderRadius: 14,
+            border: "1px solid #D0D8E5",
+            boxShadow: "0 18px 45px rgba(2,6,23,0.12)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "10px 12px",
+              borderBottom: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <div className="fw-semibold" style={{ color: "#0F172A" }}>
+              Comparar <span className="text-secondary">({compareSelection.length}/4)</span>
+            </div>
+
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                onClick={clearCompare}
+              >
+                Vaciar
+              </button>
+
+              <button
+                type="button"
+                className={`btn btn-sm ${canOpenCompare ? "btn-primary" : "btn-outline-primary"}`}
+                onClick={() => {
+                  if (!canOpenCompare) return;
+                  setCompareOpen(true);
+                }}
+                disabled={!canOpenCompare}
+                title={!canOpenCompare ? "Selecciona al menos 2 destinos" : "Abrir comparativa"}
+                style={
+                  canOpenCompare
+                    ? { backgroundColor: "#3B82F6", borderColor: "#3B82F6" }
+                    : { borderColor: "#3B82F6", color: "#3B82F6" }
+                }
+              >
+                Comparar
+              </button>
+            </div>
+          </div>
+
+          <div style={{ padding: 12 }}>
+            <div className="d-flex flex-wrap gap-2">
+              {chips.map((c) => (
+                <span
+                  key={c.key}
+                  className="badge"
+                  style={{
+                    background: "rgba(59,130,246,0.10)",
+                    border: "1px solid rgba(59,130,246,0.25)",
+                    color: "#1E40AF",
+                    padding: "8px 10px",
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    cursor: "default",
+                  }}
+                  title={c.full}
+                >
+                  {c.label}
+                  <button
+                    type="button"
+                    className="btn btn-sm p-0"
+                    onClick={() => removeCompare(c.key)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 999,
+                      lineHeight: "18px",
+                      textAlign: "center",
+                      border: "1px solid rgba(30,64,175,0.25)",
+                      background: "#fff",
+                      color: "#1E40AF",
+                      fontWeight: 900,
+                      fontSize: 12,
+                    }}
+                    aria-label={`Quitar ${c.label}`}
+                    title="Quitar"
+                  >
+                    x
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            {!canOpenCompare && (
+              <div className="text-secondary small mt-2">
+                Selecciona al menos 2 destinos para comparar.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CompareModal = () => {
+    if (!compareOpen) return null;
+
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          onClick={() => setCompareOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(2,6,23,0.55)",
+            zIndex: 1090,
+          }}
+        />
+
+        {/* Modal */}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Comparativa de destinos"
+        >
+          <div
+            className="bg-white"
+            style={{
+              width: "min(980px, 100%)",
+              maxHeight: "min(86vh, 860px)",
+              overflow: "auto",
+              borderRadius: 16,
+              border: "1px solid #D0D8E5",
+              boxShadow: "0 24px 70px rgba(2,6,23,0.25)",
+            }}
+          >
+            <div
+              style={{
+                padding: "14px 16px",
+                borderBottom: "1px solid #E2E8F0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <div>
+                <div className="fw-semibold" style={{ color: "#0F172A" }}>
+                  Comparativa cara a cara
+                </div>
+                <div className="text-secondary small">
+                  Destinos: {selectedForCompare.map((d) => normalizeDestCode(d.destination)).join(", ")}
+                </div>
+              </div>
+
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={clearCompare}
+                >
+                  Vaciar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={() => setCompareOpen(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+
+            <div style={{ padding: 16 }}>
+              {!canOpenCompare ? (
+                <div className="text-secondary">
+                  Selecciona al menos 2 destinos para comparar.
+                </div>
+              ) : (
+                <>
+                  <div className="table-responsive mb-3">
+                    <table className="table table-sm align-middle mb-0">
+                      <thead style={{ backgroundColor: "#EBF2FF" }}>
+                        <tr>
+                          <th>Metrica</th>
+                          {selectedForCompare.map((dest) => (
+                            <th key={dest.destination} className="text-end">
+                              {normalizeDestCode(dest.destination)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Media por persona</td>
+                          {selectedForCompare.map((dest) => (
+                            <td key={dest.destination} className="text-end">
+                              {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td>Coste total del grupo</td>
+                          {selectedForCompare.map((dest) => (
+                            <td key={dest.destination} className="text-end">
+                              {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td>Equidad</td>
+                          {selectedForCompare.map((dest) => (
+                            <td key={dest.destination} className="text-end">
+                              <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
+                                {Number(dest.fairnessScore || 0).toFixed(1)} / 100
+                              </span>
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td>Diferencia max dentro del grupo</td>
+                          {selectedForCompare.map((dest) => (
+                            <td key={dest.destination} className="text-end">
+                              {typeof dest.priceSpread === "number"
+                                ? `${dest.priceSpread.toFixed(2)} EUR`
+                                : "N/A"}
+                            </td>
+                          ))}
+                        </tr>
+                        <tr>
+                          <td>CO2 aproximado (indice interno)</td>
+                          {selectedForCompare.map((dest) => (
+                            <td key={dest.destination} className="text-end">
+                              {typeof dest.approxCo2Score === "number"
+                                ? dest.approxCo2Score.toFixed(2)
+                                : "N/A"}
+                            </td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p className="text-secondary small mb-2">
+                    <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada destino seleccionado.
+                  </p>
+
+                  <div className="table-responsive mb-2">
+                    <table className="table table-sm align-middle mb-0">
+                      <thead style={{ backgroundColor: "#EBF2FF" }}>
+                        <tr>
+                          <th>Origen</th>
+                          {selectedForCompare.map((dest) => (
+                            <th key={dest.destination} className="text-end">
+                              {normalizeDestCode(dest.destination)}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {origins.map((originCode) => (
+                          <tr key={originCode}>
+                            <td>{originCode}</td>
+                            {selectedForCompare.map((dest) => {
+                              const df = Array.isArray(dest.flights) ? dest.flights : [];
+                              const flight = df.find((f) => f.origin === originCode);
+                              return (
+                                <td key={dest.destination} className="text-end">
+                                  {flight && typeof flight.price === "number"
+                                    ? `${flight.price.toFixed(2)} EUR`
+                                    : "N/A"}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {selectedForCompare.length === 2 && (
+                    <p className="text-secondary small mb-0">
+                      {describeComparison(selectedForCompare[0], selectedForCompare[1], optimizeBy)}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   return (
     <section className="mt-4" ref={resultsRef}>
+      {/* Basket fijo arriba derecha (Kimovil style) */}
+      <CompareBasket />
+      {/* Modal comparativa (aparte) */}
+      <CompareModal />
+
       {budgetEnabled && (
         <div className="alert alert-warning py-2">
           Presupuesto activo: max{" "}
@@ -327,13 +690,13 @@ function FlightResults({
                 <h2 className="h5 mb-2">Mapa del encuentro del grupo</h2>
                 <p className="text-secondary mb-2">
                   <strong>Origenes:</strong>{" "}
-                  {origins.length > 0 ? origins.join(", ") : "N/A"} →{" "}
+                  {origins.length > 0 ? origins.join(", ") : "N/A"} {"->"}{" "}
                   <strong>Destino:</strong> {primaryDest.destination}
                 </p>
 
                 <p className="text-secondary small mb-2">
                   <strong>Fechas:</strong> {mainDate ? mainDate : "N/A"}
-                  {tripType === "roundtrip" && mainReturn ? ` → ${mainReturn}` : ""}
+                  {tripType === "roundtrip" && mainReturn ? ` -> ${mainReturn}` : ""}
                   {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
                 </p>
 
@@ -348,7 +711,7 @@ function FlightResults({
                         border: "1px solid #D0D8E5",
                       }}
                     >
-                      {f.origin} → {primaryDest.destination} ·{" "}
+                      {f.origin} {"->"} {primaryDest.destination} ·{" "}
                       {typeof f.price === "number" ? `${f.price.toFixed(0)} €` : "sin datos"}
                     </span>
                   ))}
@@ -425,7 +788,7 @@ function FlightResults({
                       {(dest.bestDate || dest.bestReturnDate) && (
                         <div className="text-secondary small mt-1">
                           {dest.bestDate ? `Fecha: ${dest.bestDate}` : ""}
-                          {tripType === "roundtrip" && dest.bestReturnDate ? ` → ${dest.bestReturnDate}` : ""}
+                          {tripType === "roundtrip" && dest.bestReturnDate ? ` -> ${dest.bestReturnDate}` : ""}
                         </div>
                       )}
                     </td>
@@ -449,47 +812,6 @@ function FlightResults({
           )}
         </div>
       </div>
-
-      {fairnessTop.length > 0 && (
-        <div className="card mb-4" style={{ backgroundColor: "#FFFFFF", borderColor: "#D0D8E5", color: "#1E293B" }}>
-          <div className="card-body">
-            <h2 className="h6 mb-3">Comparativa de equidad entre destinos (top 5)</h2>
-            {fairnessTop.map((dest, index) => (
-              <div key={index} className="mb-2">
-                <div className="d-flex justify-content-between mb-1 small">
-                  <span>{dest.destination}</span>
-                  <span>{Number(dest.fairnessScore || 0).toFixed(1)} / 100</span>
-                </div>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    backgroundColor: "#E5E7EB",
-                    borderRadius: "999px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.max(0, Math.min(100, Number(dest.fairnessScore || 0)))}%`,
-                      height: "100%",
-                      borderRadius: "999px",
-                      backgroundColor:
-                        Number(dest.fairnessScore || 0) >= 85
-                          ? "#16A34A"
-                          : Number(dest.fairnessScore || 0) >= 65
-                          ? "#3B82F6"
-                          : Number(dest.fairnessScore || 0) >= 45
-                          ? "#FACC15"
-                          : "#DC2626",
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mb-3 d-flex flex-wrap gap-2">
         <button
@@ -516,135 +838,6 @@ function FlightResults({
         <div className="alert alert-info py-2">
           <strong>Destino sorpresa sugerido:</strong> {surpriseDest.destination} ·{" "}
           {Number(surpriseDest.averageCostPerTraveler || 0).toFixed(0)} € por persona
-        </div>
-      )}
-
-      <div className="mb-3">
-        <p className="text-secondary small mb-1">
-          Selecciona hasta <strong>4 destinos</strong> para compararlos cara a cara.
-        </p>
-        {selectedForCompare.length === 0 && (
-          <p className="text-secondary small mb-0">
-            Marca la casilla "Comparar" en las tarjetas de destino para ver la comparativa.
-          </p>
-        )}
-        {selectedForCompare.length === 1 && (
-          <p className="text-secondary small mb-0">
-            Has seleccionado <strong>{selectedForCompare[0].destination}</strong>. Selecciona otro para comparar.
-          </p>
-        )}
-        {selectedForCompare.length > 1 && (
-          <p className="text-secondary small mb-0">
-            Estan seleccionados: {selectedForCompare.map((d) => d.destination).join(", ")}.
-          </p>
-        )}
-      </div>
-
-      {selectedForCompare.length >= 2 && (
-        <div className="card mb-4" style={{ backgroundColor: "#FFFFFF", borderColor: "#3B82F6", color: "#1E293B" }}>
-          <div className="card-body">
-            <h2 className="h6 mb-3">Comparativa cara a cara</h2>
-
-            <div className="table-responsive mb-3">
-              <table className="table table-sm align-middle mb-0">
-                <thead style={{ backgroundColor: "#EBF2FF" }}>
-                  <tr>
-                    <th>Metrica</th>
-                    {selectedForCompare.map((dest) => (
-                      <th key={dest.destination} className="text-end">
-                        {dest.destination}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Media por persona</td>
-                    {selectedForCompare.map((dest) => (
-                      <td key={dest.destination} className="text-end">
-                        {Number(dest.averageCostPerTraveler || 0).toFixed(2)} EUR
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td>Coste total del grupo</td>
-                    {selectedForCompare.map((dest) => (
-                      <td key={dest.destination} className="text-end">
-                        {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td>Equidad</td>
-                    {selectedForCompare.map((dest) => (
-                      <td key={dest.destination} className="text-end">
-                        <span style={getFairnessStyle(Number(dest.fairnessScore || 0))}>
-                          {Number(dest.fairnessScore || 0).toFixed(1)} / 100
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td>Diferencia max dentro del grupo</td>
-                    {selectedForCompare.map((dest) => (
-                      <td key={dest.destination} className="text-end">
-                        {typeof dest.priceSpread === "number" ? `${dest.priceSpread.toFixed(2)} EUR` : "N/A"}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td>CO2 aproximado (indice interno)</td>
-                    {selectedForCompare.map((dest) => (
-                      <td key={dest.destination} className="text-end">
-                        {typeof dest.approxCo2Score === "number" ? dest.approxCo2Score.toFixed(2) : "N/A"}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <p className="text-secondary small mb-2">
-              <strong>Detalle por origen:</strong> cuanto pagaria cada viajero en cada destino seleccionado.
-            </p>
-
-            <div className="table-responsive mb-2">
-              <table className="table table-sm align-middle mb-0">
-                <thead style={{ backgroundColor: "#EBF2FF" }}>
-                  <tr>
-                    <th>Origen</th>
-                    {selectedForCompare.map((dest) => (
-                      <th key={dest.destination} className="text-end">
-                        {dest.destination}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {origins.map((originCode) => (
-                    <tr key={originCode}>
-                      <td>{originCode}</td>
-                      {selectedForCompare.map((dest) => {
-                        const df = Array.isArray(dest.flights) ? dest.flights : [];
-                        const flight = df.find((f) => f.origin === originCode);
-                        return (
-                          <td key={dest.destination} className="text-end">
-                            {flight && typeof flight.price === "number" ? `${flight.price.toFixed(2)} EUR` : "N/A"}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {selectedForCompare.length === 2 && (
-              <p className="text-secondary small mb-0">
-                {describeComparison(selectedForCompare[0], selectedForCompare[1], optimizeBy)}
-              </p>
-            )}
-          </div>
         </div>
       )}
 
@@ -796,14 +989,16 @@ function FlightResults({
                       {(travelDate || travelReturn) && (
                         <p className="text-secondary mb-0 small">
                           Fecha: {travelDate || "N/A"}
-                          {tripType === "roundtrip" && travelReturn ? ` → ${travelReturn}` : ""}
+                          {tripType === "roundtrip" && travelReturn ? ` -> ${travelReturn}` : ""}
                           {typeof flexRange === "number" && flexRange > 0 ? ` (flex ±${flexRange})` : ""}
                         </p>
                       )}
                     </div>
 
                     <div className="text-end">
-                      <div className="fw-bold fs-5">{Number(dest.totalCostEUR || 0).toFixed(2)} EUR</div>
+                      <div className="fw-bold fs-5">
+                        {Number(dest.totalCostEUR || 0).toFixed(2)} EUR
+                      </div>
                       <small className="text-secondary d-block mb-1">Coste total del grupo</small>
 
                       <div className="form-check d-inline-flex align-items-center justify-content-end">
@@ -867,15 +1062,30 @@ function FlightResults({
                           </div>
 
                           <div className="mt-2 d-flex flex-wrap gap-2">
-                            <a href={skyscanner} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
+                            <a
+                              href={skyscanner}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-primary btn-sm"
+                            >
                               Ver en Skyscanner
                             </a>
 
-                            <a href={kiwi} target="_blank" rel="noreferrer" className="btn btn-outline-secondary btn-sm">
+                            <a
+                              href={kiwi}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-secondary btn-sm"
+                            >
                               Ver en Kiwi
                             </a>
 
-                            <a href={google} target="_blank" rel="noreferrer" className="btn btn-outline-dark btn-sm">
+                            <a
+                              href={google}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-outline-dark btn-sm"
+                            >
                               Ver en Google Flights
                             </a>
                           </div>
