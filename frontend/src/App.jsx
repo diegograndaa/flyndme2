@@ -24,30 +24,36 @@ const AVAILABLE_AIRPORTS = [
   { code: "DUB", city: "Dublín", country: "Irlanda" },
 ];
 
-// ✅ NUEVO: imágenes por destino (para resultado)
-const DESTINATION_META = {
-  LON: { label: "London", query: "london,city,skyline" },
-  PAR: { label: "Paris", query: "paris,eiffel,city" },
-  AMS: { label: "Amsterdam", query: "amsterdam,canals,city" },
-  ROM: { label: "Rome", query: "rome,colosseum,city" },
-  BCN: { label: "Barcelona", query: "barcelona,sagrada,familia,city" },
-  BER: { label: "Berlin", query: "berlin,city" },
-  LIS: { label: "Lisbon", query: "lisbon,city" },
-  DUB: { label: "Dublin", query: "dublin,city" },
-  MIL: { label: "Milan", query: "milan,duomo,city" },
-  VIE: { label: "Vienna", query: "vienna,city" },
-};
+/**
+ * ✅ CAMBIO CLAVE:
+ * En vez de Unsplash (que a veces bloquea / rate limit / CORS),
+ * usamos tus imágenes locales en: frontend/public/destinations/
+ *
+ * Rutas correctas en Vite:
+ *  - /destinations/LON.jpg
+ *  - /destinations/placeholder.jpg
+ * y para que funcione también en deploy con base path:
+ *  import.meta.env.BASE_URL
+ */
 
-function getDestinationImageUrl(destCode, seed = "") {
-  const code = String(destCode || "").trim().toUpperCase();
-  const meta = DESTINATION_META[code];
-  const query = meta?.query || `${code},city`;
-  const sig = `${code}-${seed || "default"}`;
+function getBaseUrl() {
+  return import.meta.env.BASE_URL || "/";
+}
 
-  // Imagen dinámica desde Unsplash (sin API key)
-  return `https://source.unsplash.com/1200x675/?${encodeURIComponent(
-    query
-  )}&sig=${encodeURIComponent(sig)}`;
+function normalizeDestCode(value) {
+  // Por si te llega "LON - Londres" o "London (LON)" etc.
+  const raw = String(value || "").trim().toUpperCase();
+  const match = raw.match(/\b[A-Z]{3}\b/);
+  return match ? match[0] : raw.slice(0, 3);
+}
+
+function getDestinationLocalImage(destCode) {
+  const code = normalizeDestCode(destCode);
+  return `${getBaseUrl()}destinations/${code}.jpg`;
+}
+
+function getPlaceholderImage() {
+  return `${getBaseUrl()}destinations/placeholder.jpg`;
 }
 
 class ErrorBoundary extends React.Component {
@@ -662,7 +668,7 @@ function App() {
                     }}
                   >
                     <div className="card-body p-4 p-md-5">
-                      {/* ✅ NUEVO: layout con imagen a la derecha */}
+                      {/* ✅ CAMBIO: imagen local con fallback */}
                       <div className="row g-3 align-items-stretch">
                         <div className="col-md-7">
                           <div className="d-flex flex-column justify-content-between h-100">
@@ -676,9 +682,7 @@ function App() {
                                 }}
                               >
                                 Mejor destino según{" "}
-                                {optimizeBy === "fairness"
-                                  ? "equidad"
-                                  : "precio total"}
+                                {optimizeBy === "fairness" ? "equidad" : "precio total"}
                               </div>
 
                               <h2 className="display-6 fw-bold mt-2 mb-3">
@@ -688,37 +692,24 @@ function App() {
                               <div className="d-flex flex-wrap gap-2">
                                 <span className="badge bg-light text-dark">
                                   Coste total:{" "}
-                                  {normalizeNumber(
-                                    bestDestination.totalCostEUR
-                                  ).toFixed(2)}{" "}
-                                  EUR
+                                  {normalizeNumber(bestDestination.totalCostEUR).toFixed(2)} EUR
                                 </span>
                                 <span className="badge bg-light text-dark">
                                   Media por persona:{" "}
-                                  {normalizeNumber(
-                                    bestDestination.averageCostPerTraveler
-                                  ).toFixed(2)}{" "}
-                                  EUR
+                                  {normalizeNumber(bestDestination.averageCostPerTraveler).toFixed(2)} EUR
                                 </span>
                                 <span className="badge bg-light text-dark">
                                   Equidad:{" "}
-                                  {normalizeNumber(
-                                    bestDestination.fairnessScore
-                                  ).toFixed(0)}
-                                  /100
+                                  {normalizeNumber(bestDestination.fairnessScore).toFixed(0)}/100
                                 </span>
                                 <span className="badge bg-light text-dark">
                                   Diferencia máx.:{" "}
-                                  {normalizeNumber(
-                                    bestDestination.priceSpread
-                                  ).toFixed(2)}{" "}
-                                  EUR
+                                  {normalizeNumber(bestDestination.priceSpread).toFixed(2)} EUR
                                 </span>
 
                                 {budgetEnabled && (
                                   <span className="badge bg-warning text-dark">
-                                    Presupuesto máx/persona:{" "}
-                                    {Number(maxBudgetPerTraveler).toFixed(0)} EUR
+                                    Presupuesto máx/persona: {Number(maxBudgetPerTraveler).toFixed(0)} EUR
                                   </span>
                                 )}
                               </div>
@@ -726,9 +717,7 @@ function App() {
                               <div className="mt-3 small" style={{ opacity: 0.95 }}>
                                 <div>
                                   <strong>Viaje:</strong>{" "}
-                                  {tripType === "roundtrip"
-                                    ? "Ida y vuelta"
-                                    : "Solo ida"}
+                                  {tripType === "roundtrip" ? "Ida y vuelta" : "Solo ida"}
                                 </div>
                                 <div>
                                   <strong>Fechas:</strong>{" "}
@@ -737,9 +726,7 @@ function App() {
                                         bestDestination.bestDate || departureDate
                                       }`
                                     : `Concretas (${departureDate}${
-                                        tripType === "roundtrip"
-                                          ? ` → ${returnDate}`
-                                          : ""
+                                        tripType === "roundtrip" ? ` → ${returnDate}` : ""
                                       })`}
                                 </div>
                               </div>
@@ -765,7 +752,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* ✅ NUEVO: imagen destino */}
                         <div className="col-md-5">
                           <div
                             className="h-100"
@@ -775,21 +761,19 @@ function App() {
                               border: "1px solid rgba(255,255,255,0.25)",
                               position: "relative",
                               minHeight: 220,
+                              backgroundColor: "rgba(255,255,255,0.10)",
                             }}
                           >
                             <img
-                              src={getDestinationImageUrl(
-                                bestDestination.destination,
-                                bestDestination.bestDate || departureDate || ""
-                              )}
-                              alt={`Foto de ${bestDestination.destination}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
+                              src={getDestinationLocalImage(bestDestination.destination)}
+                              alt={`Foto de ${normalizeDestCode(bestDestination.destination)}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
                               loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.src = getPlaceholderImage();
+                              }}
                             />
+
                             <div
                               style={{
                                 position: "absolute",
@@ -798,6 +782,7 @@ function App() {
                                   "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.35) 100%)",
                               }}
                             />
+
                             <div
                               style={{
                                 position: "absolute",
@@ -813,7 +798,7 @@ function App() {
                           </div>
                         </div>
                       </div>
-                      {/* ✅ FIN NUEVO layout */}
+                      {/* ✅ FIN CAMBIO */}
                     </div>
                   </div>
                 </section>
@@ -885,9 +870,7 @@ function App() {
                                 {bestDestination.bestDate || departureDate}
                                 {tripType === "roundtrip" &&
                                 (bestDestination.bestReturnDate || returnDate)
-                                  ? ` → ${
-                                      bestDestination.bestReturnDate || returnDate
-                                    }`
+                                  ? ` → ${bestDestination.bestReturnDate || returnDate}`
                                   : ""}
                               </div>
                             </div>

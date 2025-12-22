@@ -2,13 +2,33 @@ import React, { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
 /**
- * ✅ Imágenes locales desde:
+ * ✅ Imágenes locales:
  * frontend/public/destinations/<CODE>.jpg
  * Ej: /destinations/LIS.jpg
+ *
+ * ✅ Importante:
+ * Para que funcione en GitHub Pages u otros deploys con subpath,
+ * usamos import.meta.env.BASE_URL.
  */
+
+function getBaseUrl() {
+  return import.meta.env.BASE_URL || "/";
+}
+
+function normalizeDestCode(value) {
+  // Extrae un código IATA (3 letras) aunque te llegue "LON - Londres" o "London (LON)"
+  const raw = String(value || "").trim().toUpperCase();
+  const match = raw.match(/\b[A-Z]{3}\b/);
+  return match ? match[0] : raw.slice(0, 3);
+}
+
 function getDestinationImageUrl(destCode) {
-  const code = String(destCode || "").trim().toUpperCase();
-  return `/destinations/${code}.jpg`;
+  const code = normalizeDestCode(destCode);
+  return `${getBaseUrl()}destinations/${code}.jpg`;
+}
+
+function getPlaceholderImageUrl() {
+  return `${getBaseUrl()}destinations/placeholder.jpg`;
 }
 
 function getFairnessStyle(score) {
@@ -143,8 +163,6 @@ function FlightResults({
   departureDate,
   tripType = "oneway",
   returnDate = "",
-
-  // ✅ presupuesto
   budgetEnabled = false,
   maxBudgetPerTraveler = null,
 }) {
@@ -666,7 +684,6 @@ function FlightResults({
         const isSelectedForCompare = compareSelection.includes(dest.destination);
         const isOpen = openIndex === index;
 
-        // ✅ Imagen local + fallback
         const imgUrl = getDestinationImageUrl(dest.destination);
 
         return (
@@ -696,12 +713,12 @@ function FlightResults({
                   >
                     <img
                       src={imgUrl}
-                      alt={`Foto de ${dest.destination}`}
+                      alt={`Foto de ${normalizeDestCode(dest.destination)}`}
                       loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/destinations/placeholder.jpg";
+                        e.currentTarget.src = getPlaceholderImageUrl();
                       }}
                     />
                     <div
@@ -724,7 +741,7 @@ function FlightResults({
                         textShadow: "0 2px 8px rgba(0,0,0,0.35)",
                       }}
                     >
-                      {dest.destination}
+                      {normalizeDestCode(dest.destination)}
                     </div>
                   </div>
                 </div>
