@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./App.css";
 import FlightResults from "./components/FlightResults";
 import { LoadingOverlay, SearchButton } from "./components/SearchUX";
 
@@ -10,19 +11,6 @@ const API_BASE =
   "https://flyndme-backend.onrender.com";
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
-
-const DESTINATION_CODE_MAP = {
-  Paris: "PAR",
-  London: "LON",
-  Rome: "ROM",
-  Barcelona: "BCN",
-  Berlin: "BER",
-  Milan: "MIL",
-  Lisbon: "LIS",
-  Amsterdam: "AMS",
-  Dublin: "DUB",
-  Vienna: "VIE",
-};
 
 const AVAILABLE_AIRPORTS = [
   { code: "MAD", city: "Madrid", country: "España" },
@@ -180,8 +168,7 @@ function App() {
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
 
-  // "total" | "fairness"
-  // Se usa para la búsqueda al backend
+  // "total" | "fairness" (criterio backend)
   const [optimizeBy, setOptimizeBy] = useState("total");
 
   // UI toggle post-búsqueda (no rehace fetch)
@@ -960,6 +947,7 @@ function App() {
           <div className="container" style={{ maxWidth: "960px" }}>
             {hasResults && !showSearchPanel ? (
               <>
+                {/* RESULTADO PRINCIPAL */}
                 <section className="mb-3">
                   <div
                     className="card border-0"
@@ -1224,7 +1212,7 @@ function App() {
                               </div>
                             </div>
 
-                            {/* CTAs: principal claro + secundarios */}
+                            {/* CTAs */}
                             <div className="d-flex flex-wrap gap-2 mt-4">
                               <button
                                 type="button"
@@ -1341,10 +1329,7 @@ function App() {
 
                 {showBestDetails && (
                   <section id="best-details-panel" className="mb-4">
-                    <div
-                      className="card bg-white border"
-                      style={{ borderColor: "#D0D8E5" }}
-                    >
+                    <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <h3 className="h6 fw-semibold mb-0">
@@ -1363,9 +1348,7 @@ function App() {
                           <div className="col-md-6">
                             <div className="p-3 rounded-3 border">
                               <div className="text-secondary small">Destino</div>
-                              <div className="fw-semibold">
-                                {bestDestination.destination}
-                              </div>
+                              <div className="fw-semibold">{bestDestination.destination}</div>
                             </div>
                           </div>
 
@@ -1425,9 +1408,7 @@ function App() {
                                       href={url || "#"}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className={`btn btn-primary btn-sm ${
-                                        url ? "" : "disabled"
-                                      }`}
+                                      className={`btn btn-primary btn-sm ${url ? "" : "disabled"}`}
                                       style={{
                                         backgroundColor: "#3B82F6",
                                         borderColor: "#3B82F6",
@@ -1455,10 +1436,7 @@ function App() {
 
                 <section id="alternatives-panel" className="mb-4">
                   {showComplementary ? (
-                    <div
-                      className="card bg-white border"
-                      style={{ borderColor: "#D0D8E5" }}
-                    >
+                    <div className="card bg-white border" style={{ borderColor: "#D0D8E5" }}>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <h3 className="h6 fw-semibold mb-0">
@@ -1506,182 +1484,182 @@ function App() {
                 </section>
               </>
             ) : (
-              <div
-                className="card bg-white border mb-4"
-                style={{ borderColor: "#D0D8E5" }}
-              >
-                <div className="card-body">
-                  <div className="row g-4">
-                    <div className="col-md-8">
-                      <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                          <label className="form-label fw-semibold">
-                            Aeropuertos de origen
-                          </label>
+              /* PANEL DE BÚSQUEDA NUEVO (FM) */
+              <div className="fm-card mb-4">
+                <div className="fm-card-body">
+                  <div className="fm-row">
+                    {/* IZQUIERDA: FORM */}
+                    <div>
+                      <div className="mb-3">
+                        <h2 className="fm-title">Planifica la búsqueda</h2>
+                        <p className="fm-subtitle">
+                          Añade los aeropuertos del grupo y elige fechas. Luego te damos el mejor destino común.
+                        </p>
+                      </div>
 
-                          {origins.map((origin, index) => (
-                            <div
-                              key={index}
-                              className="d-flex align-items-center gap-2 mb-2"
-                            >
-                              <input
-                                type="text"
-                                className="form-control text-uppercase"
-                                placeholder="Ej: MAD, BCN, LON..."
-                                value={origin}
-                                onChange={(e) =>
-                                  handleOriginChange(index, e.target.value)
-                                }
-                                onFocus={() => setActiveOriginIndex(index)}
-                                disabled={loading}
-                              />
+                      <form onSubmit={handleSubmit}>
+                        {/* ORIGENES */}
+                        <div className="fm-section">
+                          <div className="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                              <div className="fw-semibold">Aeropuertos de origen</div>
+                              <div className="small fm-muted">
+                                Consejo: haz clic en la lista de la derecha para autocompletar el campo activo.
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3">
+                            {origins.map((origin, index) => (
+                              <div key={index} className="fm-origin-row mb-2">
+                                <div className="fm-origin-badge">Viajero {index + 1}</div>
+
+                                <input
+                                  type="text"
+                                  className="form-control text-uppercase"
+                                  placeholder="Ej: MAD, BCN, LON..."
+                                  value={origin}
+                                  onChange={(e) => handleOriginChange(index, e.target.value)}
+                                  onFocus={() => setActiveOriginIndex(index)}
+                                  disabled={loading}
+                                />
+
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-secondary btn-sm"
+                                  onClick={() => removeOrigin(index)}
+                                  disabled={origins.length <= 1 || loading}
+                                  title="Eliminar origen"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+
+                            <div className="fm-origin-actions">
                               <button
                                 type="button"
-                                className="btn btn-outline-secondary btn-sm"
-                                onClick={() => removeOrigin(index)}
-                                disabled={origins.length <= 1 || loading}
+                                className="fm-linklike"
+                                onClick={addOrigin}
+                                disabled={loading}
                               >
-                                ✕
+                                + Añadir origen
                               </button>
-                            </div>
-                          ))}
 
-                          <button
-                            type="button"
-                            className="btn btn-outline-secondary btn-sm mt-1"
-                            onClick={addOrigin}
-                            disabled={loading}
-                          >
-                            + Añadir origen
-                          </button>
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="form-label fw-semibold">
-                            Tipo de viaje
-                          </label>
-                          <div className="d-flex flex-wrap gap-3">
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="tripType"
-                                id="tripOneWay"
-                                value="oneway"
-                                checked={tripType === "oneway"}
-                                onChange={() => setTripType("oneway")}
-                                disabled={loading}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="tripOneWay"
-                              >
-                                Solo ida
-                              </label>
-                            </div>
-
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="tripType"
-                                id="tripRound"
-                                value="roundtrip"
-                                checked={tripType === "roundtrip"}
-                                onChange={() => setTripType("roundtrip")}
-                                disabled={loading}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="tripRound"
-                              >
-                                Ida y vuelta
-                              </label>
+                              <span className="small fm-muted">
+                                Origen activo: Viajero {safeActiveIndex + 1}
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="mb-3">
-                          <label className="form-label fw-semibold">Fechas</label>
-                          <div className="d-flex flex-wrap gap-3">
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="dateMode"
-                                id="dateExact"
-                                value="exact"
-                                checked={dateMode === "exact"}
-                                onChange={() => setDateMode("exact")}
-                                disabled={loading}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="dateExact"
-                              >
-                                Concretas
-                              </label>
-                            </div>
+                        {/* TIPO VIAJE + FECHAS */}
+                        <div className="fm-section">
+                          <div className="fw-semibold mb-2">Tipo de viaje</div>
+                          <div className="fm-pill-group">
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                tripType === "oneway"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => setTripType("oneway")}
+                              disabled={loading}
+                            >
+                              Solo ida
+                            </button>
 
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="dateMode"
-                                id="dateFlex"
-                                value="flex"
-                                checked={dateMode === "flex"}
-                                onChange={() => setDateMode("flex")}
-                                disabled={loading}
-                              />
-                              <label
-                                className="form-check-label"
-                                htmlFor="dateFlex"
-                              >
-                                Flexibles (±{flexDays} días)
-                              </label>
-                            </div>
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                tripType === "roundtrip"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => setTripType("roundtrip")}
+                              disabled={loading}
+                            >
+                              Ida y vuelta
+                            </button>
+                          </div>
+
+                          <div className="fm-divider" />
+
+                          <div className="fw-semibold mb-2">Fechas</div>
+                          <div className="fm-pill-group">
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                dateMode === "exact"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => setDateMode("exact")}
+                              disabled={loading}
+                            >
+                              Concretas
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                dateMode === "flex"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => setDateMode("flex")}
+                              disabled={loading}
+                            >
+                              Flexibles (±{flexDays} días)
+                            </button>
                           </div>
 
                           {dateMode === "flex" && (
-                            <div className="text-secondary small mt-1">
-                              Buscamos el mejor resultado dentro de{" "}
-                              {2 * flexDays + 1} fechas posibles.
+                            <div className="small fm-muted mt-2">
+                              Buscamos el mejor resultado dentro de {2 * flexDays + 1} fechas posibles.
                             </div>
                           )}
-                        </div>
 
-                        <div className="row g-3 mb-3">
-                          <div className="col-md-6">
-                            <label className="form-label fw-semibold">Salida</label>
-                            <input
-                              type="date"
-                              className="form-control"
-                              value={departureDate}
-                              onChange={(e) => setDepartureDate(e.target.value)}
-                              disabled={loading}
-                            />
-                          </div>
-
-                          {tripType === "roundtrip" && (
+                          <div className="row g-3 mt-2">
                             <div className="col-md-6">
-                              <label className="form-label fw-semibold">Vuelta</label>
+                              <label className="form-label fw-semibold">Salida</label>
                               <input
                                 type="date"
                                 className="form-control"
-                                value={returnDate}
-                                onChange={(e) => setReturnDate(e.target.value)}
+                                value={departureDate}
+                                onChange={(e) => setDepartureDate(e.target.value)}
                                 disabled={loading}
                               />
                             </div>
-                          )}
+
+                            {tripType === "roundtrip" && (
+                              <div className="col-md-6">
+                                <label className="form-label fw-semibold">Vuelta</label>
+                                <input
+                                  type="date"
+                                  className="form-control"
+                                  value={returnDate}
+                                  onChange={(e) => setReturnDate(e.target.value)}
+                                  disabled={loading}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="mb-3">
-                          <div className="d-flex justify-content-between align-items-center">
-                            <label className="form-label fw-semibold mb-0">
-                              Presupuesto máximo por persona
-                            </label>
+                        {/* PRESUPUESTO */}
+                        <div className="fm-section">
+                          <div className="d-flex justify-content-between align-items-center gap-2">
+                            <div>
+                              <div className="fw-semibold">Presupuesto máximo por persona</div>
+                              <div className="small fm-muted">
+                                {budgetEnabled
+                                  ? `Filtramos por media por persona hasta ${Number(maxBudgetPerTraveler).toFixed(0)} EUR.`
+                                  : "Sin límite. Actívalo si quieres descartar destinos caros."}
+                              </div>
+                            </div>
+
                             <div className="form-check form-switch">
                               <input
                                 className="form-check-input"
@@ -1691,17 +1669,14 @@ function App() {
                                 onChange={(e) => setBudgetEnabled(e.target.checked)}
                                 disabled={loading}
                               />
-                              <label
-                                className="form-check-label small"
-                                htmlFor="budgetSwitch"
-                              >
+                              <label className="form-check-label small" htmlFor="budgetSwitch">
                                 {budgetEnabled ? "Activado" : "Sin límite"}
                               </label>
                             </div>
                           </div>
 
                           {budgetEnabled && (
-                            <div className="mt-2">
+                            <div className="fm-budget-box">
                               <div className="d-flex align-items-center gap-2">
                                 <input
                                   type="range"
@@ -1710,14 +1685,11 @@ function App() {
                                   max={BUDGET_MAX}
                                   step={BUDGET_STEP}
                                   value={maxBudgetPerTraveler}
-                                  onChange={(e) =>
-                                    setMaxBudgetPerTraveler(
-                                      clampBudget(e.target.value)
-                                    )
-                                  }
+                                  onChange={(e) => setMaxBudgetPerTraveler(clampBudget(e.target.value))}
                                   disabled={loading}
                                 />
-                                <div style={{ width: 120 }}>
+
+                                <div style={{ width: 130 }}>
                                   <div className="input-group input-group-sm">
                                     <input
                                       type="number"
@@ -1726,11 +1698,7 @@ function App() {
                                       max={BUDGET_MAX}
                                       step={BUDGET_STEP}
                                       value={maxBudgetPerTraveler}
-                                      onChange={(e) =>
-                                        setMaxBudgetPerTraveler(
-                                          clampBudget(e.target.value)
-                                        )
-                                      }
+                                      onChange={(e) => setMaxBudgetPerTraveler(clampBudget(e.target.value))}
                                       disabled={loading}
                                     />
                                     <span className="input-group-text">EUR</span>
@@ -1738,127 +1706,118 @@ function App() {
                                 </div>
                               </div>
 
-                              <div className="d-flex justify-content-between text-secondary small mt-1">
+                              <div className="d-flex justify-content-between small fm-muted mt-1">
                                 <span>{BUDGET_MIN} EUR</span>
                                 <span>{BUDGET_MAX} EUR</span>
-                              </div>
-
-                              <div className="text-secondary small mt-1">
-                                Filtramos destinos cuya <strong>media por persona</strong> supere{" "}
-                                <strong>{Number(maxBudgetPerTraveler).toFixed(0)} EUR</strong>.
                               </div>
                             </div>
                           )}
                         </div>
 
-                        <div className="mb-3">
-                          <label className="form-label fw-semibold">Optimizar por</label>
-                          <div className="d-flex flex-wrap gap-3">
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="optimizeBy"
-                                id="optTotal"
-                                value="total"
-                                checked={optimizeBy === "total"}
-                                onChange={(e) => {
-                                  setOptimizeBy(e.target.value);
-                                  setUiCriterion(e.target.value);
-                                }}
-                                disabled={loading}
-                              />
-                              <label className="form-check-label" htmlFor="optTotal">
-                                Precio total del grupo
-                              </label>
-                            </div>
+                        {/* OPTIMIZAR */}
+                        <div className="fm-section">
+                          <div className="fw-semibold mb-2">Optimizar por</div>
+                          <div className="fm-pill-group">
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                optimizeBy === "total"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => {
+                                setOptimizeBy("total");
+                                setUiCriterion("total");
+                              }}
+                              disabled={loading}
+                            >
+                              Precio total del grupo
+                            </button>
 
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="radio"
-                                name="optimizeBy"
-                                id="optFairness"
-                                value="fairness"
-                                checked={optimizeBy === "fairness"}
-                                onChange={(e) => {
-                                  setOptimizeBy(e.target.value);
-                                  setUiCriterion(e.target.value);
-                                }}
-                                disabled={loading}
-                              />
-                              <label className="form-check-label" htmlFor="optFairness">
-                                Equidad entre viajeros
-                              </label>
-                            </div>
+                            <button
+                              type="button"
+                              className={`btn fm-pill ${
+                                optimizeBy === "fairness"
+                                  ? "btn-light fm-pill-active"
+                                  : "btn-outline-secondary"
+                              }`}
+                              onClick={() => {
+                                setOptimizeBy("fairness");
+                                setUiCriterion("fairness");
+                              }}
+                              disabled={loading}
+                            >
+                              Equidad entre viajeros
+                            </button>
                           </div>
 
-                          <small className="text-secondary">
+                          <div className="small fm-muted mt-2">
                             Actualmente estamos priorizando la {optimizeLabel}.
-                          </small>
+                          </div>
                         </div>
 
-                        {error && <div className="alert alert-danger py-2">{error}</div>}
+                        {error && <div className="alert alert-danger py-2 mt-3 mb-0">{error}</div>}
 
-                        <div className="d-grid">
-                          <SearchButton loading={loading}>
+                        {/* CTA */}
+                        <div className="mt-3">
+                          {/* Puedes usar tu SearchButton si quieres, pero aquí dejamos un CTA más estético */}
+                          <button type="submit" className="btn btn-primary w-100 fm-cta" disabled={loading}>
                             Buscar destinos comunes
-                          </SearchButton>
+                          </button>
+
+                          <div className="fm-cta-help">
+                            <span>Tiempo estimado: 5 a 10 s</span>
+                            <span>Precios estimados con Amadeus</span>
+                          </div>
                         </div>
                       </form>
                     </div>
 
-                    <div className="col-md-4">
-                      <div className="card h-100 border-0">
-                        <div className="card-body p-3">
-                          <h2 className="h6 mb-2">Aeropuertos disponibles</h2>
-                          <p className="text-secondary small mb-2">
-                            El listado se filtra según el campo activo. Haz clic para rellenarlo.
-                          </p>
-
-                          <div
-                            className="table-responsive"
-                            style={{ maxHeight: "260px", overflowY: "auto" }}
-                          >
-                            <table className="table table-sm mb-0">
-                              <thead>
-                                <tr>
-                                  <th style={{ width: "70px" }}>Código</th>
-                                  <th>Ciudad</th>
-                                  <th className="text-end">País</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {filteredAirports.map((a) => (
-                                  <tr
-                                    key={a.code}
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() => !loading && handleClickSuggestion(a.code)}
-                                  >
-                                    <td className="fw-semibold">{a.code}</td>
-                                    <td>{a.city}</td>
-                                    <td className="text-end text-secondary small">
-                                      {a.country}
-                                    </td>
-                                  </tr>
-                                ))}
-                                {filteredAirports.length === 0 && (
-                                  <tr>
-                                    <td colSpan={3} className="text-center text-secondary small">
-                                      No hay aeropuertos que coincidan.
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
+                    {/* DERECHA: LISTA AEROPUERTOS */}
+                    <aside className="fm-right-card">
+                      <div className="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                          <div className="fw-semibold">Aeropuertos disponibles</div>
+                          <div className="small fm-muted">
+                            Filtra según el campo activo. Haz clic para rellenarlo.
                           </div>
-
-                          <p className="text-secondary small mt-2 mb-0">
-                            Consejo: cambia de campo y la tabla se adapta.
-                          </p>
+                        </div>
+                        <div className="small fm-muted">
+                          Activo: Viajero {safeActiveIndex + 1}
                         </div>
                       </div>
-                    </div>
+
+                      <div className="fm-list">
+                        {filteredAirports.map((a) => (
+                          <div
+                            key={a.code}
+                            className="fm-airport-item"
+                            onClick={() => !loading && handleClickSuggestion(a.code)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleClickSuggestion(a.code);
+                            }}
+                          >
+                            <div className="fm-airport-left">
+                              <div className="fm-airport-code">{a.code}</div>
+                              <div className="fm-airport-city">{a.city}</div>
+                            </div>
+                            <div className="fm-airport-country">{a.country}</div>
+                          </div>
+                        ))}
+
+                        {filteredAirports.length === 0 && (
+                          <div className="text-center small fm-muted py-3">
+                            No hay aeropuertos que coincidan.
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="small fm-muted mt-2">
+                        Consejo: cambia de campo y la lista se adapta.
+                      </div>
+                    </aside>
                   </div>
                 </div>
               </div>

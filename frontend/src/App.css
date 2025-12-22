@@ -1,0 +1,330 @@
+/* FlyndMe UI refresh */
+
+:root {
+  --fm-bg: #f3f8ff;
+  --fm-card: #ffffff;
+  --fm-border: #d0d8e5;
+  --fm-muted: #64748b;
+  --fm-primary: #3b82f6;
+  --fm-primary-dark: #2563eb;
+  --fm-soft: rgba(59, 130, 246, 0.08);
+}
+
+.fm-page {
+  background: var(--fm-bg);
+  color: #1e293b;
+}
+
+.fm-container {
+  max-width: 980px;
+}
+
+.fm-card {
+  background: var(--fm-card);
+  border: 1px solid var(--fm-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.06);
+}
+
+.fm-card-body {
+  padding: 22px;
+}
+
+@media (min-width: 768px) {
+  .fm-card-body {
+    padding: 26px;
+  }
+}
+
+.fm-section {
+  padding: 14px 14px 12px 14px;
+  border: 1px solid rgba(208, 216, 229, 0.7);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+}
+
+.fm-section + .fm-section {
+  margin-top: 12px;
+}
+
+.fm-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0;
+}
+
+.fm-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--fm-muted);
+}
+
+.fm-divider {
+  height: 1px;
+  background: rgba(208, 216, 229, 0.8);
+  margin: 14px 0;
+}
+
+.fm-pill {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.fm-pill.btn-outline-secondary {
+  border-color: rgba(208, 216, 229, 0.9);
+  color: #334155;
+}
+
+.fm-pill.btn-outline-secondary:hover {
+  background: rgba(2, 6, 23, 0.03);
+}
+
+.fm-pill-active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+}
+
+.fm-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fm-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .fm-row {
+    grid-template-columns: 1.3fr 0.7fr;
+    gap: 18px;
+  }
+}
+
+.fm-origin-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.fm-origin-badge {
+  min-width: 92px;
+  text-align: center;
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: var(--fm-soft);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.fm-origin-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.fm-linklike {
+  background: transparent;
+  border: none;
+  color: var(--fm-primary-dark);
+  font-weight: 700;
+  padding: 0;
+}
+
+.fm-linklike:hover {
+  text-decoration: underline;
+}
+
+.fm-right-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(208, 216, 229, 0.8);
+  border-radius: 16px;
+  padding: 14px;
+  height: 100%;
+}
+
+.fm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.fm-airport-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(208, 216, 229, 0.8);
+  border-radius: 12px;
+  padding: 10px 10px;
+  background: white;
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.12s ease;
+}
+
+.fm-airport-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.08);
+}
+
+.fm-airport-left {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.fm-airport-code {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+.fm-airport-city {
+  font-size: 13px;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.fm-airport-country {
+  font-size: 12px;
+  color: var(--fm-muted);
+  white-space: nowrap;
+}
+
+.fm-cta {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 800;
+  font-size: 16px;
+  background: var(--fm-primary);
+  border-color: var(--fm-primary);
+}
+
+.fm-cta:hover {
+  background: var(--fm-primary-dark);
+  border-color: var(--fm-primary-dark);
+}
+
+.fm-cta-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--fm-muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fm-budget-box {
+  border: 1px solid rgba(208, 216, 229, 0.9);
+  background: rgba(2, 6, 23, 0.02);
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.fm-muted {
+  color: var(--fm-muted);
+}
+
+/* --- Enhancements (append at end) --- */
+
+/* Inputs & focus (Skyscanner-ish) */
+.fm-card .form-control,
+.fm-card .form-select,
+.fm-card .form-range {
+  border-color: rgba(208, 216, 229, 0.95);
+  border-radius: 12px;
+}
+
+.fm-card .form-control:focus,
+.fm-card .form-select:focus {
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+}
+
+/* Origin row layout polish */
+.fm-origin-row .form-control {
+  height: 42px;
+}
+
+.fm-origin-row .btn {
+  height: 42px;
+  width: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+/* Better mobile stacking */
+@media (max-width: 520px) {
+  .fm-origin-row {
+    flex-wrap: wrap;
+  }
+
+  .fm-origin-badge {
+    min-width: auto;
+    width: 100%;
+    text-align: left;
+  }
+
+  .fm-origin-row .form-control {
+    flex: 1 1 auto;
+    width: calc(100% - 52px);
+  }
+}
+
+/* Right list scrollbar refinement */
+.fm-list {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(148, 163, 184, 0.7) transparent; /* Firefox */
+}
+
+.fm-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fm-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fm-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+}
+
+.fm-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.75);
+}
+
+/* Airport item active press */
+.fm-airport-item:active {
+  transform: translateY(0px);
+  box-shadow: 0 6px 14px rgba(2, 6, 23, 0.08);
+}
+
+/* Optional: if later you use these wrapper classes */
+.fm-page {
+  min-height: 100vh;
+}
+
+.fm-container {
+  width: 100%;
+  margin: 0 auto;
+  padding-left: 12px;
+  padding-right: 12px;
+}
