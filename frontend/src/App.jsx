@@ -1106,7 +1106,7 @@ function App() {
     <div className="min-vh-100" style={{ backgroundColor: "#F3F8FF", color: "#1E293B" }}>
       <LoadingOverlay loading={loading} />
 
-      <header className="bg-white border-bottom">
+     <header className="bg-white border-bottom">
   <div className="container" style={{ maxWidth: "1100px" }}>
     <div
       className="d-flex align-items-center py-3"
@@ -1114,18 +1114,16 @@ function App() {
       style={{ cursor: "pointer" }}
     >
       <img
-        src={`${import.meta.env.BASE_URL || "/"}logo-flyndme.svg`}
+        src={`${import.meta.env.BASE_URL || "/"}destinations/logo-flyndme.svg`}
         alt="FlyndMe"
-        style={{
-          height: 32,
-          width: "auto",
-          marginRight: 8,
-        }}
+        height={32}
+        style={{ marginRight: 8, display: "block" }}
       />
       <span className="fw-semibold">FlyndMe</span>
     </div>
   </div>
 </header>
+
 
 
       {!hasStarted ? (
