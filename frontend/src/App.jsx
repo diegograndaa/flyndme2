@@ -217,12 +217,11 @@ function Landing({ onStart }) {
                 className="display-5 fw-bold mb-3"
                 style={{ color: "#0F172A" }}
               >
-                Encuentra el mejor destino para quedar
+                EL PUNTO DE ENCUENTRO PERFECTO
               </h1>
 
               <p className="lead mb-4" style={{ color: "#475569" }}>
-                Introduce varios orígenes y te devolvemos el destino común óptimo:
-                el más barato para el grupo o el más equilibrado entre viajeros.
+                Varios puntos de salida, una decisión clara
               </p>
 
               <div className="d-flex flex-wrap gap-2">
@@ -239,13 +238,7 @@ function Landing({ onStart }) {
                   Empezar a buscar
                 </button>
 
-                <a
-                  href="#como-funciona"
-                  className="btn btn-outline-secondary btn-lg"
-                  style={{ borderColor: "#CBD5E1" }}
-                >
-                  Ver cómo funciona
-                </a>
+            
               </div>
 
               <div className="mt-4 d-flex flex-wrap gap-2">
