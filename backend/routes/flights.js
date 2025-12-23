@@ -15,8 +15,10 @@ const DEFAULT_DESTINATIONS = [
   "VIE",
 ];
 
+// =========================
 // Cache en memoria
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
+// =========================
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 const responseCache = new Map();
 
 function getCached(key) {
@@ -30,33 +32,15 @@ function getCached(key) {
 }
 
 function setCached(key, value) {
-  responseCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+  responseCache.set(key, {
+    value,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
 }
 
-async function mapWithConcurrency(items, limit, mapper) {
-  const results = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (true) {
-      const i = nextIndex++;
-      if (i >= items.length) return;
-      try {
-        results[i] = await mapper(items[i], i);
-      } catch (e) {
-        results[i] = { __error: e };
-      }
-    }
-  }
-
-  const workers = Array.from(
-    { length: Math.min(limit, items.length) },
-    () => worker()
-  );
-  await Promise.all(workers);
-  return results;
-}
-
+// =========================
+// Utilidades de fechas
+// =========================
 function toISODate(d) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -65,9 +49,7 @@ function toISODate(d) {
 }
 
 function parseISODate(s) {
-  const [y, m, d] = String(s)
-    .split("-")
-    .map((x) => parseInt(x, 10));
+  const [y, m, d] = String(s).split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
 }
 
@@ -82,6 +64,9 @@ function diffDays(a, b) {
   return Math.round(ms / (24 * 60 * 60 * 1000));
 }
 
+// =========================
+// ROUTE PRINCIPAL
+// =========================
 router.post("/multi-origin", async (req, res) => {
   try {
     let {
@@ -94,24 +79,27 @@ router.post("/multi-origin", async (req, res) => {
       flexDays,
       nonStop,
       optimizeBy,
-      maxBudgetPerTraveler,   // media por persona
-      maxBudgetPerFlight,     // NUEVO: presupuesto máximo por vuelo individual
+      maxBudgetPerTraveler,
+      maxBudgetPerFlight,
     } = req.body;
 
-    // defaults
+    // Defaults
     tripType = tripType === "roundtrip" ? "roundtrip" : "oneway";
     dateMode = dateMode === "flex" ? "flex" : "exact";
     flexDays =
       typeof flexDays === "number" && flexDays >= 0 ? Math.min(flexDays, 7) : 3;
 
-    const parsedAvg = Number(maxBudgetPerTraveler);
-    const parsedFlight = Number(maxBudgetPerFlight);
-
     const safeMaxAvg =
-      Number.isFinite(parsedAvg) && parsedAvg > 0 ? parsedAvg : null;
+      Number.isFinite(Number(maxBudgetPerTraveler)) &&
+      Number(maxBudgetPerTraveler) > 0
+        ? Number(maxBudgetPerTraveler)
+        : null;
 
     const safeMaxFlight =
-      Number.isFinite(parsedFlight) && parsedFlight > 0 ? parsedFlight : null;
+      Number.isFinite(Number(maxBudgetPerFlight)) &&
+      Number(maxBudgetPerFlight) > 0
+        ? Number(maxBudgetPerFlight)
+        : null;
 
     const cacheKey = JSON.stringify({
       origins,
@@ -123,13 +111,16 @@ router.post("/multi-origin", async (req, res) => {
       flexDays,
       nonStop,
       optimizeBy,
-      maxBudgetPerTraveler: safeMaxAvg,
-      maxBudgetPerFlight: safeMaxFlight,
+      safeMaxAvg,
+      safeMaxFlight,
     });
 
     const cached = getCached(cacheKey);
     if (cached) return res.json(cached);
 
+    // =========================
+    // Validaciones
+    // =========================
     if (!Array.isArray(origins) || origins.length === 0) {
       return res.status(400).json({ message: "Debes indicar al menos un origen" });
     }
@@ -150,11 +141,14 @@ router.post("/multi-origin", async (req, res) => {
 
     const destinationList =
       Array.isArray(destinations) && destinations.length > 0
-        ? destinations.map((d) => String(d).trim().toUpperCase())
+        ? destinations.map((d) => String(d).trim().toUpperCase()).filter(Boolean)
         : DEFAULT_DESTINATIONS;
 
     const optionsBase = { nonStop, max: 5 };
 
+    // =========================
+    // Fechas candidatas
+    // =========================
     const depBase = parseISODate(departureDate);
     let tripLenDays = 0;
 
@@ -171,77 +165,71 @@ router.post("/multi-origin", async (req, res) => {
     const dateCandidates = [];
     if (dateMode === "flex") {
       for (let d = -flexDays; d <= flexDays; d++) {
-        dateCandidates.push({ dep: toISODate(addDays(depBase, d)) });
+        dateCandidates.push(toISODate(addDays(depBase, d)));
       }
     } else {
-      dateCandidates.push({ dep: departureDate });
+      dateCandidates.push(departureDate);
     }
 
-    const tasks = [];
-    for (const dest of destinationList) {
-      for (const dc of dateCandidates) {
-        for (const origin of originList) {
-          const dep = dc.dep;
-          const ret =
-            tripType === "roundtrip"
-              ? toISODate(addDays(parseISODate(dep), tripLenDays))
-              : null;
+    // =========================
+    // Protección combinatoria
+    // =========================
+    const combinations =
+      originList.length * destinationList.length * dateCandidates.length;
 
-          tasks.push({ origin, dest, dep, ret });
-        }
-      }
+    const MAX_COMBINATIONS = 180;
+    if (combinations > MAX_COMBINATIONS) {
+      return res.status(400).json({
+        message: `Demasiadas combinaciones (${combinations}). Reduce orígenes, destinos o flexibilidad.`,
+      });
     }
 
-    const results = await mapWithConcurrency(tasks, 6, async (t) => {
-      const options = { ...optionsBase };
-      if (tripType === "roundtrip" && t.ret) options.returnDate = t.ret;
-      const price = await getCheapestPrice(t.origin, t.dest, t.dep, options);
-      return {
-        origin: t.origin,
-        dest: t.dest,
-        dep: t.dep,
-        ret: t.ret,
-        price: typeof price === "number" ? price : null,
-      };
-    });
-
-    const byDestDate = new Map();
-    destinationList.forEach((d) => byDestDate.set(d, new Map()));
-
-    for (const r of results) {
-      const map = byDestDate.get(r.dest);
-      const current = map.get(r.dep) || { flights: [], ret: r.ret };
-      current.flights.push(
-        r.price === null
-          ? { origin: r.origin, price: null, error: "No hay vuelos" }
-          : { origin: r.origin, price: r.price }
-      );
-      map.set(r.dep, current);
-    }
-
+    // =========================
+    // BÚSQUEDA REAL (SECUENCIAL)
+    // =========================
     const enriched = [];
 
     for (const dest of destinationList) {
-      const dates = byDestDate.get(dest);
+      for (const dep of dateCandidates) {
+        const ret =
+          tripType === "roundtrip"
+            ? toISODate(addDays(parseISODate(dep), tripLenDays))
+            : null;
 
-      for (const [dep, payload] of dates.entries()) {
-        const flights = payload.flights;
-        if (flights.length !== originList.length) continue;
-        if (!flights.every((f) => typeof f.price === "number")) continue;
+        const flights = [];
+        let valid = true;
 
-        // FILTRO: presupuesto máximo por vuelo individual
-        if (
-          safeMaxFlight !== null &&
-          flights.some((f) => f.price > safeMaxFlight)
-        ) {
-          continue;
+        for (const origin of originList) {
+          const options = { ...optionsBase };
+          if (tripType === "roundtrip" && ret) {
+            options.returnDate = ret;
+          }
+
+          const price = await getCheapestPrice(origin, dest, dep, options);
+
+          // Corte temprano: si un origen falla, descartamos todo
+          if (typeof price !== "number") {
+            valid = false;
+            break;
+          }
+
+          // Filtro: presupuesto máximo por vuelo individual
+          if (safeMaxFlight !== null && price > safeMaxFlight) {
+            valid = false;
+            break;
+          }
+
+          flights.push({ origin, price });
         }
+
+        if (!valid) continue;
+        if (flights.length !== originList.length) continue;
 
         const prices = flights.map((f) => f.price);
         const total = prices.reduce((a, b) => a + b, 0);
         const avg = total / originList.length;
 
-        // FILTRO: presupuesto medio por persona
+        // Filtro: presupuesto medio por persona
         if (safeMaxAvg !== null && avg > safeMaxAvg) continue;
 
         const min = Math.min(...prices);
@@ -249,12 +237,14 @@ router.post("/multi-origin", async (req, res) => {
         const spread = max - min;
 
         const fairness =
-          avg > 0 ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100)) : 0;
+          avg > 0
+            ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100))
+            : 0;
 
         enriched.push({
           destination: dest,
           bestDate: dep,
-          bestReturnDate: payload.ret,
+          bestReturnDate: ret,
           flights,
           totalCostEUR: total,
           averageCostPerTraveler: Number(avg.toFixed(2)),
@@ -270,10 +260,14 @@ router.post("/multi-origin", async (req, res) => {
       return res.json(payload);
     }
 
+    // =========================
+    // Orden final
+    // =========================
     enriched.sort((a, b) => {
       if (optimizeBy === "fairness") {
-        if (b.fairnessScore !== a.fairnessScore)
+        if (b.fairnessScore !== a.fairnessScore) {
           return b.fairnessScore - a.fairnessScore;
+        }
         return a.totalCostEUR - b.totalCostEUR;
       }
       return a.totalCostEUR - b.totalCostEUR;
@@ -289,8 +283,10 @@ router.post("/multi-origin", async (req, res) => {
     setCached(cacheKey, payload);
     return res.json(payload);
   } catch (err) {
-    console.error("💥 Error en multi-origin:", err.message);
-    res.status(500).json({ message: "Error interno al buscar vuelos" });
+    console.error("💥 Error en multi-origin:", err);
+    return res
+      .status(500)
+      .json({ message: "Error interno al buscar vuelos" });
   }
 });
 
