@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getCheapestPrice } = require("../services/amadeusService");
+const { getCheapestOffer } = require("../services/amadeusService");
 
 // Menos destinos por defecto = muchas menos llamadas
 const DEFAULT_DESTINATIONS = ["LON", "PAR", "ROM", "AMS", "MIL", "LIS"];
@@ -44,6 +44,65 @@ function addDays(date, days) {
 function diffDays(a, b) {
   const ms = b.getTime() - a.getTime();
   return Math.round(ms / (24 * 60 * 60 * 1000));
+}
+
+function computeFairnessFromPrices(prices) {
+  const total = prices.reduce((a, b) => a + b, 0);
+  const avg = total / prices.length;
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const spread = max - min;
+
+  const fairness =
+    avg > 0 ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100)) : 0;
+
+  return {
+    total,
+    avg,
+    spread,
+    fairness,
+  };
+}
+
+/**
+ * Re-verifica un candidato (top destino) re-consultando Amadeus.
+ * Si alguno de los orígenes ya no tiene oferta, devuelve null.
+ */
+async function verifyCandidate(candidate, originList, tripType, optionsBase) {
+  const dest = candidate.destination;
+  const dep = candidate.bestDate;
+  const ret = candidate.bestReturnDate || null;
+
+  const flights = [];
+
+  for (const origin of originList) {
+    const options = { ...optionsBase, max: 10 };
+    if (tripType === "roundtrip" && ret) options.returnDate = ret;
+
+    const cheapest = await getCheapestOffer(origin, dest, dep, options);
+    if (!cheapest || typeof cheapest.price !== "number") return null;
+
+    flights.push({
+      origin,
+      price: cheapest.price,
+      offer: cheapest.offer || null,
+    });
+  }
+
+  const prices = flights.map((f) => f.price);
+  const { total, avg, spread, fairness } = computeFairnessFromPrices(prices);
+
+  return {
+    destination: dest,
+    bestDate: dep,
+    bestReturnDate: ret,
+    flights,
+    totalCostEUR: total,
+    averageCostPerTraveler: Number(avg.toFixed(2)),
+    priceSpread: Number(spread.toFixed(2)),
+    fairnessScore: Number(fairness.toFixed(1)),
+    verifiedAt: new Date().toISOString(),
+  };
 }
 
 router.post("/multi-origin", async (req, res) => {
@@ -117,6 +176,7 @@ router.post("/multi-origin", async (req, res) => {
         ? destinations.map((d) => String(d).trim().toUpperCase()).filter(Boolean)
         : DEFAULT_DESTINATIONS;
 
+    // Nota: max lo ajustamos por llamada (en verify subimos a 10)
     const optionsBase = { nonStop, max: 5 };
 
     const depBase = parseISODate(departureDate);
@@ -153,7 +213,6 @@ router.post("/multi-origin", async (req, res) => {
     }
 
     const enriched = [];
-    let bestSoFar = null;
 
     for (const dest of destinationList) {
       for (const dep of dateCandidates) {
@@ -169,39 +228,33 @@ router.post("/multi-origin", async (req, res) => {
           const options = { ...optionsBase };
           if (tripType === "roundtrip" && ret) options.returnDate = ret;
 
-          const price = await getCheapestPrice(origin, dest, dep, options);
+          const cheapest = await getCheapestOffer(origin, dest, dep, options);
 
-          if (typeof price !== "number") {
+          if (!cheapest || typeof cheapest.price !== "number") {
             valid = false;
             break;
           }
-          if (safeMaxFlight !== null && price > safeMaxFlight) {
+          if (safeMaxFlight !== null && cheapest.price > safeMaxFlight) {
             valid = false;
             break;
           }
 
-          flights.push({ origin, price });
+          flights.push({
+            origin,
+            price: cheapest.price,
+            offer: cheapest.offer || null,
+          });
         }
 
         if (!valid) continue;
         if (flights.length !== originList.length) continue;
 
         const prices = flights.map((f) => f.price);
-        const total = prices.reduce((a, b) => a + b, 0);
-        const avg = total / originList.length;
+        const { total, avg, spread, fairness } = computeFairnessFromPrices(prices);
 
         if (safeMaxAvg !== null && avg > safeMaxAvg) continue;
 
-        const min = Math.min(...prices);
-        const max = Math.max(...prices);
-        const spread = max - min;
-
-        const fairness =
-          avg > 0
-            ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100))
-            : 0;
-
-        const item = {
+        enriched.push({
           destination: dest,
           bestDate: dep,
           bestReturnDate: ret,
@@ -210,32 +263,11 @@ router.post("/multi-origin", async (req, res) => {
           averageCostPerTraveler: Number(avg.toFixed(2)),
           priceSpread: Number(spread.toFixed(2)),
           fairnessScore: Number(fairness.toFixed(1)),
-        };
-
-        enriched.push(item);
-
-        // Mantén el mejor candidato para poder cortar antes
-        if (!bestSoFar) bestSoFar = item;
-        else {
-          if (optimizeBy === "fairness") {
-            if (
-              item.fairnessScore > bestSoFar.fairnessScore ||
-              (item.fairnessScore === bestSoFar.fairnessScore &&
-                item.totalCostEUR < bestSoFar.totalCostEUR)
-            ) {
-              bestSoFar = item;
-            }
-          } else {
-            if (item.totalCostEUR < bestSoFar.totalCostEUR) bestSoFar = item;
-          }
-        }
+          verifiedAt: null, // se rellena al verificar el top
+        });
 
         // Corte temprano (evita seguir quemando cuota)
-        // Si ya tienes un resultado razonable, no explores todo el universo.
-        if (enriched.length >= 6) {
-          // ya tenemos suficientes alternativas, paramos aquí
-          break;
-        }
+        if (enriched.length >= 6) break;
       }
       if (enriched.length >= 6) break;
     }
@@ -255,9 +287,25 @@ router.post("/multi-origin", async (req, res) => {
       return a.totalCostEUR - b.totalCostEUR;
     });
 
+    // VERIFICACIÓN FINAL: top 1 (y fallback al 2 y 3 si falla)
+    let verifiedBest = null;
+    for (let i = 0; i < Math.min(3, enriched.length); i++) {
+      try {
+        const v = await verifyCandidate(enriched[i], originList, tripType, optionsBase);
+        if (v) {
+          verifiedBest = v;
+          // Actualiza ese candidato dentro del array también
+          enriched[i] = v;
+          break;
+        }
+      } catch (e) {
+        console.error("⚠️ Verificación fallida:", e?.message || e);
+      }
+    }
+
     const payload = {
       flights: enriched,
-      bestDestination: enriched[0],
+      bestDestination: verifiedBest || enriched[0],
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight: safeMaxFlight,
     };

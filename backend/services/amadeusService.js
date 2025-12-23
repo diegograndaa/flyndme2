@@ -277,6 +277,7 @@ async function searchFlightOffer(origin, destination, departureDate, options = {
 
 /**
  * Devuelve el precio mínimo (en EUR) para un origen-destino-fecha.
+ * Si no hay vuelos o hay error, devuelve null.
  */
 async function getCheapestPrice(origin, destination, departureDate, options = {}) {
   if (origin === destination) {
@@ -290,9 +291,7 @@ async function getCheapestPrice(origin, destination, departureDate, options = {}
     const data = await searchFlightOffer(origin, destination, departureDate, options);
 
     const offers = data?.data || [];
-    if (!offers.length) {
-      return null;
-    }
+    if (!offers.length) return null;
 
     let cheapestValue = null;
     for (const offer of offers) {
@@ -304,7 +303,55 @@ async function getCheapestPrice(origin, destination, departureDate, options = {}
 
     return cheapestValue;
   } catch (err) {
-    // importante: no reventar todo, pero tampoco spamear
+    return null;
+  }
+}
+
+/**
+ * Devuelve la oferta más barata + precio (fiable según Amadeus).
+ * Si no hay vuelos o hay error, devuelve null.
+ */
+async function getCheapestOffer(origin, destination, departureDate, options = {}) {
+  if (origin === destination) return null;
+
+  try {
+    const data = await searchFlightOffer(origin, destination, departureDate, {
+      ...options,
+      max: typeof options.max === "number" && options.max > 0 ? options.max : 10,
+    });
+
+    const offers = data?.data || [];
+    if (!offers.length) return null;
+
+    let cheapest = null;
+    let cheapestValue = null;
+
+    for (const offer of offers) {
+      const value = Number.parseFloat(offer?.price?.grandTotal);
+      if (!Number.isFinite(value)) continue;
+
+      if (cheapestValue === null || value < cheapestValue) {
+        cheapestValue = value;
+        cheapest = offer;
+      }
+    }
+
+    if (cheapestValue === null || !cheapest) return null;
+
+    // Resumen útil para “trazar” qué oferta fue la usada (fiabilidad)
+    return {
+      price: cheapestValue,
+      offer: {
+        id: cheapest?.id,
+        price: cheapest?.price,
+        itineraries: cheapest?.itineraries,
+        validatingAirlineCodes: cheapest?.validatingAirlineCodes,
+        numberOfBookableSeats: cheapest?.numberOfBookableSeats,
+        lastTicketingDate: cheapest?.lastTicketingDate,
+        travelerPricings: cheapest?.travelerPricings,
+      },
+    };
+  } catch (err) {
     return null;
   }
 }
@@ -313,4 +360,5 @@ module.exports = {
   getAccessToken,
   searchFlightOffer,
   getCheapestPrice,
+  getCheapestOffer,
 };
