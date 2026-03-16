@@ -120,18 +120,20 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
             <button type="button" className="alt-card-toggle" onClick={() => setOpen((v) => !v)}>
               {open ? t("alt.hideBreakdown") : t("alt.viewBreakdown")}
             </button>
-            {open && (
-              <ul className="alt-card-detail">
-                {flights.map((f, i) => (
-                  <li key={i} className="alt-card-detail-row">
-                    <span className="alt-card-detail-origin">{String(f.origin || "").toUpperCase()} → {code}</span>
-                    <span className="alt-card-detail-price">
-                      {typeof f.price === "number" ? formatEur(f.price, 2) : t("alt.noData")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className={`alt-card-detail-wrap${open ? " open" : ""}`}>
+              <div>
+                <ul className="alt-card-detail">
+                  {flights.map((f, i) => (
+                    <li key={i} className="alt-card-detail-row">
+                      <span className="alt-card-detail-origin">{String(f.origin || "").toUpperCase()} → {code}</span>
+                      <span className="alt-card-detail-price">
+                        {typeof f.price === "number" ? formatEur(f.price, 2) : t("alt.noData")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </>
         )}
       </div>

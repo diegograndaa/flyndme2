@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import FlightResults from "./components/FlightResults";
@@ -120,6 +120,61 @@ function LangSelector() {
       ))}
     </div>
   );
+}
+
+// ─── Toast notification ──────────────────────────────────────────────────────
+
+function Toast({ message, type = "success", onDone }) {
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setExiting(true), 2200);
+    const t2 = setTimeout(() => onDone?.(), 2500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onDone]);
+
+  return (
+    <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`}>
+      <span className="fm-toast-icon">
+        {type === "success" ? "✓" : type === "error" ? "✗" : "ℹ"}
+      </span>
+      {message}
+    </div>
+  );
+}
+
+// ─── Animated price counter ─────────────────────────────────────────────────
+
+function useCountUp(target, duration = 800, decimals = 0) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef(null);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    const from = prevTarget.current;
+    const to = typeof target === "number" ? target : Number(target || 0);
+    prevTarget.current = to;
+    if (from === to) { setDisplay(to); return; }
+
+    const start = performance.now();
+    const animate = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(from + (to - from) * eased);
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
+
+  return formatEur(display, decimals);
+}
+
+function AnimatedPrice({ value, decimals = 2, className = "" }) {
+  const formatted = useCountUp(value, 800, decimals);
+  return <div className={`${className} price-animate`}>{formatted}</div>;
 }
 
 // ─── Error boundary ───────────────────────────────────────────────────────────
@@ -423,6 +478,14 @@ function WinnerCard({
   onViewAlternatives, onChangeSearch,
 }) {
   const { t } = useI18n();
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (dest) {
+      const timer = setTimeout(() => setEntered(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [dest]);
 
   if (!dest) return null;
 
@@ -437,7 +500,7 @@ function WinnerCard({
   const breakdown    = Array.isArray(dest.flights) ? dest.flights : [];
 
   return (
-    <div className="wc-card">
+    <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
       {/* Image strip */}
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
@@ -482,12 +545,12 @@ function WinnerCard({
         <div className="wc-price-block">
           <div>
             <div className="wc-price-label">{t("results.groupTotal")}</div>
-            <div className="wc-price">{formatEur(dest.totalCostEUR, 2)}</div>
+            <AnimatedPrice value={dest.totalCostEUR} decimals={2} className="wc-price" />
           </div>
           <div className="wc-price-divider" />
           <div>
             <div className="wc-price-label">{t("results.avgPerPerson")}</div>
-            <div className="wc-price wc-price--secondary">{formatEur(dest.averageCostPerTraveler, 2)}</div>
+            <AnimatedPrice value={dest.averageCostPerTraveler} decimals={2} className="wc-price wc-price--secondary" />
           </div>
         </div>
 
@@ -593,6 +656,7 @@ export default function App() {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
+  const [toast,       setToast]       = useState(null); // { message, type }
 
   // Keep Render backend alive (free tier sleeps)
   useEffect(() => {
@@ -649,6 +713,7 @@ export default function App() {
     }
     const ok = await copyText(lines.join("\n"));
     setShareStatus(ok ? "ok" : "fail");
+    setToast({ message: ok ? t("results.copied") : t("results.copyFailed"), type: ok ? "success" : "error" });
     setTimeout(() => setShareStatus(""), 2500);
   };
 
@@ -772,10 +837,18 @@ export default function App() {
       {/* Loading bar */}
       <SearchProgress loading={loading} />
 
+      {/* Toast */}
+      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+
       {/* Views */}
-      {view === "landing" && <Landing onStart={() => setView("search")} />}
+      {view === "landing" && (
+        <div className="view-enter" key="landing">
+          <Landing onStart={() => setView("search")} />
+        </div>
+      )}
 
       {view === "search" && (
+        <div className="view-enter view-enter-search" key="search">
         <SearchPage
           origins={origins}           setOrigins={setOrigins}
           tripType={tripType}         setTripType={setTripType}
@@ -787,10 +860,11 @@ export default function App() {
           loading={loading}           error={error}
           onSubmit={handleSubmit}
         />
+        </div>
       )}
 
       {view === "results" && bestDestination && (
-        <main className="container py-4" style={{ maxWidth: 1080 }}>
+        <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
