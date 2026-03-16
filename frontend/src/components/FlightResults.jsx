@@ -11,7 +11,7 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
   const [open, setOpen] = useState(false);
 
   const code     = normalizeCode(dest.destination);
-  const city     = AIRPORT_MAP[code] || "";
+  const city     = AIRPORT_MAP[code]?.city || "";
   const imgUrl   = `${getBaseUrl()}destinations/${code}.jpg`;
   const isBest   = normalizeCode(bestDest?.destination) === code;
   const flights  = Array.isArray(dest.flights) ? dest.flights : [];
