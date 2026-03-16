@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 const MESSAGES = [
   "Connecting to airlines…",
+  "Waking up the server — hang tight…",
   "Searching flights from your cities…",
   "Calculating group total cost…",
   "Evaluating fairness between travelers…",

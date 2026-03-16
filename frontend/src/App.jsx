@@ -250,7 +250,7 @@ function SearchPage({
                   <input
                     type="text"
                     className="form-control sf-input text-uppercase"
-                    placeholder="Ej: MAD, LON…"
+                    placeholder="e.g. MAD, LON…"
                     value={origin}
                     onChange={(e) => {
                       const copy = [...origins];
@@ -271,7 +271,7 @@ function SearchPage({
                         setActiveIdx(Math.min(safeIdx, copy.length - 1));
                       }}
                       disabled={loading}
-                      title="Eliminar"
+                      title="Remove"
                     >✕</button>
                   )}
                 </div>
@@ -568,11 +568,14 @@ export default function App() {
   const [shareStatus, setShareStatus] = useState("");
 
   // Keep Render backend alive (free tier sleeps)
+  // Ping aggressively on load (3 quick pings to force cold-start), then every 8 min
   useEffect(() => {
     const ping = () => fetch(`${API_BASE}/api/ping`, { cache: "no-store" }).catch(() => {});
     ping();
+    const quick1 = setTimeout(ping, 3000);
+    const quick2 = setTimeout(ping, 8000);
     const t = setInterval(ping, 8 * 60 * 1000);
-    return () => clearInterval(t);
+    return () => { clearTimeout(quick1); clearTimeout(quick2); clearInterval(t); };
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
@@ -623,7 +626,7 @@ export default function App() {
     setTimeout(() => setShareStatus(""), 2500);
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -641,48 +644,83 @@ export default function App() {
     setShowAlt(false);
     setLoading(true);
 
+    const body = {
+      origins: cleanOrigins,
+      departureDate,
+      tripType,
+      optimizeBy,
+      dateMode: "exact",
+      flexDays: 0,
+      ...(tripType === "roundtrip" && { returnDate }),
+      ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
+    };
+
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 5000; // 5 s between retries
+
     try {
-      const body = {
-        origins: cleanOrigins,
-        departureDate,
-        tripType,
-        optimizeBy,
-        dateMode: "exact",
-        flexDays: 0,
-        ...(tripType === "roundtrip" && { returnDate }),
-        ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
-      };
+      let lastErr = null;
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || data.error || `Error ${res.status}`);
+          // 503 = Render free-tier is waking up → retry automatically
+          if (res.status === 503 && attempt < MAX_RETRIES) {
+            lastErr = new Error("Server is waking up…");
+            await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            continue;
+          }
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || data.error || `Error ${res.status}`);
+          }
+
+          const data = await res.json();
+          const arr  = Array.isArray(data.flights) ? data.flights : [];
+
+          if (!arr.length) {
+            setError(
+              budgetEnabled
+                ? "No results within that budget. Try increasing the limit or disabling the filter."
+                : "No results for those origins and dates. Try different dates or airports."
+            );
+            return;
+          }
+
+          setFlights(arr);
+          setBestByCriterion({ total: pickBest(arr, "total"), fairness: pickBest(arr, "fairness") });
+          setUiCriterion(optimizeBy);
+          setView("results");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return; // success — exit
+        } catch (err) {
+          lastErr = err;
+          // Only retry on network errors or 503; all other errors break immediately
+          if (err.message && !err.message.includes("waking up") && attempt < MAX_RETRIES) {
+            // Network failure (fetch itself threw) → retry
+            if (err instanceof TypeError) {
+              await new Promise((r) => setTimeout(r, RETRY_DELAY));
+              continue;
+            }
+          }
+          if (attempt >= MAX_RETRIES) break;
+          if (!(err instanceof TypeError) && !err.message?.includes("waking up")) break;
+          await new Promise((r) => setTimeout(r, RETRY_DELAY));
+        }
       }
 
-      const data = await res.json();
-      const arr  = Array.isArray(data.flights) ? data.flights : [];
-
-      if (!arr.length) {
-        setError(
-          budgetEnabled
-            ? "No results within that budget. Try increasing the limit or disabling the filter."
-            : "No results for those origins and dates. Try different dates or airports."
-        );
-        return;
+      // All retries exhausted
+      if (lastErr?.message?.includes("waking up") || lastErr instanceof TypeError) {
+        setError("The server is starting up (free tier). Please wait a moment and try again.");
+      } else {
+        setError(lastErr?.message || "Unexpected error. Please try again.");
       }
-
-      setFlights(arr);
-      setBestByCriterion({ total: pickBest(arr, "total"), fairness: pickBest(arr, "fairness") });
-      setUiCriterion(optimizeBy);
-      setView("results");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setError(err.message || "Unexpected error. Please try again.");
     } finally {
       setLoading(false);
     }
