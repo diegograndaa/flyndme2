@@ -1,90 +1,115 @@
 import { useEffect, useState } from "react";
 
-/**
- * Overlay de carga con mensajes progresivos
- */
-export function LoadingOverlay({ loading }) {
-  const messages = [
-    "Conectando con aerolíneas…",
-    "Comparando precios desde tus ciudades…",
-    "Calculando el destino más equilibrado…",
-    "Ordenando los mejores resultados…",
-    "Casi listo…",
-  ];
+const MESSAGES = [
+  "Conectando con aerolíneas…",
+  "Buscando vuelos desde tus ciudades…",
+  "Calculando el coste total del grupo…",
+  "Evaluando la equidad entre viajeros…",
+  "Casi listo…",
+];
 
-  const [step, setStep] = useState(0);
+/**
+ * Thin animated progress bar at the top of the page — non-blocking.
+ * Replaces the old full-screen overlay so the user can keep reading
+ * while the search runs.
+ */
+export function SearchProgress({ loading }) {
+  const [step, setStep]       = useState(0);
+  const [width, setWidth]     = useState(0);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!loading) return;
+    if (!loading) {
+      // Finish animation then hide
+      setWidth(100);
+      const t = setTimeout(() => { setVisible(false); setWidth(0); setStep(0); }, 400);
+      return () => clearTimeout(t);
+    }
 
+    setVisible(true);
+    setWidth(8);
     setStep(0);
-    const interval = setInterval(() => {
-      setStep((prev) => (prev + 1) % messages.length);
-    }, 1400);
 
-    return () => clearInterval(interval);
+    // Advance message every 1.8 s
+    const msgTimer = setInterval(() => {
+      setStep((p) => (p + 1) % MESSAGES.length);
+    }, 1800);
+
+    // Simulate progress (asymptotic — never quite reaches 95 % while loading)
+    const progTimer = setInterval(() => {
+      setWidth((w) => w + (95 - w) * 0.12);
+    }, 600);
+
+    return () => { clearInterval(msgTimer); clearInterval(progTimer); };
   }, [loading]);
 
-  if (!loading) return null;
+  if (!visible) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        backdropFilter: "blur(4px)",
-        zIndex: 2000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <>
+      {/* Progress bar */}
       <div
+        role="progressbar"
+        aria-label="Buscando vuelos"
         style={{
-          background: "white",
-          borderRadius: 16,
-          padding: 20,
-          width: "90%",
-          maxWidth: 420,
-          boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+          position:   "fixed",
+          top:        0,
+          left:       0,
+          width:      `${width}%`,
+          height:     3,
+          background: "linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%)",
+          transition: loading ? "width 0.6s ease" : "width 0.35s ease",
+          zIndex:     9999,
+          borderRadius: "0 2px 2px 0",
         }}
-      >
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <div
-            className="spinner-border"
-            role="status"
-            style={{ width: 22, height: 22 }}
+      />
+
+      {/* Status chip */}
+      {loading && (
+        <div
+          style={{
+            position:   "fixed",
+            bottom:     24,
+            left:       "50%",
+            transform:  "translateX(-50%)",
+            background: "#0F172A",
+            color:      "#F8FAFC",
+            borderRadius: 999,
+            padding:    "10px 20px",
+            display:    "flex",
+            alignItems: "center",
+            gap:        12,
+            fontSize:   14,
+            fontWeight: 500,
+            boxShadow:  "0 8px 32px rgba(0,0,0,0.35)",
+            zIndex:     9998,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span
+            style={{
+              width:         14,
+              height:        14,
+              border:        "2px solid rgba(255,255,255,0.3)",
+              borderTopColor:"#60A5FA",
+              borderRadius:  "50%",
+              display:       "inline-block",
+              animation:     "spin 0.7s linear infinite",
+              flexShrink:    0,
+            }}
           />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>
-              Analizando destinos…
-            </div>
-            <div style={{ marginTop: 4, color: "#555" }}>
-              {messages[step]}
-            </div>
-            <div style={{ marginTop: 12, fontSize: 12, color: "#777" }}>
-              Estamos comparando múltiples orígenes para encontrar el destino más conveniente para todos.
-            </div>
-          </div>
+          {MESSAGES[step]}
         </div>
-      </div>
-    </div>
+      )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </>
   );
 }
 
 /**
- * Botón de búsqueda con estado de carga
+ * Legacy named export — kept so existing imports don't break.
  */
-export function SearchButton({ loading, children }) {
-  return (
-    <button
-      type="submit"
-      className="btn btn-primary btn-lg"
-      style={{ backgroundColor: "#3B82F6", borderColor: "#3B82F6" }}
-      disabled={loading}
-    >
-      {loading ? "Analizando destinos…" : children}
-    </button>
-  );
+export function LoadingOverlay({ loading }) {
+  return <SearchProgress loading={loading} />;
 }
