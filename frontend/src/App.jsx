@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import FlightResults from "./components/FlightResults";
 import { SearchProgress } from "./components/SearchUX";
+import { useI18n } from "./i18n/useI18n";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -79,11 +80,12 @@ function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tr
   return `${path}?${params}`;
 }
 
-function fairnessLabel(s) {
-  if (s >= 85) return { text: "Very balanced",      color: "#16A34A" };
-  if (s >= 65) return { text: "Fairly balanced",    color: "#0062E3" };
-  if (s >= 45) return { text: "Somewhat unequal",   color: "#D97706" };
-  return             { text: "Unequal",              color: "#DC2626" };
+function useFairnessLabel(score) {
+  const { t } = useI18n();
+  if (score >= 85) return { text: t("fairness.veryBalanced"),      color: "#16A34A" };
+  if (score >= 65) return { text: t("fairness.fairlyBalanced"),    color: "#0062E3" };
+  if (score >= 45) return { text: t("fairness.somewhatUnequal"),   color: "#D97706" };
+  return             { text: t("fairness.unequal"),                 color: "#DC2626" };
 }
 
 async function copyText(text) {
@@ -99,6 +101,27 @@ async function copyText(text) {
   } catch { return false; }
 }
 
+// ─── Language selector ───────────────────────────────────────────────────────
+
+function LangSelector() {
+  const { lang, setLang } = useI18n();
+  return (
+    <div className="btn-group btn-group-sm" role="group" aria-label="Language">
+      {[["en", "EN"], ["es", "ES"]].map(([code, label]) => (
+        <button
+          key={code}
+          type="button"
+          className={`btn ${lang === code ? "btn-light fw-bold" : "btn-outline-secondary"}`}
+          style={{ minWidth: 38, fontSize: 13 }}
+          onClick={() => setLang(code)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Error boundary ───────────────────────────────────────────────────────────
 
 class ErrorBoundary extends React.Component {
@@ -108,9 +131,9 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.err) return (
       <div className="alert alert-danger">
-        <strong>Rendering error.</strong> {this.state.err}
+        <strong>{this.props.renderingLabel || "Rendering error."}</strong> {this.state.err}
         <button className="btn btn-sm btn-outline-danger ms-3" onClick={() => this.setState({ err: null })}>
-          Retry
+          {this.props.retryLabel || "Retry"}
         </button>
       </div>
     );
@@ -121,6 +144,12 @@ class ErrorBoundary extends React.Component {
 // ─── Landing ──────────────────────────────────────────────────────────────────
 
 function Landing({ onStart }) {
+  const { t } = useI18n();
+
+  const chips = t("landing.chips");
+  const steps = t("landing.steps");
+  const faqs  = t("landing.faqs");
+
   return (
     <>
       {/* Hero */}
@@ -128,32 +157,30 @@ function Landing({ onStart }) {
         <div className="container" style={{ maxWidth: 1080 }}>
           <div className="row g-5 align-items-center">
             <div className="col-lg-6">
-              <span className="lp-eyebrow">✈ FlyndMe</span>
-              <h1 className="lp-h1">Find the cheapest place to meet your group</h1>
-              <p className="lp-lead">
-                Enter each traveler's airport and instantly discover which destination is cheapest for everyone. Powered by real-time Amadeus data.
-              </p>
+              <span className="lp-eyebrow">{t("landing.eyebrow")}</span>
+              <h1 className="lp-h1">{t("landing.title")}</h1>
+              <p className="lp-lead">{t("landing.lead")}</p>
               <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
-                Find a common destination
+                {t("landing.cta")}
               </button>
               <div className="lp-chips mt-4">
-                {["Multi-origin", "Best total price", "Fairness score", "Budget per person"].map((t) => (
-                  <span key={t} className="lp-chip">{t}</span>
+                {Array.isArray(chips) && chips.map((c) => (
+                  <span key={c} className="lp-chip">{c}</span>
                 ))}
               </div>
             </div>
 
             <div className="col-lg-6">
               <div className="lp-card">
-                <div className="lp-card-title">How does it work?</div>
+                <div className="lp-card-title">{t("landing.howTitle")}</div>
                 <ul className="lp-steps">
-                  <li><span className="lp-step-num">1</span>Add the departure airport of each traveler.</li>
-                  <li><span className="lp-step-num">2</span>FlyndMe finds the cheapest destination for everyone.</li>
-                  <li><span className="lp-step-num">3</span>Book on Skyscanner directly from each origin.</li>
+                  {Array.isArray(steps) && steps.map((s, i) => (
+                    <li key={i}><span className="lp-step-num">{i + 1}</span>{s}</li>
+                  ))}
                 </ul>
                 <div className="lp-card-meta">
-                  <span>Source · Amadeus API</span>
-                  <span>Typical time · 3 – 8 s</span>
+                  <span>{t("landing.metaSource")}</span>
+                  <span>{t("landing.metaTime")}</span>
                 </div>
               </div>
             </div>
@@ -164,15 +191,10 @@ function Landing({ onStart }) {
       {/* FAQ */}
       <section className="lp-faq">
         <div className="container" style={{ maxWidth: 1080 }}>
-          <h2 className="lp-faq-title">Frequently asked questions</h2>
+          <h2 className="lp-faq-title">{t("landing.faqTitle")}</h2>
           <div className="row g-3">
-            {[
-              { q: 'What does "fairness" mean?', a: "A score from 0 to 100. The higher, the more equally each traveler pays." },
-              { q: "How does the budget filter work?", a: "It filters out destinations where the average per person exceeds your set limit." },
-              { q: "Does FlyndMe sell tickets?", a: "No. FlyndMe recommends the destination; booking is done via Skyscanner or other search engines." },
-              { q: "What makes it special?", a: "It searches simultaneously from multiple airports and optimizes by total price or fairness." },
-            ].map((item) => (
-              <div key={item.q} className="col-md-6">
+            {Array.isArray(faqs) && faqs.map((item, i) => (
+              <div key={i} className="col-md-6">
                 <div className="lp-faq-card">
                   <div className="lp-faq-q">{item.q}</div>
                   <div className="lp-faq-a">{item.a}</div>
@@ -182,7 +204,7 @@ function Landing({ onStart }) {
           </div>
           <div className="text-center mt-5">
             <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
-              Get started
+              {t("landing.getStarted")}
             </button>
           </div>
         </div>
@@ -204,6 +226,7 @@ function SearchPage({
   loading, error,
   onSubmit,
 }) {
+  const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
 
   const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
@@ -237,20 +260,20 @@ function SearchPage({
       <div className="sf-grid">
         {/* ── Left: form ── */}
         <div className="sf-form fm-card">
-          <h2 className="sf-title">Plan your search</h2>
-          <p className="sf-sub">Add each traveler's airport and pick your dates.</p>
+          <h2 className="sf-title">{t("search.title")}</h2>
+          <p className="sf-sub">{t("search.subtitle")}</p>
 
           <form onSubmit={onSubmit} noValidate>
             {/* Origins */}
             <div className="sf-section">
-              <div className="sf-label">Origin airports</div>
+              <div className="sf-label">{t("search.originLabel")}</div>
               {origins.map((origin, idx) => (
                 <div key={idx} className="sf-origin-row">
-                  <span className="sf-badge">V{idx + 1}</span>
+                  <span className="sf-badge">{t("search.travelerBadge", { n: idx + 1 })}</span>
                   <input
                     type="text"
                     className="form-control sf-input text-uppercase"
-                    placeholder="e.g. MAD, LON…"
+                    placeholder={t("search.placeholder")}
                     value={origin}
                     onChange={(e) => {
                       const copy = [...origins];
@@ -271,21 +294,21 @@ function SearchPage({
                         setActiveIdx(Math.min(safeIdx, copy.length - 1));
                       }}
                       disabled={loading}
-                      title="Remove"
+                      title={t("search.removeTitle")}
                     >✕</button>
                   )}
                 </div>
               ))}
               <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
-                + Add traveler
+                {t("search.addTraveler")}
               </button>
             </div>
 
             {/* Trip type */}
             <div className="sf-section">
-              <div className="sf-label">Trip type</div>
+              <div className="sf-label">{t("search.tripTypeLabel")}</div>
               <div className="sf-pills">
-                {[["oneway", "One way"], ["roundtrip", "Round trip"]].map(([v, l]) => (
+                {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
                     onClick={() => setTripType(v)} disabled={loading}>{l}</button>
@@ -295,17 +318,17 @@ function SearchPage({
 
             {/* Dates */}
             <div className="sf-section">
-              <div className="sf-label">Dates</div>
+              <div className="sf-label">{t("search.datesLabel")}</div>
               <div className="row g-3">
                 <div className="col-sm-6">
-                  <label className="sf-input-label">Departure</label>
+                  <label className="sf-input-label">{t("search.departure")}</label>
                   <input type="date" className="form-control sf-input"
                     value={departureDate} min={todayISO()}
                     onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
                 </div>
                 {tripType === "roundtrip" && (
                   <div className="col-sm-6">
-                    <label className="sf-input-label">Return</label>
+                    <label className="sf-input-label">{t("search.return")}</label>
                     <input type="date" className="form-control sf-input"
                       value={returnDate} min={departureDate || todayISO()}
                       onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
@@ -316,9 +339,9 @@ function SearchPage({
 
             {/* Optimize */}
             <div className="sf-section">
-              <div className="sf-label">Optimize by</div>
+              <div className="sf-label">{t("search.optimizeLabel")}</div>
               <div className="sf-pills">
-                {[["total", "Total group price"], ["fairness", "Fairness between travelers"]].map(([v, l]) => (
+                {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
                     onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
@@ -330,16 +353,16 @@ function SearchPage({
             <div className="sf-section">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <div className="sf-label mb-0">Max budget per person</div>
+                  <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
                   <div className="sf-hint">
-                    {budgetEnabled ? `Max. ${formatEur(maxBudget)} / person` : "No budget limit"}
+                    {budgetEnabled ? t("search.budgetHintOn", { amount: formatEur(maxBudget) }) : t("search.budgetHintOff")}
                   </div>
                 </div>
                 <div className="form-check form-switch mb-0">
                   <input className="form-check-input" type="checkbox" id="budgetSwitch"
                     checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
                   <label className="form-check-label small" htmlFor="budgetSwitch">
-                    {budgetEnabled ? "On" : "Off"}
+                    {budgetEnabled ? t("search.budgetOn") : t("search.budgetOff")}
                   </label>
                 </div>
               </div>
@@ -359,19 +382,19 @@ function SearchPage({
             {error && <div className="alert alert-danger py-2 mt-3">{error}</div>}
 
             <button type="submit" className="btn-fm-primary w-100 mt-3 py-3 fw-bold fs-6" disabled={loading}>
-              {loading ? "Searching…" : "Find common destination"}
+              {loading ? t("search.searching") : t("search.submit")}
             </button>
             <div className="sf-footnote">
-              <span>Estimated time: 3 – 8 s</span>
-              <span>Prices via Amadeus API</span>
+              <span>{t("search.footnoteTime")}</span>
+              <span>{t("search.footnotePrices")}</span>
             </div>
           </form>
         </div>
 
         {/* ── Right: airport picker ── */}
         <aside className="sf-airports fm-card">
-          <div className="sf-label">Available airports</div>
-          <div className="sf-hint">Click to fill the active field · Traveler {safeIdx + 1}</div>
+          <div className="sf-label">{t("search.airportsTitle")}</div>
+          <div className="sf-hint">{t("search.airportsHint", { n: safeIdx + 1 })}</div>
           <div className="sf-airport-list">
             {filtered.map((a) => (
               <div key={a.code} className="sf-airport-item"
@@ -383,7 +406,7 @@ function SearchPage({
                 <span className="sf-airport-country">{a.country}</span>
               </div>
             ))}
-            {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>No matches</div>}
+            {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>{t("search.noMatches")}</div>}
           </div>
         </aside>
       </div>
@@ -399,12 +422,14 @@ function WinnerCard({
   flightsCount, onShare, shareStatus,
   onViewAlternatives, onChangeSearch,
 }) {
+  const { t } = useI18n();
+
   if (!dest) return null;
 
   const code      = normalizeCode(dest.destination);
   const city      = cityOf(code);
   const imgUrl    = `${getBaseUrl()}destinations/${code}.jpg`;
-  const fairness  = fairnessLabel(dest.fairnessScore ?? 0);
+  const fairness  = useFairnessLabel(dest.fairnessScore ?? 0);
   const dep       = dest.bestDate || "";
   const ret       = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
 
@@ -429,13 +454,13 @@ function WinnerCard({
         {/* Header row */}
         <div className="wc-header-row">
           <div>
-            <div className="wc-eyebrow">Recommended destination</div>
+            <div className="wc-eyebrow">{t("results.eyebrow")}</div>
             <div className="wc-dest-big">{code}{city ? ` · ${city}` : ""}</div>
           </div>
 
           {/* Criterion toggle */}
           <div className="btn-group btn-group-sm" role="group" aria-label="Criterio">
-            {[["total", "Price"], ["fairness", "Fairness"]].map(([v, l]) => (
+            {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
                 className={`btn ${uiCriterion === v ? "btn-light fw-bold" : "btn-outline-light"}`}
                 onClick={() => onChangeCriterion(v)}>{l}</button>
@@ -448,20 +473,20 @@ function WinnerCard({
           <div className="wc-dates">
             {tripType === "roundtrip"
               ? `${formatDate(dep)} → ${formatDate(ret)}`
-              : `Departure: ${formatDate(dep)}`}
-            {" · "}{tripType === "roundtrip" ? "Round trip" : "One way"}
+              : t("results.departureLabel", { date: formatDate(dep) })}
+            {" · "}{tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")}
           </div>
         )}
 
         {/* Price block */}
         <div className="wc-price-block">
           <div>
-            <div className="wc-price-label">Group total</div>
+            <div className="wc-price-label">{t("results.groupTotal")}</div>
             <div className="wc-price">{formatEur(dest.totalCostEUR, 2)}</div>
           </div>
           <div className="wc-price-divider" />
           <div>
-            <div className="wc-price-label">Average per person</div>
+            <div className="wc-price-label">{t("results.avgPerPerson")}</div>
             <div className="wc-price wc-price--secondary">{formatEur(dest.averageCostPerTraveler, 2)}</div>
           </div>
         </div>
@@ -469,14 +494,14 @@ function WinnerCard({
         {/* Per-origin pills */}
         {breakdown.length > 0 && (
           <div className="wc-breakdown">
-            <div className="wc-breakdown-label">Price per origin</div>
+            <div className="wc-breakdown-label">{t("results.pricePerOrigin")}</div>
             <div className="wc-breakdown-pills">
               {breakdown.map((f, i) => (
                 <span key={i} className="wc-pill">
                   <strong>{String(f.origin).toUpperCase()}</strong>
                   <span className="wc-pill-arrow">→</span>
                   <strong>{code}</strong>
-                  <span className="wc-pill-price">{typeof f.price === "number" ? formatEur(f.price, 0) : "N/D"}</span>
+                  <span className="wc-pill-price">{typeof f.price === "number" ? formatEur(f.price, 0) : t("results.noData")}</span>
                 </span>
               ))}
             </div>
@@ -486,29 +511,29 @@ function WinnerCard({
         {/* Fairness + spread */}
         <div className="wc-metrics">
           <div className="wc-metric">
-            <div className="wc-metric-label">Fairness</div>
-            <div className="wc-metric-value">{(dest.fairnessScore ?? 0).toFixed(0)}<span className="wc-metric-unit">/100</span></div>
+            <div className="wc-metric-label">{t("results.fairnessLabel")}</div>
+            <div className="wc-metric-value">{(dest.fairnessScore ?? 0).toFixed(0)}<span className="wc-metric-unit">{t("results.fairnessUnit")}</span></div>
             <div className="wc-fairness-bar">
               <div className="wc-fairness-fill" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
             </div>
             <div className="wc-fairness-tag" style={{ color: fairness.color }}>{fairness.text}</div>
           </div>
           <div className="wc-metric">
-            <div className="wc-metric-label">Max spread</div>
+            <div className="wc-metric-label">{t("results.maxSpread")}</div>
             <div className="wc-metric-value">{formatEur(dest.priceSpread ?? 0, 2)}</div>
-            <div className="wc-metric-sub">Between the most and least expensive flight</div>
+            <div className="wc-metric-sub">{t("results.spreadSub")}</div>
           </div>
           <div className="wc-metric">
-            <div className="wc-metric-label">Destinations analyzed</div>
+            <div className="wc-metric-label">{t("results.destsAnalyzed")}</div>
             <div className="wc-metric-value">{flightsCount}</div>
-            <div className="wc-metric-sub">With your search criteria</div>
+            <div className="wc-metric-sub">{t("results.destsAnalyzedSub")}</div>
           </div>
         </div>
 
         {/* Skyscanner links */}
         {cleanOrigins.length > 0 && dep && (
           <div className="wc-book">
-            <div className="wc-book-label">Book on Skyscanner · one link per origin</div>
+            <div className="wc-book-label">{t("results.bookLabel")}</div>
             <div className="wc-book-links">
               {cleanOrigins.map((origin) => {
                 const url = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
@@ -525,17 +550,17 @@ function WinnerCard({
         {/* Secondary actions */}
         <div className="wc-actions">
           <button type="button" className="btn btn-outline-light btn-sm" onClick={onViewAlternatives}>
-            View alternatives
+            {t("results.viewAlternatives")}
           </button>
           <button type="button" className="btn btn-outline-light btn-sm" onClick={onShare}>
-            {shareStatus === "ok" ? "Copied!" : shareStatus === "fail" ? "Copy failed" : "Share"}
+            {shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
           </button>
           <button type="button" className="btn btn-link text-white text-decoration-none btn-sm" onClick={onChangeSearch}>
-            Change search
+            {t("results.changeSearch")}
           </button>
         </div>
 
-        <div className="wc-disclaimer">Estimated prices via Amadeus API. May vary at time of booking.</div>
+        <div className="wc-disclaimer">{t("results.disclaimer")}</div>
       </div>
     </div>
   );
@@ -544,6 +569,8 @@ function WinnerCard({
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const { t } = useI18n();
+
   // View: 'landing' | 'search' | 'results'
   const [view, setView] = useState("landing");
 
@@ -568,7 +595,6 @@ export default function App() {
   const [shareStatus, setShareStatus] = useState("");
 
   // Keep Render backend alive (free tier sleeps)
-  // Ping aggressively on load (3 quick pings to force cold-start), then every 8 min
   useEffect(() => {
     const ping = () => fetch(`${API_BASE}/api/ping`, { cache: "no-store" }).catch(() => {});
     ping();
@@ -613,13 +639,13 @@ export default function App() {
     const bd = bestDestination;
     const code = normalizeCode(bd.destination);
     const lines = [
-      `FlyndMe · Recommended destination: ${destLabel(code)}`,
-      `Group total: ${formatEur(bd.totalCostEUR, 2)} · Average: ${formatEur(bd.averageCostPerTraveler, 2)}`,
-      `Fairness: ${(bd.fairnessScore ?? 0).toFixed(0)}/100`,
-      `Date: ${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}`,
+      t("share.title", { dest: destLabel(code) }),
+      t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
+      t("share.fairness", { score: (bd.fairnessScore ?? 0).toFixed(0) }),
+      t("share.date", { date: `${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}` }),
     ];
     if (Array.isArray(bd.flights) && bd.flights.length) {
-      lines.push("Per origin: " + bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
+      lines.push(t("share.perOrigin", { details: bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · ") }));
     }
     const ok = await copyText(lines.join("\n"));
     setShareStatus(ok ? "ok" : "fail");
@@ -632,11 +658,11 @@ export default function App() {
     e.preventDefault();
     setError("");
 
-    if (!cleanOrigins.length) { setError("Enter at least one origin airport."); return; }
-    if (!departureDate)        { setError("Select a departure date."); return; }
+    if (!cleanOrigins.length) { setError(t("errors.noOrigin")); return; }
+    if (!departureDate)        { setError(t("errors.noDeparture")); return; }
     if (tripType === "roundtrip") {
-      if (!returnDate)               { setError("Select a return date."); return; }
-      if (returnDate <= departureDate) { setError("Return date must be after departure date."); return; }
+      if (!returnDate)               { setError(t("errors.noReturn")); return; }
+      if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
     }
 
     setFlights([]);
@@ -656,7 +682,7 @@ export default function App() {
     };
 
     const MAX_RETRIES = 3;
-    const RETRY_DELAY = 5000; // 5 s between retries
+    const RETRY_DELAY = 5000;
 
     try {
       let lastErr = null;
@@ -669,7 +695,6 @@ export default function App() {
             body: JSON.stringify(body),
           });
 
-          // 503 = Render free-tier is waking up → retry automatically
           if (res.status === 503 && attempt < MAX_RETRIES) {
             lastErr = new Error("Server is waking up…");
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
@@ -685,11 +710,7 @@ export default function App() {
           const arr  = Array.isArray(data.flights) ? data.flights : [];
 
           if (!arr.length) {
-            setError(
-              budgetEnabled
-                ? "No results within that budget. Try increasing the limit or disabling the filter."
-                : "No results for those origins and dates. Try different dates or airports."
-            );
+            setError(budgetEnabled ? t("errors.noBudgetResults") : t("errors.noResults"));
             return;
           }
 
@@ -698,12 +719,10 @@ export default function App() {
           setUiCriterion(optimizeBy);
           setView("results");
           window.scrollTo({ top: 0, behavior: "smooth" });
-          return; // success — exit
+          return;
         } catch (err) {
           lastErr = err;
-          // Only retry on network errors or 503; all other errors break immediately
           if (err.message && !err.message.includes("waking up") && attempt < MAX_RETRIES) {
-            // Network failure (fetch itself threw) → retry
             if (err instanceof TypeError) {
               await new Promise((r) => setTimeout(r, RETRY_DELAY));
               continue;
@@ -715,11 +734,10 @@ export default function App() {
         }
       }
 
-      // All retries exhausted
       if (lastErr?.message?.includes("waking up") || lastErr instanceof TypeError) {
-        setError("The server is starting up (free tier). Please wait a moment and try again.");
+        setError(t("errors.serverWaking"));
       } else {
-        setError(lastErr?.message || "Unexpected error. Please try again.");
+        setError(lastErr?.message || t("errors.unexpected"));
       }
     } finally {
       setLoading(false);
@@ -737,14 +755,17 @@ export default function App() {
             <img src={`${getBaseUrl()}logo-flyndme.svg`} alt="FlyndMe" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
-            <span className="app-logo-sub">Meet smarter, fly fair</span>
+            <span className="app-logo-sub">{t("header.tagline")}</span>
           </div>
-          {view !== "landing" && (
-            <button type="button" className="btn btn-sm btn-outline-secondary"
-              onClick={() => { setView("search"); setShowAlt(false); }}>
-              {view === "results" ? "New search" : "Home"}
-            </button>
-          )}
+          <div className="d-flex align-items-center gap-2">
+            <LangSelector />
+            {view !== "landing" && (
+              <button type="button" className="btn btn-sm btn-outline-secondary"
+                onClick={() => { setView("search"); setShowAlt(false); }}>
+                {view === "results" ? t("header.newSearch") : t("header.home")}
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -787,10 +808,10 @@ export default function App() {
           {showAlt && flights.length > 1 && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
-                <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>Other options</h3>
-                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>Hide</button>
+                <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>{t("results.otherOptions")}</h3>
+                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
               </div>
-              <ErrorBoundary>
+              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <FlightResults
                   flights={flights}
                   optimizeBy={uiCriterion}
@@ -810,7 +831,7 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="container" style={{ maxWidth: 1080 }}>
-          FlyndMe · Meet smarter, fly fair · React + Node.js + Amadeus API
+          {t("footer")}
         </div>
       </footer>
     </div>

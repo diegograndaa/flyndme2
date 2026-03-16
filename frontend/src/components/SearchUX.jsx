@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
-
-const MESSAGES = [
-  "Connecting to airlines…",
-  "Waking up the server — hang tight…",
-  "Searching flights from your cities…",
-  "Calculating group total cost…",
-  "Evaluating fairness between travelers…",
-  "Almost there…",
-];
+import { useI18n } from "../i18n/useI18n";
 
 /**
  * Thin animated progress bar at the top of the page — non-blocking.
@@ -15,6 +7,10 @@ const MESSAGES = [
  * while the search runs.
  */
 export function SearchProgress({ loading }) {
+  const { t } = useI18n();
+  const messages = t("loading.messages");
+  const ariaLabel = t("loading.ariaLabel");
+
   const [step, setStep]       = useState(0);
   const [width, setWidth]     = useState(0);
   const [visible, setVisible] = useState(false);
@@ -23,8 +19,8 @@ export function SearchProgress({ loading }) {
     if (!loading) {
       // Finish animation then hide
       setWidth(100);
-      const t = setTimeout(() => { setVisible(false); setWidth(0); setStep(0); }, 400);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => { setVisible(false); setWidth(0); setStep(0); }, 400);
+      return () => clearTimeout(timer);
     }
 
     setVisible(true);
@@ -33,7 +29,7 @@ export function SearchProgress({ loading }) {
 
     // Advance message every 1.8 s
     const msgTimer = setInterval(() => {
-      setStep((p) => (p + 1) % MESSAGES.length);
+      setStep((p) => (p + 1) % (Array.isArray(messages) ? messages.length : 1));
     }, 1800);
 
     // Simulate progress (asymptotic — never quite reaches 95 % while loading)
@@ -42,16 +38,18 @@ export function SearchProgress({ loading }) {
     }, 600);
 
     return () => { clearInterval(msgTimer); clearInterval(progTimer); };
-  }, [loading]);
+  }, [loading, messages]);
 
   if (!visible) return null;
+
+  const currentMessage = Array.isArray(messages) ? messages[step] : "";
 
   return (
     <>
       {/* Progress bar */}
       <div
         role="progressbar"
-        aria-label="Searching flights"
+        aria-label={ariaLabel}
         style={{
           position:   "fixed",
           top:        0,
@@ -99,7 +97,7 @@ export function SearchProgress({ loading }) {
               flexShrink:    0,
             }}
           />
-          {MESSAGES[step]}
+          {currentMessage}
         </div>
       )}
 

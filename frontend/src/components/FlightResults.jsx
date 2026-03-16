@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../i18n/useI18n";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ const AIRPORT_MAP = {
 // ─── Alternative card ─────────────────────────────────────────────────────────
 
 function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bestDest }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   const code     = normalizeCode(dest.destination);
@@ -71,7 +73,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
           <span className="alt-card-code">{code}</span>
           {city && <span className="alt-card-city">{city}</span>}
         </div>
-        {isBest && <div className="alt-card-badge">Recommended</div>}
+        {isBest && <div className="alt-card-badge">{t("alt.recommended")}</div>}
       </div>
 
       {/* Content */}
@@ -80,15 +82,15 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
 
         <div className="alt-card-prices">
           <div>
-            <div className="alt-card-plabel">Group total</div>
+            <div className="alt-card-plabel">{t("alt.groupTotal")}</div>
             <div className="alt-card-price">{formatEur(dest.totalCostEUR ?? 0, 0)}</div>
           </div>
           <div>
-            <div className="alt-card-plabel">Per person</div>
+            <div className="alt-card-plabel">{t("alt.perPerson")}</div>
             <div className="alt-card-price">{formatEur(dest.averageCostPerTraveler ?? 0, 0)}</div>
           </div>
           <div>
-            <div className="alt-card-plabel">Fairness</div>
+            <div className="alt-card-plabel">{t("alt.fairness")}</div>
             <div className="alt-card-price" style={{ color: fColor }}>{fairness.toFixed(0)}/100</div>
           </div>
         </div>
@@ -116,7 +118,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
         {flights.length > 0 && (
           <>
             <button type="button" className="alt-card-toggle" onClick={() => setOpen((v) => !v)}>
-              {open ? "Hide breakdown ▲" : "View prices per origin ▼"}
+              {open ? t("alt.hideBreakdown") : t("alt.viewBreakdown")}
             </button>
             {open && (
               <ul className="alt-card-detail">
@@ -124,7 +126,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
                   <li key={i} className="alt-card-detail-row">
                     <span className="alt-card-detail-origin">{String(f.origin || "").toUpperCase()} → {code}</span>
                     <span className="alt-card-detail-price">
-                      {typeof f.price === "number" ? formatEur(f.price, 2) : "No data"}
+                      {typeof f.price === "number" ? formatEur(f.price, 2) : t("alt.noData")}
                     </span>
                   </li>
                 ))}
@@ -149,11 +151,11 @@ export default function FlightResults({
   budgetEnabled = false,
   maxBudgetPerTraveler = null,
 }) {
+  const { t } = useI18n();
   const [sortBy, setSortBy] = useState("default");
 
   const safeFlights = Array.isArray(flights) ? flights : [];
 
-  // Remove the winner from the alternatives list
   const bestCode = normalizeCode(bestDestination?.destination);
   const alternatives = useMemo(() => {
     let list = safeFlights.filter((f) => normalizeCode(f.destination) !== bestCode);
@@ -173,11 +175,10 @@ export default function FlightResults({
 
   if (!safeFlights.length) return (
     <div className="alt-empty">
-      <div className="alt-empty-title">No alternatives available</div>
+      <div className="alt-empty-title">{t("alt.noAlternatives")}</div>
       {budgetEnabled && (
         <div className="alt-empty-sub">
-          Active budget: max. {formatEur(Number(maxBudgetPerTraveler ?? 0), 0)} per person.
-          Try increasing it or disabling the filter.
+          {t("alt.budgetActive", { amount: formatEur(Number(maxBudgetPerTraveler ?? 0), 0) })}
         </div>
       )}
     </div>
@@ -187,7 +188,7 @@ export default function FlightResults({
     <div>
       {budgetEnabled && (
         <div className="alert alert-info py-2 mb-3">
-          Active filter: max. <strong>{formatEur(Number(maxBudgetPerTraveler ?? 0), 0)}</strong> per person.
+          {t("alt.budgetFilter", { amount: formatEur(Number(maxBudgetPerTraveler ?? 0), 0) })}
         </div>
       )}
 
@@ -195,15 +196,15 @@ export default function FlightResults({
       {alternatives.length > 1 && (
         <div className="d-flex align-items-center gap-2 mb-3">
           <label className="form-label small mb-0 fw-semibold" htmlFor="altSort" style={{ color: "#475569", whiteSpace: "nowrap" }}>
-            Sort by:
+            {t("alt.sortLabel")}
           </label>
           <select id="altSort" className="form-select form-select-sm" style={{ maxWidth: 260 }}
             value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="default">Main criterion</option>
-            <option value="priceAsc">Total price (cheapest)</option>
-            <option value="priceDesc">Total price (most expensive)</option>
-            <option value="perPerson">Price per person</option>
-            <option value="fairness">Highest fairness</option>
+            <option value="default">{t("alt.sortDefault")}</option>
+            <option value="priceAsc">{t("alt.sortPriceAsc")}</option>
+            <option value="priceDesc">{t("alt.sortPriceDesc")}</option>
+            <option value="perPerson">{t("alt.sortPerPerson")}</option>
+            <option value="fairness">{t("alt.sortFairness")}</option>
           </select>
         </div>
       )}
@@ -225,7 +226,7 @@ export default function FlightResults({
       </div>
 
       {!alternatives.length && (
-        <p className="text-secondary small">No more alternatives to show.</p>
+        <p className="text-secondary small">{t("alt.noMore")}</p>
       )}
     </div>
   );
