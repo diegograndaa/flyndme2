@@ -3,12 +3,77 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const zlib = require("zlib");
 
 const flightsRoutes = require("./routes/flights");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV !== "production";
+const startTime = Date.now();
+
+const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
+
+// ─── Middleware: Gzip compression ─────────────────────────────────────────
+
+// Manual gzip compression using zlib
+app.use((req, res, next) => {
+  const acceptEncoding = (req.headers["accept-encoding"] || "").toLowerCase();
+
+  if (acceptEncoding.includes("gzip")) {
+    res.setHeader("Content-Encoding", "gzip");
+    const gz = zlib.createGzip();
+    const _send = res.send;
+
+    res.send = function(data) {
+      if (typeof data === "string" || Buffer.isBuffer(data)) {
+        res.removeHeader("Content-Length");
+        return gz.end(data), res.socket.on("finish", () => {});
+      }
+      return _send.call(this, data);
+    };
+
+    // Pipe compressed output to socket
+    gz.pipe(res.socket);
+    res.socket.write = function(chunk) {
+      if (res.headersSent) {
+        return gz.write(chunk);
+      }
+      return require("net").Socket.prototype.write.call(this, chunk);
+    };
+  }
+
+  next();
+});
+
+// ─── Middleware: Request logging ──────────────────────────────────────────
+
+app.use((req, res, next) => {
+  const startMs = Date.now();
+  const originalSend = res.send;
+
+  res.send = function(data) {
+    const duration = Date.now() - startMs;
+    const logLevel = res.statusCode >= 400 ? "warn" : "info";
+    console[logLevel](
+      `[${req.method}] ${req.path} → ${res.statusCode} (${duration}ms)`
+    );
+    return originalSend.call(this, data);
+  };
+
+  next();
+});
+
+// ─── Middleware: Response timing header ────────────────────────────────────
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    res.set("X-Response-Time", `${duration}ms`);
+  });
+  next();
+});
 
 // Security headers (relax CSP in dev so the API is callable from Vite)
 app.use(
@@ -18,7 +83,19 @@ app.use(
   })
 );
 
-// CORS — open in dev, strict allow-list in production
+// ─── CORS ─────────────────────────────────────────────────────────────────
+// Accept: strict allowlist in prod, Vercel preview URLs (*.vercel.app), + localhost in dev
+
+function isVercelPreviewUrl(origin) {
+  if (!origin) return false;
+  try {
+    const url = new URL(origin);
+    return url.hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : [
@@ -33,8 +110,9 @@ app.use(
     origin: isDev
       ? true // allow all origins in development
       : (origin, cb) => {
-          if (!origin || allowedOrigins.includes(origin))
+          if (!origin || allowedOrigins.includes(origin) || isVercelPreviewUrl(origin)) {
             return cb(null, true);
+          }
           cb(new Error(`CORS: origin '${origin}' not allowed`));
         },
     methods: ["GET", "POST", "OPTIONS"],
@@ -43,8 +121,6 @@ app.use(
 );
 
 app.use(express.json({ limit: "16kb" }));
-
-const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 
 // Rate limiter: 60 search requests per 10 min per IP
 const searchLimiter = rateLimit({
@@ -55,12 +131,34 @@ const searchLimiter = rateLimit({
   message: { message: "Demasiadas peticiones. Por favor espera unos minutos." },
 });
 
+// ─── Routes ──────────────────────────────────────────────────────────────
+
 app.get("/", (_req, res) => {
   res.json({ status: "ok", service: "FlyndMe API", env: AMADEUS_ENV });
 });
 
 app.get("/api/ping", (_req, res) => {
   res.json({ message: "pong", timestamp: Date.now() });
+});
+
+// Health endpoint with more detailed info
+app.get("/api/health", (_req, res) => {
+  const uptime = Math.floor((Date.now() - startTime) / 1000);
+  const memUsage = process.memoryUsage();
+
+  res.json({
+    status: "healthy",
+    uptime,
+    uptime_s: `${uptime}s`,
+    memory: {
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+      external: Math.round(memUsage.external / 1024 / 1024),
+      rss: Math.round(memUsage.rss / 1024 / 1024),
+    },
+    amadeus_env: AMADEUS_ENV,
+    timestamp: Date.now(),
+  });
 });
 
 app.use("/api/flights", searchLimiter, flightsRoutes);
@@ -80,7 +178,33 @@ process.on("unhandledRejection", (reason) => {
   console.error("[UnhandledRejection]", reason);
 });
 
-app.listen(PORT, () => {
+// ─── Graceful shutdown ────────────────────────────────────────────────────
+
+let server;
+
+function gracefulShutdown(signal) {
+  console.log(`\n[${signal}] Iniciando cierre elegante...`);
+
+  if (server) {
+    server.close(() => {
+      console.log("✈  Servidor cerrado limpiamente.");
+      process.exit(0);
+    });
+
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      console.error("Forzando cierre después de 10s.");
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+server = app.listen(PORT, () => {
   console.log(
     `✈  FlyndMe API → http://localhost:${PORT}  [${isDev ? "dev" : "prod"} · amadeus:${AMADEUS_ENV}]`
   );

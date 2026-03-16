@@ -26,6 +26,7 @@ const MAX_CONCURRENCY      = Number(process.env.AMADEUS_MAX_CONCURRENCY      || 
 const MAX_RETRIES          = Number(process.env.AMADEUS_MAX_RETRIES          || 3);
 const BASE_BACKOFF_MS      = Number(process.env.AMADEUS_BASE_BACKOFF_MS      || 600);
 const SEARCH_CACHE_TTL_MS  = Number(process.env.AMADEUS_SEARCH_CACHE_TTL_MS  || 15 * 60 * 1000);
+const MAX_CACHE_SIZE       = 500;
 
 // ─── Token cache ──────────────────────────────────────────────────────────────
 
@@ -114,9 +115,12 @@ async function requestWithRetry(requestFn, label = "Amadeus request") {
   }
 }
 
-// ─── Search cache ─────────────────────────────────────────────────────────────
+// ─── Search cache with size guard and cache hit tracking ─────────────────
 
 const searchCache = new Map();
+let cacheHits = 0;
+let cacheMisses = 0;
+let cacheRequests = 0;
 
 function makeCacheKey(origin, destination, departureDate, options) {
   const o = options || {};
@@ -131,20 +135,48 @@ function makeCacheKey(origin, destination, departureDate, options) {
 
 function fromCache(key) {
   const entry = searchCache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) { searchCache.delete(key); return null; }
+  cacheRequests++;
+  if (!entry) {
+    cacheMisses++;
+    return null;
+  }
+  if (Date.now() > entry.expiresAt) {
+    searchCache.delete(key);
+    cacheMisses++;
+    return null;
+  }
+  cacheHits++;
   return entry.value;
 }
 
 function toCache(key, value) {
   searchCache.set(key, { value, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
+
+  // Guard: prevent memory leak by evicting oldest entries if cache exceeds MAX_CACHE_SIZE
+  if (searchCache.size > MAX_CACHE_SIZE) {
+    const entries = Array.from(searchCache.entries());
+    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+    const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
+    for (const [k] of toDelete) {
+      searchCache.delete(k);
+    }
+  }
 }
 
-// Periodically evict stale entries
+// Periodically evict stale entries and log cache hit rate
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of searchCache.entries()) {
     if (now > v.expiresAt) searchCache.delete(k);
+  }
+
+  // Log cache hit rate every 50 requests
+  if (cacheRequests >= 50) {
+    const hitRate = ((cacheHits / cacheRequests) * 100).toFixed(1);
+    console.log(`[Amadeus Cache] Hits: ${cacheHits}/${cacheRequests} (${hitRate}%) | Size: ${searchCache.size}/${MAX_CACHE_SIZE}`);
+    cacheHits = 0;
+    cacheMisses = 0;
+    cacheRequests = 0;
   }
 }, SEARCH_CACHE_TTL_MS);
 
@@ -275,4 +307,28 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
   }
 }
 
-module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer };
+// ─── Health check ─────────────────────────────────────────────────────────
+
+async function healthCheck() {
+  try {
+    const token = await getAccessToken();
+    return {
+      status: "healthy",
+      credentials_valid: !!token,
+      env: AMADEUS_ENV,
+      cache_size: searchCache.size,
+      cache_max: MAX_CACHE_SIZE,
+    };
+  } catch (err) {
+    return {
+      status: "unhealthy",
+      credentials_valid: false,
+      env: AMADEUS_ENV,
+      error: err.message,
+      cache_size: searchCache.size,
+      cache_max: MAX_CACHE_SIZE,
+    };
+  }
+}
+
+module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, healthCheck };

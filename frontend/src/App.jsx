@@ -4,6 +4,10 @@ import "./App.css";
 import FlightResults from "./components/FlightResults";
 import { SearchProgress } from "./components/SearchUX";
 import { useI18n } from "./i18n/useI18n";
+import {
+  AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
+  formatEur, formatDate, todayISO, buildSkyscannerUrl, copyText, fairnessColor
+} from "./utils/helpers";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -12,98 +16,19 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "")
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
-// ─── Airport data ─────────────────────────────────────────────────────────────
-
-const AIRPORTS = [
-  { code: "MAD", city: "Madrid",     country: "Spain" },
-  { code: "BCN", city: "Barcelona",  country: "Spain" },
-  { code: "LON", city: "London",     country: "United Kingdom" },
-  { code: "PAR", city: "Paris",      country: "France" },
-  { code: "ROM", city: "Rome",       country: "Italy" },
-  { code: "MIL", city: "Milan",      country: "Italy" },
-  { code: "BER", city: "Berlin",     country: "Germany" },
-  { code: "AMS", city: "Amsterdam",  country: "Netherlands" },
-  { code: "LIS", city: "Lisbon",     country: "Portugal" },
-  { code: "DUB", city: "Dublin",     country: "Ireland" },
-  { code: "VIE", city: "Vienna",     country: "Austria" },
-];
-
-const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
-
-// ─── Utilities ────────────────────────────────────────────────────────────────
-
-function getBaseUrl() { return import.meta.env.BASE_URL || "/"; }
-
-function normalizeCode(v) {
-  const raw = String(v || "").trim().toUpperCase();
-  const m   = raw.match(/\b[A-Z]{3}\b/);
-  return m ? m[0] : raw.slice(0, 3);
-}
-
-function cityOf(code) {
-  return AIRPORT_MAP[normalizeCode(code)]?.city || "";
-}
-
-function destLabel(code) {
-  const c = cityOf(code);
-  return c ? `${normalizeCode(code)} · ${c}` : normalizeCode(code);
-}
-
-function formatEur(n, dec = 0) {
-  const v = typeof n === "number" ? n : Number(n || 0);
-  try {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency", currency: "EUR",
-      minimumFractionDigits: dec, maximumFractionDigits: dec,
-    }).format(v);
-  } catch { return `€${v.toFixed(dec)}`; }
-}
-
-function formatDate(s) {
-  if (!s) return "";
-  const d = new Date(`${s}T00:00:00`);
-  if (isNaN(d)) return s;
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function todayISO() { return new Date().toISOString().split("T")[0]; }
-
-function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
-  const from = String(origin || "").toLowerCase();
-  const to   = String(destination || "").toLowerCase();
-  const dep  = String(departureDate || "").replace(/-/g, "");
-  const ret  = tripType === "roundtrip" ? String(returnDate || "").replace(/-/g, "") : "";
-  if (!from || !to || !dep) return "";
-  const base = "https://www.skyscanner.es/transport/flights";
-  const path = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;
-  const params = new URLSearchParams({ adultsv2: "1", cabinclass: "economy", rtn: ret ? "1" : "0" });
-  return `${path}?${params}`;
-}
+// ─── Fairness label (i18n-dependent) ────────────────────────────────────────
 
 function useFairnessLabel(score) {
   const { t } = useI18n();
-  if (score >= 85) return { text: t("fairness.veryBalanced"),      color: "#16A34A" };
-  if (score >= 65) return { text: t("fairness.fairlyBalanced"),    color: "#0062E3" };
-  if (score >= 45) return { text: t("fairness.somewhatUnequal"),   color: "#D97706" };
-  return             { text: t("fairness.unequal"),                 color: "#DC2626" };
-}
-
-async function copyText(text) {
-  try {
-    if (navigator?.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }
-  } catch { /* fallback */ }
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text; ta.style.cssText = "position:fixed;left:-9999px;top:0";
-    document.body.appendChild(ta); ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta); return ok;
-  } catch { return false; }
+  if (score >= 85) return { text: t("fairness.veryBalanced"),      color: fairnessColor(score) };
+  if (score >= 65) return { text: t("fairness.fairlyBalanced"),    color: fairnessColor(score) };
+  if (score >= 45) return { text: t("fairness.somewhatUnequal"),   color: fairnessColor(score) };
+  return             { text: t("fairness.unequal"),                 color: fairnessColor(score) };
 }
 
 // ─── Language selector ───────────────────────────────────────────────────────
 
-function LangSelector() {
+const LangSelector = React.memo(function LangSelector() {
   const { lang, setLang } = useI18n();
   return (
     <div className="btn-group btn-group-sm" role="group" aria-label="Language">
@@ -120,11 +45,11 @@ function LangSelector() {
       ))}
     </div>
   );
-}
+});
 
 // ─── Toast notification ──────────────────────────────────────────────────────
 
-function Toast({ message, type = "success", onDone }) {
+const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -141,7 +66,7 @@ function Toast({ message, type = "success", onDone }) {
       {message}
     </div>
   );
-}
+});
 
 // ─── Animated price counter ─────────────────────────────────────────────────
 
@@ -198,7 +123,7 @@ class ErrorBoundary extends React.Component {
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 
-function Landing({ onStart }) {
+const Landing = React.memo(function Landing({ onStart }) {
   const { t } = useI18n();
 
   const chips = t("landing.chips");
@@ -266,11 +191,11 @@ function Landing({ onStart }) {
       </section>
     </>
   );
-}
+});
 
 // ─── Search form ──────────────────────────────────────────────────────────────
 
-function SearchPage({
+const SearchPage = React.memo(function SearchPage({
   origins, setOrigins,
   tripType, setTripType,
   departureDate, setDepartureDate,
@@ -434,7 +359,7 @@ function SearchPage({
               )}
             </div>
 
-            {error && <div className="alert alert-danger py-2 mt-3">{error}</div>}
+            {error && <div className="alert alert-danger py-2 mt-3" aria-live="polite">{error}</div>}
 
             <button type="submit" className="btn-fm-primary w-100 mt-3 py-3 fw-bold fs-6" disabled={loading}>
               {loading ? t("search.searching") : t("search.submit")}
@@ -467,11 +392,11 @@ function SearchPage({
       </div>
     </div>
   );
-}
+});
 
 // ─── Winner card ──────────────────────────────────────────────────────────────
 
-function WinnerCard({
+const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate,
   uiCriterion, onChangeCriterion,
   flightsCount, onShare, shareStatus,
@@ -627,7 +552,7 @@ function WinnerCard({
       </div>
     </div>
   );
-}
+});
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
@@ -783,6 +708,7 @@ export default function App() {
           setBestByCriterion({ total: pickBest(arr, "total"), fairness: pickBest(arr, "fairness") });
           setUiCriterion(optimizeBy);
           setView("results");
+          document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         } catch (err) {

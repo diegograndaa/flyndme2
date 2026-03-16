@@ -4,12 +4,16 @@ const { getCheapestOffer } = require("../services/amadeusService");
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const DEFAULT_DESTINATIONS = ["LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "DUB", "VIE"];
+const DEFAULT_DESTINATIONS = [
+  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "DUB", "VIE",
+  "BRU", "PRG", "WAW", "ATH", "CPH", "HEL", "ZRH", "OSL", "BUD", "IST"
+];
 const MAX_ORIGINS           = 8;
 const MAX_COMBINATIONS      = 120;
 const CACHE_TTL_MS          = 10 * 60 * 1000;
+const MAX_CACHE_SIZE        = 200;
 
-// ─── In-memory response cache ─────────────────────────────────────────────────
+// ─── In-memory response cache with size guard ─────────────────────────────
 
 const responseCache = new Map();
 
@@ -22,6 +26,16 @@ function getCached(key) {
 
 function setCached(key, value) {
   responseCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+
+  // Guard: prevent memory leak by evicting oldest entries if cache exceeds MAX_CACHE_SIZE
+  if (responseCache.size > MAX_CACHE_SIZE) {
+    const entries = Array.from(responseCache.entries());
+    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
+    const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
+    for (const [k] of toDelete) {
+      responseCache.delete(k);
+    }
+  }
 }
 
 setInterval(() => {
@@ -123,6 +137,8 @@ async function fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFli
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 router.post("/multi-origin", async (req, res) => {
+  const startTime = Date.now();
+
   try {
     let {
       origins,
@@ -145,7 +161,10 @@ router.post("/multi-origin", async (req, res) => {
 
     // ── Validate origins ──────────────────────────────────────────────────────
     if (!Array.isArray(origins) || origins.length === 0) {
-      return res.status(400).json({ message: "Indica al menos un aeropuerto de origen." });
+      return res.status(400).json({
+        code: "MISSING_ORIGINS",
+        message: "Indica al menos un aeropuerto de origen.",
+      });
     }
 
     const originList = [...new Set(
@@ -153,18 +172,30 @@ router.post("/multi-origin", async (req, res) => {
     )];
 
     if (originList.length === 0) {
-      return res.status(400).json({ message: "Los orígenes deben ser códigos IATA válidos (ej: MAD, BCN)." });
+      return res.status(400).json({
+        code: "INVALID_ORIGINS",
+        message: "Los orígenes deben ser códigos IATA válidos (ej: MAD, BCN).",
+      });
     }
     if (originList.length > MAX_ORIGINS) {
-      return res.status(400).json({ message: `Máximo ${MAX_ORIGINS} orígenes permitidos.` });
+      return res.status(400).json({
+        code: "TOO_MANY_ORIGINS",
+        message: `Máximo ${MAX_ORIGINS} orígenes permitidos.`,
+      });
     }
 
     // ── Validate dates ────────────────────────────────────────────────────────
     if (!departureDate || !isValidISODate(departureDate)) {
-      return res.status(400).json({ message: "Fecha de salida inválida. Usa YYYY-MM-DD." });
+      return res.status(400).json({
+        code: "INVALID_DEPARTURE_DATE",
+        message: "Fecha de salida inválida. Usa YYYY-MM-DD.",
+      });
     }
     if (tripType === "roundtrip" && (!returnDate || !isValidISODate(returnDate))) {
-      return res.status(400).json({ message: "Fecha de vuelta inválida. Usa YYYY-MM-DD." });
+      return res.status(400).json({
+        code: "INVALID_RETURN_DATE",
+        message: "Fecha de vuelta inválida. Usa YYYY-MM-DD.",
+      });
     }
 
     // ── Budget ────────────────────────────────────────────────────────────────
@@ -180,6 +211,8 @@ router.post("/multi-origin", async (req, res) => {
     });
     const cached = getCached(cacheKey);
     if (cached) {
+      const duration = Date.now() - startTime;
+      res.set("X-Response-Time", `${duration}ms`);
       console.log("[cache] HIT");
       return res.json(cached);
     }
@@ -191,7 +224,10 @@ router.post("/multi-origin", async (req, res) => {
         : DEFAULT_DESTINATIONS.filter((d) => !originList.includes(d)); // skip origins that match
 
     if (destinationList.length === 0) {
-      return res.status(400).json({ message: "Sin destinos válidos para buscar." });
+      return res.status(400).json({
+        code: "NO_VALID_DESTINATIONS",
+        message: "Sin destinos válidos para buscar.",
+      });
     }
 
     // ── Date candidates ───────────────────────────────────────────────────────
@@ -201,7 +237,10 @@ router.post("/multi-origin", async (req, res) => {
     if (tripType === "roundtrip") {
       tripLenDays = diffDays(depBase, parseISODate(returnDate));
       if (tripLenDays <= 0) {
-        return res.status(400).json({ message: "La fecha de vuelta debe ser posterior a la de salida." });
+        return res.status(400).json({
+          code: "INVALID_RETURN_DATE_ORDER",
+          message: "La fecha de vuelta debe ser posterior a la de salida.",
+        });
       }
     }
 
@@ -213,51 +252,63 @@ router.post("/multi-origin", async (req, res) => {
     const combinations = originList.length * destinationList.length * dateCandidates.length;
     if (combinations > MAX_COMBINATIONS) {
       return res.status(400).json({
+        code: "TOO_MANY_COMBINATIONS",
         message: `Demasiadas combinaciones (${combinations}). Reduce orígenes, destinos o flexibilidad.`,
       });
     }
 
-    // ── Search — destination × date (sequential), origins (parallel) ──────────
+    // ── Search: process destinations in parallel chunks (respect rate limits) ──────
     const optionsBase = { nonStop, max: 5 };
     const enriched    = [];
 
     console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas = ${combinations} llamadas`);
     const t0 = Date.now();
 
-    outer:
-    for (const dest of destinationList) {
-      if (originList.includes(dest)) continue;
+    // Process destinations in parallel chunks of 3 to respect rate limits
+    const CHUNK_SIZE = 3;
+    const validDestinations = destinationList.filter(d => !originList.includes(d));
 
-      // Track the best (lowest cost / highest fairness) across date variants
-      let bestForDest = null;
+    for (let chunkIdx = 0; chunkIdx < validDestinations.length && enriched.length < 9; chunkIdx += CHUNK_SIZE) {
+      const chunk = validDestinations.slice(chunkIdx, chunkIdx + CHUNK_SIZE);
 
-      for (const dep of dateCandidates) {
-        const ret = tripType === "roundtrip"
-          ? toISODate(addDays(parseISODate(dep), tripLenDays))
-          : null;
+      // Search all destinations in this chunk in parallel
+      const chunkResults = await Promise.allSettled(
+        chunk.map(async (dest) => {
+          let bestForDest = null;
 
-        const result = await fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFlight);
-        if (!result) continue;
+          for (const dep of dateCandidates) {
+            const ret = tripType === "roundtrip"
+              ? toISODate(addDays(parseISODate(dep), tripLenDays))
+              : null;
 
-        // Apply per-traveler budget filter
-        if (safeMaxAvg !== null && result.averageCostPerTraveler > safeMaxAvg) continue;
+            const result = await fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFlight);
+            if (!result) continue;
 
-        // Keep the best date variant for this destination
-        if (
-          !bestForDest ||
-          (optimizeBy === "fairness"
-            ? result.fairnessScore > bestForDest.fairnessScore ||
-              (result.fairnessScore === bestForDest.fairnessScore &&
-               result.totalCostEUR < bestForDest.totalCostEUR)
-            : result.totalCostEUR < bestForDest.totalCostEUR)
-        ) {
-          bestForDest = result;
+            // Apply per-traveler budget filter
+            if (safeMaxAvg !== null && result.averageCostPerTraveler > safeMaxAvg) continue;
+
+            // Keep the best date variant for this destination
+            if (
+              !bestForDest ||
+              (optimizeBy === "fairness"
+                ? result.fairnessScore > bestForDest.fairnessScore ||
+                  (result.fairnessScore === bestForDest.fairnessScore &&
+                   result.totalCostEUR < bestForDest.totalCostEUR)
+                : result.totalCostEUR < bestForDest.totalCostEUR)
+            ) {
+              bestForDest = result;
+            }
+          }
+
+          return bestForDest;
+        })
+      );
+
+      // Collect results from this chunk
+      for (const result of chunkResults) {
+        if (result.status === "fulfilled" && result.value && enriched.length < 9) {
+          enriched.push(result.value);
         }
-      }
-
-      if (bestForDest) {
-        enriched.push(bestForDest);
-        if (enriched.length >= 9) break outer; // enough candidates
       }
     }
 
@@ -266,6 +317,8 @@ router.post("/multi-origin", async (req, res) => {
     if (!enriched.length) {
       const payload = { flights: [], bestDestination: null };
       setCached(cacheKey, payload);
+      const duration = Date.now() - startTime;
+      res.set("X-Response-Time", `${duration}ms`);
       return res.json(payload);
     }
 
@@ -285,11 +338,19 @@ router.post("/multi-origin", async (req, res) => {
     };
 
     setCached(cacheKey, payload);
+
+    const duration = Date.now() - startTime;
+    res.set("X-Response-Time", `${duration}ms`);
     return res.json(payload);
 
   } catch (err) {
     console.error("[multi-origin error]", err);
-    return res.status(500).json({ message: "Error interno al buscar vuelos." });
+    const duration = Date.now() - startTime;
+    res.set("X-Response-Time", `${duration}ms`);
+    return res.status(500).json({
+      code: "INTERNAL_ERROR",
+      message: "Error interno al buscar vuelos.",
+    });
   }
 });
 

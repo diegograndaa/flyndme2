@@ -1183,7 +1183,86 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Reduce motion for accessibility */
+/* ── Focus-visible accessibility ────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.btn-fm-primary:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--primary);
+}
+.wc-card .btn:focus-visible,
+.wc-card a:focus-visible {
+  outline-color: var(--white);
+}
+
+/* ── Selection / highlight color ─────────────────────────────── */
+
+::selection {
+  background: rgba(0,98,227,.2);
+  color: var(--navy);
+}
+
+/* ── Skip to main content (a11y) ─────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+
+@media print {
+  .app-header,
+  .app-footer,
+  .wc-actions,
+  .wc-book,
+  .sf-airports,
+  .alt-card-links,
+  .alt-card-toggle,
+  .btn-fm-primary { display: none !important; }
+
+  .wc-card {
+    box-shadow: none !important;
+    border: 2px solid #333;
+    page-break-inside: avoid;
+  }
+  .alt-card {
+    box-shadow: none !important;
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  body { background: white; }
+}
+
+/* ── Extra small screens (<360px) ────────────────────────────── */
+
+@media (max-width: 360px) {
+  .lp-h1      { font-size: 26px; }
+  .lp-lead    { font-size: 15px; }
+  .sf-form    { padding: 20px 16px; }
+  .sf-title   { font-size: 18px; }
+  .sf-section { padding: 14px; }
+  .wc-body    { padding: 20px 16px; }
+  .wc-dest-code { font-size: 28px; }
+  .wc-dest-big  { font-size: 22px; }
+  .wc-price-block > div { padding: 14px 12px; }
+  .alt-grid   { grid-template-columns: 1fr; }
+}
+
+/* ── Reduce motion for accessibility ─────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -1,54 +1,12 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-
-// ─── Utilities ────────────────────────────────────────────────────────────────
-
-function getBaseUrl() { return import.meta.env.BASE_URL || "/"; }
-
-function normalizeCode(v) {
-  const raw = String(v || "").trim().toUpperCase();
-  const m   = raw.match(/\b[A-Z]{3}\b/);
-  return m ? m[0] : raw.slice(0, 3);
-}
-
-function formatEur(n, dec = 0) {
-  const v = typeof n === "number" ? n : Number(n || 0);
-  try {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency", currency: "EUR",
-      minimumFractionDigits: dec, maximumFractionDigits: dec,
-    }).format(v);
-  } catch { return `€${v.toFixed(dec)}`; }
-}
-
-function fairnessColor(s) {
-  if (s >= 85) return "#16A34A";
-  if (s >= 65) return "#3B82F6";
-  if (s >= 45) return "#D97706";
-  return "#DC2626";
-}
-
-function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
-  const from = String(origin || "").toLowerCase();
-  const to   = String(destination || "").toLowerCase();
-  const dep  = String(departureDate || "").replace(/-/g, "");
-  const ret  = tripType === "roundtrip" ? String(returnDate || "").replace(/-/g, "") : "";
-  if (!from || !to || !dep) return "";
-  const base   = "https://www.skyscanner.es/transport/flights";
-  const path   = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;
-  const params = new URLSearchParams({ adultsv2: "1", cabinclass: "economy", rtn: ret ? "1" : "0" });
-  return `${path}?${params}`;
-}
-
-const AIRPORT_MAP = {
-  MAD: "Madrid",   BCN: "Barcelona", LON: "London",    PAR: "Paris",
-  ROM: "Rome",     MIL: "Milan",     BER: "Berlin",    AMS: "Amsterdam",
-  LIS: "Lisbon",   DUB: "Dublin",    VIE: "Vienna",
-};
+import {
+  getBaseUrl, normalizeCode, formatEur, fairnessColor, buildSkyscannerUrl, AIRPORT_MAP
+} from "../utils/helpers";
 
 // ─── Alternative card ─────────────────────────────────────────────────────────
 
-function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bestDest }) {
+const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bestDest }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
@@ -139,7 +97,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
       </div>
     </div>
   );
-}
+});
 
 // ─── FlightResults ────────────────────────────────────────────────────────────
 
