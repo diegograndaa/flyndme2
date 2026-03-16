@@ -13,11 +13,11 @@ function normalizeCode(v) {
 function formatEur(n, dec = 0) {
   const v = typeof n === "number" ? n : Number(n || 0);
   try {
-    return new Intl.NumberFormat("es-ES", {
+    return new Intl.NumberFormat("en-GB", {
       style: "currency", currency: "EUR",
       minimumFractionDigits: dec, maximumFractionDigits: dec,
     }).format(v);
-  } catch { return `${v.toFixed(dec)} €`; }
+  } catch { return `€${v.toFixed(dec)}`; }
 }
 
 function fairnessColor(s) {
@@ -40,9 +40,9 @@ function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tr
 }
 
 const AIRPORT_MAP = {
-  MAD: "Madrid",   BCN: "Barcelona", LON: "Londres",   PAR: "París",
-  ROM: "Roma",     MIL: "Milán",     BER: "Berlín",    AMS: "Ámsterdam",
-  LIS: "Lisboa",   DUB: "Dublín",    VIE: "Viena",
+  MAD: "Madrid",   BCN: "Barcelona", LON: "London",    PAR: "Paris",
+  ROM: "Rome",     MIL: "Milan",     BER: "Berlin",    AMS: "Amsterdam",
+  LIS: "Lisbon",   DUB: "Dublin",    VIE: "Vienna",
 };
 
 // ─── Alternative card ─────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
           <span className="alt-card-code">{code}</span>
           {city && <span className="alt-card-city">{city}</span>}
         </div>
-        {isBest && <div className="alt-card-badge">Recomendado</div>}
+        {isBest && <div className="alt-card-badge">Recommended</div>}
       </div>
 
       {/* Content */}
@@ -80,15 +80,15 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
 
         <div className="alt-card-prices">
           <div>
-            <div className="alt-card-plabel">Total grupo</div>
+            <div className="alt-card-plabel">Group total</div>
             <div className="alt-card-price">{formatEur(dest.totalCostEUR ?? 0, 0)}</div>
           </div>
           <div>
-            <div className="alt-card-plabel">Por persona</div>
+            <div className="alt-card-plabel">Per person</div>
             <div className="alt-card-price">{formatEur(dest.averageCostPerTraveler ?? 0, 0)}</div>
           </div>
           <div>
-            <div className="alt-card-plabel">Equidad</div>
+            <div className="alt-card-plabel">Fairness</div>
             <div className="alt-card-price" style={{ color: fColor }}>{fairness.toFixed(0)}/100</div>
           </div>
         </div>
@@ -116,7 +116,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
         {flights.length > 0 && (
           <>
             <button type="button" className="alt-card-toggle" onClick={() => setOpen((v) => !v)}>
-              {open ? "Ocultar desglose ▲" : "Ver precios por origen ▼"}
+              {open ? "Hide breakdown ▲" : "View prices per origin ▼"}
             </button>
             {open && (
               <ul className="alt-card-detail">
@@ -124,7 +124,7 @@ function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bes
                   <li key={i} className="alt-card-detail-row">
                     <span className="alt-card-detail-origin">{String(f.origin || "").toUpperCase()} → {code}</span>
                     <span className="alt-card-detail-price">
-                      {typeof f.price === "number" ? formatEur(f.price, 2) : "Sin datos"}
+                      {typeof f.price === "number" ? formatEur(f.price, 2) : "No data"}
                     </span>
                   </li>
                 ))}
@@ -173,11 +173,11 @@ export default function FlightResults({
 
   if (!safeFlights.length) return (
     <div className="alt-empty">
-      <div className="alt-empty-title">Sin alternativas disponibles</div>
+      <div className="alt-empty-title">No alternatives available</div>
       {budgetEnabled && (
         <div className="alt-empty-sub">
-          Presupuesto activo: máx. {formatEur(Number(maxBudgetPerTraveler ?? 0), 0)} por persona.
-          Prueba a subirlo o a desactivarlo.
+          Active budget: max. {formatEur(Number(maxBudgetPerTraveler ?? 0), 0)} per person.
+          Try increasing it or disabling the filter.
         </div>
       )}
     </div>
@@ -187,7 +187,7 @@ export default function FlightResults({
     <div>
       {budgetEnabled && (
         <div className="alert alert-info py-2 mb-3">
-          Filtro activo: máx. <strong>{formatEur(Number(maxBudgetPerTraveler ?? 0), 0)}</strong> por persona.
+          Active filter: max. <strong>{formatEur(Number(maxBudgetPerTraveler ?? 0), 0)}</strong> per person.
         </div>
       )}
 
@@ -195,15 +195,15 @@ export default function FlightResults({
       {alternatives.length > 1 && (
         <div className="d-flex align-items-center gap-2 mb-3">
           <label className="form-label small mb-0 fw-semibold" htmlFor="altSort" style={{ color: "#475569", whiteSpace: "nowrap" }}>
-            Ordenar por:
+            Sort by:
           </label>
           <select id="altSort" className="form-select form-select-sm" style={{ maxWidth: 260 }}
             value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="default">Criterio principal</option>
-            <option value="priceAsc">Precio total (más barato)</option>
-            <option value="priceDesc">Precio total (más caro)</option>
-            <option value="perPerson">Precio por persona</option>
-            <option value="fairness">Mayor equidad</option>
+            <option value="default">Main criterion</option>
+            <option value="priceAsc">Total price (cheapest)</option>
+            <option value="priceDesc">Total price (most expensive)</option>
+            <option value="perPerson">Price per person</option>
+            <option value="fairness">Highest fairness</option>
           </select>
         </div>
       )}
@@ -225,7 +225,7 @@ export default function FlightResults({
       </div>
 
       {!alternatives.length && (
-        <p className="text-secondary small">No hay más alternativas para mostrar.</p>
+        <p className="text-secondary small">No more alternatives to show.</p>
       )}
     </div>
   );

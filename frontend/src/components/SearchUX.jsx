@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
 const MESSAGES = [
-  "Conectando con aerolíneas…",
-  "Buscando vuelos desde tus ciudades…",
-  "Calculando el coste total del grupo…",
-  "Evaluando la equidad entre viajeros…",
-  "Casi listo…",
+  "Connecting to airlines…",
+  "Searching flights from your cities…",
+  "Calculating group total cost…",
+  "Evaluating fairness between travelers…",
+  "Almost there…",
 ];
 
 /**
@@ -50,14 +50,14 @@ export function SearchProgress({ loading }) {
       {/* Progress bar */}
       <div
         role="progressbar"
-        aria-label="Buscando vuelos"
+        aria-label="Searching flights"
         style={{
           position:   "fixed",
           top:        0,
           left:       0,
           width:      `${width}%`,
           height:     3,
-          background: "linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%)",
+          background: "linear-gradient(90deg, #0062E3 0%, #05C3A8 100%)",
           transition: loading ? "width 0.6s ease" : "width 0.35s ease",
           zIndex:     9999,
           borderRadius: "0 2px 2px 0",
@@ -72,7 +72,7 @@ export function SearchProgress({ loading }) {
             bottom:     24,
             left:       "50%",
             transform:  "translateX(-50%)",
-            background: "#0F172A",
+            background: "#111827",
             color:      "#F8FAFC",
             borderRadius: 999,
             padding:    "10px 20px",
@@ -91,7 +91,7 @@ export function SearchProgress({ loading }) {
               width:         14,
               height:        14,
               border:        "2px solid rgba(255,255,255,0.3)",
-              borderTopColor:"#60A5FA",
+              borderTopColor:"#05C3A8",
               borderRadius:  "50%",
               display:       "inline-block",
               animation:     "spin 0.7s linear infinite",

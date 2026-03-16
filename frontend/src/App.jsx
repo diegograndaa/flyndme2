@@ -14,17 +14,17 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 // ─── Airport data ─────────────────────────────────────────────────────────────
 
 const AIRPORTS = [
-  { code: "MAD", city: "Madrid",     country: "España" },
-  { code: "BCN", city: "Barcelona",  country: "España" },
-  { code: "LON", city: "Londres",    country: "Reino Unido" },
-  { code: "PAR", city: "París",      country: "Francia" },
-  { code: "ROM", city: "Roma",       country: "Italia" },
-  { code: "MIL", city: "Milán",      country: "Italia" },
-  { code: "BER", city: "Berlín",     country: "Alemania" },
-  { code: "AMS", city: "Ámsterdam",  country: "Países Bajos" },
-  { code: "LIS", city: "Lisboa",     country: "Portugal" },
-  { code: "DUB", city: "Dublín",     country: "Irlanda" },
-  { code: "VIE", city: "Viena",      country: "Austria" },
+  { code: "MAD", city: "Madrid",     country: "Spain" },
+  { code: "BCN", city: "Barcelona",  country: "Spain" },
+  { code: "LON", city: "London",     country: "United Kingdom" },
+  { code: "PAR", city: "Paris",      country: "France" },
+  { code: "ROM", city: "Rome",       country: "Italy" },
+  { code: "MIL", city: "Milan",      country: "Italy" },
+  { code: "BER", city: "Berlin",     country: "Germany" },
+  { code: "AMS", city: "Amsterdam",  country: "Netherlands" },
+  { code: "LIS", city: "Lisbon",     country: "Portugal" },
+  { code: "DUB", city: "Dublin",     country: "Ireland" },
+  { code: "VIE", city: "Vienna",     country: "Austria" },
 ];
 
 const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
@@ -51,18 +51,18 @@ function destLabel(code) {
 function formatEur(n, dec = 0) {
   const v = typeof n === "number" ? n : Number(n || 0);
   try {
-    return new Intl.NumberFormat("es-ES", {
+    return new Intl.NumberFormat("en-GB", {
       style: "currency", currency: "EUR",
       minimumFractionDigits: dec, maximumFractionDigits: dec,
     }).format(v);
-  } catch { return `${v.toFixed(dec)} €`; }
+  } catch { return `€${v.toFixed(dec)}`; }
 }
 
 function formatDate(s) {
   if (!s) return "";
   const d = new Date(`${s}T00:00:00`);
   if (isNaN(d)) return s;
-  return d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function todayISO() { return new Date().toISOString().split("T")[0]; }
@@ -80,10 +80,10 @@ function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tr
 }
 
 function fairnessLabel(s) {
-  if (s >= 85) return { text: "Muy equilibrado",      color: "#16A34A" };
-  if (s >= 65) return { text: "Bastante equilibrado", color: "#3B82F6" };
-  if (s >= 45) return { text: "Algo desigual",        color: "#D97706" };
-  return             { text: "Desigual",               color: "#DC2626" };
+  if (s >= 85) return { text: "Very balanced",      color: "#16A34A" };
+  if (s >= 65) return { text: "Fairly balanced",    color: "#0062E3" };
+  if (s >= 45) return { text: "Somewhat unequal",   color: "#D97706" };
+  return             { text: "Unequal",              color: "#DC2626" };
 }
 
 async function copyText(text) {
@@ -108,9 +108,9 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.err) return (
       <div className="alert alert-danger">
-        <strong>Error al renderizar.</strong> {this.state.err}
+        <strong>Rendering error.</strong> {this.state.err}
         <button className="btn btn-sm btn-outline-danger ms-3" onClick={() => this.setState({ err: null })}>
-          Reintentar
+          Retry
         </button>
       </div>
     );
@@ -128,16 +128,16 @@ function Landing({ onStart }) {
         <div className="container" style={{ maxWidth: 1080 }}>
           <div className="row g-5 align-items-center">
             <div className="col-lg-6">
-              <span className="lp-eyebrow">FlyndMe</span>
-              <h1 className="lp-h1">El punto de encuentro perfecto para tu grupo</h1>
+              <span className="lp-eyebrow">✈ FlyndMe</span>
+              <h1 className="lp-h1">Find the cheapest place to meet your group</h1>
               <p className="lp-lead">
-                Introduce los aeropuertos de cada viajero y en segundos sabrás qué destino le sale más barato a todos juntos.
+                Enter each traveler's airport and instantly discover which destination is cheapest for everyone. Powered by real-time Amadeus data.
               </p>
               <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
-                Buscar destino común
+                Find a common destination
               </button>
               <div className="lp-chips mt-4">
-                {["Multi origen", "Mejor precio total", "Equidad entre viajeros", "Presupuesto por persona"].map((t) => (
+                {["Multi-origin", "Best total price", "Fairness score", "Budget per person"].map((t) => (
                   <span key={t} className="lp-chip">{t}</span>
                 ))}
               </div>
@@ -145,15 +145,15 @@ function Landing({ onStart }) {
 
             <div className="col-lg-6">
               <div className="lp-card">
-                <div className="lp-card-title">¿Cómo funciona?</div>
+                <div className="lp-card-title">How does it work?</div>
                 <ul className="lp-steps">
-                  <li><span className="lp-step-num">1</span>Añade los aeropuertos de cada viajero.</li>
-                  <li><span className="lp-step-num">2</span>FlyndMe busca el destino más barato para todos.</li>
-                  <li><span className="lp-step-num">3</span>Abre Skyscanner para reservar desde cada origen.</li>
+                  <li><span className="lp-step-num">1</span>Add the departure airport of each traveler.</li>
+                  <li><span className="lp-step-num">2</span>FlyndMe finds the cheapest destination for everyone.</li>
+                  <li><span className="lp-step-num">3</span>Book on Skyscanner directly from each origin.</li>
                 </ul>
                 <div className="lp-card-meta">
-                  <span>Fuente · Amadeus API</span>
-                  <span>Tiempo típico · 3 – 8 s</span>
+                  <span>Source · Amadeus API</span>
+                  <span>Typical time · 3 – 8 s</span>
                 </div>
               </div>
             </div>
@@ -164,13 +164,13 @@ function Landing({ onStart }) {
       {/* FAQ */}
       <section className="lp-faq">
         <div className="container" style={{ maxWidth: 1080 }}>
-          <h2 className="lp-faq-title">Preguntas frecuentes</h2>
+          <h2 className="lp-faq-title">Frequently asked questions</h2>
           <div className="row g-3">
             {[
-              { q: '¿Qué significa "equidad"?', a: "Una puntuación de 0 a 100. Cuanto más alta, más parecido paga cada viajero." },
-              { q: "¿Cómo funciona el presupuesto?", a: "Filtra destinos donde la media por persona supera el límite que tú fijas." },
-              { q: "¿FlyndMe vende billetes?", a: "No. FlyndMe recomienda el destino; la reserva se hace en Skyscanner u otros buscadores." },
-              { q: "¿Qué tiene de especial?", a: "Busca simultáneamente desde varios aeropuertos y optimiza por precio total o equidad." },
+              { q: 'What does "fairness" mean?', a: "A score from 0 to 100. The higher, the more equally each traveler pays." },
+              { q: "How does the budget filter work?", a: "It filters out destinations where the average per person exceeds your set limit." },
+              { q: "Does FlyndMe sell tickets?", a: "No. FlyndMe recommends the destination; booking is done via Skyscanner or other search engines." },
+              { q: "What makes it special?", a: "It searches simultaneously from multiple airports and optimizes by total price or fairness." },
             ].map((item) => (
               <div key={item.q} className="col-md-6">
                 <div className="lp-faq-card">
@@ -182,7 +182,7 @@ function Landing({ onStart }) {
           </div>
           <div className="text-center mt-5">
             <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
-              Empezar ahora
+              Get started
             </button>
           </div>
         </div>
@@ -237,13 +237,13 @@ function SearchPage({
       <div className="sf-grid">
         {/* ── Left: form ── */}
         <div className="sf-form fm-card">
-          <h2 className="sf-title">Planifica la búsqueda</h2>
-          <p className="sf-sub">Añade los aeropuertos del grupo y elige fechas.</p>
+          <h2 className="sf-title">Plan your search</h2>
+          <p className="sf-sub">Add each traveler's airport and pick your dates.</p>
 
           <form onSubmit={onSubmit} noValidate>
             {/* Origins */}
             <div className="sf-section">
-              <div className="sf-label">Aeropuertos de origen</div>
+              <div className="sf-label">Origin airports</div>
               {origins.map((origin, idx) => (
                 <div key={idx} className="sf-origin-row">
                   <span className="sf-badge">V{idx + 1}</span>
@@ -277,15 +277,15 @@ function SearchPage({
                 </div>
               ))}
               <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
-                + Añadir viajero
+                + Add traveler
               </button>
             </div>
 
             {/* Trip type */}
             <div className="sf-section">
-              <div className="sf-label">Tipo de viaje</div>
+              <div className="sf-label">Trip type</div>
               <div className="sf-pills">
-                {[["oneway", "Solo ida"], ["roundtrip", "Ida y vuelta"]].map(([v, l]) => (
+                {[["oneway", "One way"], ["roundtrip", "Round trip"]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
                     onClick={() => setTripType(v)} disabled={loading}>{l}</button>
@@ -295,17 +295,17 @@ function SearchPage({
 
             {/* Dates */}
             <div className="sf-section">
-              <div className="sf-label">Fechas</div>
+              <div className="sf-label">Dates</div>
               <div className="row g-3">
                 <div className="col-sm-6">
-                  <label className="sf-input-label">Salida</label>
+                  <label className="sf-input-label">Departure</label>
                   <input type="date" className="form-control sf-input"
                     value={departureDate} min={todayISO()}
                     onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
                 </div>
                 {tripType === "roundtrip" && (
                   <div className="col-sm-6">
-                    <label className="sf-input-label">Vuelta</label>
+                    <label className="sf-input-label">Return</label>
                     <input type="date" className="form-control sf-input"
                       value={returnDate} min={departureDate || todayISO()}
                       onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
@@ -316,9 +316,9 @@ function SearchPage({
 
             {/* Optimize */}
             <div className="sf-section">
-              <div className="sf-label">Optimizar por</div>
+              <div className="sf-label">Optimize by</div>
               <div className="sf-pills">
-                {[["total", "Precio total del grupo"], ["fairness", "Equidad entre viajeros"]].map(([v, l]) => (
+                {[["total", "Total group price"], ["fairness", "Fairness between travelers"]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
                     onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
@@ -330,16 +330,16 @@ function SearchPage({
             <div className="sf-section">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <div className="sf-label mb-0">Presupuesto máximo por persona</div>
+                  <div className="sf-label mb-0">Max budget per person</div>
                   <div className="sf-hint">
-                    {budgetEnabled ? `Máx. ${formatEur(maxBudget)} / persona` : "Sin límite de presupuesto"}
+                    {budgetEnabled ? `Max. ${formatEur(maxBudget)} / person` : "No budget limit"}
                   </div>
                 </div>
                 <div className="form-check form-switch mb-0">
                   <input className="form-check-input" type="checkbox" id="budgetSwitch"
                     checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
                   <label className="form-check-label small" htmlFor="budgetSwitch">
-                    {budgetEnabled ? "Activado" : "Desactivado"}
+                    {budgetEnabled ? "On" : "Off"}
                   </label>
                 </div>
               </div>
@@ -359,19 +359,19 @@ function SearchPage({
             {error && <div className="alert alert-danger py-2 mt-3">{error}</div>}
 
             <button type="submit" className="btn-fm-primary w-100 mt-3 py-3 fw-bold fs-6" disabled={loading}>
-              {loading ? "Buscando…" : "Buscar destino común"}
+              {loading ? "Searching…" : "Find common destination"}
             </button>
             <div className="sf-footnote">
-              <span>Tiempo estimado: 3 – 8 s</span>
-              <span>Precios vía Amadeus API</span>
+              <span>Estimated time: 3 – 8 s</span>
+              <span>Prices via Amadeus API</span>
             </div>
           </form>
         </div>
 
         {/* ── Right: airport picker ── */}
         <aside className="sf-airports fm-card">
-          <div className="sf-label">Aeropuertos disponibles</div>
-          <div className="sf-hint">Haz clic para rellenar el campo activo · Viajero {safeIdx + 1}</div>
+          <div className="sf-label">Available airports</div>
+          <div className="sf-hint">Click to fill the active field · Traveler {safeIdx + 1}</div>
           <div className="sf-airport-list">
             {filtered.map((a) => (
               <div key={a.code} className="sf-airport-item"
@@ -383,7 +383,7 @@ function SearchPage({
                 <span className="sf-airport-country">{a.country}</span>
               </div>
             ))}
-            {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>Sin coincidencias</div>}
+            {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>No matches</div>}
           </div>
         </aside>
       </div>
@@ -429,13 +429,13 @@ function WinnerCard({
         {/* Header row */}
         <div className="wc-header-row">
           <div>
-            <div className="wc-eyebrow">Destino recomendado</div>
+            <div className="wc-eyebrow">Recommended destination</div>
             <div className="wc-dest-big">{code}{city ? ` · ${city}` : ""}</div>
           </div>
 
           {/* Criterion toggle */}
           <div className="btn-group btn-group-sm" role="group" aria-label="Criterio">
-            {[["total", "Precio"], ["fairness", "Equidad"]].map(([v, l]) => (
+            {[["total", "Price"], ["fairness", "Fairness"]].map(([v, l]) => (
               <button key={v} type="button"
                 className={`btn ${uiCriterion === v ? "btn-light fw-bold" : "btn-outline-light"}`}
                 onClick={() => onChangeCriterion(v)}>{l}</button>
@@ -448,20 +448,20 @@ function WinnerCard({
           <div className="wc-dates">
             {tripType === "roundtrip"
               ? `${formatDate(dep)} → ${formatDate(ret)}`
-              : `Salida: ${formatDate(dep)}`}
-            {" · "}{tripType === "roundtrip" ? "Ida y vuelta" : "Solo ida"}
+              : `Departure: ${formatDate(dep)}`}
+            {" · "}{tripType === "roundtrip" ? "Round trip" : "One way"}
           </div>
         )}
 
         {/* Price block */}
         <div className="wc-price-block">
           <div>
-            <div className="wc-price-label">Total del grupo</div>
+            <div className="wc-price-label">Group total</div>
             <div className="wc-price">{formatEur(dest.totalCostEUR, 2)}</div>
           </div>
           <div className="wc-price-divider" />
           <div>
-            <div className="wc-price-label">Media por persona</div>
+            <div className="wc-price-label">Average per person</div>
             <div className="wc-price wc-price--secondary">{formatEur(dest.averageCostPerTraveler, 2)}</div>
           </div>
         </div>
@@ -469,7 +469,7 @@ function WinnerCard({
         {/* Per-origin pills */}
         {breakdown.length > 0 && (
           <div className="wc-breakdown">
-            <div className="wc-breakdown-label">Precio por origen</div>
+            <div className="wc-breakdown-label">Price per origin</div>
             <div className="wc-breakdown-pills">
               {breakdown.map((f, i) => (
                 <span key={i} className="wc-pill">
@@ -486,7 +486,7 @@ function WinnerCard({
         {/* Fairness + spread */}
         <div className="wc-metrics">
           <div className="wc-metric">
-            <div className="wc-metric-label">Equidad</div>
+            <div className="wc-metric-label">Fairness</div>
             <div className="wc-metric-value">{(dest.fairnessScore ?? 0).toFixed(0)}<span className="wc-metric-unit">/100</span></div>
             <div className="wc-fairness-bar">
               <div className="wc-fairness-fill" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
@@ -494,21 +494,21 @@ function WinnerCard({
             <div className="wc-fairness-tag" style={{ color: fairness.color }}>{fairness.text}</div>
           </div>
           <div className="wc-metric">
-            <div className="wc-metric-label">Diferencia máxima</div>
+            <div className="wc-metric-label">Max spread</div>
             <div className="wc-metric-value">{formatEur(dest.priceSpread ?? 0, 2)}</div>
-            <div className="wc-metric-sub">Entre el vuelo más caro y el más barato</div>
+            <div className="wc-metric-sub">Between the most and least expensive flight</div>
           </div>
           <div className="wc-metric">
-            <div className="wc-metric-label">Destinos analizados</div>
+            <div className="wc-metric-label">Destinations analyzed</div>
             <div className="wc-metric-value">{flightsCount}</div>
-            <div className="wc-metric-sub">Con tus criterios de búsqueda</div>
+            <div className="wc-metric-sub">With your search criteria</div>
           </div>
         </div>
 
         {/* Skyscanner links */}
         {cleanOrigins.length > 0 && dep && (
           <div className="wc-book">
-            <div className="wc-book-label">Reservar en Skyscanner · un enlace por origen</div>
+            <div className="wc-book-label">Book on Skyscanner · one link per origin</div>
             <div className="wc-book-links">
               {cleanOrigins.map((origin) => {
                 const url = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
@@ -525,17 +525,17 @@ function WinnerCard({
         {/* Secondary actions */}
         <div className="wc-actions">
           <button type="button" className="btn btn-outline-light btn-sm" onClick={onViewAlternatives}>
-            Ver otras opciones
+            View alternatives
           </button>
           <button type="button" className="btn btn-outline-light btn-sm" onClick={onShare}>
-            {shareStatus === "ok" ? "¡Copiado!" : shareStatus === "fail" ? "Error al copiar" : "Compartir"}
+            {shareStatus === "ok" ? "Copied!" : shareStatus === "fail" ? "Copy failed" : "Share"}
           </button>
           <button type="button" className="btn btn-link text-white text-decoration-none btn-sm" onClick={onChangeSearch}>
-            Cambiar búsqueda
+            Change search
           </button>
         </div>
 
-        <div className="wc-disclaimer">Precios estimados vía Amadeus API. Pueden variar al reservar.</div>
+        <div className="wc-disclaimer">Estimated prices via Amadeus API. May vary at time of booking.</div>
       </div>
     </div>
   );
@@ -610,13 +610,13 @@ export default function App() {
     const bd = bestDestination;
     const code = normalizeCode(bd.destination);
     const lines = [
-      `FlyndMe · Destino recomendado: ${destLabel(code)}`,
-      `Total grupo: ${formatEur(bd.totalCostEUR, 2)} · Media: ${formatEur(bd.averageCostPerTraveler, 2)}`,
-      `Equidad: ${(bd.fairnessScore ?? 0).toFixed(0)}/100`,
-      `Fecha: ${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}`,
+      `FlyndMe · Recommended destination: ${destLabel(code)}`,
+      `Group total: ${formatEur(bd.totalCostEUR, 2)} · Average: ${formatEur(bd.averageCostPerTraveler, 2)}`,
+      `Fairness: ${(bd.fairnessScore ?? 0).toFixed(0)}/100`,
+      `Date: ${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}`,
     ];
     if (Array.isArray(bd.flights) && bd.flights.length) {
-      lines.push("Por origen: " + bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
+      lines.push("Per origin: " + bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
     }
     const ok = await copyText(lines.join("\n"));
     setShareStatus(ok ? "ok" : "fail");
@@ -629,11 +629,11 @@ export default function App() {
     e.preventDefault();
     setError("");
 
-    if (!cleanOrigins.length) { setError("Introduce al menos un aeropuerto de origen."); return; }
-    if (!departureDate)        { setError("Selecciona una fecha de salida."); return; }
+    if (!cleanOrigins.length) { setError("Enter at least one origin airport."); return; }
+    if (!departureDate)        { setError("Select a departure date."); return; }
     if (tripType === "roundtrip") {
-      if (!returnDate)               { setError("Selecciona una fecha de vuelta."); return; }
-      if (returnDate <= departureDate) { setError("La fecha de vuelta debe ser posterior a la de salida."); return; }
+      if (!returnDate)               { setError("Select a return date."); return; }
+      if (returnDate <= departureDate) { setError("Return date must be after departure date."); return; }
     }
 
     setFlights([]);
@@ -670,8 +670,8 @@ export default function App() {
       if (!arr.length) {
         setError(
           budgetEnabled
-            ? "Sin resultados con ese presupuesto. Sube el máximo o desactiva el filtro."
-            : "Sin resultados para esos orígenes y fechas. Prueba otras fechas o aeropuertos."
+            ? "No results within that budget. Try increasing the limit or disabling the filter."
+            : "No results for those origins and dates. Try different dates or airports."
         );
         return;
       }
@@ -682,7 +682,7 @@ export default function App() {
       setView("results");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setError(err.message || "Error inesperado. Vuelve a intentarlo.");
+      setError(err.message || "Unexpected error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -704,7 +704,7 @@ export default function App() {
           {view !== "landing" && (
             <button type="button" className="btn btn-sm btn-outline-secondary"
               onClick={() => { setView("search"); setShowAlt(false); }}>
-              {view === "results" ? "Nueva búsqueda" : "Inicio"}
+              {view === "results" ? "New search" : "Home"}
             </button>
           )}
         </div>
@@ -749,8 +749,8 @@ export default function App() {
           {showAlt && flights.length > 1 && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
-                <h3 className="h5 fw-bold mb-0" style={{ color: "#0F172A" }}>Otras opciones</h3>
-                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>Ocultar</button>
+                <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>Other options</h3>
+                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>Hide</button>
               </div>
               <ErrorBoundary>
                 <FlightResults
@@ -772,7 +772,7 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="container" style={{ maxWidth: 1080 }}>
-          FlyndMe · Prototipo funcional · React + Node.js + Amadeus API
+          FlyndMe · Meet smarter, fly fair · React + Node.js + Amadeus API
         </div>
       </footer>
     </div>
