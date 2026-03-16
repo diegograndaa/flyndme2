@@ -7,66 +7,71 @@
   "landing": {
     "eyebrow": "✈ FlyndMe",
     "title": "Encuentra el destino más barato para tu grupo",
-    "lead": "Introduce el aeropuerto de cada viajero y descubre al instante el destino más económico para todos. Con datos en tiempo real de Amadeus.",
-    "cta": "Buscar destino común",
+    "lead": "Introduce la ciudad de cada viajero y descubre al instante dónde es más barato reunirse. Así de simple.",
+    "cta": "Empezar búsqueda",
     "chips": ["Multi-origen", "Mejor precio total", "Índice de equidad", "Presupuesto por persona"],
     "howTitle": "¿Cómo funciona?",
     "steps": [
-      "Añade el aeropuerto de salida de cada viajero.",
-      "FlyndMe encuentra el destino más barato para todos.",
-      "Reserva en Skyscanner directamente desde cada origen."
+      "Añade la ciudad de salida de cada viajero.",
+      "FlyndMe compara vuelos y encuentra el destino más barato.",
+      "Reserva en Skyscanner con un clic."
     ],
-    "metaSource": "Fuente · Amadeus API",
-    "metaTime": "Tiempo típico · 3 – 8 s",
+    "metaSource": "Datos reales · Amadeus",
+    "metaTime": "Resultado en ~5 s",
     "faqTitle": "Preguntas frecuentes",
     "faqs": [
       {
-        "q": "¿Qué significa «equidad»?",
-        "a": "Una puntuación de 0 a 100. Cuanto más alta, más equitativo es lo que paga cada viajero."
-      },
-      {
-        "q": "¿Cómo funciona el filtro de presupuesto?",
-        "a": "Descarta destinos donde el precio medio por persona supera el límite que hayas fijado."
-      },
-      {
         "q": "¿FlyndMe vende billetes?",
-        "a": "No. FlyndMe recomienda el destino; la reserva se hace en Skyscanner u otros buscadores."
+        "a": "No. Te recomienda el mejor destino y luego reservas directamente en Skyscanner u otro buscador."
       },
       {
-        "q": "¿Qué lo hace especial?",
-        "a": "Busca simultáneamente desde varios aeropuertos y optimiza por precio total o equidad."
+        "q": "¿Qué es el índice de equidad?",
+        "a": "Mide del 0 al 100 si todos los viajeros pagan un precio parecido. Cuanto más alto, más justo."
+      },
+      {
+        "q": "¿Cuántos viajeros puedo añadir?",
+        "a": "Hasta 8 viajeros desde ciudades diferentes. Cuantos más, más útil es FlyndMe."
+      },
+      {
+        "q": "¿Los precios son exactos?",
+        "a": "Son precios reales de Amadeus, pero pueden variar ligeramente en el momento de reservar."
       }
     ],
     "getStarted": "Empezar"
   },
   "search": {
-    "title": "Planifica tu búsqueda",
-    "subtitle": "Añade el aeropuerto de cada viajero y elige las fechas.",
-    "originLabel": "Aeropuertos de origen",
-    "placeholder": "Ej: MAD, LON…",
+    "title": "¿Desde dónde viajáis?",
+    "subtitle": "Añade la ciudad de cada viajero y elige las fechas.",
+    "originLabel": "Ciudades de salida",
+    "placeholder": "Escribe ciudad o código…",
     "travelerBadge": "V{{n}}",
-    "removeTitle": "Eliminar",
+    "travelerTooltip": "Viajero {{n}}",
+    "removeTitle": "Eliminar viajero",
     "addTraveler": "+ Añadir viajero",
     "tripTypeLabel": "Tipo de viaje",
     "oneway": "Solo ida",
     "roundtrip": "Ida y vuelta",
-    "datesLabel": "Fechas",
+    "datesLabel": "¿Cuándo?",
     "departure": "Ida",
     "return": "Vuelta",
+    "showAdvanced": "Más opciones",
+    "hideAdvanced": "Menos opciones",
     "optimizeLabel": "Optimizar por",
-    "optTotal": "Precio total del grupo",
-    "optFairness": "Equidad entre viajeros",
+    "optimizeHelp": "Elige si prefieres el destino más barato en total o el más justo para todos.",
+    "optimizeHint": "Por defecto se busca el destino más barato para todo el grupo.",
+    "optTotal": "Precio más bajo",
+    "optFairness": "Precio más justo",
     "budgetLabel": "Presupuesto máx. por persona",
     "budgetHintOn": "Máx. {{amount}} / persona",
     "budgetHintOff": "Sin límite de presupuesto",
     "budgetOn": "Sí",
     "budgetOff": "No",
-    "submit": "Buscar destino común",
+    "submit": "Buscar destino",
     "searching": "Buscando…",
-    "footnoteTime": "Tiempo estimado: 3 – 8 s",
-    "footnotePrices": "Precios vía Amadeus API",
-    "airportsTitle": "Aeropuertos disponibles",
-    "airportsHint": "Haz clic para rellenar el campo activo · Viajero {{n}}",
+    "footnoteTime": "Resultado en ~5 s",
+    "footnotePrices": "Precios vía Amadeus",
+    "airportsTitle": "Elige un aeropuerto",
+    "airportsHint": "Selecciona para el viajero {{n}}",
     "noMatches": "Sin coincidencias"
   },
   "results": {
@@ -83,17 +88,18 @@
     "noData": "N/D",
     "fairnessLabel": "Equidad",
     "fairnessUnit": "/100",
+    "fairnessHelp": "Cuanto más alto, más parecido paga cada viajero",
     "maxSpread": "Diferencia máxima",
     "spreadSub": "Entre el vuelo más caro y el más barato",
     "destsAnalyzed": "Destinos analizados",
     "destsAnalyzedSub": "Con tus criterios de búsqueda",
-    "bookLabel": "Reservar en Skyscanner · un enlace por origen",
+    "bookLabel": "Reservar vuelos — un enlace por viajero",
     "viewAlternatives": "Ver alternativas",
     "share": "Compartir",
     "copied": "¡Copiado!",
     "copyFailed": "Error al copiar",
     "changeSearch": "Cambiar búsqueda",
-    "disclaimer": "Precios estimados vía Amadeus API. Pueden variar en el momento de la reserva.",
+    "disclaimer": "Precios estimados vía Amadeus. Pueden variar al momento de reservar.",
     "otherOptions": "Otras opciones",
     "hide": "Ocultar"
   },
@@ -106,46 +112,45 @@
   "errors": {
     "rendering": "Error de renderizado.",
     "retry": "Reintentar",
-    "noOrigin": "Introduce al menos un aeropuerto de origen.",
-    "noDeparture": "Selecciona una fecha de ida.",
-    "noReturn": "Selecciona una fecha de vuelta.",
-    "returnBeforeDep": "La fecha de vuelta debe ser posterior a la de ida.",
-    "noBudgetResults": "Sin resultados dentro de ese presupuesto. Prueba a aumentar el límite o a desactivar el filtro.",
-    "noResults": "Sin resultados para esos orígenes y fechas. Prueba con otras fechas u otros aeropuertos.",
-    "serverWaking": "El servidor está arrancando (plan gratuito). Espera un momento y vuelve a intentarlo.",
-    "unexpected": "Error inesperado. Inténtalo de nuevo."
+    "noOrigin": "Añade al menos una ciudad de salida.",
+    "noDeparture": "Elige una fecha de ida.",
+    "noReturn": "Elige una fecha de vuelta.",
+    "returnBeforeDep": "La vuelta debe ser después de la ida.",
+    "noBudgetResults": "Sin resultados dentro de ese presupuesto. Sube el límite o desactívalo.",
+    "noResults": "Sin resultados para esas ciudades y fechas. Prueba con otras fechas.",
+    "serverWaking": "El servidor se está iniciando. Reintentando automáticamente…",
+    "unexpected": "Algo salió mal. Inténtalo de nuevo."
   },
   "alt": {
     "recommended": "Recomendado",
-    "groupTotal": "Total del grupo",
+    "groupTotal": "Total grupo",
     "perPerson": "Por persona",
     "fairness": "Equidad",
     "hideBreakdown": "Ocultar desglose ▲",
     "viewBreakdown": "Ver precios por origen ▼",
     "noData": "Sin datos",
     "noAlternatives": "No hay alternativas disponibles",
-    "budgetActive": "Presupuesto activo: máx. {{amount}} por persona. Prueba a aumentarlo o a desactivar el filtro.",
+    "budgetActive": "Presupuesto activo: máx. {{amount}} por persona.",
     "budgetFilter": "Filtro activo: máx. {{amount}} por persona.",
     "sortLabel": "Ordenar por:",
     "sortDefault": "Criterio principal",
-    "sortPriceAsc": "Precio total (menor)",
-    "sortPriceDesc": "Precio total (mayor)",
+    "sortPriceAsc": "Más barato primero",
+    "sortPriceDesc": "Más caro primero",
     "sortPerPerson": "Precio por persona",
-    "sortFairness": "Mayor equidad",
+    "sortFairness": "Más equitativo",
     "noMore": "No hay más alternativas."
   },
   "loading": {
     "messages": [
       "Conectando con aerolíneas…",
-      "Despertando el servidor — un momento…",
       "Buscando vuelos desde tus ciudades…",
-      "Calculando coste total del grupo…",
-      "Evaluando equidad entre viajeros…",
+      "Comparando destinos…",
+      "Calculando el mejor precio para el grupo…",
       "Casi listo…"
     ],
     "ariaLabel": "Buscando vuelos"
   },
-  "footer": "FlyndMe · Queda mejor, vuela justo · React + Node.js + Amadeus API",
+  "footer": "FlyndMe — Encuentra dónde reunirte con tu grupo al mejor precio.",
   "share": {
     "title": "FlyndMe · Destino recomendado: {{dest}}",
     "totalAvg": "Total del grupo: {{total}} · Media: {{avg}}",

@@ -7,66 +7,71 @@
   "landing": {
     "eyebrow": "✈ FlyndMe",
     "title": "Find the cheapest place to meet your group",
-    "lead": "Enter each traveler's airport and instantly discover which destination is cheapest for everyone. Powered by real-time Amadeus data.",
-    "cta": "Find a common destination",
+    "lead": "Enter each traveler's city and instantly discover where it's cheapest to meet. That simple.",
+    "cta": "Start searching",
     "chips": ["Multi-origin", "Best total price", "Fairness score", "Budget per person"],
     "howTitle": "How does it work?",
     "steps": [
-      "Add the departure airport of each traveler.",
-      "FlyndMe finds the cheapest destination for everyone.",
-      "Book on Skyscanner directly from each origin."
+      "Add the departure city of each traveler.",
+      "FlyndMe compares flights and finds the cheapest destination.",
+      "Book on Skyscanner with one click."
     ],
-    "metaSource": "Source · Amadeus API",
-    "metaTime": "Typical time · 3 – 8 s",
+    "metaSource": "Real data · Amadeus",
+    "metaTime": "Results in ~5 s",
     "faqTitle": "Frequently asked questions",
     "faqs": [
       {
-        "q": "What does \"fairness\" mean?",
-        "a": "A score from 0 to 100. The higher, the more equally each traveler pays."
-      },
-      {
-        "q": "How does the budget filter work?",
-        "a": "It filters out destinations where the average per person exceeds your set limit."
-      },
-      {
         "q": "Does FlyndMe sell tickets?",
-        "a": "No. FlyndMe recommends the destination; booking is done via Skyscanner or other search engines."
+        "a": "No. We recommend the best destination, then you book directly on Skyscanner or another search engine."
       },
       {
-        "q": "What makes it special?",
-        "a": "It searches simultaneously from multiple airports and optimizes by total price or fairness."
+        "q": "What is the fairness score?",
+        "a": "It measures from 0 to 100 how equally each traveler pays. The higher, the fairer."
+      },
+      {
+        "q": "How many travelers can I add?",
+        "a": "Up to 8 travelers from different cities. The more, the more useful FlyndMe becomes."
+      },
+      {
+        "q": "Are the prices exact?",
+        "a": "They're real prices from Amadeus, but may vary slightly at the time of booking."
       }
     ],
     "getStarted": "Get started"
   },
   "search": {
-    "title": "Plan your search",
-    "subtitle": "Add each traveler's airport and pick your dates.",
-    "originLabel": "Origin airports",
-    "placeholder": "e.g. MAD, LON…",
-    "travelerBadge": "V{{n}}",
-    "removeTitle": "Remove",
+    "title": "Where are you flying from?",
+    "subtitle": "Add each traveler's city and pick your dates.",
+    "originLabel": "Departure cities",
+    "placeholder": "Type city or code…",
+    "travelerBadge": "T{{n}}",
+    "travelerTooltip": "Traveler {{n}}",
+    "removeTitle": "Remove traveler",
     "addTraveler": "+ Add traveler",
     "tripTypeLabel": "Trip type",
     "oneway": "One way",
     "roundtrip": "Round trip",
-    "datesLabel": "Dates",
+    "datesLabel": "When?",
     "departure": "Departure",
     "return": "Return",
+    "showAdvanced": "More options",
+    "hideAdvanced": "Less options",
     "optimizeLabel": "Optimize by",
-    "optTotal": "Total group price",
-    "optFairness": "Fairness between travelers",
+    "optimizeHelp": "Choose whether you prefer the cheapest total or the fairest distribution.",
+    "optimizeHint": "By default we find the cheapest destination for the whole group.",
+    "optTotal": "Lowest price",
+    "optFairness": "Fairest price",
     "budgetLabel": "Max budget per person",
     "budgetHintOn": "Max. {{amount}} / person",
     "budgetHintOff": "No budget limit",
     "budgetOn": "On",
     "budgetOff": "Off",
-    "submit": "Find common destination",
+    "submit": "Find destination",
     "searching": "Searching…",
-    "footnoteTime": "Estimated time: 3 – 8 s",
-    "footnotePrices": "Prices via Amadeus API",
-    "airportsTitle": "Available airports",
-    "airportsHint": "Click to fill the active field · Traveler {{n}}",
+    "footnoteTime": "Results in ~5 s",
+    "footnotePrices": "Prices via Amadeus",
+    "airportsTitle": "Pick an airport",
+    "airportsHint": "Select for traveler {{n}}",
     "noMatches": "No matches"
   },
   "results": {
@@ -80,20 +85,21 @@
     "groupTotal": "Group total",
     "avgPerPerson": "Average per person",
     "pricePerOrigin": "Price per origin",
-    "noData": "N/D",
+    "noData": "N/A",
     "fairnessLabel": "Fairness",
     "fairnessUnit": "/100",
+    "fairnessHelp": "The higher, the more equally each traveler pays",
     "maxSpread": "Max spread",
     "spreadSub": "Between the most and least expensive flight",
     "destsAnalyzed": "Destinations analyzed",
     "destsAnalyzedSub": "With your search criteria",
-    "bookLabel": "Book on Skyscanner · one link per origin",
+    "bookLabel": "Book flights — one link per traveler",
     "viewAlternatives": "View alternatives",
     "share": "Share",
     "copied": "Copied!",
     "copyFailed": "Copy failed",
     "changeSearch": "Change search",
-    "disclaimer": "Estimated prices via Amadeus API. May vary at time of booking.",
+    "disclaimer": "Estimated prices via Amadeus. May vary at time of booking.",
     "otherOptions": "Other options",
     "hide": "Hide"
   },
@@ -106,14 +112,14 @@
   "errors": {
     "rendering": "Rendering error.",
     "retry": "Retry",
-    "noOrigin": "Enter at least one origin airport.",
-    "noDeparture": "Select a departure date.",
-    "noReturn": "Select a return date.",
-    "returnBeforeDep": "Return date must be after departure date.",
-    "noBudgetResults": "No results within that budget. Try increasing the limit or disabling the filter.",
-    "noResults": "No results for those origins and dates. Try different dates or airports.",
-    "serverWaking": "The server is starting up (free tier). Please wait a moment and try again.",
-    "unexpected": "Unexpected error. Please try again."
+    "noOrigin": "Add at least one departure city.",
+    "noDeparture": "Pick a departure date.",
+    "noReturn": "Pick a return date.",
+    "returnBeforeDep": "Return date must be after departure.",
+    "noBudgetResults": "No results within that budget. Try increasing the limit or turn it off.",
+    "noResults": "No results for those cities and dates. Try different dates.",
+    "serverWaking": "Server is starting up. Retrying automatically…",
+    "unexpected": "Something went wrong. Please try again."
   },
   "alt": {
     "recommended": "Recommended",
@@ -124,28 +130,27 @@
     "viewBreakdown": "View prices per origin ▼",
     "noData": "No data",
     "noAlternatives": "No alternatives available",
-    "budgetActive": "Active budget: max. {{amount}} per person. Try increasing it or disabling the filter.",
+    "budgetActive": "Active budget: max. {{amount}} per person.",
     "budgetFilter": "Active filter: max. {{amount}} per person.",
     "sortLabel": "Sort by:",
     "sortDefault": "Main criterion",
-    "sortPriceAsc": "Total price (cheapest)",
-    "sortPriceDesc": "Total price (most expensive)",
+    "sortPriceAsc": "Cheapest first",
+    "sortPriceDesc": "Most expensive first",
     "sortPerPerson": "Price per person",
-    "sortFairness": "Highest fairness",
+    "sortFairness": "Most fair",
     "noMore": "No more alternatives to show."
   },
   "loading": {
     "messages": [
       "Connecting to airlines…",
-      "Waking up the server — hang tight…",
       "Searching flights from your cities…",
-      "Calculating group total cost…",
-      "Evaluating fairness between travelers…",
+      "Comparing destinations…",
+      "Calculating the best price for your group…",
       "Almost there…"
     ],
     "ariaLabel": "Searching flights"
   },
-  "footer": "FlyndMe · Meet smarter, fly fair · React + Node.js + Amadeus API",
+  "footer": "FlyndMe — Find where to meet your group at the best price.",
   "share": {
     "title": "FlyndMe · Recommended destination: {{dest}}",
     "totalAvg": "Group total: {{total}} · Average: {{avg}}",

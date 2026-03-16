@@ -570,6 +570,121 @@ body {
   font-weight: 500;
 }
 
+/* ── Input city label (shows city name next to code) ──────── */
+
+.sf-input-wrap {
+  position: relative;
+  flex: 1;
+}
+.sf-input-wrap .sf-input {
+  padding-right: 110px !important;
+}
+.sf-input-city {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-50);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Badge with person icon ────────────────────────────────── */
+
+.sf-badge-icon {
+  margin-right: 2px;
+  font-size: 10px;
+}
+
+/* ── Advanced options toggle ───────────────────────────────── */
+
+.sf-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--slate-500);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 4px;
+  transition: color .15s;
+}
+.sf-advanced-toggle:hover {
+  color: var(--primary);
+}
+.sf-advanced-arrow {
+  transition: transform .2s ease;
+  font-size: 12px;
+}
+.sf-advanced-arrow--open {
+  transform: rotate(180deg);
+}
+
+.sf-advanced-panel {
+  animation: fadeInUp .25s ease both;
+}
+
+/* ── Label help icon ───────────────────────────────────────── */
+
+.sf-label-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--slate-200);
+  color: var(--slate-500);
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: 6px;
+  cursor: help;
+  vertical-align: middle;
+}
+
+/* ── Airport picker hint ───────────────────────────────────── */
+
+.sf-picker-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 600;
+  background: var(--primary-50);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+}
+.sf-picker-hint-icon {
+  font-size: 14px;
+}
+
+/* ── Airport item selected state ───────────────────────────── */
+
+.sf-airport-item--selected {
+  border-color: var(--primary) !important;
+  background: var(--primary-50) !important;
+}
+.sf-airport-check {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 14px;
+  margin-left: auto;
+}
+
 /* form-check-input brand color */
 .form-check-input:checked {
   background-color: var(--primary) !important;
@@ -780,6 +895,21 @@ body {
 .wc-fairness-tag {
   font-size: 11px;
   font-weight: 700;
+}
+.wc-metric-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.7);
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: 4px;
+  cursor: help;
+  vertical-align: middle;
 }
 
 .wc-book        { margin-bottom: 24px; }

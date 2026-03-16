@@ -208,6 +208,7 @@ const SearchPage = React.memo(function SearchPage({
 }) {
   const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
   const filterVal = origins[safeIdx]?.trim().toLowerCase() || "";
@@ -235,6 +236,13 @@ const SearchPage = React.memo(function SearchPage({
 
   const BUDGET_MIN = 30; const BUDGET_MAX = 800; const BUDGET_STEP = 10;
 
+  // Show city name next to code in the origin input
+  const originDisplay = (val) => {
+    const code = normalizeCode(val);
+    const city = cityOf(code);
+    return city ? `${code}` : val;
+  };
+
   return (
     <div className="container py-4" style={{ maxWidth: 960 }}>
       <div className="sf-grid">
@@ -247,60 +255,68 @@ const SearchPage = React.memo(function SearchPage({
             {/* Origins */}
             <div className="sf-section">
               <div className="sf-label">{t("search.originLabel")}</div>
-              {origins.map((origin, idx) => (
-                <div key={idx} className="sf-origin-row">
-                  <span className="sf-badge">{t("search.travelerBadge", { n: idx + 1 })}</span>
-                  <input
-                    type="text"
-                    className="form-control sf-input text-uppercase"
-                    placeholder={t("search.placeholder")}
-                    value={origin}
-                    onChange={(e) => {
-                      const copy = [...origins];
-                      copy[idx] = e.target.value.toUpperCase();
-                      setOrigins(copy);
-                    }}
-                    onFocus={() => setActiveIdx(idx)}
-                    disabled={loading}
-                    autoComplete="off"
-                  />
-                  {origins.length > 1 && (
-                    <button
-                      type="button"
-                      className="sf-remove"
-                      onClick={() => {
-                        const copy = origins.filter((_, i) => i !== idx);
-                        setOrigins(copy.length ? copy : [""]);
-                        setActiveIdx(Math.min(safeIdx, copy.length - 1));
-                      }}
-                      disabled={loading}
-                      title={t("search.removeTitle")}
-                    >✕</button>
-                  )}
-                </div>
-              ))}
+              {origins.map((origin, idx) => {
+                const code = normalizeCode(origin);
+                const city = cityOf(code);
+                return (
+                  <div key={idx} className="sf-origin-row">
+                    <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
+                      <span className="sf-badge-icon">👤</span>{idx + 1}
+                    </span>
+                    <div className="sf-input-wrap">
+                      <input
+                        type="text"
+                        className="form-control sf-input text-uppercase"
+                        placeholder={t("search.placeholder")}
+                        value={origin}
+                        onChange={(e) => {
+                          const copy = [...origins];
+                          copy[idx] = e.target.value.toUpperCase();
+                          setOrigins(copy);
+                        }}
+                        onFocus={() => setActiveIdx(idx)}
+                        disabled={loading}
+                        autoComplete="off"
+                      />
+                      {city && origin.trim() && (
+                        <span className="sf-input-city">{city}</span>
+                      )}
+                    </div>
+                    {origins.length > 1 && (
+                      <button
+                        type="button"
+                        className="sf-remove"
+                        onClick={() => {
+                          const copy = origins.filter((_, i) => i !== idx);
+                          setOrigins(copy.length ? copy : [""]);
+                          setActiveIdx(Math.min(safeIdx, copy.length - 1));
+                        }}
+                        disabled={loading}
+                        title={t("search.removeTitle")}
+                      >✕</button>
+                    )}
+                  </div>
+                );
+              })}
               <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
                 {t("search.addTraveler")}
               </button>
             </div>
 
-            {/* Trip type */}
+            {/* Trip type + Dates combined */}
             <div className="sf-section">
               <div className="sf-label">{t("search.tripTypeLabel")}</div>
-              <div className="sf-pills">
+              <div className="sf-pills" style={{ marginBottom: 16 }}>
                 {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
                     onClick={() => setTripType(v)} disabled={loading}>{l}</button>
                 ))}
               </div>
-            </div>
 
-            {/* Dates */}
-            <div className="sf-section">
               <div className="sf-label">{t("search.datesLabel")}</div>
               <div className="row g-3">
-                <div className="col-sm-6">
+                <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
                   <label className="sf-input-label">{t("search.departure")}</label>
                   <input type="date" className="form-control sf-input"
                     value={departureDate} min={todayISO()}
@@ -317,47 +333,66 @@ const SearchPage = React.memo(function SearchPage({
               </div>
             </div>
 
-            {/* Optimize */}
-            <div className="sf-section">
-              <div className="sf-label">{t("search.optimizeLabel")}</div>
-              <div className="sf-pills">
-                {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
-                  <button key={v} type="button"
-                    className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
-                    onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
-                ))}
-              </div>
-            </div>
+            {/* Advanced options toggle */}
+            <button
+              type="button"
+              className="sf-advanced-toggle"
+              onClick={() => setShowAdvanced((v) => !v)}
+            >
+              {showAdvanced ? t("search.hideAdvanced") : t("search.showAdvanced")}
+              <span className={`sf-advanced-arrow${showAdvanced ? " sf-advanced-arrow--open" : ""}`}>▾</span>
+            </button>
 
-            {/* Budget */}
-            <div className="sf-section">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
-                  <div className="sf-hint">
-                    {budgetEnabled ? t("search.budgetHintOn", { amount: formatEur(maxBudget) }) : t("search.budgetHintOff")}
+            {/* Advanced: Optimize + Budget */}
+            {showAdvanced && (
+              <div className="sf-advanced-panel">
+                {/* Optimize */}
+                <div className="sf-section">
+                  <div className="sf-label">
+                    {t("search.optimizeLabel")}
+                    <span className="sf-label-help" title={t("search.optimizeHelp")}>?</span>
                   </div>
+                  <div className="sf-pills">
+                    {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
+                      <button key={v} type="button"
+                        className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
+                        onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
+                    ))}
+                  </div>
+                  <div className="sf-hint mt-1">{t("search.optimizeHint")}</div>
                 </div>
-                <div className="form-check form-switch mb-0">
-                  <input className="form-check-input" type="checkbox" id="budgetSwitch"
-                    checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
-                  <label className="form-check-label small" htmlFor="budgetSwitch">
-                    {budgetEnabled ? t("search.budgetOn") : t("search.budgetOff")}
-                  </label>
+
+                {/* Budget */}
+                <div className="sf-section">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
+                      <div className="sf-hint">
+                        {budgetEnabled ? t("search.budgetHintOn", { amount: formatEur(maxBudget) }) : t("search.budgetHintOff")}
+                      </div>
+                    </div>
+                    <div className="form-check form-switch mb-0">
+                      <input className="form-check-input" type="checkbox" id="budgetSwitch"
+                        checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
+                      <label className="form-check-label small" htmlFor="budgetSwitch">
+                        {budgetEnabled ? t("search.budgetOn") : t("search.budgetOff")}
+                      </label>
+                    </div>
+                  </div>
+                  {budgetEnabled && (
+                    <div className="sf-budget-box mt-3">
+                      <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
+                        value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
+                      <div className="d-flex justify-content-between small" style={{ color: "#64748B" }}>
+                        <span>{formatEur(BUDGET_MIN)}</span>
+                        <strong>{formatEur(maxBudget)}</strong>
+                        <span>{formatEur(BUDGET_MAX)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              {budgetEnabled && (
-                <div className="sf-budget-box mt-3">
-                  <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
-                    value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
-                  <div className="d-flex justify-content-between small" style={{ color: "#64748B" }}>
-                    <span>{formatEur(BUDGET_MIN)}</span>
-                    <strong>{formatEur(maxBudget)}</strong>
-                    <span>{formatEur(BUDGET_MAX)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
 
             {error && <div className="alert alert-danger py-2 mt-3" aria-live="polite">{error}</div>}
 
@@ -374,18 +409,26 @@ const SearchPage = React.memo(function SearchPage({
         {/* ── Right: airport picker ── */}
         <aside className="sf-airports fm-card">
           <div className="sf-label">{t("search.airportsTitle")}</div>
-          <div className="sf-hint">{t("search.airportsHint", { n: safeIdx + 1 })}</div>
+          <div className="sf-picker-hint">
+            <span className="sf-picker-hint-icon">👆</span>
+            {t("search.airportsHint", { n: safeIdx + 1 })}
+          </div>
           <div className="sf-airport-list">
-            {filtered.map((a) => (
-              <div key={a.code} className="sf-airport-item"
-                onClick={() => !loading && handleClickAirport(a.code)}
-                role="button" tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && handleClickAirport(a.code)}>
-                <span className="sf-airport-code">{a.code}</span>
-                <span className="sf-airport-city">{a.city}</span>
-                <span className="sf-airport-country">{a.country}</span>
-              </div>
-            ))}
+            {filtered.map((a) => {
+              const isSelected = origins.some((o) => normalizeCode(o) === a.code);
+              return (
+                <div key={a.code}
+                  className={`sf-airport-item${isSelected ? " sf-airport-item--selected" : ""}`}
+                  onClick={() => !loading && handleClickAirport(a.code)}
+                  role="button" tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && handleClickAirport(a.code)}>
+                  <span className="sf-airport-code">{a.code}</span>
+                  <span className="sf-airport-city">{a.city}</span>
+                  <span className="sf-airport-country">{a.country}</span>
+                  {isSelected && <span className="sf-airport-check">✓</span>}
+                </div>
+              );
+            })}
             {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>{t("search.noMatches")}</div>}
           </div>
         </aside>
@@ -499,7 +542,7 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Fairness + spread */}
         <div className="wc-metrics">
           <div className="wc-metric">
-            <div className="wc-metric-label">{t("results.fairnessLabel")}</div>
+            <div className="wc-metric-label">{t("results.fairnessLabel")} <span className="wc-metric-help" title={t("results.fairnessHelp")}>?</span></div>
             <div className="wc-metric-value">{(dest.fairnessScore ?? 0).toFixed(0)}<span className="wc-metric-unit">{t("results.fairnessUnit")}</span></div>
             <div className="wc-fairness-bar">
               <div className="wc-fairness-fill" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
