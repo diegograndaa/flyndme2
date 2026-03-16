@@ -25,6 +25,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       "http://localhost:5173",
       "http://localhost:4173",
       "https://flyndme.vercel.app",
+      "https://flyndme2.vercel.app",
     ];
 
 app.use(
@@ -42,6 +43,8 @@ app.use(
 );
 
 app.use(express.json({ limit: "16kb" }));
+
+const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 
 // Rate limiter: 60 search requests per 10 min per IP
 const searchLimiter = rateLimit({
@@ -76,8 +79,6 @@ app.use((err, _req, res, _next) => {
 process.on("unhandledRejection", (reason) => {
   console.error("[UnhandledRejection]", reason);
 });
-
-const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 
 app.listen(PORT, () => {
   console.log(
