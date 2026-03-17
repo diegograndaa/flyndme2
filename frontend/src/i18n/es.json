@@ -42,7 +42,14 @@
     "exampleWinner": "Destino recomendado",
     "exampleDest": "LIS · Lisboa",
     "exampleTotal": "total del grupo",
-    "getStarted": "Empezar"
+    "getStarted": "Empezar",
+    "useCasesTitle": "¿Quién usa FlyndMe?",
+    "useCases": [
+      { "icon": "🌍", "title": "Amigos en distintos países", "desc": "Deja de comparar vuelos ciudad por ciudad. FlyndMe lo hace en segundos." },
+      { "icon": "💑", "title": "Parejas a distancia", "desc": "Encuentra el lugar más barato para encontrarse a mitad de camino." },
+      { "icon": "🎓", "title": "Grupos Erasmus y estudiantes", "desc": "Viajes baratos por Europa. Perfecto para planificar quedadas y reuniones." },
+      { "icon": "💻", "title": "Nómadas digitales y equipos remotos", "desc": "Coordina viajes de grupo desde cualquier lugar al mejor precio." }
+    ]
   },
   "search": {
     "title": "¿Desde dónde viajáis?",
@@ -94,7 +101,9 @@
     "airportsHint": "Selecciona para el viajero {{n}}",
     "noMatches": "Sin coincidencias",
     "pickAirport": "Elegir de la lista",
-    "closeDrawer": "Listo"
+    "closeDrawer": "Listo",
+    "paxLabel": "viajeros",
+    "paxTooltip": "Número de viajeros desde esta ciudad"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -179,7 +188,13 @@
       "Un momento más…",
       "Casi listo…"
     ],
-    "ariaLabel": "Buscando vuelos"
+    "ariaLabel": "Buscando vuelos",
+    "steps": ["Buscando vuelos", "Comparando precios", "Preparando resultados"],
+    "skeletonHint": "Analizando {{n}} combinaciones de rutas…"
+  },
+  "recentSearches": {
+    "title": "Búsquedas recientes",
+    "clear": "Borrar todo"
   },
   "footer": "FlyndMe — Encuentra dónde reunirte con tu grupo al mejor precio.",
   "pwa": {

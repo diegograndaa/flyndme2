@@ -70,6 +70,75 @@ const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
   );
 });
 
+// ─── Search skeleton (loading state) ────────────────────────────────────────
+
+const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
+  const { t } = useI18n();
+  const steps = t("loading.steps") || ["Searching", "Comparing", "Preparing"];
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setActiveStep(1), 6000),
+      setTimeout(() => setActiveStep(2), 14000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const numCombinations = Math.max(origins.length, 1) * 36;
+
+  return (
+    <div className="container py-4" style={{ maxWidth: 1080 }}>
+      {/* Progress stepper */}
+      <div className="sk-stepper">
+        {steps.map((label, i) => (
+          <div key={i} className={`sk-step${i <= activeStep ? " sk-step--active" : ""}${i < activeStep ? " sk-step--done" : ""}`}>
+            <div className="sk-step-dot">
+              {i < activeStep ? "✓" : i + 1}
+            </div>
+            <span className="sk-step-label">{label}</span>
+            {i < steps.length - 1 && <div className="sk-step-line" />}
+          </div>
+        ))}
+      </div>
+
+      <p className="sk-hint">{t("loading.skeletonHint", { n: numCombinations })}</p>
+
+      {/* Skeleton winner card */}
+      <div className="sk-card">
+        <div className="sk-card-img fm-skeleton" />
+        <div className="sk-card-body">
+          <div className="fm-skeleton" style={{ width: "40%", height: 24, borderRadius: 8, marginBottom: 12 }} />
+          <div className="fm-skeleton" style={{ width: "65%", height: 16, borderRadius: 6, marginBottom: 20 }} />
+          <div style={{ display: "flex", gap: 16 }}>
+            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
+            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
+            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
+          </div>
+          <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+            {origins.filter(Boolean).map((o, i) => (
+              <div key={i} className="fm-skeleton" style={{ width: 100, height: 40, borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Skeleton alternative cards */}
+      <div className="sk-alts">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="sk-alt">
+            <div className="fm-skeleton" style={{ width: "100%", height: 100, borderRadius: "10px 10px 0 0" }} />
+            <div style={{ padding: 14 }}>
+              <div className="fm-skeleton" style={{ width: "50%", height: 16, borderRadius: 6, marginBottom: 8 }} />
+              <div className="fm-skeleton" style={{ width: "70%", height: 14, borderRadius: 6 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 // ─── Animated price counter ─────────────────────────────────────────────────
 
 function useCountUp(target, duration = 800, decimals = 0) {
@@ -191,6 +260,22 @@ const Landing = React.memo(function Landing({ onStart }) {
         </div>
       </section>
 
+      {/* Use cases (SEO) */}
+      <section className="lp-usecases">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <h2 className="lp-usecases-title">{t("landing.useCasesTitle")}</h2>
+          <div className="lp-usecases-grid">
+            {Array.isArray(t("landing.useCases")) && t("landing.useCases").map((uc, i) => (
+              <div key={i} className="lp-usecase-card">
+                <span className="lp-usecase-icon">{uc.icon}</span>
+                <h3 className="lp-usecase-name">{uc.title}</h3>
+                <p className="lp-usecase-desc">{uc.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="lp-faq">
         <div className="container" style={{ maxWidth: 1080 }}>
@@ -229,8 +314,10 @@ const SearchPage = React.memo(function SearchPage({
   flexEnabled, setFlexEnabled,
   flexDays, setFlexDays,
   selectedDests, setSelectedDests,
+  passengers, setPassengers,
   loading, error,
   onSubmit,
+  recentSearches, onLoadRecent, onClearRecent,
 }) {
   const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
@@ -279,6 +366,24 @@ const SearchPage = React.memo(function SearchPage({
           <h2 className="sf-title">{t("search.title")}</h2>
           <p className="sf-sub">{t("search.subtitle")}</p>
 
+          {/* Recent searches */}
+          {recentSearches?.length > 0 && !loading && (
+            <div className="sf-recent">
+              <div className="sf-recent-header">
+                <span className="sf-recent-title">{t("recentSearches.title")}</span>
+                <button type="button" className="sf-recent-clear" onClick={onClearRecent}>{t("recentSearches.clear")}</button>
+              </div>
+              <div className="sf-recent-chips">
+                {recentSearches.map((r, i) => (
+                  <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
+                    <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
+                    <span className="sf-recent-date">{r.departureDate}{r.tripType === "roundtrip" ? ` ↔ ${r.returnDate}` : ""}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <form onSubmit={onSubmit} noValidate>
             {/* Origins */}
             <div className="sf-section">
@@ -310,13 +415,25 @@ const SearchPage = React.memo(function SearchPage({
                         <span className="sf-input-city">{city}</span>
                       )}
                     </div>
+                    {/* Passenger count stepper */}
+                    <div className="sf-pax" title={t("search.paxTooltip")}>
+                      <button type="button" className="sf-pax-btn"
+                        onClick={() => { const p = [...passengers]; p[idx] = Math.max(1, (p[idx] || 1) - 1); setPassengers(p); }}
+                        disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
+                      <span className="sf-pax-count">{passengers[idx] || 1}</span>
+                      <button type="button" className="sf-pax-btn"
+                        onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
+                        disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
+                    </div>
                     {origins.length > 1 && (
                       <button
                         type="button"
                         className="sf-remove"
                         onClick={() => {
                           const copy = origins.filter((_, i) => i !== idx);
+                          const pCopy = passengers.filter((_, i) => i !== idx);
                           setOrigins(copy.length ? copy : [""]);
+                          setPassengers(pCopy.length ? pCopy : [1]);
                           setActiveIdx(Math.min(safeIdx, copy.length - 1));
                         }}
                         disabled={loading}
@@ -327,7 +444,7 @@ const SearchPage = React.memo(function SearchPage({
                 );
               })}
               <div className="sf-origin-actions">
-                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
+                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setPassengers([...passengers, 1]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
                   {t("search.addTraveler")}
                 </button>
                 <button type="button" className="sf-pick-btn" onClick={() => setShowMobileAirports(true)} disabled={loading}>
@@ -336,6 +453,7 @@ const SearchPage = React.memo(function SearchPage({
                 {origins.length === 1 && !origins[0].trim() && (
                   <button type="button" className="sf-example-btn" onClick={() => {
                     setOrigins(["MAD", "LON", "BER"]);
+                    setPassengers([1, 1, 1]);
                     setActiveIdx(0);
                   }} disabled={loading}>
                     {t("search.tryExample")}
@@ -750,6 +868,9 @@ const WinnerCard = React.memo(function WinnerCard({
                       </div>
                       <div className="wc-flight-price-tag">
                         {typeof price === "number" ? formatEur(price, 0) : "—"}
+                        {(offer?.passengers || 0) > 1 && (
+                          <span className="wc-flight-pax-badge">×{offer.passengers}</span>
+                        )}
                       </div>
                     </div>
                     {/* Outbound itinerary */}
@@ -860,6 +981,7 @@ export default function App() {
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
+  const [passengers,    setPassengers]    = useState([1]); // passengers per origin
 
   // Results
   const [flights,         setFlights]         = useState([]);
@@ -872,6 +994,44 @@ export default function App() {
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [toast,       setToast]       = useState(null); // { message, type }
+
+  // ── Recent searches (localStorage) ────────────────────────────────────────
+  const RECENT_KEY = "flyndme_recent";
+  const MAX_RECENT = 5;
+
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
+  });
+
+  const saveRecentSearch = useCallback((params) => {
+    setRecentSearches((prev) => {
+      const entry = {
+        origins: params.origins,
+        tripType: params.tripType,
+        departureDate: params.departureDate,
+        returnDate: params.returnDate,
+        ts: Date.now(),
+      };
+      // De-duplicate by origins+date combo
+      const key = `${entry.origins.join(",")}_${entry.departureDate}_${entry.tripType}`;
+      const filtered = prev.filter((r) => `${r.origins.join(",")}_${r.departureDate}_${r.tripType}` !== key);
+      const updated = [entry, ...filtered].slice(0, MAX_RECENT);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(updated)); } catch { /* quota */ }
+      return updated;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try { localStorage.removeItem(RECENT_KEY); } catch { /* */ }
+  }, []);
+
+  const loadRecentSearch = useCallback((entry) => {
+    setOrigins(entry.origins);
+    setTripType(entry.tripType);
+    setDepartureDate(entry.departureDate);
+    if (entry.returnDate) setReturnDate(entry.returnDate);
+  }, []);
 
   // ── PWA: Register service worker ────────────────────────────────────────
   useEffect(() => {
@@ -1200,12 +1360,35 @@ export default function App() {
             return;
           }
 
-          setFlights(arr);
-          setBestByCriterion({ total: pickBest(arr, "total"), fairness: pickBest(arr, "fairness") });
+          // Adjust totals for passenger counts (>1 traveler per origin)
+          const paxMap = {};
+          cleanOrigins.forEach((o, i) => { paxMap[o] = passengers[i] || 1; });
+          const totalPax = cleanOrigins.reduce((s, o, i) => s + (passengers[i] || 1), 0);
+          const hasMultiPax = totalPax > cleanOrigins.length;
+
+          const adjusted = hasMultiPax ? arr.map((dest) => {
+            const adjFlights = (dest.flights || []).map((f) => ({
+              ...f,
+              passengers: paxMap[f.origin] || 1,
+              totalForOrigin: f.price * (paxMap[f.origin] || 1),
+            }));
+            const adjTotal = adjFlights.reduce((s, f) => s + f.totalForOrigin, 0);
+            return {
+              ...dest,
+              flights: adjFlights,
+              totalCostEUR: adjTotal,
+              averageCostPerTraveler: adjTotal / totalPax,
+              _totalPassengers: totalPax,
+            };
+          }) : arr;
+
+          setFlights(adjusted);
+          setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           setView("results");
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
+          saveRecentSearch({ origins: cleanOrigins, tripType, departureDate, returnDate });
           trackEvent("search_complete", {
             origins: cleanOrigins.length,
             results: arr.length,
@@ -1282,9 +1465,20 @@ export default function App() {
           flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
           flexDays={flexDays}         setFlexDays={setFlexDays}
           selectedDests={selectedDests} setSelectedDests={setSelectedDests}
+          passengers={passengers}     setPassengers={setPassengers}
           loading={loading}           error={error}
           onSubmit={handleSubmit}
+          recentSearches={recentSearches}
+          onLoadRecent={loadRecentSearch}
+          onClearRecent={clearRecentSearches}
         />
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && view === "search" && (
+        <div className="view-enter" key="skeleton">
+          <SearchSkeleton origins={cleanOrigins} />
         </div>
       )}
 
