@@ -13,8 +13,8 @@
     "howTitle": "How does it work?",
     "steps": [
       "Add the departure city of each traveler.",
-      "FlyndMe compares flights and finds the cheapest destination.",
-      "Book on Skyscanner with one click."
+      "FlyndMe compares flights with flexible dates and finds the cheapest destination.",
+      "Share results with your group and book on Skyscanner or Google Flights."
     ],
     "metaSource": "Real data · Amadeus",
     "metaTime": "Results in ~5 s",
@@ -76,6 +76,10 @@
     "searching": "Searching…",
     "footnoteTime": "Results in ~5 s",
     "footnotePrices": "Prices via Amadeus",
+    "flexLabel": "Flexible dates",
+    "flexHintOn": "±{{days}} days around your date",
+    "flexHintOff": "Search on exact date only",
+    "flexDaysUnit": "days",
     "airportsTitle": "Pick an airport",
     "airportsHint": "Select for traveler {{n}}",
     "noMatches": "No matches"
@@ -167,6 +171,9 @@
     "totalAvg": "Group total: {{total}} · Average: {{avg}}",
     "fairness": "Fairness: {{score}}/100",
     "date": "Date: {{date}}",
-    "perOrigin": "Per origin: {{details}}"
+    "perOrigin": "Per origin: {{details}}",
+    "linkCopied": "Link copied! Share it with your group.",
+    "expired": "This link has expired or doesn't exist.",
+    "sharing": "Generating link…"
   }
 }

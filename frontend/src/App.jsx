@@ -225,6 +225,8 @@ const SearchPage = React.memo(function SearchPage({
   optimizeBy, setOptimizeBy,
   budgetEnabled, setBudgetEnabled,
   maxBudget, setMaxBudget,
+  flexEnabled, setFlexEnabled,
+  flexDays, setFlexDays,
   loading, error,
   onSubmit,
 }) {
@@ -360,6 +362,35 @@ const SearchPage = React.memo(function SearchPage({
                     <input type="date" className="form-control sf-input"
                       value={returnDate} min={departureDate || todayISO()}
                       onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
+                  </div>
+                )}
+              </div>
+
+              {/* Flexible dates toggle */}
+              <div className="sf-flex-toggle mt-3">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <div className="sf-flex-label">{t("search.flexLabel")}</div>
+                    <div className="sf-hint">
+                      {flexEnabled
+                        ? t("search.flexHintOn", { days: flexDays })
+                        : t("search.flexHintOff")}
+                    </div>
+                  </div>
+                  <div className="form-check form-switch mb-0">
+                    <input className="form-check-input" type="checkbox" id="flexSwitch"
+                      checked={flexEnabled} onChange={(e) => setFlexEnabled(e.target.checked)} disabled={loading} />
+                  </div>
+                </div>
+                {flexEnabled && (
+                  <div className="sf-flex-pills mt-2">
+                    {[1, 2, 3].map((d) => (
+                      <button key={d} type="button"
+                        className={`sf-pill sf-pill--sm${flexDays === d ? " sf-pill--active" : ""}`}
+                        onClick={() => setFlexDays(d)} disabled={loading}>
+                        ±{d} {t("search.flexDaysUnit")}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -670,6 +701,8 @@ export default function App() {
   const [optimizeBy,    setOptimizeBy]    = useState("total");
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudget,     setMaxBudget]     = useState(200);
+  const [flexEnabled,   setFlexEnabled]   = useState(false);
+  const [flexDays,      setFlexDays]      = useState(3);
 
   // Results
   const [flights,         setFlights]         = useState([]);
@@ -689,8 +722,50 @@ export default function App() {
     ping();
     const quick1 = setTimeout(ping, 3000);
     const quick2 = setTimeout(ping, 8000);
-    const t = setInterval(ping, 8 * 60 * 1000);
-    return () => { clearTimeout(quick1); clearTimeout(quick2); clearInterval(t); };
+    const interval = setInterval(ping, 8 * 60 * 1000);
+    return () => { clearTimeout(quick1); clearTimeout(quick2); clearInterval(interval); };
+  }, []);
+
+  // Load shared results from URL (?share=ID)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get("share");
+    if (!shareId) return;
+
+    setLoading(true);
+    fetch(`${API_BASE}/api/share/${shareId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Share not found");
+        return res.json();
+      })
+      .then((data) => {
+        const { results, searchParams } = data;
+        if (results?.flights?.length) {
+          setFlights(results.flights);
+          setBestByCriterion(results.bestByCriterion || {
+            total: pickBest(results.flights, "total"),
+            fairness: pickBest(results.flights, "fairness"),
+          });
+        }
+        if (searchParams) {
+          if (searchParams.origins?.length) setOrigins(searchParams.origins);
+          if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
+          if (searchParams.returnDate) setReturnDate(searchParams.returnDate);
+          if (searchParams.tripType) setTripType(searchParams.tripType);
+          if (searchParams.optimizeBy) setOptimizeBy(searchParams.optimizeBy);
+          if (searchParams.uiCriterion) setUiCriterion(searchParams.uiCriterion);
+        }
+        setView("results");
+        document.title = "FlyndMe - Shared Results";
+        // Clean URL without reload
+        window.history.replaceState({}, "", window.location.pathname);
+      })
+      .catch(() => {
+        setToast({ message: t("share.expired"), type: "error" });
+        window.history.replaceState({}, "", window.location.pathname);
+      })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
@@ -721,25 +796,71 @@ export default function App() {
     setShowAlt(false);
   };
 
-  // ── Share ───────────────────────────────────────────────────────────────────
+  // ── Share (generates a shareable link) ──────────────────────────────────────
 
   const handleShare = async () => {
-    if (!bestDestination) return;
-    const bd = bestDestination;
-    const code = normalizeCode(bd.destination);
-    const lines = [
-      t("share.title", { dest: destLabel(code) }),
-      t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
-      t("share.fairness", { score: (bd.fairnessScore ?? 0).toFixed(0) }),
-      t("share.date", { date: `${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}` }),
-    ];
-    if (Array.isArray(bd.flights) && bd.flights.length) {
-      lines.push(t("share.perOrigin", { details: bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · ") }));
+    if (!bestDestination || !flights.length) return;
+    setShareStatus("saving");
+
+    try {
+      // Save results to backend
+      const res = await fetch(`${API_BASE}/api/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          results: { flights, bestByCriterion },
+          searchParams: {
+            origins: cleanOrigins,
+            departureDate,
+            returnDate,
+            tripType,
+            optimizeBy,
+            uiCriterion,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      const { id } = await res.json();
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${id}`;
+
+      // Copy the link
+      const ok = await copyText(shareUrl);
+      if (ok) {
+        setShareStatus("ok");
+        setToast({ message: t("share.linkCopied"), type: "success" });
+      } else {
+        // Fallback: copy text summary
+        const bd = bestDestination;
+        const code = normalizeCode(bd.destination);
+        const lines = [
+          t("share.title", { dest: destLabel(code) }),
+          t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
+          `🔗 ${shareUrl}`,
+        ];
+        await copyText(lines.join("\n"));
+        setShareStatus("ok");
+        setToast({ message: t("share.linkCopied"), type: "success" });
+      }
+    } catch {
+      // Fallback to old text-only share
+      const bd = bestDestination;
+      const code = normalizeCode(bd.destination);
+      const lines = [
+        t("share.title", { dest: destLabel(code) }),
+        t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
+        t("share.fairness", { score: (bd.fairnessScore ?? 0).toFixed(0) }),
+        t("share.date", { date: `${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}` }),
+      ];
+      if (Array.isArray(bd.flights) && bd.flights.length) {
+        lines.push(t("share.perOrigin", { details: bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · ") }));
+      }
+      const ok = await copyText(lines.join("\n"));
+      setShareStatus(ok ? "ok" : "fail");
+      setToast({ message: ok ? t("results.copied") : t("results.copyFailed"), type: ok ? "success" : "error" });
     }
-    const ok = await copyText(lines.join("\n"));
-    setShareStatus(ok ? "ok" : "fail");
-    setToast({ message: ok ? t("results.copied") : t("results.copyFailed"), type: ok ? "success" : "error" });
-    setTimeout(() => setShareStatus(""), 2500);
+    setTimeout(() => setShareStatus(""), 3000);
   };
 
   // ── Ensure backend is awake before searching ─────────────────────────────────
@@ -794,8 +915,8 @@ export default function App() {
         departureDate,
         tripType,
         optimizeBy,
-        dateMode: "exact",
-        flexDays: 0,
+        dateMode: flexEnabled ? "flex" : "exact",
+        flexDays: flexEnabled ? flexDays : 0,
         ...(tripType === "roundtrip" && { returnDate }),
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
       };
@@ -907,6 +1028,8 @@ export default function App() {
           optimizeBy={optimizeBy}     setOptimizeBy={setOptimizeBy}
           budgetEnabled={budgetEnabled} setBudgetEnabled={setBudgetEnabled}
           maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
+          flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
+          flexDays={flexDays}         setFlexDays={setFlexDays}
           loading={loading}           error={error}
           onSubmit={handleSubmit}
         />

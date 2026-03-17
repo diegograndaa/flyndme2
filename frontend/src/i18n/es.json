@@ -13,8 +13,8 @@
     "howTitle": "¿Cómo funciona?",
     "steps": [
       "Añade la ciudad de salida de cada viajero.",
-      "FlyndMe compara vuelos y encuentra el destino más barato.",
-      "Reserva en Skyscanner con un clic."
+      "FlyndMe compara vuelos con fechas flexibles y encuentra el destino más barato.",
+      "Comparte el resultado con tu grupo y reserva en Skyscanner o Google Flights."
     ],
     "metaSource": "Datos reales · Amadeus",
     "metaTime": "Resultado en ~5 s",
@@ -76,6 +76,10 @@
     "searching": "Buscando…",
     "footnoteTime": "Resultado en ~5 s",
     "footnotePrices": "Precios vía Amadeus",
+    "flexLabel": "Fechas flexibles",
+    "flexHintOn": "±{{days}} días alrededor de tu fecha",
+    "flexHintOff": "Buscar solo en la fecha exacta",
+    "flexDaysUnit": "días",
     "airportsTitle": "Elige un aeropuerto",
     "airportsHint": "Selecciona para el viajero {{n}}",
     "noMatches": "Sin coincidencias"
@@ -167,6 +171,9 @@
     "totalAvg": "Total del grupo: {{total}} · Media: {{avg}}",
     "fairness": "Equidad: {{score}}/100",
     "date": "Fecha: {{date}}",
-    "perOrigin": "Por origen: {{details}}"
+    "perOrigin": "Por origen: {{details}}",
+    "linkCopied": "¡Enlace copiado! Compártelo con tu grupo.",
+    "expired": "Este enlace ha expirado o no existe.",
+    "sharing": "Generando enlace…"
   }
 }

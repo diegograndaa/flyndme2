@@ -68,6 +68,9 @@ export function todayISO() {
   return new Date().toISOString().split("T")[0];
 }
 
+// Skyscanner affiliate ID — set via VITE_SKYSCANNER_AFFILIATE_ID env var
+const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SKYSCANNER_AFFILIATE_ID) || "";
+
 export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
   const from = String(origin || "").toLowerCase();
   const to   = String(destination || "").toLowerCase();
@@ -77,6 +80,12 @@ export function buildSkyscannerUrl({ origin, destination, departureDate, returnD
   const base = "https://www.skyscanner.es/transport/flights";
   const path = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;
   const params = new URLSearchParams({ adultsv2: "1", cabinclass: "economy", rtn: ret ? "1" : "0" });
+  // Append affiliate tracking if configured
+  if (SKYSCANNER_AFFILIATE_ID) {
+    params.set("associateId", SKYSCANNER_AFFILIATE_ID);
+    params.set("utm_source", "flyndme");
+    params.set("utm_medium", "referral");
+  }
   return `${path}?${params}`;
 }
 

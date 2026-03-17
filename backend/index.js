@@ -6,6 +6,7 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 
 const flightsRoutes = require("./routes/flights");
+const shareRoutes   = require("./routes/share");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -75,7 +76,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "16kb" }));
+app.use(express.json({ limit: "128kb" }));
 
 // Rate limiter: 60 search requests per 10 min per IP
 const searchLimiter = rateLimit({
@@ -89,7 +90,12 @@ const searchLimiter = rateLimit({
 // ─── Routes ──────────────────────────────────────────────────────────────
 
 app.get("/", (_req, res) => {
-  res.json({ status: "ok", service: "FlyndMe API", env: AMADEUS_ENV });
+  res.json({
+    status: "ok",
+    service: "FlyndMe API",
+    env: AMADEUS_ENV,
+    features: ["flexDates", "shareLinks", "affiliateReady"],
+  });
 });
 
 app.get("/api/ping", (_req, res) => {
@@ -117,6 +123,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/flights", searchLimiter, flightsRoutes);
+app.use("/api/share", shareRoutes);
 
 // 404
 app.use((_req, res) => {
