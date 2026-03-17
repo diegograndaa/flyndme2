@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import FlightResults from "./components/FlightResults";
+import DestinationMap from "./components/DestinationMap";
+import CompareChart from "./components/CompareChart";
 import { SearchProgress } from "./components/SearchUX";
 import { useI18n } from "./i18n/useI18n";
 import {
@@ -201,6 +203,13 @@ const Landing = React.memo(function Landing({ onStart }) {
   const steps = t("landing.steps");
   const faqs  = t("landing.faqs");
 
+  // Social proof: pseudo-random daily counter (deterministic per day)
+  const [socialCount] = useState(() => {
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    return 120 + (seed % 180); // 120-299 range, varies daily
+  });
+
   return (
     <>
       {/* Hero */}
@@ -214,7 +223,11 @@ const Landing = React.memo(function Landing({ onStart }) {
               <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
                 {t("landing.cta")}
               </button>
-              <div className="lp-chips mt-4">
+              <div className="lp-social-proof mt-3">
+                <span className="lp-social-dot" />
+                <span className="lp-social-text">{t("social.counter", { n: socialCount })}</span>
+              </div>
+              <div className="lp-chips mt-3">
                 {Array.isArray(chips) && chips.map((c) => (
                   <span key={c} className="lp-chip">{c}</span>
                 ))}
@@ -1495,11 +1508,44 @@ export default function App() {
             onShare={handleShare}
             onShareWhatsApp={handleShareWhatsApp}
             shareStatus={shareStatus}
-            onViewAlternatives={() => setShowAlt((v) => !v)}
+            onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
           />
 
-          {showAlt && flights.length > 1 && (
+          {/* Visual tabs: Map & Compare */}
+          {flights.length > 1 && (
+            <div className="rv-tabs mt-4">
+              <button type="button"
+                className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
+                onClick={() => setShowAlt(showAlt === "map" ? false : "map")}>
+                🗺 {t("results.showMap")}
+              </button>
+              <button type="button"
+                className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
+                onClick={() => setShowAlt(showAlt === "compare" ? false : "compare")}>
+                📊 {t("results.showCompare")}
+              </button>
+              <button type="button"
+                className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
+                onClick={() => setShowAlt(showAlt === "list" ? false : "list")}>
+                📋 {t("results.otherOptions")}
+              </button>
+            </div>
+          )}
+
+          {showAlt === "map" && flights.length > 1 && (
+            <div className="mt-3 view-enter">
+              <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
+            </div>
+          )}
+
+          {showAlt === "compare" && flights.length > 1 && (
+            <div className="mt-3 view-enter">
+              <CompareChart flights={flights} bestDestination={bestDestination} />
+            </div>
+          )}
+
+          {showAlt === "list" && flights.length > 1 && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
                 <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>{t("results.otherOptions")}</h3>

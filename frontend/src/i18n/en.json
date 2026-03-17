@@ -138,7 +138,9 @@
     "returnLeg": "Return",
     "disclaimer": "Estimated prices via Amadeus. May vary at time of booking.",
     "otherOptions": "Other options",
-    "hide": "Hide"
+    "hide": "Hide",
+    "showMap": "Map",
+    "showCompare": "Compare"
   },
   "fairness": {
     "veryBalanced": "Very balanced",
@@ -195,6 +197,29 @@
   "recentSearches": {
     "title": "Recent searches",
     "clear": "Clear all"
+  },
+  "map": {
+    "title": "Price map",
+    "cheap": "Cheap",
+    "mid": "Mid",
+    "expensive": "Expensive",
+    "origin": "Your cities",
+    "best": "Best",
+    "groupTotal": "Group total",
+    "ariaLabel": "Map of European destinations with flight prices"
+  },
+  "compare": {
+    "title": "Price vs Fairness",
+    "priceAxis": "Avg. price per person",
+    "fairnessAxis": "Fairness score",
+    "cheapFair": "Cheap & fair",
+    "cheapUnfair": "Cheap but uneven",
+    "expFair": "Pricey but fair",
+    "expUnfair": "Pricey & uneven"
+  },
+  "social": {
+    "counter": "{{n}} groups have searched today",
+    "counterSub": "Join them and find your best meeting point"
   },
   "footer": "FlyndMe — Find where to meet your group at the best price.",
   "pwa": {

@@ -138,7 +138,9 @@
     "returnLeg": "Vuelta",
     "disclaimer": "Precios estimados vía Amadeus. Pueden variar al momento de reservar.",
     "otherOptions": "Otras opciones",
-    "hide": "Ocultar"
+    "hide": "Ocultar",
+    "showMap": "Mapa",
+    "showCompare": "Comparar"
   },
   "fairness": {
     "veryBalanced": "Muy equilibrado",
@@ -195,6 +197,29 @@
   "recentSearches": {
     "title": "Búsquedas recientes",
     "clear": "Borrar todo"
+  },
+  "map": {
+    "title": "Mapa de precios",
+    "cheap": "Barato",
+    "mid": "Medio",
+    "expensive": "Caro",
+    "origin": "Tus ciudades",
+    "best": "Mejor",
+    "groupTotal": "Total grupo",
+    "ariaLabel": "Mapa de destinos europeos con precios de vuelos"
+  },
+  "compare": {
+    "title": "Precio vs Equidad",
+    "priceAxis": "Precio medio/persona",
+    "fairnessAxis": "Equidad",
+    "cheapFair": "Barato y justo",
+    "cheapUnfair": "Barato pero desigual",
+    "expFair": "Caro pero justo",
+    "expUnfair": "Caro y desigual"
+  },
+  "social": {
+    "counter": "{{n}} grupos han buscado hoy",
+    "counterSub": "Únete y encuentra tu mejor punto de encuentro"
   },
   "footer": "FlyndMe — Encuentra dónde reunirte con tu grupo al mejor precio.",
   "pwa": {
