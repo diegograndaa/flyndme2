@@ -80,9 +80,21 @@
     "flexHintOn": "±{{days}} days around your date",
     "flexHintOff": "Search on exact date only",
     "flexDaysUnit": "days",
+    "destLabel": "Destinations to compare",
+    "destAll": "Searching all destinations",
+    "destSelected": "{{n}} destinations selected",
+    "destChoose": "Choose",
+    "destHide": "Hide",
+    "destCatAll": "All",
+    "destCatBeach": "Beach",
+    "destCatBudget": "Budget",
+    "destCatCapital": "Capitals",
+    "destReset": "Reset to all",
     "airportsTitle": "Pick an airport",
     "airportsHint": "Select for traveler {{n}}",
-    "noMatches": "No matches"
+    "noMatches": "No matches",
+    "pickAirport": "Pick from list",
+    "closeDrawer": "Done"
   },
   "results": {
     "eyebrow": "Recommended destination",
@@ -113,6 +125,8 @@
     "changeSearch": "Change search",
     "direct": "Direct",
     "stops": "{{n}} stop(s)",
+    "outbound": "Outbound",
+    "returnLeg": "Return",
     "disclaimer": "Estimated prices via Amadeus. May vary at time of booking.",
     "otherOptions": "Other options",
     "hide": "Hide"

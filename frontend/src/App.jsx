@@ -228,12 +228,15 @@ const SearchPage = React.memo(function SearchPage({
   maxBudget, setMaxBudget,
   flexEnabled, setFlexEnabled,
   flexDays, setFlexDays,
+  selectedDests, setSelectedDests,
   loading, error,
   onSubmit,
 }) {
   const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDestPicker, setShowDestPicker] = useState(false);
+  const [showMobileAirports, setShowMobileAirports] = useState(false);
 
   const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
   const filterVal = origins[safeIdx]?.trim().toLowerCase() || "";
@@ -326,6 +329,9 @@ const SearchPage = React.memo(function SearchPage({
               <div className="sf-origin-actions">
                 <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
                   {t("search.addTraveler")}
+                </button>
+                <button type="button" className="sf-pick-btn" onClick={() => setShowMobileAirports(true)} disabled={loading}>
+                  {t("search.pickAirport")}
                 </button>
                 {origins.length === 1 && !origins[0].trim() && (
                   <button type="button" className="sf-example-btn" onClick={() => {
@@ -455,6 +461,75 @@ const SearchPage = React.memo(function SearchPage({
                     </div>
                   )}
                 </div>
+
+                {/* Destination filter */}
+                <div className="sf-section">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="sf-label mb-0">{t("search.destLabel")}</div>
+                      <div className="sf-hint">
+                        {selectedDests.length > 0
+                          ? t("search.destSelected", { n: selectedDests.length })
+                          : t("search.destAll")}
+                      </div>
+                    </div>
+                    <button type="button" className="btn btn-sm btn-outline-primary"
+                      onClick={() => setShowDestPicker((v) => !v)} disabled={loading}>
+                      {showDestPicker ? t("search.destHide") : t("search.destChoose")}
+                    </button>
+                  </div>
+                  {showDestPicker && (
+                    <div className="sf-dest-picker mt-3">
+                      {/* Quick category filters */}
+                      <div className="sf-dest-categories">
+                        {[
+                          ["all",     t("search.destCatAll"),     []],
+                          ["beach",   t("search.destCatBeach"),   ["AGP","PMI","TFS","NCE","MLA","DBV","SPU","RHO","TLV"]],
+                          ["budget",  t("search.destCatBudget"),  ["OPO","NAP","KRK","BEG","OTP","SOF","TIA","RAK","TLL","RIX","VNO","SKG"]],
+                          ["capital", t("search.destCatCapital"), ["LON","PAR","ROM","BER","MAD","LIS","VIE","PRG","ATH","CPH","BUD","DUB","BRU","WAW","OSL","HEL","STO"]],
+                        ].map(([key, label, codes]) => (
+                          <button key={key} type="button"
+                            className={`sf-pill sf-pill--sm${key === "all" && selectedDests.length === 0 ? " sf-pill--active" : ""}`}
+                            onClick={() => {
+                              if (key === "all") setSelectedDests([]);
+                              else setSelectedDests(codes);
+                            }} disabled={loading}>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Individual city toggles */}
+                      <div className="sf-dest-grid">
+                        {AIRPORTS.filter(a => !origins.some(o => normalizeCode(o) === a.code)).map((a) => {
+                          const isOn = selectedDests.length === 0 || selectedDests.includes(a.code);
+                          return (
+                            <button key={a.code} type="button"
+                              className={`sf-dest-chip${isOn ? " sf-dest-chip--on" : ""}`}
+                              onClick={() => {
+                                if (selectedDests.length === 0) {
+                                  // Switch from "all" to "all except this one"
+                                  const allCodes = AIRPORTS.filter(x => !origins.some(o => normalizeCode(o) === x.code)).map(x => x.code);
+                                  setSelectedDests(allCodes.filter(c => c !== a.code));
+                                } else if (selectedDests.includes(a.code)) {
+                                  setSelectedDests(selectedDests.filter(c => c !== a.code));
+                                } else {
+                                  setSelectedDests([...selectedDests, a.code]);
+                                }
+                              }} disabled={loading}>
+                              <span className="sf-dest-chip-code">{a.code}</span>
+                              <span className="sf-dest-chip-city">{a.city}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedDests.length > 0 && (
+                        <button type="button" className="sf-dest-clear" onClick={() => setSelectedDests([])} disabled={loading}>
+                          {t("search.destReset")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -470,9 +545,18 @@ const SearchPage = React.memo(function SearchPage({
           </form>
         </div>
 
-        {/* ── Right: airport picker ── */}
-        <aside className="sf-airports fm-card">
-          <div className="sf-label">{t("search.airportsTitle")}</div>
+        {/* ── Right: airport picker (desktop sidebar / mobile bottom drawer) ── */}
+        {showMobileAirports && <div className="sf-drawer-overlay" onClick={() => setShowMobileAirports(false)} />}
+        <aside className={`sf-airports fm-card${showMobileAirports ? " sf-airports--open" : ""}`}>
+          <div className="sf-drawer-handle" onClick={() => setShowMobileAirports(false)}>
+            <span className="sf-drawer-bar" />
+          </div>
+          <div className="sf-airports-header">
+            <div className="sf-label">{t("search.airportsTitle")}</div>
+            <button type="button" className="sf-drawer-close" onClick={() => setShowMobileAirports(false)}>
+              {t("search.closeDrawer")}
+            </button>
+          </div>
           <div className="sf-picker-hint">
             <span className="sf-picker-hint-icon">👆</span>
             {t("search.airportsHint", { n: safeIdx + 1 })}
@@ -621,21 +705,32 @@ const WinnerCard = React.memo(function WinnerCard({
                 const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
                 const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
 
-                // Extract itinerary details
+                // Extract itinerary details (outbound)
                 const itin = offer?.itineraries?.[0];
                 const segments = itin?.segments || [];
                 const stops = segments.length > 0 ? segments.length - 1 : null;
                 const airline = offer?.validatingAirlineCodes?.[0] || "";
                 const duration = itin?.duration || "";
-                // Parse ISO 8601 duration like "PT5H30M"
                 const durationText = duration
                   ? duration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
                   : "";
-                // Resolve specific airport for multi-airport cities
                 const depAirport = segments[0]?.departure?.iataCode || "";
                 const arrAirport = segments[segments.length - 1]?.arrival?.iataCode || "";
                 const depName = airportName(depAirport);
                 const arrName = airportName(arrAirport);
+
+                // Extract return itinerary (roundtrip only)
+                const retItin = tripType === "roundtrip" ? offer?.itineraries?.[1] : null;
+                const retSegments = retItin?.segments || [];
+                const retStops = retSegments.length > 0 ? retSegments.length - 1 : null;
+                const retDuration = retItin?.duration || "";
+                const retDurationText = retDuration
+                  ? retDuration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
+                  : "";
+                const retDepAirport = retSegments[0]?.departure?.iataCode || "";
+                const retArrAirport = retSegments[retSegments.length - 1]?.arrival?.iataCode || "";
+                const retDepName = airportName(retDepAirport);
+                const retArrName = airportName(retArrAirport);
 
                 return (
                   <div key={origin} className="wc-flight-card">
@@ -657,9 +752,10 @@ const WinnerCard = React.memo(function WinnerCard({
                         {typeof price === "number" ? formatEur(price, 0) : "—"}
                       </div>
                     </div>
-                    {/* Itinerary details */}
+                    {/* Outbound itinerary */}
                     {(airline || stops !== null || durationText) && (
                       <div className="wc-flight-meta">
+                        <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.outbound")}</span>
                         {airline && <span className="wc-flight-meta-item wc-flight-meta-airline">{airline}</span>}
                         {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
                         {stops !== null && (
@@ -670,6 +766,23 @@ const WinnerCard = React.memo(function WinnerCard({
                         {(depName || arrName) && (
                           <span className="wc-flight-meta-item wc-flight-meta-airport">
                             {depAirport}{depName ? ` ${depName}` : ""} → {arrAirport}{arrName ? ` ${arrName}` : ""}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {/* Return itinerary */}
+                    {retItin && (retStops !== null || retDurationText) && (
+                      <div className="wc-flight-meta wc-flight-meta--return">
+                        <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.returnLeg")}</span>
+                        {retDurationText && <span className="wc-flight-meta-item">{retDurationText}</span>}
+                        {retStops !== null && (
+                          <span className={`wc-flight-meta-item ${retStops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
+                            {retStops === 0 ? t("results.direct") : t("results.stops", { n: retStops })}
+                          </span>
+                        )}
+                        {(retDepName || retArrName) && (
+                          <span className="wc-flight-meta-item wc-flight-meta-airport">
+                            {retDepAirport}{retDepName ? ` ${retDepName}` : ""} → {retArrAirport}{retArrName ? ` ${retArrName}` : ""}
                           </span>
                         )}
                       </div>
@@ -746,6 +859,7 @@ export default function App() {
   const [maxBudget,     setMaxBudget]     = useState(200);
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
+  const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
 
   // Results
   const [flights,         setFlights]         = useState([]);
@@ -1048,6 +1162,7 @@ export default function App() {
         flexDays: flexEnabled ? flexDays : 0,
         ...(tripType === "roundtrip" && { returnDate }),
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
+        ...(selectedDests.length > 0 && { destinations: selectedDests }),
       };
 
       const MAX_RETRIES = 3;
@@ -1166,6 +1281,7 @@ export default function App() {
           maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
           flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
           flexDays={flexDays}         setFlexDays={setFlexDays}
+          selectedDests={selectedDests} setSelectedDests={setSelectedDests}
           loading={loading}           error={error}
           onSubmit={handleSubmit}
         />

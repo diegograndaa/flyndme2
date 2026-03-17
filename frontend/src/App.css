@@ -1196,6 +1196,194 @@ body {
   font-size: 11px;
   letter-spacing: 0.02em;
 }
+.wc-flight-meta-leg {
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: var(--primary-light);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.wc-flight-meta--return {
+  border-top: 1px dashed var(--slate-200);
+  margin-top: 0;
+  padding-top: 6px;
+}
+.wc-flight-meta--return .wc-flight-meta-leg {
+  color: var(--accent-dark);
+  background: #E0FBF5;
+}
+
+/* ── Destination picker ── */
+
+.sf-dest-picker {
+  background: var(--slate-50);
+  border-radius: 10px;
+  padding: 12px;
+}
+.sf-dest-categories {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.sf-dest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.sf-dest-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border: 1px solid var(--slate-200);
+  border-radius: 6px;
+  background: var(--white);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  opacity: 0.45;
+}
+.sf-dest-chip--on {
+  opacity: 1;
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.sf-dest-chip:hover {
+  opacity: 0.8;
+}
+.sf-dest-chip-code {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 11px;
+}
+.sf-dest-chip-city {
+  color: var(--slate-500);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sf-dest-clear {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Mobile airport picker button ── */
+
+.sf-pick-btn {
+  display: none; /* hidden on desktop */
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all .15s;
+}
+.sf-pick-btn:hover {
+  background: var(--primary);
+  color: var(--white);
+}
+
+/* ── Airport drawer (mobile) ── */
+
+.sf-drawer-overlay {
+  display: none;
+}
+.sf-drawer-handle {
+  display: none;
+}
+.sf-airports-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sf-drawer-close {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .sf-pick-btn {
+    display: inline-flex;
+  }
+
+  .sf-airports {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 70vh;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 32px rgba(0,0,0,.18);
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.32,.72,0,1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 20px 24px;
+  }
+  .sf-airports--open {
+    transform: translateY(0);
+  }
+
+  .sf-drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0,0,0,.4);
+    animation: fadeIn .2s ease;
+  }
+
+  .sf-drawer-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+    cursor: grab;
+  }
+  .sf-drawer-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--slate-300);
+  }
+
+  .sf-drawer-close {
+    display: inline-flex;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-light);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+  }
+
+  .sf-airport-list {
+    max-height: 50vh;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 /* ── WhatsApp share button ── */
 
