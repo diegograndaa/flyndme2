@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const zlib = require("zlib");
+const compression = require("compression");
 
 const flightsRoutes = require("./routes/flights");
 
@@ -15,62 +15,17 @@ const startTime = Date.now();
 const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 
 // ─── Middleware: Gzip compression ─────────────────────────────────────────
-
-// Manual gzip compression using zlib
-app.use((req, res, next) => {
-  const acceptEncoding = (req.headers["accept-encoding"] || "").toLowerCase();
-
-  if (acceptEncoding.includes("gzip")) {
-    res.setHeader("Content-Encoding", "gzip");
-    const gz = zlib.createGzip();
-    const _send = res.send;
-
-    res.send = function(data) {
-      if (typeof data === "string" || Buffer.isBuffer(data)) {
-        res.removeHeader("Content-Length");
-        return gz.end(data), res.socket.on("finish", () => {});
-      }
-      return _send.call(this, data);
-    };
-
-    // Pipe compressed output to socket
-    gz.pipe(res.socket);
-    res.socket.write = function(chunk) {
-      if (res.headersSent) {
-        return gz.write(chunk);
-      }
-      return require("net").Socket.prototype.write.call(this, chunk);
-    };
-  }
-
-  next();
-});
+app.use(compression());
 
 // ─── Middleware: Request logging ──────────────────────────────────────────
-
-app.use((req, res, next) => {
-  const startMs = Date.now();
-  const originalSend = res.send;
-
-  res.send = function(data) {
-    const duration = Date.now() - startMs;
-    const logLevel = res.statusCode >= 400 ? "warn" : "info";
-    console[logLevel](
-      `[${req.method}] ${req.path} → ${res.statusCode} (${duration}ms)`
-    );
-    return originalSend.call(this, data);
-  };
-
-  next();
-});
-
-// ─── Middleware: Response timing header ────────────────────────────────────
-
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
-    res.set("X-Response-Time", `${duration}ms`);
+    const logLevel = res.statusCode >= 400 ? "warn" : "info";
+    console[logLevel](
+      `[${req.method}] ${req.path} → ${res.statusCode} (${duration}ms)`
+    );
   });
   next();
 });
