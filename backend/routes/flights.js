@@ -9,7 +9,7 @@ const DEFAULT_DESTINATIONS = [
   "BRU", "PRG", "WAW", "ATH", "CPH", "HEL", "ZRH", "OSL", "BUD", "IST"
 ];
 const MAX_ORIGINS           = 8;
-const MAX_COMBINATIONS      = 120;
+const MAX_COMBINATIONS      = 500;
 const CACHE_TTL_MS          = 10 * 60 * 1000;
 const MAX_CACHE_SIZE        = 200;
 
