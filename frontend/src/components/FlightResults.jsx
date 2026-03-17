@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
-  getBaseUrl, normalizeCode, formatEur, fairnessColor, buildSkyscannerUrl, AIRPORT_MAP
+  getBaseUrl, normalizeCode, formatEur, fairnessColor,
+  buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf
 } from "../utils/helpers";
+import { getCityImage } from "../utils/cityImages";
 
 // ─── Alternative card ─────────────────────────────────────────────────────────
 
@@ -12,13 +14,17 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
 
   const code     = normalizeCode(dest.destination);
   const city     = AIRPORT_MAP[code]?.city || "";
-  const imgUrl   = `${getBaseUrl()}destinations/${code}.jpg`;
+  const imgUrl   = getCityImage(code, getBaseUrl(), { w: 600, h: 300 });
   const isBest   = normalizeCode(bestDest?.destination) === code;
   const flights  = Array.isArray(dest.flights) ? dest.flights : [];
   const dep      = dest.bestDate || departureDate || "";
   const ret      = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
   const fairness = dest.fairnessScore ?? 0;
   const fColor   = fairnessColor(fairness);
+
+  // Build first origin's Skyscanner URL for the main CTA
+  const firstOrigin = origins[0] || "";
+  const mainSsUrl = buildSkyscannerUrl({ origin: firstOrigin, destination: code, departureDate: dep, returnDate: ret, tripType });
 
   return (
     <div className={`alt-card${isBest ? " alt-card--best" : ""}`}>
@@ -28,10 +34,11 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
         <div className="alt-card-img-overlay" />
         <div className="alt-card-img-label">
-          <span className="alt-card-code">{code}</span>
-          {city && <span className="alt-card-city">{city}</span>}
+          <span className="alt-card-code">{city || code}</span>
+          {city && <span className="alt-card-city">{code}</span>}
         </div>
         {isBest && <div className="alt-card-badge">{t("alt.recommended")}</div>}
+        <div className="alt-card-price-badge">{formatEur(dest.averageCostPerTraveler ?? 0, 0)}<span>/pp</span></div>
       </div>
 
       {/* Content */}
@@ -58,21 +65,14 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
           <div className="alt-card-bar-fill" style={{ width: `${Math.min(100, fairness)}%`, background: fColor }} />
         </div>
 
-        {/* Skyscanner buttons */}
-        {dep && origins.length > 0 && (
-          <div className="alt-card-links">
-            {origins.map((origin) => {
-              const url = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
-              return url ? (
-                <a key={origin} href={url} target="_blank" rel="noreferrer" className="alt-card-link">
-                  {origin} → {code}
-                </a>
-              ) : null;
-            })}
-          </div>
+        {/* Main booking CTA */}
+        {mainSsUrl && (
+          <a href={mainSsUrl} target="_blank" rel="noreferrer" className="alt-card-book-btn">
+            {t("alt.bookOn")} Skyscanner
+          </a>
         )}
 
-        {/* Expand per-origin prices */}
+        {/* More booking options + breakdown */}
         {flights.length > 0 && (
           <>
             <button type="button" className="alt-card-toggle" onClick={() => setOpen((v) => !v)}>
@@ -81,14 +81,25 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
             <div className={`alt-card-detail-wrap${open ? " open" : ""}`}>
               <div>
                 <ul className="alt-card-detail">
-                  {flights.map((f, i) => (
-                    <li key={i} className="alt-card-detail-row">
-                      <span className="alt-card-detail-origin">{String(f.origin || "").toUpperCase()} → {code}</span>
-                      <span className="alt-card-detail-price">
-                        {typeof f.price === "number" ? formatEur(f.price, 2) : t("alt.noData")}
-                      </span>
-                    </li>
-                  ))}
+                  {flights.map((f, i) => {
+                    const originCode = String(f.origin || "").toUpperCase();
+                    const ssUrl = buildSkyscannerUrl({ origin: originCode, destination: code, departureDate: dep, returnDate: ret, tripType });
+                    const gfUrl = buildGoogleFlightsUrl({ origin: originCode, destination: code, departureDate: dep, returnDate: ret, tripType });
+                    return (
+                      <li key={i} className="alt-card-detail-row">
+                        <span className="alt-card-detail-origin">
+                          {originCode} <span className="alt-card-detail-city">{cityOf(originCode)}</span>
+                        </span>
+                        <span className="alt-card-detail-price">
+                          {typeof f.price === "number" ? formatEur(f.price, 0) : t("alt.noData")}
+                        </span>
+                        <span className="alt-card-detail-links">
+                          {ssUrl && <a href={ssUrl} target="_blank" rel="noreferrer" className="alt-mini-link">SS</a>}
+                          {gfUrl && <a href={gfUrl} target="_blank" rel="noreferrer" className="alt-mini-link alt-mini-link--gf">GF</a>}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>

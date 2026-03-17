@@ -80,6 +80,17 @@ export function buildSkyscannerUrl({ origin, destination, departureDate, returnD
   return `${path}?${params}`;
 }
 
+export function buildGoogleFlightsUrl({ origin, destination, departureDate, returnDate, tripType }) {
+  const from = String(origin || "").toUpperCase();
+  const to   = String(destination || "").toUpperCase();
+  const dep  = String(departureDate || "");
+  if (!from || !to || !dep) return "";
+  const ret = tripType === "roundtrip" && returnDate ? String(returnDate) : "";
+  let url = `https://www.google.com/travel/flights?q=Flights+from+${from}+to+${to}+on+${dep}`;
+  if (ret) url += `+return+${ret}`;
+  return url;
+}
+
 export async function copyText(text) {
   try {
     if (navigator?.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }

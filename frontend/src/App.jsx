@@ -6,8 +6,9 @@ import { SearchProgress } from "./components/SearchUX";
 import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, todayISO, buildSkyscannerUrl, copyText, fairnessColor
+  formatEur, formatDate, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor
 } from "./utils/helpers";
+import { getCityImage } from "./utils/cityImages";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -490,7 +491,7 @@ const WinnerCard = React.memo(function WinnerCard({
 
   const code      = normalizeCode(dest.destination);
   const city      = cityOf(code);
-  const imgUrl    = `${getBaseUrl()}destinations/${code}.jpg`;
+  const imgUrl    = getCityImage(code, getBaseUrl(), { w: 1200, h: 500 });
   const fairness  = useFairnessLabel(dest.fairnessScore ?? 0);
   const dep       = dest.bestDate || "";
   const ret       = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
@@ -498,126 +499,151 @@ const WinnerCard = React.memo(function WinnerCard({
   const cleanOrigins = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean);
   const breakdown    = Array.isArray(dest.flights) ? dest.flights : [];
 
+  // Build price map from breakdown
+  const priceMap = {};
+  breakdown.forEach((f) => { priceMap[String(f.origin).toUpperCase()] = f.price; });
+
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
-      {/* Image strip */}
+      {/* Hero image */}
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
-          <span className="wc-dest-code">{code}</span>
-          {city && <span className="wc-dest-city">{city}</span>}
+          <div className="wc-badge-winner">{t("results.eyebrow")}</div>
+          <span className="wc-dest-code">{city || code}</span>
+          {city && <span className="wc-dest-city">{code}</span>}
         </div>
+      </div>
+
+      {/* Summary strip */}
+      <div className="wc-summary">
+        <div className="wc-summary-item">
+          <div className="wc-summary-label">{t("results.groupTotal")}</div>
+          <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-summary-price" />
+        </div>
+        <div className="wc-summary-divider" />
+        <div className="wc-summary-item">
+          <div className="wc-summary-label">{t("results.avgPerPerson")}</div>
+          <AnimatedPrice value={dest.averageCostPerTraveler} decimals={0} className="wc-summary-price wc-summary-price--secondary" />
+        </div>
+        <div className="wc-summary-divider" />
+        <div className="wc-summary-item">
+          <div className="wc-summary-label">{t("results.fairnessLabel")}</div>
+          <div className="wc-summary-fairness">
+            <span style={{ color: fairness.color, fontWeight: 800, fontSize: 20 }}>{(dest.fairnessScore ?? 0).toFixed(0)}</span>
+            <span style={{ color: "rgba(255,255,255,.5)", fontSize: 13 }}>/100</span>
+          </div>
+        </div>
+        {dep && (
+          <>
+            <div className="wc-summary-divider" />
+            <div className="wc-summary-item">
+              <div className="wc-summary-label">
+                {tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")}
+              </div>
+              <div className="wc-summary-date">
+                {tripType === "roundtrip"
+                  ? `${formatDate(dep)} → ${formatDate(ret)}`
+                  : formatDate(dep)}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Body */}
       <div className="wc-body">
-        {/* Header row */}
-        <div className="wc-header-row">
-          <div>
-            <div className="wc-eyebrow">{t("results.eyebrow")}</div>
-            <div className="wc-dest-big">{code}{city ? ` · ${city}` : ""}</div>
-          </div>
-
-          {/* Criterion toggle */}
-          <div className="btn-group btn-group-sm" role="group" aria-label="Criterio">
+        {/* Criterion toggle */}
+        <div className="wc-criterion-row">
+          <div className="wc-criterion-pills">
             {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
-                className={`btn ${uiCriterion === v ? "btn-light fw-bold" : "btn-outline-light"}`}
+                className={`wc-criterion-pill${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
                 onClick={() => onChangeCriterion(v)}>{l}</button>
             ))}
           </div>
-        </div>
-
-        {/* Dates */}
-        {dep && (
-          <div className="wc-dates">
-            {tripType === "roundtrip"
-              ? `${formatDate(dep)} → ${formatDate(ret)}`
-              : t("results.departureLabel", { date: formatDate(dep) })}
-            {" · "}{tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")}
-          </div>
-        )}
-
-        {/* Price block */}
-        <div className="wc-price-block">
-          <div>
-            <div className="wc-price-label">{t("results.groupTotal")}</div>
-            <AnimatedPrice value={dest.totalCostEUR} decimals={2} className="wc-price" />
-          </div>
-          <div className="wc-price-divider" />
-          <div>
-            <div className="wc-price-label">{t("results.avgPerPerson")}</div>
-            <AnimatedPrice value={dest.averageCostPerTraveler} decimals={2} className="wc-price wc-price--secondary" />
+          <div className="wc-stats-mini">
+            {t("results.destsAnalyzed")}: <strong>{flightsCount}</strong>
           </div>
         </div>
 
-        {/* Per-origin pills */}
-        {breakdown.length > 0 && (
-          <div className="wc-breakdown">
-            <div className="wc-breakdown-label">{t("results.pricePerOrigin")}</div>
-            <div className="wc-breakdown-pills">
-              {breakdown.map((f, i) => (
-                <span key={i} className="wc-pill">
-                  <strong>{String(f.origin).toUpperCase()}</strong>
-                  <span className="wc-pill-arrow">→</span>
-                  <strong>{code}</strong>
-                  <span className="wc-pill-price">{typeof f.price === "number" ? formatEur(f.price, 0) : t("results.noData")}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Fairness + spread */}
-        <div className="wc-metrics">
-          <div className="wc-metric">
-            <div className="wc-metric-label">{t("results.fairnessLabel")} <span className="wc-metric-help" title={t("results.fairnessHelp")}>?</span></div>
-            <div className="wc-metric-value">{(dest.fairnessScore ?? 0).toFixed(0)}<span className="wc-metric-unit">{t("results.fairnessUnit")}</span></div>
-            <div className="wc-fairness-bar">
-              <div className="wc-fairness-fill" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
-            </div>
-            <div className="wc-fairness-tag" style={{ color: fairness.color }}>{fairness.text}</div>
-          </div>
-          <div className="wc-metric">
-            <div className="wc-metric-label">{t("results.maxSpread")}</div>
-            <div className="wc-metric-value">{formatEur(dest.priceSpread ?? 0, 2)}</div>
-            <div className="wc-metric-sub">{t("results.spreadSub")}</div>
-          </div>
-          <div className="wc-metric">
-            <div className="wc-metric-label">{t("results.destsAnalyzed")}</div>
-            <div className="wc-metric-value">{flightsCount}</div>
-            <div className="wc-metric-sub">{t("results.destsAnalyzedSub")}</div>
-          </div>
-        </div>
-
-        {/* Skyscanner links */}
+        {/* ── Booking section (Kiwi/Skyscanner style) ── */}
         {cleanOrigins.length > 0 && dep && (
-          <div className="wc-book">
-            <div className="wc-book-label">{t("results.bookLabel")}</div>
-            <div className="wc-book-links">
+          <div className="wc-booking">
+            <div className="wc-booking-title">{t("results.bookTitle")}</div>
+            <div className="wc-booking-sub">{t("results.bookSub")}</div>
+
+            <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
-                const url = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
-                return url ? (
-                  <a key={origin} href={url} target="_blank" rel="noreferrer" className="btn-fm-primary btn-sm-fm">
-                    {origin} → {code}
-                  </a>
-                ) : null;
+                const price = priceMap[origin];
+                const originCity = cityOf(origin);
+                const destCity = city || code;
+                const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
+                const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
+
+                return (
+                  <div key={origin} className="wc-flight-card">
+                    <div className="wc-flight-route">
+                      <div className="wc-flight-endpoint">
+                        <span className="wc-flight-code">{origin}</span>
+                        <span className="wc-flight-city">{originCity}</span>
+                      </div>
+                      <div className="wc-flight-arrow-wrap">
+                        <div className="wc-flight-line" />
+                        <span className="wc-flight-plane">✈</span>
+                        <div className="wc-flight-line" />
+                      </div>
+                      <div className="wc-flight-endpoint wc-flight-endpoint--right">
+                        <span className="wc-flight-code">{code}</span>
+                        <span className="wc-flight-city">{destCity}</span>
+                      </div>
+                      <div className="wc-flight-price-tag">
+                        {typeof price === "number" ? formatEur(price, 0) : "—"}
+                      </div>
+                    </div>
+                    <div className="wc-flight-ctas">
+                      {ssUrl && (
+                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--skyscanner">
+                          <span className="wc-cta-icon">🔍</span>
+                          Skyscanner
+                        </a>
+                      )}
+                      {gfUrl && (
+                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--google">
+                          <span className="wc-cta-icon">✈</span>
+                          Google Flights
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
               })}
             </div>
           </div>
         )}
 
-        {/* Secondary actions */}
+        {/* Fairness detail (collapsible mini) */}
+        <div className="wc-fairness-detail">
+          <div className="wc-fairness-bar-full">
+            <div className="wc-fairness-fill-full" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
+          </div>
+          <div className="wc-fairness-row">
+            <span className="wc-fairness-tag-full" style={{ color: fairness.color }}>{fairness.text}</span>
+            <span className="wc-fairness-spread">{t("results.maxSpread")}: {formatEur(dest.priceSpread ?? 0, 0)}</span>
+          </div>
+        </div>
+
+        {/* Actions */}
         <div className="wc-actions">
-          <button type="button" className="btn btn-outline-light btn-sm" onClick={onViewAlternatives}>
+          <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
             {t("results.viewAlternatives")}
           </button>
-          <button type="button" className="btn btn-outline-light btn-sm" onClick={onShare}>
+          <button type="button" className="wc-action-btn" onClick={onShare}>
             {shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
           </button>
-          <button type="button" className="btn btn-link text-white text-decoration-none btn-sm" onClick={onChangeSearch}>
+          <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
           </button>
         </div>
