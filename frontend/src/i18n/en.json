@@ -37,6 +37,11 @@
         "a": "They're real prices from Amadeus, but may vary slightly at the time of booking."
       }
     ],
+    "exampleTitle": "See how it works",
+    "exampleSub": "3 friends in Madrid, London and Berlin want to meet up. FlyndMe compares flights and finds the best meeting point.",
+    "exampleWinner": "Recommended destination",
+    "exampleDest": "LIS · Lisbon",
+    "exampleTotal": "group total",
     "getStarted": "Get started"
   },
   "search": {
@@ -48,6 +53,7 @@
     "travelerTooltip": "Traveler {{n}}",
     "removeTitle": "Remove traveler",
     "addTraveler": "+ Add traveler",
+    "tryExample": "Try example: MAD + LON + BER",
     "tripTypeLabel": "Trip type",
     "oneway": "One way",
     "roundtrip": "Round trip",

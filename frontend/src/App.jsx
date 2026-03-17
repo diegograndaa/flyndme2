@@ -168,6 +168,27 @@ const Landing = React.memo(function Landing({ onStart }) {
         </div>
       </section>
 
+      {/* Example preview */}
+      <section className="lp-example">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <h2 className="lp-example-title">{t("landing.exampleTitle")}</h2>
+          <p className="lp-example-sub">{t("landing.exampleSub")}</p>
+          <div className="lp-example-card">
+            <div className="lp-example-origins">
+              <span className="lp-example-origin">MAD <span>Madrid</span></span>
+              <span className="lp-example-origin">LON <span>London</span></span>
+              <span className="lp-example-origin">BER <span>Berlin</span></span>
+            </div>
+            <div className="lp-example-arrow">→</div>
+            <div className="lp-example-result">
+              <div className="lp-example-winner">{t("landing.exampleWinner")}</div>
+              <div className="lp-example-dest">LIS · Lisbon</div>
+              <div className="lp-example-price">€85 {t("landing.exampleTotal")}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="lp-faq">
         <div className="container" style={{ maxWidth: 1080 }}>
@@ -298,9 +319,19 @@ const SearchPage = React.memo(function SearchPage({
                   </div>
                 );
               })}
-              <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
-                {t("search.addTraveler")}
-              </button>
+              <div className="sf-origin-actions">
+                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
+                  {t("search.addTraveler")}
+                </button>
+                {origins.length === 1 && !origins[0].trim() && (
+                  <button type="button" className="sf-example-btn" onClick={() => {
+                    setOrigins(["MAD", "LON", "BER"]);
+                    setActiveIdx(0);
+                  }} disabled={loading}>
+                    {t("search.tryExample")}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Trip type + Dates combined */}
@@ -714,22 +745,28 @@ export default function App() {
       ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
     };
 
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 5000;
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 4000;
 
     try {
       let lastErr = null;
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30000);
+
           const res = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
 
+          // Server waking up — retry silently
           if (res.status === 503 && attempt < MAX_RETRIES) {
-            lastErr = new Error("Server is waking up…");
+            lastErr = new Error("waking up");
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
             continue;
           }
@@ -756,19 +793,18 @@ export default function App() {
           return;
         } catch (err) {
           lastErr = err;
-          if (err.message && !err.message.includes("waking up") && attempt < MAX_RETRIES) {
-            if (err instanceof TypeError) {
-              await new Promise((r) => setTimeout(r, RETRY_DELAY));
-              continue;
-            }
+          const isNetworkErr = err instanceof TypeError || err.name === "AbortError";
+          const isWaking = err.message?.includes("waking up");
+
+          if ((isNetworkErr || isWaking) && attempt < MAX_RETRIES) {
+            await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            continue;
           }
-          if (attempt >= MAX_RETRIES) break;
-          if (!(err instanceof TypeError) && !err.message?.includes("waking up")) break;
-          await new Promise((r) => setTimeout(r, RETRY_DELAY));
+          if (!isNetworkErr && !isWaking) break;
         }
       }
 
-      if (lastErr?.message?.includes("waking up") || lastErr instanceof TypeError) {
+      if (lastErr?.message?.includes("waking up") || lastErr instanceof TypeError || lastErr?.name === "AbortError") {
         setError(t("errors.serverWaking"));
       } else {
         setError(lastErr?.message || t("errors.unexpected"));

@@ -37,6 +37,11 @@
         "a": "Son precios reales de Amadeus, pero pueden variar ligeramente en el momento de reservar."
       }
     ],
+    "exampleTitle": "Mira cómo funciona",
+    "exampleSub": "3 amigos en Madrid, Londres y Berlín quieren encontrarse. FlyndMe compara vuelos y encuentra el mejor punto de encuentro.",
+    "exampleWinner": "Destino recomendado",
+    "exampleDest": "LIS · Lisboa",
+    "exampleTotal": "total del grupo",
     "getStarted": "Empezar"
   },
   "search": {
@@ -48,6 +53,7 @@
     "travelerTooltip": "Viajero {{n}}",
     "removeTitle": "Eliminar viajero",
     "addTraveler": "+ Añadir viajero",
+    "tryExample": "Probar ejemplo: MAD + LON + BER",
     "tripTypeLabel": "Tipo de viaje",
     "oneway": "Solo ida",
     "roundtrip": "Ida y vuelta",
