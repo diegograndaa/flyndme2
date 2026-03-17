@@ -1141,6 +1141,53 @@ body {
   transform: translateY(-1px);
 }
 
+/* ── Flight meta (airline, stops, duration) ── */
+
+.wc-flight-meta {
+  display: flex;
+  gap: 12px;
+  padding: 6px 16px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--slate-500);
+  flex-wrap: wrap;
+}
+.wc-flight-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.wc-flight-meta-airline {
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.5px;
+}
+.wc-flight-meta--direct {
+  color: var(--success);
+  font-weight: 700;
+}
+.wc-flight-meta--stops {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* ── WhatsApp share button ── */
+
+.wc-action-btn--whatsapp {
+  background: #25D366 !important;
+  color: var(--white) !important;
+  border-color: #25D366 !important;
+}
+.wc-action-btn--whatsapp:hover {
+  background: #1EBE5A !important;
+  border-color: #1EBE5A !important;
+  transform: translateY(-1px);
+}
+.wc-wa-icon {
+  font-size: 15px;
+  margin-right: 2px;
+}
+
 /* ── Fairness detail bar ── */
 
 .wc-fairness-detail {

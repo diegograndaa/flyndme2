@@ -505,7 +505,7 @@ const SearchPage = React.memo(function SearchPage({
 const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate,
   uiCriterion, onChangeCriterion,
-  flightsCount, onShare, shareStatus,
+  flightsCount, onShare, onShareWhatsApp, shareStatus,
   onViewAlternatives, onChangeSearch,
 }) {
   const { t } = useI18n();
@@ -530,9 +530,14 @@ const WinnerCard = React.memo(function WinnerCard({
   const cleanOrigins = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean);
   const breakdown    = Array.isArray(dest.flights) ? dest.flights : [];
 
-  // Build price map from breakdown
+  // Build price map + itinerary info from breakdown
   const priceMap = {};
-  breakdown.forEach((f) => { priceMap[String(f.origin).toUpperCase()] = f.price; });
+  const offerMap = {};
+  breakdown.forEach((f) => {
+    const k = String(f.origin).toUpperCase();
+    priceMap[k] = f.price;
+    offerMap[k] = f.offer || null;
+  });
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
@@ -609,10 +614,22 @@ const WinnerCard = React.memo(function WinnerCard({
             <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];
+                const offer = offerMap[origin];
                 const originCity = cityOf(origin);
                 const destCity = city || code;
                 const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
                 const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
+
+                // Extract itinerary details
+                const itin = offer?.itineraries?.[0];
+                const segments = itin?.segments || [];
+                const stops = segments.length > 0 ? segments.length - 1 : null;
+                const airline = offer?.validatingAirlineCodes?.[0] || "";
+                const duration = itin?.duration || "";
+                // Parse ISO 8601 duration like "PT5H30M"
+                const durationText = duration
+                  ? duration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
+                  : "";
 
                 return (
                   <div key={origin} className="wc-flight-card">
@@ -634,6 +651,18 @@ const WinnerCard = React.memo(function WinnerCard({
                         {typeof price === "number" ? formatEur(price, 0) : "—"}
                       </div>
                     </div>
+                    {/* Itinerary details */}
+                    {(airline || stops !== null || durationText) && (
+                      <div className="wc-flight-meta">
+                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline">{airline}</span>}
+                        {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
+                        {stops !== null && (
+                          <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
+                            {stops === 0 ? t("results.direct") : t("results.stops", { n: stops })}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="wc-flight-ctas">
                       {ssUrl && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--skyscanner">
@@ -672,7 +701,10 @@ const WinnerCard = React.memo(function WinnerCard({
             {t("results.viewAlternatives")}
           </button>
           <button type="button" className="wc-action-btn" onClick={onShare}>
-            {shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
+            {shareStatus === "ok" ? t("results.copied") : shareStatus === "saving" ? "…" : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
+          </button>
+          <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
+            <span className="wc-wa-icon">💬</span> WhatsApp
           </button>
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
@@ -830,6 +862,7 @@ export default function App() {
       if (ok) {
         setShareStatus("ok");
         setToast({ message: t("share.linkCopied"), type: "success" });
+        trackEvent("share_link", { destination: normalizeCode(bestDestination.destination) });
       } else {
         // Fallback: copy text summary
         const bd = bestDestination;
@@ -862,6 +895,56 @@ export default function App() {
     }
     setTimeout(() => setShareStatus(""), 3000);
   };
+
+  // ── WhatsApp share ─────────────────────────────────────────────────────────
+
+  const handleShareWhatsApp = async () => {
+    if (!bestDestination) return;
+    const bd = bestDestination;
+    const code = normalizeCode(bd.destination);
+    const destName = destLabel(code);
+
+    // Try to get a share link first
+    let shareUrl = "";
+    try {
+      const res = await fetch(`${API_BASE}/api/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          results: { flights, bestByCriterion },
+          searchParams: { origins: cleanOrigins, departureDate, returnDate, tripType, optimizeBy, uiCriterion },
+        }),
+      });
+      if (res.ok) {
+        const { id } = await res.json();
+        shareUrl = `${window.location.origin}${window.location.pathname}?share=${id}`;
+      }
+    } catch { /* fallback without link */ }
+
+    const lines = [
+      `✈ *FlyndMe* — ${destName}`,
+      `${t("results.groupTotal")}: ${formatEur(bd.totalCostEUR, 0)} · ${formatEur(bd.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}`,
+    ];
+    if (Array.isArray(bd.flights) && bd.flights.length) {
+      lines.push(bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
+    }
+    if (shareUrl) lines.push(`\n🔗 ${shareUrl}`);
+
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
+    window.open(waUrl, "_blank");
+    trackEvent("share_whatsapp", { destination: code });
+  };
+
+  // ── Simple analytics (beacon-based, no external deps) ─────────────────────
+
+  function trackEvent(event, data = {}) {
+    try {
+      // Log to console for now; replace with your analytics endpoint
+      console.log(`[analytics] ${event}`, data);
+      // If you have an analytics endpoint, uncomment:
+      // navigator.sendBeacon?.(`${API_BASE}/api/events`, JSON.stringify({ event, ...data, ts: Date.now() }));
+    } catch { /* silent */ }
+  }
 
   // ── Ensure backend is awake before searching ─────────────────────────────────
 
@@ -962,6 +1045,13 @@ export default function App() {
           setView("results");
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
+          trackEvent("search_complete", {
+            origins: cleanOrigins.length,
+            results: arr.length,
+            flexEnabled,
+            tripType,
+            winner: arr[0]?.destination,
+          });
           return;
         } catch (err) {
           lastErr = err;
@@ -1047,6 +1137,7 @@ export default function App() {
             onChangeCriterion={handleCriterion}
             flightsCount={flights.length}
             onShare={handleShare}
+            onShareWhatsApp={handleShareWhatsApp}
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => !v)}
             onChangeSearch={() => setView("search")}

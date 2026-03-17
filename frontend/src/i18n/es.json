@@ -111,6 +111,8 @@
     "copied": "¡Copiado!",
     "copyFailed": "Error al copiar",
     "changeSearch": "Cambiar búsqueda",
+    "direct": "Directo",
+    "stops": "{{n}} escala(s)",
     "disclaimer": "Precios estimados vía Amadeus. Pueden variar al momento de reservar.",
     "otherOptions": "Otras opciones",
     "hide": "Ocultar"

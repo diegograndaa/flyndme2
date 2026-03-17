@@ -111,6 +111,8 @@
     "copied": "Copied!",
     "copyFailed": "Copy failed",
     "changeSearch": "Change search",
+    "direct": "Direct",
+    "stops": "{{n}} stop(s)",
     "disclaimer": "Estimated prices via Amadeus. May vary at time of booking.",
     "otherOptions": "Other options",
     "hide": "Hide"
