@@ -168,6 +168,10 @@
     "ariaLabel": "Buscando vuelos"
   },
   "footer": "FlyndMe — Encuentra dónde reunirte con tu grupo al mejor precio.",
+  "pwa": {
+    "installHint": "Añade a tu pantalla de inicio para acceder más rápido",
+    "install": "Instalar"
+  },
   "share": {
     "title": "FlyndMe · Destino recomendado: {{dest}}",
     "totalAvg": "Total del grupo: {{total}} · Media: {{avg}}",

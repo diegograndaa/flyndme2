@@ -1,28 +1,88 @@
 // ─── Airport data ─────────────────────────────────────────────────────────────
 
 export const AIRPORTS = [
-  { code: "MAD", city: "Madrid",     country: "Spain" },
-  { code: "BCN", city: "Barcelona",  country: "Spain" },
-  { code: "LON", city: "London",     country: "United Kingdom" },
-  { code: "PAR", city: "Paris",      country: "France" },
-  { code: "ROM", city: "Rome",       country: "Italy" },
-  { code: "MIL", city: "Milan",      country: "Italy" },
-  { code: "BER", city: "Berlin",     country: "Germany" },
-  { code: "AMS", city: "Amsterdam",  country: "Netherlands" },
-  { code: "LIS", city: "Lisbon",     country: "Portugal" },
-  { code: "DUB", city: "Dublin",     country: "Ireland" },
-  { code: "VIE", city: "Vienna",     country: "Austria" },
-  { code: "BRU", city: "Brussels",   country: "Belgium" },
-  { code: "PRG", city: "Prague",     country: "Czechia" },
-  { code: "WAW", city: "Warsaw",     country: "Poland" },
-  { code: "ATH", city: "Athens",     country: "Greece" },
-  { code: "CPH", city: "Copenhagen", country: "Denmark" },
-  { code: "HEL", city: "Helsinki",   country: "Finland" },
-  { code: "ZRH", city: "Zurich",     country: "Switzerland" },
-  { code: "OSL", city: "Oslo",       country: "Norway" },
-  { code: "BUD", city: "Budapest",   country: "Hungary" },
-  { code: "IST", city: "Istanbul",   country: "Turkey" },
+  // ── Western Europe ──
+  { code: "MAD", city: "Madrid",              country: "Spain" },
+  { code: "BCN", city: "Barcelona",           country: "Spain" },
+  { code: "AGP", city: "Malaga",              country: "Spain" },
+  { code: "PMI", city: "Palma de Mallorca",   country: "Spain" },
+  { code: "TFS", city: "Tenerife",            country: "Spain" },
+  { code: "LON", city: "London",              country: "United Kingdom" },
+  { code: "EDI", city: "Edinburgh",           country: "United Kingdom" },
+  { code: "PAR", city: "Paris",               country: "France" },
+  { code: "MRS", city: "Marseille",           country: "France" },
+  { code: "NCE", city: "Nice",                country: "France" },
+  { code: "ROM", city: "Rome",                country: "Italy" },
+  { code: "MIL", city: "Milan",               country: "Italy" },
+  { code: "NAP", city: "Naples",              country: "Italy" },
+  { code: "BER", city: "Berlin",              country: "Germany" },
+  { code: "MUC", city: "Munich",              country: "Germany" },
+  { code: "FRA", city: "Frankfurt",           country: "Germany" },
+  { code: "AMS", city: "Amsterdam",           country: "Netherlands" },
+  { code: "LIS", city: "Lisbon",              country: "Portugal" },
+  { code: "OPO", city: "Porto",               country: "Portugal" },
+  { code: "DUB", city: "Dublin",              country: "Ireland" },
+  { code: "BRU", city: "Brussels",            country: "Belgium" },
+  { code: "GVA", city: "Geneva",              country: "Switzerland" },
+  { code: "ZRH", city: "Zurich",              country: "Switzerland" },
+  // ── Central & Eastern Europe ──
+  { code: "VIE", city: "Vienna",              country: "Austria" },
+  { code: "PRG", city: "Prague",              country: "Czechia" },
+  { code: "WAW", city: "Warsaw",              country: "Poland" },
+  { code: "KRK", city: "Krakow",             country: "Poland" },
+  { code: "BUD", city: "Budapest",            country: "Hungary" },
+  { code: "OTP", city: "Bucharest",           country: "Romania" },
+  { code: "SOF", city: "Sofia",               country: "Bulgaria" },
+  { code: "BEG", city: "Belgrade",            country: "Serbia" },
+  { code: "ZAG", city: "Zagreb",              country: "Croatia" },
+  { code: "DBV", city: "Dubrovnik",           country: "Croatia" },
+  { code: "SPU", city: "Split",               country: "Croatia" },
+  { code: "TIA", city: "Tirana",              country: "Albania" },
+  // ── Nordics & Baltics ──
+  { code: "CPH", city: "Copenhagen",          country: "Denmark" },
+  { code: "HEL", city: "Helsinki",            country: "Finland" },
+  { code: "OSL", city: "Oslo",                country: "Norway" },
+  { code: "STO", city: "Stockholm",           country: "Sweden" },
+  { code: "TLL", city: "Tallinn",             country: "Estonia" },
+  { code: "RIX", city: "Riga",                country: "Latvia" },
+  { code: "VNO", city: "Vilnius",             country: "Lithuania" },
+  // ── Southeast Europe & Mediterranean ──
+  { code: "ATH", city: "Athens",              country: "Greece" },
+  { code: "SKG", city: "Thessaloniki",        country: "Greece" },
+  { code: "RHO", city: "Rhodes",              country: "Greece" },
+  { code: "IST", city: "Istanbul",            country: "Turkey" },
+  { code: "MLA", city: "Malta",               country: "Malta" },
+  // ── North Africa & Middle East ──
+  { code: "RAK", city: "Marrakech",           country: "Morocco" },
+  { code: "CMN", city: "Casablanca",          country: "Morocco" },
+  { code: "TLV", city: "Tel Aviv",            country: "Israel" },
 ];
+
+// ── Multi-airport mapping: city codes → specific airports ───────────────────
+// Amadeus accepts city codes (LON, PAR, etc.) and searches all airports.
+// This map helps display which airport the result refers to.
+export const MULTI_AIRPORT = {
+  LON: ["LHR", "LGW", "STN", "LTN"],
+  PAR: ["CDG", "ORY"],
+  MIL: ["MXP", "LIN", "BGY"],
+  ROM: ["FCO", "CIA"],
+  BER: ["BER"],    // single since Tegel closed
+  STO: ["ARN", "BMA"],
+  IST: ["IST", "SAW"],
+};
+
+// Resolve a specific airport name (e.g. LHR → "Heathrow")
+const AIRPORT_NAMES = {
+  LHR: "Heathrow", LGW: "Gatwick", STN: "Stansted", LTN: "Luton",
+  CDG: "Charles de Gaulle", ORY: "Orly",
+  MXP: "Malpensa", LIN: "Linate", BGY: "Bergamo",
+  FCO: "Fiumicino", CIA: "Ciampino",
+  ARN: "Arlanda", BMA: "Bromma",
+  SAW: "Sabiha Gökçen",
+};
+export function airportName(code) {
+  return AIRPORT_NAMES[String(code).toUpperCase()] || "";
+}
 
 export const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
 

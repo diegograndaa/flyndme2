@@ -1,0 +1,30 @@
+{
+  "name": "FlyndMe — Find the cheapest place to meet your group",
+  "short_name": "FlyndMe",
+  "description": "Compare flights from multiple origins and find the best destination for your group.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0062E3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-flyndme.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/favicon-32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    }
+  ],
+  "categories": ["travel", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

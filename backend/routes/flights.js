@@ -5,11 +5,17 @@ const { getCheapestOffer } = require("../services/amadeusService");
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const DEFAULT_DESTINATIONS = [
-  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "DUB", "VIE",
-  "BRU", "PRG", "WAW", "ATH", "CPH", "HEL", "ZRH", "OSL", "BUD", "IST"
+  // Tier 1: major hubs (high route coverage)
+  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "MAD", "BCN",
+  // Tier 2: popular destinations
+  "DUB", "VIE", "BRU", "PRG", "WAW", "ATH", "CPH", "HEL", "ZRH", "OSL", "BUD", "IST",
+  // Tier 3: budget-friendly & trending
+  "OPO", "NAP", "KRK", "BEG", "OTP", "SOF", "TIA", "RAK",
+  // Tier 4: Mediterranean & islands
+  "AGP", "PMI", "NCE", "DBV", "SPU", "MLA", "SKG",
 ];
 const MAX_ORIGINS           = 8;
-const MAX_COMBINATIONS      = 500;
+const MAX_COMBINATIONS      = 1200; // supports 4 origins × 36 dests × 7 flex dates; early-stop caps actual API calls
 const CACHE_TTL_MS          = 10 * 60 * 1000;
 const MAX_CACHE_SIZE        = 200;
 

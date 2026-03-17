@@ -6,7 +6,8 @@ import { SearchProgress } from "./components/SearchUX";
 import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor
+  formatEur, formatDate, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
+  airportName, MULTI_AIRPORT
 } from "./utils/helpers";
 import { getCityImage } from "./utils/cityImages";
 
@@ -630,6 +631,11 @@ const WinnerCard = React.memo(function WinnerCard({
                 const durationText = duration
                   ? duration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
                   : "";
+                // Resolve specific airport for multi-airport cities
+                const depAirport = segments[0]?.departure?.iataCode || "";
+                const arrAirport = segments[segments.length - 1]?.arrival?.iataCode || "";
+                const depName = airportName(depAirport);
+                const arrName = airportName(arrAirport);
 
                 return (
                   <div key={origin} className="wc-flight-card">
@@ -659,6 +665,11 @@ const WinnerCard = React.memo(function WinnerCard({
                         {stops !== null && (
                           <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
                             {stops === 0 ? t("results.direct") : t("results.stops", { n: stops })}
+                          </span>
+                        )}
+                        {(depName || arrName) && (
+                          <span className="wc-flight-meta-item wc-flight-meta-airport">
+                            {depAirport}{depName ? ` ${depName}` : ""} → {arrAirport}{arrName ? ` ${arrName}` : ""}
                           </span>
                         )}
                       </div>
@@ -747,6 +758,36 @@ export default function App() {
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [toast,       setToast]       = useState(null); // { message, type }
+
+  // ── PWA: Register service worker ────────────────────────────────────────
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
+  // ── PWA: Install prompt ─────────────────────────────────────────────────
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") trackEvent("pwa_install");
+    setInstallPrompt(null);
+    setShowInstallBanner(false);
+  };
 
   // Keep Render backend alive (free tier sleeps)
   useEffect(() => {
@@ -928,7 +969,12 @@ export default function App() {
     if (Array.isArray(bd.flights) && bd.flights.length) {
       lines.push(bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
     }
-    if (shareUrl) lines.push(`\n🔗 ${shareUrl}`);
+    // Use OG endpoint for rich social previews (WhatsApp, Telegram, Twitter)
+    if (shareUrl) {
+      const shareId = shareUrl.split("share=")[1];
+      const ogUrl = `${API_BASE}/api/share/${shareId}/og`;
+      lines.push(`\n🔗 ${ogUrl}`);
+    }
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank");
@@ -1165,6 +1211,23 @@ export default function App() {
             </div>
           )}
         </main>
+      )}
+
+      {/* PWA Install banner */}
+      {showInstallBanner && installPrompt && (
+        <div className="pwa-banner">
+          <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
+            <span className="pwa-banner-text">
+              <strong>FlyndMe</strong> — {t("pwa.installHint")}
+            </span>
+            <div className="d-flex gap-2">
+              <button className="btn btn-sm btn-light fw-semibold" onClick={handleInstall}>
+                {t("pwa.install")}
+              </button>
+              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)}>✕</button>
+            </div>
+          </div>
+        </div>
       )}
 
       <footer className="app-footer">

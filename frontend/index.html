@@ -5,29 +5,80 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google" content="notranslate" />
-    <meta name="description" content="FlyndMe: Compare and find the fairest group flight prices across multiple origins. Optimize by total cost or fairness score." />
-    <meta name="theme-color" content="#0f172a" />
-    <meta property="og:title" content="FlyndMe - Fair Flight Prices for Groups" />
-    <meta property="og:description" content="Find the best group flight deals with fairness scoring. Search multiple origins and compare prices instantly." />
+    <meta name="theme-color" content="#0062E3" />
+
+    <!-- SEO Meta -->
+    <title>FlyndMe — Find the cheapest place to meet your group</title>
+    <meta name="description" content="FlyndMe compares flights from multiple cities to find where your group can meet at the lowest total cost. Real prices, fairness scoring, and one-click booking." />
+    <meta name="keywords" content="group flights, cheapest destination, multi-origin flight search, meet your friends, group travel, fairness score, FlyndMe" />
+    <meta name="author" content="FlyndMe" />
+    <link rel="canonical" href="https://flyndme.vercel.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="FlyndMe — Find the cheapest place to meet your group" />
+    <meta property="og:description" content="Enter each traveler's city and instantly discover where it's cheapest to meet. Real prices from Amadeus, fairness scoring, flexible dates." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://flyndme.vercel.app/" />
+    <meta property="og:site_name" content="FlyndMe" />
+    <meta property="og:image" content="https://flyndme.vercel.app/og-preview.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
 
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FlyndMe — Cheapest group flights" />
+    <meta name="twitter:description" content="Compare flights from multiple origins and find the best destination for your group." />
+    <meta name="twitter:image" content="https://flyndme.vercel.app/og-preview.png" />
+
+    <!-- PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/manifest.json" />
 
-    <title>FlyndMe</title>
-
-    <!-- Favicons (Vercel + Vite SAFE) -->
+    <!-- Favicons -->
     <link rel="icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-
-    <!-- SVG fallback -->
     <link rel="icon" type="image/svg+xml" href="/logo-flyndme.svg" />
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FlyndMe",
+      "url": "https://flyndme.vercel.app",
+      "description": "Compare flights from multiple origins and find the cheapest destination for your group.",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "FlyndMe"
+      },
+      "featureList": [
+        "Multi-origin flight search",
+        "Group total cost optimization",
+        "Fairness score between travelers",
+        "Flexible date search",
+        "Shareable result links",
+        "Real-time prices from Amadeus"
+      ]
+    }
+    </script>
   </head>
 
   <body>
