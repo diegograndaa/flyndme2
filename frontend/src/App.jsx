@@ -716,6 +716,26 @@ export default function App() {
     setTimeout(() => setShareStatus(""), 2500);
   };
 
+  // ── Ensure backend is awake before searching ─────────────────────────────────
+
+  async function ensureBackendAwake() {
+    const PING_URL = `${API_BASE}/api/ping`;
+    const MAX_WAKE = 15;           // up to 15 attempts = ~60 s
+    const WAKE_DELAY = 4000;
+
+    for (let i = 0; i < MAX_WAKE; i++) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(PING_URL, { cache: "no-store", signal: ctrl.signal });
+        clearTimeout(t);
+        if (res.ok) return true;    // backend is alive
+      } catch { /* network error or timeout — keep trying */ }
+      await new Promise((r) => setTimeout(r, WAKE_DELAY));
+    }
+    return false;                    // gave up
+  }
+
   // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
   const handleSubmit = async (e) => {
@@ -734,27 +754,34 @@ export default function App() {
     setShowAlt(false);
     setLoading(true);
 
-    const body = {
-      origins: cleanOrigins,
-      departureDate,
-      tripType,
-      optimizeBy,
-      dateMode: "exact",
-      flexDays: 0,
-      ...(tripType === "roundtrip" && { returnDate }),
-      ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
-    };
-
-    const MAX_RETRIES = 5;
-    const RETRY_DELAY = 4000;
-
     try {
+      // Step 1: wake backend if needed (ping is lightweight)
+      const awake = await ensureBackendAwake();
+      if (!awake) {
+        setError(t("errors.serverWaking"));
+        return;
+      }
+
+      // Step 2: actual search (backend is now warm)
+      const body = {
+        origins: cleanOrigins,
+        departureDate,
+        tripType,
+        optimizeBy,
+        dateMode: "exact",
+        flexDays: 0,
+        ...(tripType === "roundtrip" && { returnDate }),
+        ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
+      };
+
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY = 3000;
       let lastErr = null;
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 30000);
+          const timeout = setTimeout(() => controller.abort(), 45000);
 
           const res = await fetch(API_URL, {
             method: "POST",
@@ -764,9 +791,7 @@ export default function App() {
           });
           clearTimeout(timeout);
 
-          // Server waking up — retry silently
           if (res.status === 503 && attempt < MAX_RETRIES) {
-            lastErr = new Error("waking up");
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
             continue;
           }
@@ -793,22 +818,16 @@ export default function App() {
           return;
         } catch (err) {
           lastErr = err;
-          const isNetworkErr = err instanceof TypeError || err.name === "AbortError";
-          const isWaking = err.message?.includes("waking up");
-
-          if ((isNetworkErr || isWaking) && attempt < MAX_RETRIES) {
+          const isTransient = err instanceof TypeError || err.name === "AbortError";
+          if (isTransient && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
             continue;
           }
-          if (!isNetworkErr && !isWaking) break;
+          if (!isTransient) break;
         }
       }
 
-      if (lastErr?.message?.includes("waking up") || lastErr instanceof TypeError || lastErr?.name === "AbortError") {
-        setError(t("errors.serverWaking"));
-      } else {
-        setError(lastErr?.message || t("errors.unexpected"));
-      }
+      setError(lastErr?.message || t("errors.unexpected"));
     } finally {
       setLoading(false);
     }

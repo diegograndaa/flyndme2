@@ -27,15 +27,15 @@ export function SearchProgress({ loading }) {
     setWidth(8);
     setStep(0);
 
-    // Advance message every 1.8 s
+    // Advance message every 4 s (slower to cover long cold-starts)
     const msgTimer = setInterval(() => {
       setStep((p) => (p + 1) % (Array.isArray(messages) ? messages.length : 1));
-    }, 1800);
+    }, 4000);
 
     // Simulate progress (asymptotic — never quite reaches 95 % while loading)
     const progTimer = setInterval(() => {
-      setWidth((w) => w + (95 - w) * 0.12);
-    }, 600);
+      setWidth((w) => w + (95 - w) * 0.06);
+    }, 800);
 
     return () => { clearInterval(msgTimer); clearInterval(progTimer); };
   }, [loading, messages]);

@@ -148,10 +148,12 @@
   },
   "loading": {
     "messages": [
+      "Despertando el servidor…",
       "Conectando con aerolíneas…",
       "Buscando vuelos desde tus ciudades…",
       "Comparando destinos…",
       "Calculando el mejor precio para el grupo…",
+      "Un momento más…",
       "Casi listo…"
     ],
     "ariaLabel": "Buscando vuelos"
