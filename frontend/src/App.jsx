@@ -2069,18 +2069,6 @@ export default function App() {
 
   const tabContentRef = useRef(null);
 
-  // ── Dynamic document title per view ────────────────────────────────────
-  useEffect(() => {
-    const titles = {
-      landing: "FlyndMe — Find the cheapest place to meet your group",
-      search: "FlyndMe — Search flights",
-      results: bestDestination
-        ? `FlyndMe — ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/pp`
-        : "FlyndMe — Results",
-    };
-    document.title = titles[view] || titles.landing;
-  }, [view, bestDestination]);
-
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -2297,6 +2285,18 @@ export default function App() {
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+
+  // ── Dynamic document title per view ────────────────────────────────────
+  useEffect(() => {
+    const titles = {
+      landing: "FlyndMe — Find the cheapest place to meet your group",
+      search: "FlyndMe — Search flights",
+      results: bestDestination
+        ? `FlyndMe — ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/pp`
+        : "FlyndMe — Results",
+    };
+    document.title = titles[view] || titles.landing;
+  }, [view, bestDestination]);
 
   const cleanOrigins = useMemo(
     () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
