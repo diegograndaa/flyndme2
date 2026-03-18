@@ -173,7 +173,9 @@
     "compareVs": "Compare",
     "favorite": "Save to favorites",
     "exportCSV": "Export results as CSV",
-    "copySummary": "Copy summary"
+    "copySummary": "Copy summary",
+    "savingsPct": "{{pct}}% cheaper than average",
+    "tripDays": "{{n}}-day trip"
   },
   "vs": {
     "title": "Compare destinations",

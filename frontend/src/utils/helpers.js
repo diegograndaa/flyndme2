@@ -179,3 +179,19 @@ export function fairnessColor(s) {
   if (s >= 45) return "#D97706";
   return "#DC2626";
 }
+
+// Country → flag emoji (ISO 3166-1 alpha-2 code → regional indicators)
+const COUNTRY_FLAGS = {
+  "Spain": "🇪🇸", "United Kingdom": "🇬🇧", "France": "🇫🇷", "Italy": "🇮🇹",
+  "Germany": "🇩🇪", "Netherlands": "🇳🇱", "Portugal": "🇵🇹", "Austria": "🇦🇹",
+  "Belgium": "🇧🇪", "Czech Republic": "🇨🇿", "Poland": "🇵🇱", "Greece": "🇬🇷",
+  "Ireland": "🇮🇪", "Denmark": "🇩🇰", "Sweden": "🇸🇪", "Norway": "🇳🇴",
+  "Finland": "🇫🇮", "Hungary": "🇭🇺", "Switzerland": "🇨🇭", "Croatia": "🇭🇷",
+  "Romania": "🇷🇴", "Bulgaria": "🇧🇬", "Serbia": "🇷🇸", "Turkey": "🇹🇷",
+  "Morocco": "🇲🇦", "Malta": "🇲🇹", "Albania": "🇦🇱", "Israel": "🇮🇱",
+  "Estonia": "🇪🇪", "Latvia": "🇱🇻", "Lithuania": "🇱🇹",
+};
+export function countryFlag(code) {
+  const ap = AIRPORT_MAP[code];
+  return ap ? (COUNTRY_FLAGS[ap.country] || "") : "";
+}

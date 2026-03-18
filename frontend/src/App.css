@@ -3188,6 +3188,42 @@ html {
   background: rgba(17,24,39,.85);
 }
 
+/* ── Savings + trip days chips on winner card ───────────────────── */
+.wc-chips-overlay {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+  z-index: 3;
+}
+.wc-savings-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 8px rgba(22,163,74,.35);
+  animation: fadeInUp .4s ease .3s both;
+}
+.wc-trip-days-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: var(--radius-full);
+  animation: fadeInUp .4s ease .35s both;
+}
+
 /* ── CSV export button in stats bar ───────────────────────────── */
 
 .fm-stats-export {

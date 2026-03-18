@@ -11,7 +11,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
-  airportName, MULTI_AIRPORT
+  airportName, MULTI_AIRPORT, countryFlag
 } from "./utils/helpers";
 import { getCityImage } from "./utils/cityImages";
 
@@ -785,7 +785,7 @@ const SearchPage = React.memo(function SearchPage({
                         autoComplete="off"
                       />
                       {city && origin.trim() && (
-                        <span className="sf-input-city">{city}</span>
+                        <span className="sf-input-city">{countryFlag(code)} {city}</span>
                       )}
                     </div>
                     {/* Passenger count stepper */}
@@ -842,7 +842,15 @@ const SearchPage = React.memo(function SearchPage({
                 {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                   <button key={v} type="button"
                     className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
-                    onClick={() => setTripType(v)} disabled={loading}>{l}</button>
+                    onClick={() => {
+                      setTripType(v);
+                      // Auto-suggest return date when switching to roundtrip
+                      if (v === "roundtrip" && !returnDate && departureDate) {
+                        const d = new Date(departureDate + "T00:00:00");
+                        d.setDate(d.getDate() + 7);
+                        setReturnDate(d.toISOString().slice(0, 10));
+                      }
+                    }} disabled={loading}>{l}</button>
                 ))}
               </div>
 
@@ -1134,9 +1142,10 @@ const SearchPage = React.memo(function SearchPage({
 // ─── Winner card ──────────────────────────────────────────────────────────────
 
 const WinnerCard = React.memo(function WinnerCard({
-  dest, origins, tripType, returnDate,
+  dest, origins, tripType, returnDate, departureDate: depDate,
   uiCriterion, onChangeCriterion,
-  flightsCount, onShare, onShareWhatsApp, onShareTelegram, onShareEmail, shareStatus,
+  flightsCount, allFlights = [],
+  onShare, onShareWhatsApp, onShareTelegram, onShareEmail, shareStatus,
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
   searchBadges = [],
@@ -1173,6 +1182,24 @@ const WinnerCard = React.memo(function WinnerCard({
     offerMap[k] = f.offer || null;
   });
 
+  // Savings vs average of all destinations
+  const savingsPct = useMemo(() => {
+    if (!allFlights || allFlights.length < 2 || !dest?.averageCostPerTraveler) return 0;
+    const avgAll = allFlights.reduce((s, f) => s + (f.averageCostPerTraveler || 0), 0) / allFlights.length;
+    if (avgAll <= 0) return 0;
+    return Math.round(((avgAll - dest.averageCostPerTraveler) / avgAll) * 100);
+  }, [allFlights, dest]);
+
+  // Trip duration in days (roundtrip only)
+  const tripDays = useMemo(() => {
+    if (tripType !== "roundtrip") return 0;
+    const d = dep || depDate;
+    const r = ret;
+    if (!d || !r) return 0;
+    const diff = (new Date(r + "T00:00:00") - new Date(d + "T00:00:00")) / 86400000;
+    return diff > 0 ? Math.round(diff) : 0;
+  }, [tripType, dep, ret, depDate]);
+
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
       {/* Hero image */}
@@ -1188,6 +1215,19 @@ const WinnerCard = React.memo(function WinnerCard({
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
         </button>
+        {/* Savings + trip duration chips */}
+        <div className="wc-chips-overlay">
+          {savingsPct > 5 && (
+            <span className="wc-savings-chip">
+              {t("results.savingsPct", { pct: savingsPct })}
+            </span>
+          )}
+          {tripDays > 0 && (
+            <span className="wc-trip-days-chip">
+              {t("results.tripDays", { n: tripDays })}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Summary strip */}
@@ -2137,9 +2177,11 @@ export default function App() {
             origins={cleanOrigins}
             tripType={tripType}
             returnDate={returnDate}
+            departureDate={departureDate}
             uiCriterion={uiCriterion}
             onChangeCriterion={handleCriterion}
             flightsCount={flights.length}
+            allFlights={flights}
             onShare={handleShare}
             onShareWhatsApp={handleShareWhatsApp}
             onShareTelegram={handleShareTelegram}
