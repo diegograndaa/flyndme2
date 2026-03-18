@@ -638,6 +638,19 @@ const Landing = React.memo(function Landing({ onStart }) {
                 <span className="lp-social-dot" />
                 <span className="lp-social-text">{t("social.counter", { n: socialCount })}</span>
               </div>
+              <div className="lp-live-stats mt-2">
+                <span className="lp-live-stat">
+                  <AnimatedStat value={42} /> {t("landing.statDestinations")}
+                </span>
+                <span className="lp-live-stat-sep">·</span>
+                <span className="lp-live-stat">
+                  <AnimatedStat value={6} /> {t("landing.statOrigins")}
+                </span>
+                <span className="lp-live-stat-sep">·</span>
+                <span className="lp-live-stat">
+                  <AnimatedStat value={252} /> {t("landing.statRoutes")}
+                </span>
+              </div>
               <div className="lp-chips mt-3">
                 {Array.isArray(chips) && chips.map((c) => (
                   <span key={c} className="lp-chip">{c}</span>
@@ -1553,8 +1566,21 @@ const WinnerCard = React.memo(function WinnerCard({
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
         </button>
-        {/* Savings + trip duration + vs last search chips */}
+        {/* Savings + trip duration + countdown + vs last search chips */}
         <div className="wc-chips-overlay">
+          {/* Countdown to departure */}
+          {(() => {
+            const depD = dep || depDate;
+            if (!depD) return null;
+            const days = Math.ceil((new Date(depD + "T00:00:00") - new Date()) / 86400000);
+            if (days < 0 || days > 365) return null;
+            const urgency = days <= 3 ? "urgent" : days <= 14 ? "soon" : "normal";
+            return (
+              <span className={`wc-countdown-chip wc-countdown-chip--${urgency}`}>
+                {days === 0 ? t("results.countdownToday") : days === 1 ? t("results.countdownTomorrow") : t("results.countdownDays", { n: days })}
+              </span>
+            );
+          })()}
           {savingsPct > 5 && (
             <span className="wc-savings-chip">
               {t("results.savingsPct", { pct: savingsPct })}
@@ -1787,6 +1813,24 @@ const WinnerCard = React.memo(function WinnerCard({
                         )}
                       </div>
                     )}
+                    {/* Duration comparison bar */}
+                    {durationText && (() => {
+                      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                      if (!match) return null;
+                      const mins = (parseInt(match[1] || 0) * 60) + parseInt(match[2] || 0);
+                      if (!mins) return null;
+                      const maxMins = 12 * 60; // 12h reference
+                      const pct = Math.min(100, (mins / maxMins) * 100);
+                      const color = mins <= 120 ? "#22C55E" : mins <= 300 ? "var(--primary)" : "#F59E0B";
+                      return (
+                        <div className="wc-duration-bar-wrap">
+                          <div className="wc-duration-bar">
+                            <div className="wc-duration-bar-fill" style={{ width: `${pct}%`, background: color }} />
+                          </div>
+                          <span className="wc-duration-bar-label">{durationText}</span>
+                        </div>
+                      );
+                    })()}
                     <div className="wc-flight-ctas">
                       {ssUrl && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--skyscanner">
@@ -2134,6 +2178,42 @@ export default function App() {
     if (entry.returnDate) setReturnDate(entry.returnDate);
   }, []);
 
+  // ── Auto-save search draft to localStorage ────────────────────────────
+  const DRAFT_KEY = "flyndme_draft";
+
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (draft && draft.origins?.length) {
+        setOrigins(draft.origins);
+        if (draft.tripType) setTripType(draft.tripType);
+        if (draft.departureDate) setDepartureDate(draft.departureDate);
+        if (draft.returnDate) setReturnDate(draft.returnDate);
+        if (draft.passengers) setPassengers(draft.passengers);
+      }
+    } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save draft on change (debounced)
+  useEffect(() => {
+    const tid = setTimeout(() => {
+      try {
+        const hasInput = origins.some(o => o.trim());
+        if (hasInput) {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ origins, tripType, departureDate, returnDate, passengers }));
+        }
+      } catch { /* quota */ }
+    }, 500);
+    return () => clearTimeout(tid);
+  }, [origins, tripType, departureDate, returnDate, passengers]);
+
+  // Clear draft on successful search
+  const clearDraft = useCallback(() => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
+  }, []);
+
   // ── PWA: Register service worker ────────────────────────────────────────
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -2448,6 +2528,7 @@ export default function App() {
     setLoading(true);
     setSearchDuration(0);
     searchStartRef.current = Date.now();
+    clearDraft();
 
     try {
       // Step 1: wake backend if needed (ping is lightweight)
@@ -2767,6 +2848,32 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* Price alert hint */}
+          <div className="fm-alert-hint view-enter">
+            <span className="fm-alert-hint-icon">🔔</span>
+            <span className="fm-alert-hint-text">{t("results.alertHint")}</span>
+            <span className="fm-alert-hint-badge">{t("results.comingSoon")}</span>
+          </div>
+
+          {/* Total group distance */}
+          {(() => {
+            const destCode = normalizeCode(bestDestination.destination);
+            let totalKm = 0;
+            let count = 0;
+            cleanOrigins.forEach(o => {
+              const km = approxDistKm(o, destCode);
+              if (km) { totalKm += km; count++; }
+            });
+            if (!count) return null;
+            return (
+              <div className="fm-distance-summary view-enter">
+                <span className="fm-distance-icon">🌍</span>
+                <span>{t("results.totalDistance", { km: Math.round(totalKm).toLocaleString() })}</span>
+                <span className="fm-distance-avg">{t("results.avgDistance", { km: Math.round(totalKm / count).toLocaleString() })}</span>
+              </div>
+            );
+          })()}
 
           {/* Origin summary chips */}
           <OriginSummaryChips origins={cleanOrigins} bestDestination={bestDestination} currency={currency} />

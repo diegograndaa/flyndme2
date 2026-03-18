@@ -4708,3 +4708,149 @@ html {
 [data-theme="dark"] .fm-skel-card {
   background: #1E293B;
 }
+
+/* ── Countdown to departure chip ──────────────────────────── */
+
+.wc-countdown-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  letter-spacing: .3px;
+}
+.wc-countdown-chip--normal {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+.wc-countdown-chip--soon {
+  background: rgba(251,191,36,.25);
+  color: #FDE68A;
+}
+.wc-countdown-chip--urgent {
+  background: rgba(239,68,68,.3);
+  color: #FCA5A5;
+  animation: countdownPulse 1.5s ease infinite;
+}
+@keyframes countdownPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .7; }
+}
+
+/* ── Duration comparison bar ──────────────────────────────── */
+
+.wc-duration-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.wc-duration-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.wc-duration-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .4s cubic-bezier(.22,1,.36,1);
+}
+.wc-duration-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,.7);
+  white-space: nowrap;
+}
+
+/* ── Landing live stats ───────────────────────────────────── */
+
+.lp-live-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748B;
+}
+.lp-live-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lp-live-stat strong {
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.lp-live-stat-sep {
+  color: #CBD5E1;
+}
+[data-theme="dark"] .lp-live-stats { color: #94A3B8; }
+[data-theme="dark"] .lp-live-stat strong { color: #60A5FA; }
+[data-theme="dark"] .lp-live-stat-sep { color: #475569; }
+
+/* ── Price alert hint ─────────────────────────────────────── */
+
+.fm-alert-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(251,191,36,.06), rgba(245,158,11,.06));
+  border: 1px solid rgba(251,191,36,.2);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #92400E;
+}
+.fm-alert-hint-icon { font-size: 16px; }
+.fm-alert-hint-text { flex: 1; }
+.fm-alert-hint-badge {
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  background: rgba(251,191,36,.15);
+  color: #B45309;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+[data-theme="dark"] .fm-alert-hint {
+  background: linear-gradient(135deg, rgba(251,191,36,.04), rgba(245,158,11,.04));
+  border-color: rgba(251,191,36,.15);
+  color: #FDE68A;
+}
+[data-theme="dark"] .fm-alert-hint-badge {
+  background: rgba(251,191,36,.1);
+  color: #FBBF24;
+}
+
+/* ── Total distance summary ───────────────────────────────── */
+
+.fm-distance-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #475569;
+}
+.fm-distance-icon { font-size: 16px; }
+.fm-distance-avg {
+  margin-left: auto;
+  font-size: 12px;
+  color: #94A3B8;
+}
+[data-theme="dark"] .fm-distance-summary {
+  background: #111827;
+  border-color: #1E293B;
+  color: #94A3B8;
+}
+[data-theme="dark"] .fm-distance-avg { color: #64748B; }

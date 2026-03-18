@@ -18,6 +18,9 @@
     ],
     "metaSource": "Real data · Amadeus",
     "metaTime": "Results in ~5 s",
+    "statDestinations": "destinations",
+    "statOrigins": "max origins",
+    "statRoutes": "routes analyzed",
     "faqTitle": "Frequently asked questions",
     "faqs": [
       {
@@ -189,7 +192,14 @@
     "searchTime": "Found in {{s}}s",
     "groupSavings": "Your group saves {{amount}} vs the most expensive option",
     "tryNearbyDates": "Try nearby dates",
-    "priceTrend": "Price trend"
+    "priceTrend": "Price trend",
+    "countdownToday": "Departing today!",
+    "countdownTomorrow": "Departing tomorrow",
+    "countdownDays": "{{n}} days until departure",
+    "alertHint": "Want to track price changes for this route?",
+    "comingSoon": "Coming soon",
+    "totalDistance": "Total group travel: {{km}} km",
+    "avgDistance": "~{{km}} km avg per traveler"
   },
   "vs": {
     "title": "Compare destinations",
