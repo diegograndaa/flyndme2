@@ -311,6 +311,15 @@
     "dark": "Modo oscuro",
     "system": "Sistema"
   },
+  "favorites": {
+    "title": "Destinos guardados",
+    "empty": "Aún no tienes favoritos. Pulsa el corazón en cualquier destino para guardarlo aquí."
+  },
+  "breadcrumb": {
+    "home": "Inicio",
+    "search": "Búsqueda",
+    "results": "Resultados"
+  },
   "a11y": {
     "skipToContent": "Ir al contenido",
     "scrollToTop": "Ir arriba"

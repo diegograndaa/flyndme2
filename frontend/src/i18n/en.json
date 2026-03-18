@@ -311,6 +311,15 @@
     "dark": "Dark mode",
     "system": "System"
   },
+  "favorites": {
+    "title": "Saved destinations",
+    "empty": "No favorites yet. Tap the heart on any destination to save it here."
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "search": "Search",
+    "results": "Results"
+  },
   "a11y": {
     "skipToContent": "Skip to content",
     "scrollToTop": "Scroll to top"

@@ -659,6 +659,101 @@ const Landing = React.memo(function Landing({ onStart }) {
   );
 });
 
+// ─── Breadcrumb ──────────────────────────────────────────────────────────────
+
+function Breadcrumb({ current, onNavigate }) {
+  const { t } = useI18n();
+  const crumbs = [
+    { key: "landing", label: t("breadcrumb.home") },
+    { key: "search", label: t("breadcrumb.search") },
+    ...(current === "results" ? [{ key: "results", label: t("breadcrumb.results") }] : []),
+  ];
+  return (
+    <nav className="fm-breadcrumb" aria-label="breadcrumb">
+      {crumbs.map((c, i) => (
+        <React.Fragment key={c.key}>
+          {i > 0 && <span className="fm-breadcrumb-sep">›</span>}
+          <button type="button"
+            className={`fm-breadcrumb-item${c.key === current ? " fm-breadcrumb-item--active" : ""}`}
+            onClick={() => c.key !== current && onNavigate(c.key)}
+            disabled={c.key === current}>
+            {c.label}
+          </button>
+        </React.Fragment>
+      ))}
+    </nav>
+  );
+}
+
+// ─── Animated typing placeholder ─────────────────────────────────────────────
+
+const TYPING_EXAMPLES = ["Madrid", "London", "Berlin", "Rome", "Paris", "Lisbon", "MAD", "LON", "BCN"];
+
+function useTypingPlaceholder(active) {
+  const [text, setText] = useState("");
+  const [typing, setTyping] = useState(true);
+  const idxRef = useRef(0);
+  const charRef = useRef(0);
+  const dirRef = useRef(1); // 1 = typing, -1 = deleting
+
+  useEffect(() => {
+    if (!active) { setText(""); return; }
+    const id = setInterval(() => {
+      const word = TYPING_EXAMPLES[idxRef.current % TYPING_EXAMPLES.length];
+      if (dirRef.current === 1) {
+        charRef.current++;
+        if (charRef.current > word.length) {
+          dirRef.current = -1;
+          setTyping(false);
+          return;
+        }
+        setTyping(true);
+      } else {
+        charRef.current--;
+        if (charRef.current <= 0) {
+          dirRef.current = 1;
+          idxRef.current++;
+          setTyping(true);
+          return;
+        }
+        setTyping(true);
+      }
+      setText(word.slice(0, charRef.current));
+    }, dirRef.current === 1 ? 110 : 60);
+    return () => clearInterval(id);
+  }, [active]);
+
+  return { text, typing };
+}
+
+// ─── Approximate distances for price-per-km ─────────────────────────────────
+
+const CITY_COORDS = {
+  MAD: [40.47, -3.56], BCN: [41.30, 2.08], AGP: [36.67, -4.49], PMI: [39.55, 2.74],
+  TFS: [28.04, -16.57], LON: [51.47, -0.46], EDI: [55.95, -3.37], PAR: [49.01, 2.55],
+  ROM: [41.80, 12.25], MIL: [45.63, 8.72], NAP: [40.88, 14.29], BER: [52.36, 13.51],
+  MUC: [48.35, 11.79], FRA: [50.03, 8.57], AMS: [52.31, 4.76], LIS: [38.77, -9.13],
+  OPO: [41.24, -8.68], DUB: [53.42, -6.27], BRU: [50.90, 4.48], GVA: [46.24, 6.11],
+  ZRH: [47.46, 8.55], VIE: [48.11, 16.57], PRG: [50.10, 14.26], WAW: [52.17, 20.97],
+  BUD: [47.44, 19.26], ATH: [37.94, 23.94], CPH: [55.62, 12.66], IST: [41.28, 28.74],
+  RAK: [31.60, -8.04], MLA: [35.86, 14.48], DBV: [42.56, 18.27], SPU: [43.54, 16.30],
+  NCE: [43.66, 7.21], MRS: [43.44, 5.22], HEL: [60.32, 24.96], OSL: [60.19, 11.10],
+  STO: [59.65, 17.94], OTP: [44.57, 26.09], SOF: [42.70, 23.41], BEG: [44.82, 20.31],
+  TIA: [41.41, 19.72], TLV: [32.01, 34.89], KRK: [50.08, 19.78], TLL: [59.41, 24.83],
+  RIX: [56.92, 23.97], VNO: [54.63, 25.29], SKG: [40.52, 22.97], RHO: [36.41, 28.09],
+  ZAG: [45.74, 16.07], CMN: [33.37, -7.59],
+};
+
+function approxDistKm(code1, code2) {
+  const c1 = CITY_COORDS[code1], c2 = CITY_COORDS[code2];
+  if (!c1 || !c2) return null;
+  const R = 6371;
+  const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+  const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ─── Search form ──────────────────────────────────────────────────────────────
 
 const SearchPage = React.memo(function SearchPage({
@@ -687,6 +782,12 @@ const SearchPage = React.memo(function SearchPage({
   const [showMobileAirports, setShowMobileAirports] = useState(false);
   const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
   const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
+  const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
+  const [dragOver, setDragOver] = useState(-1);
+
+  // Animated typing placeholder for empty first origin
+  const showTyping = origins.length >= 1 && !origins[0]?.trim() && !loading;
+  const { text: typingText, typing: typingActive } = useTypingPlaceholder(showTyping);
 
   const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
 
@@ -786,15 +887,37 @@ const SearchPage = React.memo(function SearchPage({
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
                 return (
-                  <div key={idx} className="sf-origin-row">
+                  <div key={idx}
+                    className={`sf-origin-row${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
+                    draggable={origins.length > 1 && !loading}
+                    onDragStart={() => setDragIdx(idx)}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
+                    onDragLeave={() => setDragOver(-1)}
+                    onDrop={() => {
+                      if (dragIdx >= 0 && dragIdx !== idx) {
+                        const o = [...origins]; const p = [...passengers];
+                        const [oItem] = o.splice(dragIdx, 1); o.splice(idx, 0, oItem);
+                        const [pItem] = p.splice(dragIdx, 1); p.splice(idx, 0, pItem);
+                        setOrigins(o); setPassengers(p);
+                      }
+                      setDragIdx(-1); setDragOver(-1);
+                    }}
+                    onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
+                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder">⠿</span>}
                     <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon">👤</span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
+                      {/* Typing placeholder animation */}
+                      {idx === 0 && showTyping && typingText && (
+                        <span className={`sf-typing-placeholder${typingActive ? " sf-typing-placeholder--active" : ""}`}>
+                          {typingText}
+                        </span>
+                      )}
                       <input
                         type="text"
                         className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
-                        placeholder={t("search.placeholder")}
+                        placeholder={idx === 0 && showTyping ? "" : t("search.placeholder")}
                         value={origin}
                         onChange={(e) => {
                           const val = e.target.value.toUpperCase();
@@ -1528,6 +1651,12 @@ const WinnerCard = React.memo(function WinnerCard({
                         {(offer?.passengers || 0) > 1 && (
                           <span className="wc-flight-pax-badge">×{offer.passengers}</span>
                         )}
+                        {typeof price === "number" && (() => {
+                          const km = approxDistKm(origin, code);
+                          if (!km || km < 50) return null;
+                          const ppkm = (price / km).toFixed(2);
+                          return <span className="wc-km-badge">€{ppkm}/km</span>;
+                        })()}
                       </div>
                     </div>
                     {/* Outbound itinerary */}
@@ -1639,6 +1768,44 @@ const WinnerCard = React.memo(function WinnerCard({
               📤 {t("results.shareNative")}
             </button>
           )}
+          <button type="button" className="wc-share-img-btn" onClick={() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 600; canvas.height = 340;
+            const ctx = canvas.getContext("2d");
+            // Background gradient
+            const bg = ctx.createLinearGradient(0, 0, 600, 340);
+            bg.addColorStop(0, "#0062E3"); bg.addColorStop(1, "#7C3AED");
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, 600, 340);
+            // Text
+            ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+            ctx.font = "bold 14px system-ui"; ctx.fillText("FlyndMe", 300, 35);
+            ctx.font = "bold 32px system-ui"; ctx.fillText(city || code, 300, 80);
+            ctx.font = "18px system-ui";
+            ctx.fillText(`${t("results.groupTotal")}: ${currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}`, 300, 120);
+            ctx.fillText(`${t("results.avgPerPerson")}: ${currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}`, 300, 150);
+            ctx.fillText(`${t("results.fairnessLabel")}: ${(dest.fairnessScore ?? 0).toFixed(0)}/100`, 300, 180);
+            // Per-origin breakdown
+            ctx.font = "14px system-ui"; ctx.fillStyle = "rgba(255,255,255,.85)";
+            breakdown.forEach((f, i) => {
+              const km = approxDistKm(String(f.origin).toUpperCase(), code);
+              const kmStr = km ? ` · ${Math.round(km)} km` : "";
+              ctx.fillText(`${f.origin}: ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}${kmStr}`, 300, 220 + i * 24);
+            });
+            ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.font = "11px system-ui";
+            ctx.fillText("flyndme.com", 300, 330);
+            canvas.toBlob((blob) => {
+              if (!blob) return;
+              try {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]);
+              } catch { /* fallback: download */ }
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = `flyndme-${code}.png`;
+              a.click(); URL.revokeObjectURL(url);
+            });
+          }}>
+            🖼️ Share as image
+          </button>
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
           </button>
@@ -1824,6 +1991,7 @@ export default function App() {
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [toast,       setToast]       = useState(null); // { message, type }
+  const [showFavPanel, setShowFavPanel] = useState(false);
 
   // Last search best price (for comparison)
   const [lastBestPrice, setLastBestPrice] = useState(() => {
@@ -2332,6 +2500,12 @@ export default function App() {
             <span className="app-logo-sub">{t("header.tagline")}</span>
           </div>
           <div className="d-flex align-items-center gap-2">
+            {favs.length > 0 && (
+              <button type="button" className="fm-fav-header-btn" onClick={() => setShowFavPanel((v) => !v)}
+                title={t("results.favorite")}>
+                ❤️ <span className="fm-fav-header-count">{favs.length}</span>
+              </button>
+            )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
             {view !== "landing" && (
@@ -2343,6 +2517,37 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Favorites panel */}
+      {showFavPanel && (
+        <>
+          <div className="fm-fav-overlay" onClick={() => setShowFavPanel(false)} />
+          <div className="fm-fav-panel">
+            <div className="fm-fav-panel-header">
+              <span className="fm-fav-panel-title">{t("favorites.title")}</span>
+              <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)}>✕</button>
+            </div>
+            {favs.length === 0 ? (
+              <div className="fm-fav-panel-empty">{t("favorites.empty")}</div>
+            ) : (
+              <div className="fm-fav-panel-list">
+                {favs.map((f) => (
+                  <div key={f.code} className="fm-fav-panel-item">
+                    <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
+                    <div className="fm-fav-panel-info">
+                      <span className="fm-fav-panel-code">{f.code}</span>
+                      <span className="fm-fav-panel-city">{f.city}</span>
+                    </div>
+                    <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
+                    <button type="button" className="fm-fav-panel-remove"
+                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Loading bar */}
       <SearchProgress loading={loading} />
@@ -2360,6 +2565,9 @@ export default function App() {
 
       {view === "search" && (
         <div className="view-enter view-enter-search" key="search">
+        <div className="container" style={{ maxWidth: 960 }}>
+          <Breadcrumb current="search" onNavigate={(k) => { setView(k); if (k === "landing") setShowAlt(false); }} />
+        </div>
         <SearchPage
           origins={origins}           setOrigins={setOrigins}
           tripType={tripType}         setTripType={setTripType}
@@ -2393,6 +2601,8 @@ export default function App() {
 
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+          <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
+
           {/* Sticky results mini-bar */}
           <div className="fm-sticky-bar">
             <div className="fm-sticky-inner">
