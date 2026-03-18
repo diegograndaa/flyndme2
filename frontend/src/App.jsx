@@ -1534,7 +1534,7 @@ const WinnerCard = React.memo(function WinnerCard({
                     {(airline || stops !== null || durationText) && (
                       <div className="wc-flight-meta">
                         <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.outbound")}</span>
-                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline">{airline}</span>}
+                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><span className="wc-airline-badge">{airline}</span></span>}
                         {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
                         {stops !== null && (
                           <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
@@ -2393,6 +2393,16 @@ export default function App() {
 
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+          {/* Sticky results mini-bar */}
+          <div className="fm-sticky-bar">
+            <div className="fm-sticky-inner">
+              <span className="fm-sticky-dest">✈ {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
+              <span className="fm-sticky-price">{currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency)}/pp</span>
+              <span className="fm-sticky-origins">{cleanOrigins.join(" · ")}</span>
+              <button type="button" className="fm-sticky-btn" onClick={() => setView("search")}>{t("results.changeSearch")}</button>
+            </div>
+          </div>
+
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -2422,6 +2432,19 @@ export default function App() {
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
           />
+
+          {/* Group savings vs most expensive destination */}
+          {flights.length >= 2 && (() => {
+            const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
+            const saved = maxTotal - bestDestination.totalCostEUR;
+            if (saved > 10) return (
+              <div className="fm-group-savings view-enter">
+                <span className="fm-group-savings-icon">💰</span>
+                <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
+              </div>
+            );
+            return null;
+          })()}
 
           {/* Celebrate badge for cheap flights (avg < €50/pp) */}
           {bestDestination.averageCostPerTraveler < 50 && (
@@ -2557,6 +2580,36 @@ export default function App() {
           {showAlt === "vs" && flights.length >= 2 && (
             <VsCompare flights={flights} bestDestination={bestDestination} currency={currency} />
           )}
+
+          {/* Quick re-search: try nearby dates */}
+          <div className="fm-quick-research view-enter">
+            <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
+            <div className="fm-quick-research-btns">
+              {[-1, 1, -2, 2].map((offset) => {
+                const d = new Date((departureDate || todayISO()) + "T00:00:00");
+                d.setDate(d.getDate() + offset);
+                const iso = d.toISOString().slice(0, 10);
+                const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
+                return (
+                  <button key={offset} type="button" className="fm-quick-research-btn"
+                    onClick={() => {
+                      setDepartureDate(iso);
+                      if (tripType === "roundtrip" && returnDate) {
+                        const r = new Date(returnDate + "T00:00:00");
+                        r.setDate(r.getDate() + offset);
+                        setReturnDate(r.toISOString().slice(0, 10));
+                      }
+                      setView("search");
+                      setTimeout(() => {
+                        document.querySelector(".sf-form form")?.requestSubmit?.();
+                      }, 200);
+                    }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </main>
       )}
       </div>{/* /main-content */}

@@ -86,7 +86,10 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
       {/* Content */}
       <div className="alt-card-body">
         <div className="alt-card-rank-row">
-          <div className="alt-card-rank">{countryFlag(code)} #{rank}</div>
+          <div className={`alt-card-rank${rank <= 3 ? " alt-card-rank--medal" : ""}`}>
+            {rank <= 3 ? <span className={`alt-card-medal alt-card-medal--${rank}`}>{rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}</span> : null}
+            {countryFlag(code)} #{rank}
+          </div>
           <div className="alt-card-chips">
             {weatherChip && <span className="alt-card-weather">{weatherChip}</span>}
             {qInfo && <span className="alt-card-info-chip" title={`UTC${qInfo.tz} · ${qInfo.lang}`}>🕐 UTC{qInfo.tz}</span>}

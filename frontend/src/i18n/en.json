@@ -186,7 +186,9 @@
     "vsLastCheaper": "{{pct}}% cheaper than last search",
     "vsLastPricier": "{{pct}}% pricier than last search",
     "copyFlight": "Copy flight info",
-    "searchTime": "Found in {{s}}s"
+    "searchTime": "Found in {{s}}s",
+    "groupSavings": "Your group saves {{amount}} vs the most expensive option",
+    "tryNearbyDates": "Try nearby dates"
   },
   "vs": {
     "title": "Compare destinations",
