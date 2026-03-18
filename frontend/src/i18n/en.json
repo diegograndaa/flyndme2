@@ -167,7 +167,8 @@
     "routesCompared": "routes compared",
     "compareVs": "Compare",
     "favorite": "Save to favorites",
-    "exportCSV": "Export results as CSV"
+    "exportCSV": "Export results as CSV",
+    "copySummary": "Copy summary"
   },
   "vs": {
     "title": "Compare destinations",

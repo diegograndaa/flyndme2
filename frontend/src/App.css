@@ -102,7 +102,7 @@
 
 [data-theme="dark"] .fm-card,
 [data-theme="dark"] .lp-card,
-[data-theme="dark"] .lp-faq-card,
+[data-theme="dark"] .lp-faq-item,
 [data-theme="dark"] .lp-usecase-card,
 [data-theme="dark"] .lp-example-card,
 [data-theme="dark"] .wc-card,
@@ -647,29 +647,65 @@ body {
   letter-spacing: -.5px;
 }
 
-.lp-faq-card {
-  background: var(--slate-50);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  padding: 24px;
-  height: 100%;
-  transition: all .2s;
+.lp-faq-list {
+  max-width: 720px;
+  margin: 0 auto;
 }
-.lp-faq-card:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-2px);
+.lp-faq-item {
+  border-bottom: 1px solid var(--slate-200);
+}
+.lp-faq-item:first-child {
+  border-top: 1px solid var(--slate-200);
 }
 .lp-faq-q {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 18px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
   font-weight: 700;
   font-size: 15px;
   color: var(--navy);
-  margin-bottom: 8px;
+  font-family: var(--font);
+  text-align: left;
+  gap: 12px;
+  transition: color .15s;
+}
+.lp-faq-q:hover {
+  color: var(--primary);
+}
+.lp-faq-chevron {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--slate-400);
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.lp-faq-item--open .lp-faq-chevron {
+  color: var(--primary);
+}
+.lp-faq-a-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .3s ease;
+}
+.lp-faq-item--open .lp-faq-a-wrap {
+  grid-template-rows: 1fr;
+}
+.lp-faq-a-wrap > .lp-faq-a {
+  overflow: hidden;
 }
 .lp-faq-a {
   font-size: 14px;
   color: var(--slate-500);
   line-height: 1.6;
+  padding-bottom: 18px;
+}
+[data-theme="dark"] .lp-faq-item {
+  border-color: #1E293B;
 }
 
 /* ── Search form page ─────────────────────────────────────────── */
@@ -2475,9 +2511,8 @@ body {
   .alt-card:active {
     transform: scale(.99);
   }
-  .lp-faq-card:active {
+  .lp-faq-item:active {
     border-color: var(--primary);
-    transform: scale(.99);
   }
 }
 
@@ -3183,4 +3218,68 @@ html {
 @media (max-width: 480px) {
   .lp-routes-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-route-card { padding: 14px 10px; }
+}
+
+/* ── Price breakdown tooltip ──────────────────────────────────── */
+
+.wc-summary-item--tooltip {
+  position: relative;
+  cursor: help;
+}
+.wc-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: var(--navy);
+  color: white;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+.wc-summary-item--tooltip:hover .wc-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+  pointer-events: auto;
+}
+.wc-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--navy);
+}
+.wc-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+}
+.wc-tooltip-row span:last-child {
+  font-weight: 700;
+}
+[data-theme="dark"] .wc-tooltip {
+  background: #334155;
+}
+[data-theme="dark"] .wc-tooltip::after {
+  border-top-color: #334155;
+}
+
+/* ── Summary copy button ──────────────────────────────────────── */
+
+.wc-action-btn--summary {
+  background: var(--slate-100);
+  color: var(--navy);
+  border-color: var(--slate-200);
+}
+.wc-action-btn--summary:hover {
+  background: var(--slate-200);
 }

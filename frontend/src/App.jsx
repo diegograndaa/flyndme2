@@ -427,6 +427,23 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// ─── FAQ accordion item ─────────────────────────────────────────────────────
+
+const FaqItem = React.memo(function FaqItem({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`lp-faq-item${open ? " lp-faq-item--open" : ""}`}>
+      <button type="button" className="lp-faq-q" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <span>{q}</span>
+        <span className="lp-faq-chevron">{open ? "−" : "+"}</span>
+      </button>
+      <div className="lp-faq-a-wrap">
+        <div className="lp-faq-a">{a}</div>
+      </div>
+    </div>
+  );
+});
+
 // ─── Landing ──────────────────────────────────────────────────────────────────
 
 const Landing = React.memo(function Landing({ onStart }) {
@@ -541,18 +558,13 @@ const Landing = React.memo(function Landing({ onStart }) {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ accordion */}
       <section className="lp-faq">
         <div className="container" style={{ maxWidth: 1080 }}>
           <h2 className="lp-faq-title">{t("landing.faqTitle")}</h2>
-          <div className="row g-3">
+          <div className="lp-faq-list">
             {Array.isArray(faqs) && faqs.map((item, i) => (
-              <div key={i} className="col-md-6">
-                <div className="lp-faq-card">
-                  <div className="lp-faq-q">{item.q}</div>
-                  <div className="lp-faq-a">{item.a}</div>
-                </div>
-              </div>
+              <FaqItem key={i} q={item.q} a={item.a} />
             ))}
           </div>
           <div className="text-center mt-5">
@@ -1085,12 +1097,23 @@ const WinnerCard = React.memo(function WinnerCard({
 
       {/* Summary strip */}
       <div className="wc-summary">
-        <div className="wc-summary-item">
+        <div className="wc-summary-item wc-summary-item--tooltip">
           <div className="wc-summary-label">{t("results.groupTotal")}</div>
           {currency === "EUR"
             ? <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-summary-price" />
             : <div className="wc-summary-price price-animate">{convertPrice(dest.totalCostEUR, currency)}</div>
           }
+          {/* Per-origin breakdown tooltip */}
+          {breakdown.length > 0 && (
+            <div className="wc-tooltip">
+              {breakdown.map((f, i) => (
+                <div key={i} className="wc-tooltip-row">
+                  <span>{f.origin}</span>
+                  <span>{currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="wc-summary-divider" />
         <div className="wc-summary-item">
@@ -1287,6 +1310,19 @@ const WinnerCard = React.memo(function WinnerCard({
           <button type="button" className="wc-action-btn wc-action-btn--telegram" onClick={onShareTelegram}>
             ✈ Telegram
           </button>
+          <button type="button" className="wc-action-btn wc-action-btn--summary" onClick={() => {
+            const lines = [
+              `✈ ${city || code}`,
+              `${t("results.groupTotal")}: ${currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}`,
+              `${t("results.avgPerPerson")}: ${currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}`,
+              `${t("results.fairnessLabel")}: ${(dest.fairnessScore ?? 0).toFixed(0)}/100`,
+              "",
+              ...breakdown.map((f) => `  ${f.origin}: ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`),
+            ];
+            copyText(lines.join("\n"));
+          }}>
+            📋 {t("results.copySummary")}
+          </button>
           <button type="button" className="wc-action-btn wc-action-btn--email" onClick={onShareEmail}>
             ✉ Email
           </button>
@@ -1413,6 +1449,20 @@ export default function App() {
   // Keep a ref of current view for keyboard handler (avoids stale closure)
   const viewRef = useRef(view);
   useEffect(() => { viewRef.current = view; }, [view]);
+
+  const tabContentRef = useRef(null);
+
+  // ── Dynamic document title per view ────────────────────────────────────
+  useEffect(() => {
+    const titles = {
+      landing: "FlyndMe — Find the cheapest place to meet your group",
+      search: "FlyndMe — Search flights",
+      results: bestDestination
+        ? `FlyndMe — ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/pp`
+        : "FlyndMe — Results",
+    };
+    document.title = titles[view] || titles.landing;
+  }, [view, bestDestination]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
@@ -2057,26 +2107,26 @@ export default function App() {
 
           {/* Visual tabs: Map & Compare */}
           {flights.length > 1 && (
-            <div className="rv-tabs mt-4">
+            <div className="rv-tabs mt-4" ref={tabContentRef}>
               <button type="button"
                 className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
-                onClick={() => setShowAlt(showAlt === "map" ? false : "map")}>
+                onClick={() => { setShowAlt(showAlt === "map" ? false : "map"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
                 🗺 {t("results.showMap")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
-                onClick={() => setShowAlt(showAlt === "compare" ? false : "compare")}>
+                onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
                 📊 {t("results.showCompare")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
-                onClick={() => setShowAlt(showAlt === "list" ? false : "list")}>
+                onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
                 📋 {t("results.otherOptions")}
               </button>
               {flights.length >= 2 && (
                 <button type="button"
                   className={`rv-tab${showAlt === "vs" ? " rv-tab--active" : ""}`}
-                  onClick={() => setShowAlt(showAlt === "vs" ? false : "vs")}>
+                  onClick={() => { setShowAlt(showAlt === "vs" ? false : "vs"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
                   ⚡ {t("results.compareVs")}
                 </button>
               )}
