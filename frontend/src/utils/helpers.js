@@ -124,6 +124,13 @@ export function formatDate(s) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+export function weekdayOf(s) {
+  if (!s) return "";
+  const d = new Date(`${s}T00:00:00`);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString("en-GB", { weekday: "short" });
+}
+
 export function todayISO() {
   return new Date().toISOString().split("T")[0];
 }

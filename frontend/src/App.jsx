@@ -10,7 +10,7 @@ const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
+  formatEur, formatDate, weekdayOf, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
   airportName, MULTI_AIRPORT, countryFlag
 } from "./utils/helpers";
 import { getCityImage } from "./utils/cityImages";
@@ -883,16 +883,22 @@ const SearchPage = React.memo(function SearchPage({
               <div className="row g-3">
                 <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
                   <label className="sf-input-label">{t("search.departure")}</label>
-                  <input type="date" className="form-control sf-input"
-                    value={departureDate} min={todayISO()}
-                    onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
+                  <div className="sf-date-wrap">
+                    <input type="date" className="form-control sf-input"
+                      value={departureDate} min={todayISO()}
+                      onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
+                    {departureDate && <span className="sf-weekday-badge">{weekdayOf(departureDate)}</span>}
+                  </div>
                 </div>
                 {tripType === "roundtrip" && (
                   <div className="col-sm-6">
                     <label className="sf-input-label">{t("search.return")}</label>
-                    <input type="date" className="form-control sf-input"
-                      value={returnDate} min={departureDate || todayISO()}
-                      onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
+                    <div className="sf-date-wrap">
+                      <input type="date" className="form-control sf-input"
+                        value={returnDate} min={departureDate || todayISO()}
+                        onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
+                      {returnDate && <span className="sf-weekday-badge">{weekdayOf(returnDate)}</span>}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1131,6 +1137,10 @@ const SearchPage = React.memo(function SearchPage({
                   })}
                 </div>
                 <div className="sf-summary-meta">
+                  {(() => {
+                    const totalPax = origins.filter(o => o.trim()).reduce((s, o, i) => s + (passengers[i] || 1), 0);
+                    return totalPax > 1 ? <span className="sf-summary-pax-total">👥 {totalPax} {t("search.paxLabel")}</span> : null;
+                  })()}
                   {departureDate && <span>{formatDate(departureDate)}</span>}
                   {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
                   {flexEnabled && <span className="sf-summary-flex">±{flexDays}d</span>}
@@ -1139,7 +1149,7 @@ const SearchPage = React.memo(function SearchPage({
             )}
 
             <div className="sf-submit-wrap">
-              <button type="submit" className="btn-fm-primary w-100 py-3 fw-bold fs-6" disabled={loading}>
+              <button type="submit" className={`btn-fm-primary w-100 py-3 fw-bold fs-6${!loading && origins.some(o => o.trim()) && departureDate ? " sf-submit--ready" : ""}`} disabled={loading}>
                 {loading ? t("search.searching") : t("search.submit")}
               </button>
             </div>
@@ -1270,6 +1280,12 @@ const WinnerCard = React.memo(function WinnerCard({
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
+      {/* Confetti burst on entrance */}
+      {entered && (
+        <div className="wc-confetti" aria-hidden="true">
+          {[...Array(12)].map((_, i) => <span key={i} className="wc-confetti-piece" style={{ "--ci": i }} />)}
+        </div>
+      )}
       {/* Hero image */}
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
@@ -1504,6 +1520,12 @@ const WinnerCard = React.memo(function WinnerCard({
                           Google Flights
                         </a>
                       )}
+                      <button type="button" className="wc-cta wc-cta--copy" onClick={() => {
+                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""}`;
+                        copyText(txt);
+                      }} title={t("results.copyFlight")}>
+                        📋
+                      </button>
                     </div>
                   </div>
                 );
@@ -1749,6 +1771,10 @@ export default function App() {
   const [lastBestPrice, setLastBestPrice] = useState(() => {
     try { return Number(localStorage.getItem("flyndme_last_best") || 0); } catch { return 0; }
   });
+
+  // Search duration (seconds)
+  const [searchDuration, setSearchDuration] = useState(0);
+  const searchStartRef = useRef(0);
 
   // ── Recent searches (localStorage) ────────────────────────────────────────
   const RECENT_KEY = "flyndme_recent";
@@ -2100,6 +2126,8 @@ export default function App() {
     setBestByCriterion({ total: null, fairness: null });
     setShowAlt(false);
     setLoading(true);
+    setSearchDuration(0);
+    searchStartRef.current = Date.now();
 
     try {
       // Step 1: wake backend if needed (ping is lightweight)
@@ -2187,6 +2215,10 @@ export default function App() {
           setView("results");
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
+          // Record search duration
+          if (searchStartRef.current) {
+            setSearchDuration(((Date.now() - searchStartRef.current) / 1000).toFixed(1));
+          }
           saveRecentSearch({ origins: cleanOrigins, tripType, departureDate, returnDate });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
@@ -2351,6 +2383,14 @@ export default function App() {
             <span className="fm-stats-item">
               <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
             </span>
+            {searchDuration > 0 && (
+              <>
+                <span className="fm-stats-sep">·</span>
+                <span className="fm-stats-item fm-stats-item--time">
+                  ⏱ {searchDuration}s
+                </span>
+              </>
+            )}
             <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
               📥 CSV
             </button>

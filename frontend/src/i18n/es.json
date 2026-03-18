@@ -183,7 +183,9 @@
     "shareNative": "Compartir",
     "cheapestOrigin": "Ruta más barata",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
-    "vsLastPricier": "{{pct}}% más caro que la última búsqueda"
+    "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
+    "copyFlight": "Copiar info del vuelo",
+    "searchTime": "Encontrado en {{s}}s"
   },
   "vs": {
     "title": "Comparar destinos",

@@ -3715,3 +3715,152 @@ html {
   border-color: #334155;
   color: #94A3B8;
 }
+
+/* ═══════════════ Round 12 ═══════════════════════════════════ */
+
+/* ── Day-of-week badge beside date input ────────────────────── */
+
+.sf-date-wrap {
+  position: relative;
+}
+.sf-weekday-badge {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: #EFF6FF;
+  padding: 1px 7px;
+  border-radius: 10px;
+  pointer-events: none;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .sf-weekday-badge {
+  background: rgba(0,98,227,.18);
+  color: #60A5FA;
+}
+
+/* ── Pulse animation on ready submit button ─────────────────── */
+
+.sf-submit--ready {
+  animation: submitPulse 2.5s ease-in-out infinite;
+}
+@keyframes submitPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,98,227,.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(0,98,227,0); }
+}
+
+/* ── Total pax count in summary bar ─────────────────────────── */
+
+.sf-summary-pax-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-right: 4px;
+}
+[data-theme="dark"] .sf-summary-pax-total {
+  color: #E2E8F0;
+}
+
+/* ── Search duration in stats bar ───────────────────────────── */
+
+.fm-stats-item--time {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Copy button on booking cards ───────────────────────────── */
+
+.wc-cta--copy {
+  min-width: 36px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  text-align: center;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  transition: background .2s, color .2s;
+}
+.wc-cta--copy:hover {
+  background: rgba(255,255,255,.14);
+  color: white;
+}
+
+/* ── Winner card confetti burst ─────────────────────────────── */
+
+.wc-confetti {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 10;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.wc-confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiBurst .9s ease-out forwards;
+  animation-delay: calc(var(--ci) * 40ms);
+  opacity: 0;
+}
+/* Rotate pieces around a circle with different colors */
+.wc-confetti-piece:nth-child(1)  { background: #F59E0B; }
+.wc-confetti-piece:nth-child(2)  { background: #3B82F6; }
+.wc-confetti-piece:nth-child(3)  { background: #10B981; }
+.wc-confetti-piece:nth-child(4)  { background: #EF4444; }
+.wc-confetti-piece:nth-child(5)  { background: #8B5CF6; }
+.wc-confetti-piece:nth-child(6)  { background: #EC4899; }
+.wc-confetti-piece:nth-child(7)  { background: #F59E0B; }
+.wc-confetti-piece:nth-child(8)  { background: #3B82F6; }
+.wc-confetti-piece:nth-child(9)  { background: #10B981; }
+.wc-confetti-piece:nth-child(10) { background: #EF4444; }
+.wc-confetti-piece:nth-child(11) { background: #8B5CF6; }
+.wc-confetti-piece:nth-child(12) { background: #EC4899; }
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(cos(calc(var(--ci) * 30deg)) * 120px),
+        calc(sin(calc(var(--ci) * 30deg)) * 80px + 40px)
+      )
+      rotate(calc(var(--ci) * 60deg))
+      scale(0.4);
+  }
+}
+
+/* Fallback for browsers without trig functions: stagger via nth-child */
+@supports not (transform: translate(calc(cos(30deg) * 1px), 0)) {
+  .wc-confetti-piece:nth-child(1)  { --dx: -60px; --dy: -40px; }
+  .wc-confetti-piece:nth-child(2)  { --dx:  40px; --dy: -50px; }
+  .wc-confetti-piece:nth-child(3)  { --dx: -80px; --dy:  10px; }
+  .wc-confetti-piece:nth-child(4)  { --dx:  70px; --dy:  20px; }
+  .wc-confetti-piece:nth-child(5)  { --dx: -30px; --dy:  60px; }
+  .wc-confetti-piece:nth-child(6)  { --dx:  90px; --dy: -20px; }
+  .wc-confetti-piece:nth-child(7)  { --dx: -100px; --dy:  40px; }
+  .wc-confetti-piece:nth-child(8)  { --dx:  50px; --dy:  70px; }
+  .wc-confetti-piece:nth-child(9)  { --dx: -40px; --dy: -60px; }
+  .wc-confetti-piece:nth-child(10) { --dx:  110px; --dy:  0px; }
+  .wc-confetti-piece:nth-child(11) { --dx: -90px; --dy: -30px; }
+  .wc-confetti-piece:nth-child(12) { --dx:  20px; --dy:  50px; }
+  @keyframes confettiBurst {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx, 60px), var(--dy, 40px)) rotate(220deg) scale(0.3); }
+  }
+}
