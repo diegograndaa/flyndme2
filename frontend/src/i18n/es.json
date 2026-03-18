@@ -125,7 +125,10 @@
     "dateWarnSoon": "Sales en menos de 3 días — los precios pueden ser más altos de lo normal",
     "dateWarnFar": "Esta fecha es en más de 11 meses — puede que las aerolíneas aún no tengan horarios",
     "dateWarnSweet": "¡Buen momento! Reservar con 6-8 semanas de antelación suele dar los mejores precios",
-    "dateWarnLong": "Tu viaje dura más de 30 días — algunas aerolíneas cobran diferente en viajes largos"
+    "dateWarnLong": "Tu viaje dura más de 30 días — algunas aerolíneas cobran diferente en viajes largos",
+    "unknownAirport": "Aeropuerto desconocido — elige de la lista",
+    "moveUp": "Subir",
+    "moveDown": "Bajar"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -175,7 +178,9 @@
     "exportCSV": "Exportar resultados como CSV",
     "copySummary": "Copiar resumen",
     "savingsPct": "{{pct}}% más barato que la media",
-    "tripDays": "Viaje de {{n}} días"
+    "tripDays": "Viaje de {{n}} días",
+    "shareNative": "Compartir",
+    "cheapestOrigin": "Ruta más barata"
   },
   "vs": {
     "title": "Comparar destinos",

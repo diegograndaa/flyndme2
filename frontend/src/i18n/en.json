@@ -125,7 +125,10 @@
     "dateWarnSoon": "Departing in less than 3 days — prices may be higher than usual",
     "dateWarnFar": "This date is over 11 months away — airline schedules may not be available yet",
     "dateWarnSweet": "Great timing! Booking 6-8 weeks ahead often gives the best prices",
-    "dateWarnLong": "Your trip is longer than 30 days — some airlines price long trips differently"
+    "dateWarnLong": "Your trip is longer than 30 days — some airlines price long trips differently",
+    "unknownAirport": "Unknown airport — pick from the list",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "results": {
     "eyebrow": "Recommended destination",
@@ -175,7 +178,9 @@
     "exportCSV": "Export results as CSV",
     "copySummary": "Copy summary",
     "savingsPct": "{{pct}}% cheaper than average",
-    "tripDays": "{{n}}-day trip"
+    "tripDays": "{{n}}-day trip",
+    "shareNative": "Share",
+    "cheapestOrigin": "Cheapest route"
   },
   "vs": {
     "title": "Compare destinations",

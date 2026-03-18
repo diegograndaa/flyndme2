@@ -761,6 +761,7 @@ const SearchPage = React.memo(function SearchPage({
               {origins.map((origin, idx) => {
                 const code = normalizeCode(origin);
                 const city = cityOf(code);
+                const isUnknown = origin.trim().length >= 3 && !city;
                 return (
                   <div key={idx} className="sf-origin-row">
                     <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
@@ -769,7 +770,7 @@ const SearchPage = React.memo(function SearchPage({
                     <div className="sf-input-wrap">
                       <input
                         type="text"
-                        className="form-control sf-input text-uppercase"
+                        className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
                         placeholder={t("search.placeholder")}
                         value={origin}
                         onChange={(e) => {
@@ -787,6 +788,9 @@ const SearchPage = React.memo(function SearchPage({
                       {city && origin.trim() && (
                         <span className="sf-input-city">{countryFlag(code)} {city}</span>
                       )}
+                      {isUnknown && (
+                        <span className="sf-input-unknown">{t("search.unknownAirport")}</span>
+                      )}
                     </div>
                     {/* Passenger count stepper */}
                     <div className="sf-pax" title={t("search.paxTooltip")}>
@@ -797,6 +801,27 @@ const SearchPage = React.memo(function SearchPage({
                       <button type="button" className="sf-pax-btn"
                         onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
+                    </div>
+                    {/* Reorder + remove */}
+                    <div className="sf-origin-actions-inline">
+                      {origins.length > 1 && idx > 0 && (
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")}
+                          onClick={() => {
+                            const o = [...origins]; const p = [...passengers];
+                            [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
+                            [p[idx], p[idx - 1]] = [p[idx - 1], p[idx]];
+                            setOrigins(o); setPassengers(p); setActiveIdx(idx - 1);
+                          }}>↑</button>
+                      )}
+                      {origins.length > 1 && idx < origins.length - 1 && (
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")}
+                          onClick={() => {
+                            const o = [...origins]; const p = [...passengers];
+                            [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
+                            [p[idx], p[idx + 1]] = [p[idx + 1], p[idx]];
+                            setOrigins(o); setPassengers(p); setActiveIdx(idx + 1);
+                          }}>↓</button>
+                      )}
                     </div>
                     {origins.length > 1 && (
                       <button
@@ -1145,7 +1170,7 @@ const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate, departureDate: depDate,
   uiCriterion, onChangeCriterion,
   flightsCount, allFlights = [],
-  onShare, onShareWhatsApp, onShareTelegram, onShareEmail, shareStatus,
+  onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, shareStatus,
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
   searchBadges = [],
@@ -1181,6 +1206,12 @@ const WinnerCard = React.memo(function WinnerCard({
     priceMap[k] = f.price;
     offerMap[k] = f.offer || null;
   });
+
+  // Cheapest origin (for highlighting in booking cards)
+  const cheapestOrigin = useMemo(() => {
+    if (!breakdown.length) return "";
+    return breakdown.reduce((best, f) => (!best || (f.price < best.price)) ? f : best, null)?.origin?.toUpperCase() || "";
+  }, [breakdown]);
 
   // Savings vs average of all destinations
   const savingsPct = useMemo(() => {
@@ -1262,8 +1293,16 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-summary-item">
           <div className="wc-summary-label">{t("results.fairnessLabel")}</div>
           <div className="wc-summary-fairness">
-            <span style={{ color: fairness.color, fontWeight: 800, fontSize: 20 }}>{(dest.fairnessScore ?? 0).toFixed(0)}</span>
-            <span style={{ color: "rgba(255,255,255,.5)", fontSize: 13 }}>/100</span>
+            <svg className="wc-fairness-ring" viewBox="0 0 40 40" width="44" height="44">
+              <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
+              <circle cx="20" cy="20" r="16" fill="none" stroke={fairness.color} strokeWidth="3"
+                strokeDasharray={`${((dest.fairnessScore ?? 0) / 100) * 100.53} 100.53`}
+                strokeLinecap="round" transform="rotate(-90 20 20)"
+                style={{ transition: "stroke-dasharray .8s ease" }} />
+              <text x="20" y="22" textAnchor="middle" fill={fairness.color} fontSize="11" fontWeight="800">
+                {(dest.fairnessScore ?? 0).toFixed(0)}
+              </text>
+            </svg>
           </div>
         </div>
         {dep && (
@@ -1342,10 +1381,13 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retArrName = airportName(retArrAirport);
 
                 return (
-                  <div key={origin} className="wc-flight-card">
+                  <div key={origin} className={`wc-flight-card${cleanOrigins.length > 1 && origin === cheapestOrigin ? " wc-flight-card--cheapest" : ""}`}>
+                    {cleanOrigins.length > 1 && origin === cheapestOrigin && (
+                      <div className="wc-cheapest-label">{t("results.cheapestOrigin")}</div>
+                    )}
                     <div className="wc-flight-route">
                       <div className="wc-flight-endpoint">
-                        <span className="wc-flight-code">{origin}</span>
+                        <span className="wc-flight-code">{countryFlag(origin)} {origin}</span>
                         <span className="wc-flight-city">{originCity}</span>
                       </div>
                       <div className="wc-flight-arrow-wrap">
@@ -1461,6 +1503,11 @@ const WinnerCard = React.memo(function WinnerCard({
           <button type="button" className="wc-action-btn wc-action-btn--email" onClick={onShareEmail}>
             ✉ Email
           </button>
+          {typeof navigator !== "undefined" && navigator.share && (
+            <button type="button" className="wc-action-btn wc-action-btn--native" onClick={onShareNative}>
+              📤 {t("results.shareNative")}
+            </button>
+          )}
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
           </button>
@@ -1933,6 +1980,22 @@ export default function App() {
     trackEvent("share_email", { destination: code });
   };
 
+  // ── Native Web Share API (mobile) ──────────────────────────────────────────
+
+  const handleShareNative = async () => {
+    if (!bestDestination || !navigator.share) return;
+    const code = normalizeCode(bestDestination.destination);
+    const destName = destLabel(code);
+    try {
+      await navigator.share({
+        title: `FlyndMe — ${destName}`,
+        text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
+        url: window.location.href,
+      });
+      trackEvent("share_native", { destination: code });
+    } catch { /* user cancelled */ }
+  };
+
   // ── Simple analytics (beacon-based, no external deps) ─────────────────────
 
   function trackEvent(event, data = {}) {
@@ -2186,6 +2249,7 @@ export default function App() {
             onShareWhatsApp={handleShareWhatsApp}
             onShareTelegram={handleShareTelegram}
             onShareEmail={handleShareEmail}
+            onShareNative={handleShareNative}
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
