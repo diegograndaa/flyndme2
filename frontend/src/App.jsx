@@ -11,7 +11,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
-  airportName, MULTI_AIRPORT, countryFlag
+  airportName, MULTI_AIRPORT, countryFlag, destQuickInfo
 } from "./utils/helpers";
 import { getCityImage } from "./utils/cityImages";
 
@@ -99,14 +99,22 @@ const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
 const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 400);
+    const onScroll = () => {
+      setVisible(window.scrollY > 400);
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docH > 0 ? Math.min(1, window.scrollY / docH) : 0);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   if (!visible) return null;
+
+  const r = 18, c = 2 * Math.PI * r;
+  const offset = c * (1 - progress);
 
   return (
     <button
@@ -116,7 +124,13 @@ const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
       aria-label={t("a11y.scrollToTop")}
       title={t("a11y.scrollToTop")}
     >
-      ↑
+      <svg className="scroll-top-ring" viewBox="0 0 44 44" width="44" height="44">
+        <circle cx="22" cy="22" r={r} fill="none" stroke="rgba(0,0,0,.08)" strokeWidth="3" />
+        <circle cx="22" cy="22" r={r} fill="none" stroke="var(--primary)" strokeWidth="3"
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+          style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset .1s" }} />
+      </svg>
+      <span className="scroll-top-arrow">↑</span>
     </button>
   );
 });
@@ -406,6 +420,72 @@ function AnimatedStat({ value }) {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [value]);
   return <strong>{display}</strong>;
+}
+
+// ─── Price trend mini-sparkline ───────────────────────────────────────────────
+
+function PriceSparkline({ flights }) {
+  if (!flights || flights.length < 3) return null;
+  const prices = flights.slice(0, 10).map(f => f.averageCostPerTraveler || 0).filter(Boolean);
+  if (prices.length < 3) return null;
+  const min = Math.min(...prices), max = Math.max(...prices);
+  const range = max - min || 1;
+  const w = 80, h = 24, pad = 2;
+  const points = prices.map((p, i) => {
+    const x = pad + (i / (prices.length - 1)) * (w - 2 * pad);
+    const y = pad + (1 - (p - min) / range) * (h - 2 * pad);
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <svg className="fm-sparkline" viewBox={`0 0 ${w} ${h}`} width={w} height={h}>
+      <polyline points={points} fill="none" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={points.split(" ")[0].split(",")[0]} cy={points.split(" ")[0].split(",")[1]} r="2" fill="#22C55E" />
+    </svg>
+  );
+}
+
+// ─── Origin summary chips ────────────────────────────────────────────────────
+
+function OriginSummaryChips({ origins, bestDestination, currency }) {
+  if (!origins.length || !bestDestination) return null;
+  const breakdown = Array.isArray(bestDestination.flights) ? bestDestination.flights : [];
+  const priceMap = {};
+  breakdown.forEach(f => { priceMap[String(f.origin).toUpperCase()] = f.price; });
+
+  return (
+    <div className="fm-origin-chips view-enter">
+      {origins.map(o => {
+        const price = priceMap[o];
+        return (
+          <div key={o} className="fm-origin-chip">
+            <span className="fm-origin-chip-flag">{countryFlag(o)}</span>
+            <span className="fm-origin-chip-code">{o}</span>
+            {typeof price === "number" && (
+              <span className="fm-origin-chip-price">{formatEur(price, 0)}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Results skeleton ────────────────────────────────────────────────────────
+
+function ResultsSkeleton() {
+  return (
+    <div className="fm-results-skeleton view-enter">
+      <div className="fm-skel-hero fm-skel-pulse" />
+      <div className="fm-skel-row">
+        <div className="fm-skel-box fm-skel-pulse" style={{ width: "30%", height: 20 }} />
+        <div className="fm-skel-box fm-skel-pulse" style={{ width: "20%", height: 20 }} />
+        <div className="fm-skel-box fm-skel-pulse" style={{ width: "25%", height: 20 }} />
+      </div>
+      {[1,2,3].map(i => (
+        <div key={i} className="fm-skel-card fm-skel-pulse" style={{ animationDelay: `${i * .1}s` }} />
+      ))}
+    </div>
+  );
 }
 
 // ─── Error boundary ───────────────────────────────────────────────────────────
@@ -1495,6 +1575,19 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
       </div>
 
+      {/* Destination quick info (timezone, language) */}
+      {(() => {
+        const qi = destQuickInfo(code);
+        if (!qi) return null;
+        return (
+          <div className="wc-quick-info">
+            {qi.tz && <span className="wc-quick-info-item">🕐 UTC{qi.tz}</span>}
+            {qi.lang && <span className="wc-quick-info-item">🗣️ {qi.lang}</span>}
+            {qi.currency && <span className="wc-quick-info-item">💱 {qi.currency}</span>}
+          </div>
+        );
+      })()}
+
       {/* Summary strip */}
       <div className="wc-summary">
         <div className="wc-summary-item wc-summary-item--tooltip">
@@ -1951,8 +2044,9 @@ export default function App() {
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-      // Escape: go back one view
+      // Escape: close panels first, then go back
       if (e.key === "Escape") {
+        if (showFavPanel) { setShowFavPanel(false); return; }
         const cur = viewRef.current;
         if (cur === "results") setView("search");
         else if (cur === "search") setView("landing");
@@ -2599,6 +2693,13 @@ export default function App() {
         </div>
       )}
 
+      {/* Results loading skeleton */}
+      {loading && view === "results" && !bestDestination && (
+        <div className="container py-4 view-enter" key="results-skeleton" style={{ maxWidth: 1080 }}>
+          <ResultsSkeleton />
+        </div>
+      )}
+
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
@@ -2664,6 +2765,22 @@ export default function App() {
                 <strong>{t("results.celebrate")}</strong>
                 <span className="fm-celebrate-sub">{t("results.celebrateSub")}</span>
               </div>
+            </div>
+          )}
+
+          {/* Origin summary chips */}
+          <OriginSummaryChips origins={cleanOrigins} bestDestination={bestDestination} currency={currency} />
+
+          {/* Price sparkline across destinations */}
+          {flights.length >= 3 && (
+            <div className="fm-sparkline-wrap view-enter">
+              <span className="fm-sparkline-label">{t("results.priceTrend")}</span>
+              <PriceSparkline flights={flights} />
+              <span className="fm-sparkline-range">
+                {formatEur(Math.min(...flights.map(f => f.averageCostPerTraveler || Infinity)), 0)}
+                {" – "}
+                {formatEur(Math.max(...flights.map(f => f.averageCostPerTraveler || 0)), 0)}
+              </span>
             </div>
           )}
 

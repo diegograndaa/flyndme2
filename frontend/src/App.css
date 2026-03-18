@@ -4547,3 +4547,164 @@ html {
 .sf-origin-row--dragover {
   border-top: 2px solid var(--primary);
 }
+
+/* ── Scroll-to-top progress ring ──────────────────────────── */
+
+.scroll-top-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scroll-top-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.scroll-top-arrow {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── Destination quick info strip ─────────────────────────── */
+
+.wc-quick-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #64748B;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+}
+.wc-quick-info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+[data-theme="dark"] .wc-quick-info {
+  background: #0F172A;
+  border-color: #1E293B;
+  color: #94A3B8;
+}
+
+/* ── Price sparkline ──────────────────────────────────────── */
+
+.fm-sparkline-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.fm-sparkline-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+}
+.fm-sparkline {
+  flex-shrink: 0;
+}
+.fm-sparkline-range {
+  font-size: 12px;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+[data-theme="dark"] .fm-sparkline-wrap {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-sparkline-label { color: #94A3B8; }
+
+/* ── Origin summary chips ─────────────────────────────────── */
+
+.fm-origin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.fm-origin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 20px;
+  font-size: 13px;
+  transition: all .15s;
+}
+.fm-origin-chip:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,98,227,.08);
+}
+.fm-origin-chip-flag {
+  font-size: 16px;
+}
+.fm-origin-chip-code {
+  font-weight: 700;
+  color: var(--navy);
+}
+.fm-origin-chip-price {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 12px;
+}
+[data-theme="dark"] .fm-origin-chip {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .fm-origin-chip-code { color: #F1F5F9; }
+[data-theme="dark"] .fm-origin-chip:hover {
+  border-color: #60A5FA;
+}
+
+/* ── Results skeleton ─────────────────────────────────────── */
+
+.fm-results-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fm-skel-hero {
+  width: 100%;
+  height: 220px;
+  border-radius: 16px;
+  background: #E2E8F0;
+}
+.fm-skel-row {
+  display: flex;
+  gap: 12px;
+}
+.fm-skel-box {
+  border-radius: 8px;
+  background: #E2E8F0;
+}
+.fm-skel-card {
+  width: 100%;
+  height: 80px;
+  border-radius: 12px;
+  background: #E2E8F0;
+}
+.fm-skel-pulse {
+  animation: skelPulse 1.2s ease-in-out infinite;
+}
+@keyframes skelPulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+[data-theme="dark"] .fm-skel-hero,
+[data-theme="dark"] .fm-skel-box,
+[data-theme="dark"] .fm-skel-card {
+  background: #1E293B;
+}

@@ -188,7 +188,8 @@
     "copyFlight": "Copiar info del vuelo",
     "searchTime": "Encontrado en {{s}}s",
     "groupSavings": "Tu grupo ahorra {{amount}} respecto a la opción más cara",
-    "tryNearbyDates": "Probar fechas cercanas"
+    "tryNearbyDates": "Probar fechas cercanas",
+    "priceTrend": "Tendencia de precios"
   },
   "vs": {
     "title": "Comparar destinos",
