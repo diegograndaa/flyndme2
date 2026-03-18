@@ -40,6 +40,87 @@ function useFairnessLabel(score) {
   return             { text: t("fairness.unequal"),                 color: fairnessColor(score) };
 }
 
+// ─── Theme (dark mode) ──────────────────────────────────────────────────────
+
+function useTheme() {
+  const [theme, setThemeState] = useState(() => {
+    try { return localStorage.getItem("flyndme_theme") || "system"; } catch { return "system"; }
+  });
+
+  const resolved = useMemo(() => {
+    if (theme === "system") {
+      return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return theme;
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", resolved);
+  }, [resolved]);
+
+  // Listen for system preference changes
+  useEffect(() => {
+    if (theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => document.documentElement.setAttribute("data-theme", mq.matches ? "dark" : "light");
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
+
+  const setTheme = useCallback((t) => {
+    setThemeState(t);
+    try { localStorage.setItem("flyndme_theme", t); } catch { /* */ }
+  }, []);
+
+  const toggle = useCallback(() => {
+    setTheme(resolved === "dark" ? "light" : "dark");
+  }, [resolved, setTheme]);
+
+  return { theme, resolved, setTheme, toggle };
+}
+
+const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={toggle}
+      aria-label={resolved === "dark" ? t("theme.light") : t("theme.dark")}
+      title={resolved === "dark" ? t("theme.light") : t("theme.dark")}
+    >
+      {resolved === "dark" ? "☀️" : "🌙"}
+    </button>
+  );
+});
+
+// ─── Scroll to top button ──────────────────────────────────────────────────
+
+const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
+  const { t } = useI18n();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      type="button"
+      className={`scroll-top-btn${visible ? " visible" : ""}`}
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label={t("a11y.scrollToTop")}
+      title={t("a11y.scrollToTop")}
+    >
+      ↑
+    </button>
+  );
+});
+
 // ─── Language selector ───────────────────────────────────────────────────────
 
 const LangSelector = React.memo(function LangSelector() {
@@ -1035,9 +1116,60 @@ const WinnerCard = React.memo(function WinnerCard({
 
 export default function App() {
   const { t } = useI18n();
+  const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
 
   // View: 'landing' | 'search' | 'results'
-  const [view, setView] = useState("landing");
+  const [view, setViewRaw] = useState("landing");
+
+  // ── Browser history support (back/forward buttons) ──────────────────────
+  const skipHistoryPush = useRef(false);
+
+  const setView = useCallback((newView) => {
+    setViewRaw((prev) => {
+      if (prev !== newView && !skipHistoryPush.current) {
+        window.history.pushState({ view: newView }, "", `#${newView}`);
+      }
+      skipHistoryPush.current = false;
+      return newView;
+    });
+  }, []);
+
+  useEffect(() => {
+    // Set initial state
+    window.history.replaceState({ view: "landing" }, "", window.location.pathname + window.location.search);
+
+    const onPopState = (e) => {
+      const target = e.state?.view || "landing";
+      skipHistoryPush.current = true;
+      setView(target);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep a ref of current view for keyboard handler (avoids stale closure)
+  const viewRef = useRef(view);
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      // Ignore if user is typing in an input
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // Escape: go back one view
+      if (e.key === "Escape") {
+        const cur = viewRef.current;
+        if (cur === "results") setView("search");
+        else if (cur === "search") setView("landing");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Search params
   const [origins,       setOrigins]       = useState([""]);
@@ -1491,6 +1623,9 @@ export default function App() {
 
   return (
     <div className="app-root">
+      {/* Skip to content (a11y) */}
+      <a href="#main-content" className="skip-link">{t("a11y.skipToContent")}</a>
+
       {/* Header */}
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
@@ -1501,6 +1636,7 @@ export default function App() {
             <span className="app-logo-sub">{t("header.tagline")}</span>
           </div>
           <div className="d-flex align-items-center gap-2">
+            <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
             {view !== "landing" && (
               <button type="button" className="btn btn-sm btn-outline-secondary"
@@ -1519,6 +1655,7 @@ export default function App() {
       {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
 
       {/* Views */}
+      <div id="main-content">
       {view === "landing" && (
         <div className="view-enter" key="landing">
           <Landing onStart={() => setView("search")} />
@@ -1673,6 +1810,10 @@ export default function App() {
           )}
         </main>
       )}
+      </div>{/* /main-content */}
+
+      {/* Scroll to top */}
+      <ScrollToTopBtn />
 
       {/* PWA Install banner */}
       {showInstallBanner && installPrompt && (

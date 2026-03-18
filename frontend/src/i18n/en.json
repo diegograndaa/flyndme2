@@ -243,5 +243,14 @@
     "linkCopied": "Link copied! Share it with your group.",
     "expired": "This link has expired or doesn't exist.",
     "sharing": "Generating link…"
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode",
+    "system": "System"
+  },
+  "a11y": {
+    "skipToContent": "Skip to content",
+    "scrollToTop": "Scroll to top"
   }
 }
