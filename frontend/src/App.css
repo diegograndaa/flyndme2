@@ -2444,3 +2444,41 @@ html {
   }
   html { scroll-behavior: auto; }
 }
+
+/* ── Celebrate badge (cheap flight confetti) ── */
+.fm-celebrate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #6ee7b7;
+  border-radius: 14px;
+  animation: celebratePop 0.5s ease-out;
+}
+.fm-celebrate-confetti {
+  font-size: 28px;
+  animation: confettiShake 0.6s ease-out;
+}
+.fm-celebrate strong {
+  display: block;
+  color: #065f46;
+  font-size: 15px;
+}
+.fm-celebrate-sub {
+  display: block;
+  color: #047857;
+  font-size: 13px;
+  margin-top: 2px;
+}
+@keyframes celebratePop {
+  0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes confettiShake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg) scale(1.2); }
+  50% { transform: rotate(10deg) scale(1.1); }
+  75% { transform: rotate(-5deg); }
+}

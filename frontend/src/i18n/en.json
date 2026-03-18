@@ -103,7 +103,10 @@
     "pickAirport": "Pick from list",
     "closeDrawer": "Done",
     "paxLabel": "travelers",
-    "paxTooltip": "Number of travelers from this city"
+    "paxTooltip": "Number of travelers from this city",
+    "directOnly": "Direct flights only",
+    "directHint": "Show only non-stop flights",
+    "currencyLabel": "Currency"
   },
   "results": {
     "eyebrow": "Recommended destination",
@@ -140,7 +143,12 @@
     "otherOptions": "Other options",
     "hide": "Hide",
     "showMap": "Map",
-    "showCompare": "Compare"
+    "showCompare": "Compare",
+    "sortBy": "Sort by",
+    "sortPrice": "Price",
+    "sortFairness": "Fairness",
+    "celebrate": "Great deal!",
+    "celebrateSub": "This is one of the cheapest group flights we've found"
   },
   "fairness": {
     "veryBalanced": "Very balanced",

@@ -103,7 +103,10 @@
     "pickAirport": "Elegir de la lista",
     "closeDrawer": "Listo",
     "paxLabel": "viajeros",
-    "paxTooltip": "Número de viajeros desde esta ciudad"
+    "paxTooltip": "Número de viajeros desde esta ciudad",
+    "directOnly": "Solo vuelos directos",
+    "directHint": "Mostrar solo vuelos sin escalas",
+    "currencyLabel": "Moneda"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -140,7 +143,12 @@
     "otherOptions": "Otras opciones",
     "hide": "Ocultar",
     "showMap": "Mapa",
-    "showCompare": "Comparar"
+    "showCompare": "Comparar",
+    "sortBy": "Ordenar por",
+    "sortPrice": "Precio",
+    "sortFairness": "Equidad",
+    "celebrate": "¡Gran oferta!",
+    "celebrateSub": "Este es uno de los vuelos de grupo más baratos que hemos encontrado"
   },
   "fairness": {
     "veryBalanced": "Muy equilibrado",

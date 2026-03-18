@@ -22,6 +22,14 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "")
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
+// ─── Currency conversion (approximate static rates) ─────────────────────────
+const FX_RATES = { EUR: 1, GBP: 0.86, USD: 1.09 };
+const FX_SYMBOLS = { EUR: "€", GBP: "£", USD: "$" };
+function convertPrice(eur, currency) {
+  const val = eur * (FX_RATES[currency] || 1);
+  return `${FX_SYMBOLS[currency] || "€"}${val.toFixed(0)}`;
+}
+
 // ─── Fairness label (i18n-dependent) ────────────────────────────────────────
 
 function useFairnessLabel(score) {
@@ -330,6 +338,8 @@ const SearchPage = React.memo(function SearchPage({
   flexDays, setFlexDays,
   selectedDests, setSelectedDests,
   passengers, setPassengers,
+  directOnly, setDirectOnly,
+  currency, setCurrency,
   loading, error,
   onSubmit,
   recentSearches, onLoadRecent, onClearRecent,
@@ -605,6 +615,34 @@ const SearchPage = React.memo(function SearchPage({
                   )}
                 </div>
 
+                {/* Direct flights only */}
+                <div className="sf-section">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="sf-label mb-0">{t("search.directOnly")}</div>
+                      <div className="sf-hint">{t("search.directHint")}</div>
+                    </div>
+                    <div className="form-check form-switch mb-0">
+                      <input className="form-check-input" type="checkbox" id="directSwitch"
+                        checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} disabled={loading} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Currency selector */}
+                <div className="sf-section">
+                  <div className="sf-label mb-1">{t("search.currencyLabel")}</div>
+                  <div className="sf-pills">
+                    {["EUR", "GBP", "USD"].map((c) => (
+                      <button key={c} type="button"
+                        className={`sf-pill sf-pill--sm${currency === c ? " sf-pill--active" : ""}`}
+                        onClick={() => setCurrency(c)} disabled={loading}>
+                        {c === "EUR" ? "€ EUR" : c === "GBP" ? "£ GBP" : "$ USD"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Destination filter */}
                 <div className="sf-section">
                   <div className="d-flex justify-content-between align-items-center">
@@ -734,6 +772,7 @@ const WinnerCard = React.memo(function WinnerCard({
   uiCriterion, onChangeCriterion,
   flightsCount, onShare, onShareWhatsApp, shareStatus,
   onViewAlternatives, onChangeSearch,
+  currency = "EUR",
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -784,12 +823,18 @@ const WinnerCard = React.memo(function WinnerCard({
       <div className="wc-summary">
         <div className="wc-summary-item">
           <div className="wc-summary-label">{t("results.groupTotal")}</div>
-          <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-summary-price" />
+          {currency === "EUR"
+            ? <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-summary-price" />
+            : <div className="wc-summary-price price-animate">{convertPrice(dest.totalCostEUR, currency)}</div>
+          }
         </div>
         <div className="wc-summary-divider" />
         <div className="wc-summary-item">
           <div className="wc-summary-label">{t("results.avgPerPerson")}</div>
-          <AnimatedPrice value={dest.averageCostPerTraveler} decimals={0} className="wc-summary-price wc-summary-price--secondary" />
+          {currency === "EUR"
+            ? <AnimatedPrice value={dest.averageCostPerTraveler} decimals={0} className="wc-summary-price wc-summary-price--secondary" />
+            : <div className="wc-summary-price wc-summary-price--secondary price-animate">{convertPrice(dest.averageCostPerTraveler, currency)}</div>
+          }
         </div>
         <div className="wc-summary-divider" />
         <div className="wc-summary-item">
@@ -891,7 +936,7 @@ const WinnerCard = React.memo(function WinnerCard({
                         <span className="wc-flight-city">{destCity}</span>
                       </div>
                       <div className="wc-flight-price-tag">
-                        {typeof price === "number" ? formatEur(price, 0) : "—"}
+                        {typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}
                         {(offer?.passengers || 0) > 1 && (
                           <span className="wc-flight-pax-badge">×{offer.passengers}</span>
                         )}
@@ -1006,12 +1051,15 @@ export default function App() {
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
   const [passengers,    setPassengers]    = useState([1]); // passengers per origin
+  const [directOnly,    setDirectOnly]    = useState(false);
+  const [currency,      setCurrency]      = useState("EUR");
 
   // Results
   const [flights,         setFlights]         = useState([]);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
+  const [sortMode,        setSortMode]        = useState("default"); // default | price | fairness
 
   // UI state
   const [loading,     setLoading]     = useState(false);
@@ -1347,6 +1395,7 @@ export default function App() {
         ...(tripType === "roundtrip" && { returnDate }),
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
         ...(selectedDests.length > 0 && { destinations: selectedDests }),
+        ...(directOnly && { nonStop: true }),
       };
 
       const MAX_RETRIES = 3;
@@ -1490,6 +1539,8 @@ export default function App() {
           flexDays={flexDays}         setFlexDays={setFlexDays}
           selectedDests={selectedDests} setSelectedDests={setSelectedDests}
           passengers={passengers}     setPassengers={setPassengers}
+          directOnly={directOnly}     setDirectOnly={setDirectOnly}
+          currency={currency}         setCurrency={setCurrency}
           loading={loading}           error={error}
           onSubmit={handleSubmit}
           recentSearches={recentSearches}
@@ -1521,7 +1572,32 @@ export default function App() {
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
+            currency={currency}
           />
+
+          {/* Celebrate badge for cheap flights (avg < €50/pp) */}
+          {bestDestination.averageCostPerTraveler < 50 && (
+            <div className="fm-celebrate view-enter">
+              <span className="fm-celebrate-confetti">🎉</span>
+              <div>
+                <strong>{t("results.celebrate")}</strong>
+                <span className="fm-celebrate-sub">{t("results.celebrateSub")}</span>
+              </div>
+            </div>
+          )}
+
+          {/* JSON-LD structured data for SEO */}
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TravelAction",
+            "name": `Group flight to ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination}`,
+            "description": `Cheapest group flight destination from ${cleanOrigins.join(", ")}`,
+            "result": {
+              "@type": "Flight",
+              "arrivalAirport": { "@type": "Airport", "iataCode": normalizeCode(bestDestination.destination) },
+              "offers": { "@type": "Offer", "price": bestDestination.averageCostPerTraveler?.toFixed(2), "priceCurrency": "EUR" }
+            }
+          }) }} />
 
           {/* Visual tabs: Map & Compare */}
           {flights.length > 1 && (
@@ -1568,11 +1644,21 @@ export default function App() {
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
                 <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>{t("results.otherOptions")}</h3>
-                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
+                <div className="d-flex align-items-center gap-2">
+                  <span className="small" style={{ color: "#64748B" }}>{t("results.sortBy")}:</span>
+                  <div className="sf-pills">
+                    {[["default", "—"], ["price", t("results.sortPrice")], ["fairness", t("results.sortFairness")]].map(([v, l]) => (
+                      <button key={v} type="button"
+                        className={`sf-pill sf-pill--sm${sortMode === v ? " sf-pill--active" : ""}`}
+                        onClick={() => setSortMode(v)}>{l}</button>
+                    ))}
+                  </div>
+                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
+                </div>
               </div>
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <FlightResults
-                  flights={flights}
+                  flights={sortMode === "price" ? [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR) : sortMode === "fairness" ? [...flights].sort((a, b) => (b.fairnessScore || 0) - (a.fairnessScore || 0)) : flights}
                   optimizeBy={uiCriterion}
                   bestDestination={bestDestination}
                   origins={cleanOrigins}
