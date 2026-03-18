@@ -128,7 +128,8 @@
     "dateWarnLong": "Your trip is longer than 30 days — some airlines price long trips differently",
     "unknownAirport": "Unknown airport — pick from the list",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "kbdHint": "Press Enter to search"
   },
   "results": {
     "eyebrow": "Recommended destination",
@@ -180,7 +181,9 @@
     "savingsPct": "{{pct}}% cheaper than average",
     "tripDays": "{{n}}-day trip",
     "shareNative": "Share",
-    "cheapestOrigin": "Cheapest route"
+    "cheapestOrigin": "Cheapest route",
+    "vsLastCheaper": "{{pct}}% cheaper than last search",
+    "vsLastPricier": "{{pct}}% pricier than last search"
   },
   "vs": {
     "title": "Compare destinations",

@@ -128,7 +128,8 @@
     "dateWarnLong": "Tu viaje dura más de 30 días — algunas aerolíneas cobran diferente en viajes largos",
     "unknownAirport": "Aeropuerto desconocido — elige de la lista",
     "moveUp": "Subir",
-    "moveDown": "Bajar"
+    "moveDown": "Bajar",
+    "kbdHint": "Pulsa Enter para buscar"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -180,7 +181,9 @@
     "savingsPct": "{{pct}}% más barato que la media",
     "tripDays": "Viaje de {{n}} días",
     "shareNative": "Compartir",
-    "cheapestOrigin": "Ruta más barata"
+    "cheapestOrigin": "Ruta más barata",
+    "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
+    "vsLastPricier": "{{pct}}% más caro que la última búsqueda"
   },
   "vs": {
     "title": "Comparar destinos",

@@ -195,3 +195,29 @@ export function countryFlag(code) {
   const ap = AIRPORT_MAP[code];
   return ap ? (COUNTRY_FLAGS[ap.country] || "") : "";
 }
+
+// Destination quick-info (timezone offset from UTC, language tip)
+const DEST_INFO = {
+  MAD: { tz: "+1", lang: "ES" }, BCN: { tz: "+1", lang: "ES/CA" }, AGP: { tz: "+1", lang: "ES" },
+  PMI: { tz: "+1", lang: "ES/CA" }, TFS: { tz: "+0", lang: "ES" },
+  LON: { tz: "+0", lang: "EN" }, EDI: { tz: "+0", lang: "EN" },
+  PAR: { tz: "+1", lang: "FR" }, MRS: { tz: "+1", lang: "FR" }, NCE: { tz: "+1", lang: "FR" },
+  ROM: { tz: "+1", lang: "IT" }, MIL: { tz: "+1", lang: "IT" }, NAP: { tz: "+1", lang: "IT" },
+  BER: { tz: "+1", lang: "DE" }, MUC: { tz: "+1", lang: "DE" }, FRA: { tz: "+1", lang: "DE" },
+  AMS: { tz: "+1", lang: "NL/EN" }, LIS: { tz: "+0", lang: "PT" }, OPO: { tz: "+0", lang: "PT" },
+  VIE: { tz: "+1", lang: "DE" }, PRG: { tz: "+1", lang: "CS" }, ATH: { tz: "+2", lang: "EL" },
+  CPH: { tz: "+1", lang: "DA" }, BUD: { tz: "+1", lang: "HU" }, DUB: { tz: "+0", lang: "EN" },
+  BRU: { tz: "+1", lang: "FR/NL" }, WAW: { tz: "+1", lang: "PL" },
+  OSL: { tz: "+1", lang: "NO" }, HEL: { tz: "+2", lang: "FI" }, STO: { tz: "+1", lang: "SV" },
+  KRK: { tz: "+1", lang: "PL" }, BEG: { tz: "+1", lang: "SR" },
+  OTP: { tz: "+2", lang: "RO" }, SOF: { tz: "+2", lang: "BG" },
+  IST: { tz: "+3", lang: "TR" }, RAK: { tz: "+1", lang: "AR/FR" },
+  DBV: { tz: "+1", lang: "HR" }, SPU: { tz: "+1", lang: "HR" },
+  MLA: { tz: "+1", lang: "EN/MT" }, TIA: { tz: "+1", lang: "SQ" },
+  TLV: { tz: "+2", lang: "HE/EN" }, RHO: { tz: "+2", lang: "EL" },
+  TLL: { tz: "+2", lang: "ET" }, RIX: { tz: "+2", lang: "LV" }, VNO: { tz: "+2", lang: "LT" },
+  SKG: { tz: "+2", lang: "EL" }, GVA: { tz: "+1", lang: "FR" }, ZRH: { tz: "+1", lang: "DE" },
+};
+export function destQuickInfo(code) {
+  return DEST_INFO[code] || null;
+}

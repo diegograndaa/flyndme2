@@ -1112,6 +1112,32 @@ const SearchPage = React.memo(function SearchPage({
 
             {error && <FriendlyError message={error} onRetry={onSubmit} />}
 
+            {/* Traveler summary bar */}
+            {origins.some((o) => o.trim()) && (
+              <div className="sf-summary-bar">
+                <div className="sf-summary-travelers">
+                  {origins.filter((o) => o.trim()).map((o, i) => {
+                    const c = normalizeCode(o);
+                    const flag = countryFlag(c);
+                    return (
+                      <span key={i} className="sf-summary-chip" title={cityOf(c) || c}>
+                        {flag && <span className="sf-summary-flag">{flag}</span>}
+                        {c}
+                        {(passengers[origins.indexOf(o)] || 1) > 1 && (
+                          <span className="sf-summary-pax">×{passengers[origins.indexOf(o)]}</span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="sf-summary-meta">
+                  {departureDate && <span>{formatDate(departureDate)}</span>}
+                  {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
+                  {flexEnabled && <span className="sf-summary-flex">±{flexDays}d</span>}
+                </div>
+              </div>
+            )}
+
             <div className="sf-submit-wrap">
               <button type="submit" className="btn-fm-primary w-100 py-3 fw-bold fs-6" disabled={loading}>
                 {loading ? t("search.searching") : t("search.submit")}
@@ -1119,6 +1145,7 @@ const SearchPage = React.memo(function SearchPage({
             </div>
             <div className="sf-footnote">
               <span>{t("search.footnoteTime")}</span>
+              <span className="sf-kbd-hint">{t("search.kbdHint")}</span>
               <span>{t("search.footnotePrices")}</span>
             </div>
           </form>
@@ -1169,7 +1196,7 @@ const SearchPage = React.memo(function SearchPage({
 const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate, departureDate: depDate,
   uiCriterion, onChangeCriterion,
-  flightsCount, allFlights = [],
+  flightsCount, allFlights = [], lastBestPrice = 0,
   onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, shareStatus,
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
@@ -1178,6 +1205,7 @@ const WinnerCard = React.memo(function WinnerCard({
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(true);
 
   useEffect(() => {
     if (dest) {
@@ -1206,6 +1234,15 @@ const WinnerCard = React.memo(function WinnerCard({
     priceMap[k] = f.price;
     offerMap[k] = f.offer || null;
   });
+
+  // Price comparison vs last search
+  const priceVsLast = useMemo(() => {
+    if (!lastBestPrice || !dest?.averageCostPerTraveler || lastBestPrice === dest.averageCostPerTraveler) return null;
+    const diff = dest.averageCostPerTraveler - lastBestPrice;
+    const pct = Math.round((Math.abs(diff) / lastBestPrice) * 100);
+    if (pct < 2) return null; // ignore tiny differences
+    return { cheaper: diff < 0, pct, diff: Math.abs(diff) };
+  }, [lastBestPrice, dest]);
 
   // Cheapest origin (for highlighting in booking cards)
   const cheapestOrigin = useMemo(() => {
@@ -1246,7 +1283,7 @@ const WinnerCard = React.memo(function WinnerCard({
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
         </button>
-        {/* Savings + trip duration chips */}
+        {/* Savings + trip duration + vs last search chips */}
         <div className="wc-chips-overlay">
           {savingsPct > 5 && (
             <span className="wc-savings-chip">
@@ -1256,6 +1293,13 @@ const WinnerCard = React.memo(function WinnerCard({
           {tripDays > 0 && (
             <span className="wc-trip-days-chip">
               {t("results.tripDays", { n: tripDays })}
+            </span>
+          )}
+          {priceVsLast && (
+            <span className={`wc-vs-last-chip${priceVsLast.cheaper ? " wc-vs-last-chip--cheaper" : " wc-vs-last-chip--pricier"}`}>
+              {priceVsLast.cheaper
+                ? t("results.vsLastCheaper", { pct: priceVsLast.pct })
+                : t("results.vsLastPricier", { pct: priceVsLast.pct })}
             </span>
           )}
         </div>
@@ -1338,12 +1382,18 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
         </div>
 
-        {/* ── Booking section (Kiwi/Skyscanner style) ── */}
+        {/* ── Booking section (collapsible) ── */}
         {cleanOrigins.length > 0 && dep && (
           <div className="wc-booking">
-            <div className="wc-booking-title">{t("results.bookTitle")}</div>
-            <div className="wc-booking-sub">{t("results.bookSub")}</div>
+            <button type="button" className="wc-booking-toggle" onClick={() => setBookingOpen((v) => !v)}>
+              <div>
+                <div className="wc-booking-title">{t("results.bookTitle")}</div>
+                <div className="wc-booking-sub">{t("results.bookSub")}</div>
+              </div>
+              <span className={`wc-booking-chevron${bookingOpen ? " wc-booking-chevron--open" : ""}`}>▾</span>
+            </button>
 
+            <div className={`wc-booking-collapse${bookingOpen ? " wc-booking-collapse--open" : ""}`}>
             <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];
@@ -1459,6 +1509,7 @@ const WinnerCard = React.memo(function WinnerCard({
                 );
               })}
             </div>
+            </div>{/* /wc-booking-collapse */}
           </div>
         )}
 
@@ -1693,6 +1744,11 @@ export default function App() {
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [toast,       setToast]       = useState(null); // { message, type }
+
+  // Last search best price (for comparison)
+  const [lastBestPrice, setLastBestPrice] = useState(() => {
+    try { return Number(localStorage.getItem("flyndme_last_best") || 0); } catch { return 0; }
+  });
 
   // ── Recent searches (localStorage) ────────────────────────────────────────
   const RECENT_KEY = "flyndme_recent";
@@ -2132,6 +2188,12 @@ export default function App() {
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
           saveRecentSearch({ origins: cleanOrigins, tripType, departureDate, returnDate });
+          // Save best price for next-search comparison
+          const bestTotal = pickBest(adjusted, "total");
+          if (bestTotal?.averageCostPerTraveler) {
+            try { localStorage.setItem("flyndme_last_best", String(bestTotal.averageCostPerTraveler)); } catch {}
+            setLastBestPrice(bestTotal.averageCostPerTraveler);
+          }
           trackEvent("search_complete", {
             origins: cleanOrigins.length,
             results: arr.length,
@@ -2245,6 +2307,7 @@ export default function App() {
             onChangeCriterion={handleCriterion}
             flightsCount={flights.length}
             allFlights={flights}
+            lastBestPrice={lastBestPrice}
             onShare={handleShare}
             onShareWhatsApp={handleShareWhatsApp}
             onShareTelegram={handleShareTelegram}

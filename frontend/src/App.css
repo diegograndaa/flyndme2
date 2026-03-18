@@ -2317,8 +2317,8 @@ body {
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Card entry animations */
@@ -2580,10 +2580,28 @@ body {
 /* ── Skeleton loading ──────────────────────────────────────── */
 
 .fm-skeleton {
-  background: linear-gradient(90deg, var(--slate-100) 25%, var(--slate-200) 50%, var(--slate-100) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  background: linear-gradient(
+    105deg,
+    var(--slate-100) 0%,
+    var(--slate-100) 30%,
+    rgba(255,255,255,.6) 50%,
+    var(--slate-100) 70%,
+    var(--slate-100) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
   border-radius: var(--radius-sm);
+}
+[data-theme="dark"] .fm-skeleton {
+  background: linear-gradient(
+    105deg,
+    rgba(255,255,255,.04) 0%,
+    rgba(255,255,255,.04) 30%,
+    rgba(255,255,255,.1) 50%,
+    rgba(255,255,255,.04) 70%,
+    rgba(255,255,255,.04) 100%
+  );
+  background-size: 300% 100%;
 }
 
 /* Stepper */
@@ -3512,4 +3530,188 @@ html {
 }
 .wc-action-btn--summary:hover {
   background: var(--slate-200);
+}
+
+/* ── Traveler summary bar (above submit) ────────────────────── */
+
+.sf-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--slate-600);
+}
+.sf-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.sf-summary-flag {
+  font-size: 14px;
+}
+.sf-summary-pax {
+  font-size: 10px;
+  color: var(--slate-400);
+  font-weight: 500;
+}
+.sf-summary-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--slate-500);
+}
+.sf-summary-flex {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: #EFF6FF;
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 600;
+}
+[data-theme="dark"] .sf-summary-bar {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .sf-summary-chip {
+  background: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+[data-theme="dark"] .sf-summary-flex {
+  background: rgba(0,98,227,.15);
+}
+
+/* ── Keyboard hint ──────────────────────────────────────────── */
+
+.sf-kbd-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--slate-400);
+  margin-top: 6px;
+}
+.sf-kbd-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--slate-100);
+  border: 1px solid var(--slate-300);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--slate-300);
+  color: var(--slate-500);
+}
+[data-theme="dark"] .sf-kbd-hint kbd {
+  background: #1E293B;
+  border-color: #334155;
+  box-shadow: 0 1px 0 #334155;
+  color: #94A3B8;
+}
+
+/* ── Collapsible booking section ────────────────────────────── */
+
+.wc-booking-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.85);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .2s;
+  margin-top: 8px;
+}
+.wc-booking-toggle:hover {
+  color: white;
+}
+.wc-booking-chevron {
+  display: inline-block;
+  transition: transform .3s ease;
+  font-size: 12px;
+}
+.wc-booking-chevron.open {
+  transform: rotate(180deg);
+}
+.wc-booking-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .35s ease;
+}
+.wc-booking-collapse.open {
+  grid-template-rows: 1fr;
+}
+.wc-booking-collapse > div {
+  overflow: hidden;
+}
+
+/* ── Price vs last search chip ──────────────────────────────── */
+
+.wc-vs-last-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+.wc-vs-last-chip--cheaper {
+  background: rgba(22,163,74,.2);
+  color: #4ADE80;
+}
+.wc-vs-last-chip--pricier {
+  background: rgba(220,38,38,.2);
+  color: #FCA5A5;
+}
+
+/* ── Alt card chips row ─────────────────────────────────────── */
+
+.alt-card-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.alt-card-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--slate-500);
+  white-space: nowrap;
+}
+[data-theme="dark"] .alt-card-info-chip {
+  background: #1E293B;
+  border-color: #334155;
+  color: #94A3B8;
 }

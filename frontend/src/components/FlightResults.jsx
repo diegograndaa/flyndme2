@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, formatEur, fairnessColor,
-  buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf
+  buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf, countryFlag, destQuickInfo
 } from "../utils/helpers";
 import { getCityImage } from "../utils/cityImages";
 
@@ -61,6 +61,9 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
   // Weather/season chip
   const weatherChip = getWeatherChip(code, dep, t);
 
+  // Quick info (timezone + language)
+  const qInfo = destQuickInfo(code);
+
   // Build first origin's Skyscanner URL for the main CTA
   const firstOrigin = origins[0] || "";
   const mainSsUrl = buildSkyscannerUrl({ origin: firstOrigin, destination: code, departureDate: dep, returnDate: ret, tripType });
@@ -83,8 +86,11 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
       {/* Content */}
       <div className="alt-card-body">
         <div className="alt-card-rank-row">
-          <div className="alt-card-rank">#{rank}</div>
-          {weatherChip && <span className="alt-card-weather">{weatherChip}</span>}
+          <div className="alt-card-rank">{countryFlag(code)} #{rank}</div>
+          <div className="alt-card-chips">
+            {weatherChip && <span className="alt-card-weather">{weatherChip}</span>}
+            {qInfo && <span className="alt-card-info-chip" title={`UTC${qInfo.tz} · ${qInfo.lang}`}>🕐 UTC{qInfo.tz}</span>}
+          </div>
         </div>
 
         <div className="alt-card-prices">
