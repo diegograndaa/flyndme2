@@ -120,7 +120,12 @@
     "cabinEconomy": "Turista",
     "cabinPremium": "Premium",
     "cabinBusiness": "Business",
-    "currencyLabel": "Moneda"
+    "currencyLabel": "Moneda",
+    "dateWarnPast": "Esta fecha ya pasó — elige una fecha futura",
+    "dateWarnSoon": "Sales en menos de 3 días — los precios pueden ser más altos de lo normal",
+    "dateWarnFar": "Esta fecha es en más de 11 meses — puede que las aerolíneas aún no tengan horarios",
+    "dateWarnSweet": "¡Buen momento! Reservar con 6-8 semanas de antelación suele dar los mejores precios",
+    "dateWarnLong": "Tu viaje dura más de 30 días — algunas aerolíneas cobran diferente en viajes largos"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -214,7 +219,12 @@
     "sortPriceDesc": "Más caro primero",
     "sortPerPerson": "Precio por persona",
     "sortFairness": "Más equitativo",
-    "noMore": "No hay más alternativas."
+    "noMore": "No hay más alternativas.",
+    "noAltSuggestion": "Prueba añadiendo más orígenes o usando fechas flexibles para encontrar alternativas.",
+    "season.summer": "Verano",
+    "season.winter": "Invierno",
+    "season.spring": "Primavera",
+    "season.autumn": "Otoño"
   },
   "loading": {
     "messages": [

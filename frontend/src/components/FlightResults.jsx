@@ -6,6 +6,42 @@ import {
 } from "../utils/helpers";
 import { getCityImage } from "../utils/cityImages";
 
+// ─── Season helper ────────────────────────────────────────────────────────────
+
+const SEASON_ICONS = { summer: "☀️", winter: "❄️", spring: "🌸", autumn: "🍂" };
+const TEMP_HINTS = {
+  AGP: [32, 12], PMI: [31, 10], TFS: [28, 19], BCN: [30, 9],
+  ROM: [31, 7], ATH: [34, 8], LIS: [28, 10], MLA: [33, 11],
+  LON: [23, 5], PAR: [25, 4], BER: [25, 0], AMS: [22, 3],
+  DUB: [20, 5], PRG: [26, -1], VIE: [27, 0], BUD: [28, -1],
+  WAW: [25, -2], CPH: [22, 1], OSL: [22, -4], HEL: [22, -6],
+  STO: [22, -3], MIL: [30, 2], NAP: [30, 7], OPO: [25, 9],
+  RAK: [38, 12], IST: [29, 5], DBV: [30, 6], SPU: [30, 6],
+  NCE: [28, 7], GVA: [26, 1], ZRH: [25, 0], MUC: [24, -1],
+};
+
+function getSeasonKey(month) {
+  if (month >= 5 && month <= 8) return "summer";
+  if (month >= 11 || month <= 1) return "winter";
+  if (month >= 2 && month <= 4) return "spring";
+  return "autumn";
+}
+
+function getWeatherChip(code, dateStr, t) {
+  if (!dateStr) return null;
+  const month = new Date(dateStr + "T00:00:00").getMonth();
+  const season = getSeasonKey(month);
+  const icon = SEASON_ICONS[season] || "🌤️";
+  const temps = TEMP_HINTS[code];
+  let tempStr = "";
+  if (temps) {
+    const w = season === "summer" ? 1 : season === "winter" ? 0 : 0.5;
+    tempStr = ` ~${Math.round(temps[1] + (temps[0] - temps[1]) * w)}°C`;
+  }
+  const seasonLabel = t("alt.season." + season) || season;
+  return `${icon} ${seasonLabel}${tempStr}`;
+}
+
 // ─── Alternative card ─────────────────────────────────────────────────────────
 
 const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate, returnDate, tripType, bestDest }) {
@@ -21,6 +57,9 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
   const ret      = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
   const fairness = dest.fairnessScore ?? 0;
   const fColor   = fairnessColor(fairness);
+
+  // Weather/season chip
+  const weatherChip = getWeatherChip(code, dep, t);
 
   // Build first origin's Skyscanner URL for the main CTA
   const firstOrigin = origins[0] || "";
@@ -43,7 +82,10 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
 
       {/* Content */}
       <div className="alt-card-body">
-        <div className="alt-card-rank">#{rank}</div>
+        <div className="alt-card-rank-row">
+          <div className="alt-card-rank">#{rank}</div>
+          {weatherChip && <span className="alt-card-weather">{weatherChip}</span>}
+        </div>
 
         <div className="alt-card-prices">
           <div>
@@ -146,12 +188,13 @@ export default function FlightResults({
 
   if (!safeFlights.length) return (
     <div className="alt-empty">
+      <div className="alt-empty-icon">🔎</div>
       <div className="alt-empty-title">{t("alt.noAlternatives")}</div>
-      {budgetEnabled && (
-        <div className="alt-empty-sub">
-          {t("alt.budgetActive", { amount: formatEur(Number(maxBudgetPerTraveler ?? 0), 0) })}
-        </div>
-      )}
+      <div className="alt-empty-sub">
+        {budgetEnabled
+          ? t("alt.budgetActive", { amount: formatEur(Number(maxBudgetPerTraveler ?? 0), 0) })
+          : t("alt.noAltSuggestion")}
+      </div>
     </div>
   );
 

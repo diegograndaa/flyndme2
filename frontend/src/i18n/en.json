@@ -120,7 +120,12 @@
     "cabinEconomy": "Economy",
     "cabinPremium": "Premium",
     "cabinBusiness": "Business",
-    "currencyLabel": "Currency"
+    "currencyLabel": "Currency",
+    "dateWarnPast": "This date is in the past — please pick a future date",
+    "dateWarnSoon": "Departing in less than 3 days — prices may be higher than usual",
+    "dateWarnFar": "This date is over 11 months away — airline schedules may not be available yet",
+    "dateWarnSweet": "Great timing! Booking 6-8 weeks ahead often gives the best prices",
+    "dateWarnLong": "Your trip is longer than 30 days — some airlines price long trips differently"
   },
   "results": {
     "eyebrow": "Recommended destination",
@@ -214,7 +219,12 @@
     "sortPriceDesc": "Most expensive first",
     "sortPerPerson": "Price per person",
     "sortFairness": "Most fair",
-    "noMore": "No more alternatives to show."
+    "noMore": "No more alternatives to show.",
+    "noAltSuggestion": "Try adding more origins or using flexible dates to find alternatives.",
+    "season.summer": "Summer",
+    "season.winter": "Winter",
+    "season.spring": "Spring",
+    "season.autumn": "Autumn"
   },
   "loading": {
     "messages": [

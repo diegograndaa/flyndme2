@@ -427,6 +427,87 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// ─── Date validation warnings (real-time) ───────────────────────────────────
+
+function useDateWarnings(departureDate, returnDate, tripType) {
+  const { t } = useI18n();
+  return useMemo(() => {
+    const warnings = [];
+    if (!departureDate) return warnings;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dep = new Date(departureDate + "T00:00:00");
+
+    if (dep < today) {
+      warnings.push({ key: "past", text: t("search.dateWarnPast"), type: "error" });
+    } else {
+      const diffDays = Math.round((dep - today) / 86400000);
+      if (diffDays <= 3) {
+        warnings.push({ key: "soon", text: t("search.dateWarnSoon"), type: "warn" });
+      }
+      if (diffDays > 330) {
+        warnings.push({ key: "far", text: t("search.dateWarnFar"), type: "warn" });
+      }
+      if (diffDays >= 42 && diffDays <= 56) {
+        warnings.push({ key: "sweet", text: t("search.dateWarnSweet"), type: "tip" });
+      }
+    }
+
+    if (tripType === "roundtrip" && returnDate && departureDate) {
+      const ret = new Date(returnDate + "T00:00:00");
+      const tripLen = Math.round((ret - dep) / 86400000);
+      if (tripLen > 30) {
+        warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
+      }
+    }
+
+    return warnings;
+  }, [departureDate, returnDate, tripType, t]);
+}
+
+// ─── Season/weather hint for destination ─────────────────────────────────────
+
+const SEASON_DATA = {
+  // month → season label key (0=Jan)
+  // lat-based: "north" for European cities
+  getSeasonKey(month) {
+    if (month >= 5 && month <= 8) return "summer";
+    if (month >= 11 || month <= 1) return "winter";
+    if (month >= 2 && month <= 4) return "spring";
+    return "autumn";
+  },
+  // avg temp ranges by destination for summer/winter
+  tempHints: {
+    AGP: [32, 12], PMI: [31, 10], TFS: [28, 19], BCN: [30, 9],
+    ROM: [31, 7], ATH: [34, 8], LIS: [28, 10], MLA: [33, 11],
+    LON: [23, 5], PAR: [25, 4], BER: [25, 0], AMS: [22, 3],
+    DUB: [20, 5], PRG: [26, -1], VIE: [27, 0], BUD: [28, -1],
+    WAW: [25, -2], CPH: [22, 1], OSL: [22, -4], HEL: [22, -6],
+    STO: [22, -3], MIL: [30, 2], NAP: [30, 7], OPO: [25, 9],
+    RAK: [38, 12], IST: [29, 5],
+  }
+};
+
+function getWeatherHint(destCode, departureDate, t) {
+  if (!departureDate || !destCode) return null;
+  const month = new Date(departureDate + "T00:00:00").getMonth();
+  const seasonKey = SEASON_DATA.getSeasonKey(month);
+  const temps = SEASON_DATA.tempHints[destCode];
+  const seasonIcons = { summer: "☀️", winter: "❄️", spring: "🌸", autumn: "🍂" };
+  const icon = seasonIcons[seasonKey] || "🌤️";
+
+  let tempStr = "";
+  if (temps) {
+    // Interpolate between summer [0] and winter [1]
+    const summerWeight = seasonKey === "summer" ? 1 : seasonKey === "winter" ? 0 : 0.5;
+    const approxTemp = Math.round(temps[1] + (temps[0] - temps[1]) * summerWeight);
+    tempStr = ` · ~${approxTemp}°C`;
+  }
+
+  return `${icon} ${t("alt.season." + seasonKey)}${tempStr}`;
+}
+
 // ─── FAQ accordion item ─────────────────────────────────────────────────────
 
 const FaqItem = React.memo(function FaqItem({ q, a }) {
@@ -605,6 +686,8 @@ const SearchPage = React.memo(function SearchPage({
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [showMobileAirports, setShowMobileAirports] = useState(false);
 
+  const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
+
   const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
   const filterVal = origins[safeIdx]?.trim().toLowerCase() || "";
 
@@ -780,6 +863,18 @@ const SearchPage = React.memo(function SearchPage({
                   </div>
                 )}
               </div>
+
+              {/* Date warnings */}
+              {dateWarnings.length > 0 && (
+                <div className="sf-date-warnings mt-2">
+                  {dateWarnings.map((w) => (
+                    <div key={w.key} className={`sf-date-warn sf-date-warn--${w.type}`}>
+                      <span className="sf-date-warn-icon">{w.type === "error" ? "⚠️" : w.type === "warn" ? "⚡" : "💡"}</span>
+                      <span>{w.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Flexible dates toggle */}
               <div className="sf-flex-toggle mt-3">
@@ -2121,7 +2216,7 @@ export default function App() {
               <button type="button"
                 className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
                 onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
-                📋 {t("results.otherOptions")}
+                📋 {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
               </button>
               {flights.length >= 2 && (
                 <button type="button"
