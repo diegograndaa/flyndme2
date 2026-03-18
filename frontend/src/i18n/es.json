@@ -213,7 +213,16 @@
     ],
     "ariaLabel": "Buscando vuelos",
     "steps": ["Buscando vuelos", "Comparando precios", "Preparando resultados"],
-    "skeletonHint": "Analizando {{n}} combinaciones de rutas…"
+    "skeletonHint": "Analizando {{n}} combinaciones de rutas…",
+    "tips": [
+      "Los vuelos de martes y miércoles suelen ser los más baratos",
+      "Reservar con 6-8 semanas de antelación da los mejores precios",
+      "Volar entre semana puede ahorrar hasta un 30%",
+      "Las aerolíneas low-cost suelen volar a aeropuertos secundarios",
+      "Las fechas flexibles revelan ofertas ocultas",
+      "Los vuelos de madrugada suelen ser más baratos",
+      "Los vuelos con escala pueden costar la mitad que los directos"
+    ]
   },
   "recentSearches": {
     "title": "Búsquedas recientes",

@@ -213,7 +213,16 @@
     ],
     "ariaLabel": "Searching flights",
     "steps": ["Searching flights", "Comparing prices", "Preparing results"],
-    "skeletonHint": "Analyzing {{n}} route combinations…"
+    "skeletonHint": "Analyzing {{n}} route combinations…",
+    "tips": [
+      "Tuesday and Wednesday flights are often the cheapest",
+      "Booking 6-8 weeks ahead usually gives the best prices",
+      "Flying mid-week can save up to 30% vs weekends",
+      "Budget airlines often fly to secondary airports nearby",
+      "Flexible dates can reveal hidden deals",
+      "Early morning flights are typically cheaper",
+      "Connecting flights can be half the price of direct ones"
+    ]
   },
   "recentSearches": {
     "title": "Recent searches",

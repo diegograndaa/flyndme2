@@ -163,6 +163,36 @@ const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
   );
 });
 
+// ─── Loading tips carousel ──────────────────────────────────────────────────
+
+const LoadingTips = React.memo(function LoadingTips() {
+  const { t } = useI18n();
+  const tips = t("loading.tips") || [];
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * Math.max(tips.length, 1)));
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    if (tips.length <= 1) return;
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setIdx((i) => (i + 1) % tips.length);
+        setFade(true);
+      }, 300);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [tips.length]);
+
+  if (!tips.length) return null;
+
+  return (
+    <div className={`loading-tip${fade ? " loading-tip--visible" : ""}`}>
+      <span className="loading-tip-icon">💡</span>
+      <span className="loading-tip-text">{tips[idx % tips.length]}</span>
+    </div>
+  );
+});
+
 // ─── Search skeleton (loading state) ────────────────────────────────────────
 
 const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
@@ -196,6 +226,9 @@ const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
       </div>
 
       <p className="sk-hint">{t("loading.skeletonHint", { n: numCombinations })}</p>
+
+      {/* Travel tips carousel */}
+      <LoadingTips />
 
       {/* Skeleton winner card */}
       <div className="sk-card">
@@ -264,6 +297,25 @@ function useCountUp(target, duration = 800, decimals = 0) {
 function AnimatedPrice({ value, decimals = 2, className = "" }) {
   const formatted = useCountUp(value, 800, decimals);
   return <div className={`${className} price-animate`}>{formatted}</div>;
+}
+
+function AnimatedStat({ value }) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    const to = typeof value === "number" ? value : 0;
+    const start = performance.now();
+    const duration = 600;
+    const animate = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(eased * to));
+      if (p < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [value]);
+  return <strong>{display}</strong>;
 }
 
 // ─── Error boundary ───────────────────────────────────────────────────────────
@@ -811,9 +863,11 @@ const SearchPage = React.memo(function SearchPage({
 
             {error && <div className="alert alert-danger py-2 mt-3" aria-live="polite">{error}</div>}
 
-            <button type="submit" className="btn-fm-primary w-100 mt-3 py-3 fw-bold fs-6" disabled={loading}>
-              {loading ? t("search.searching") : t("search.submit")}
-            </button>
+            <div className="sf-submit-wrap">
+              <button type="submit" className="btn-fm-primary w-100 py-3 fw-bold fs-6" disabled={loading}>
+                {loading ? t("search.searching") : t("search.submit")}
+              </button>
+            </div>
             <div className="sf-footnote">
               <span>{t("search.footnoteTime")}</span>
               <span>{t("search.footnotePrices")}</span>
@@ -866,9 +920,10 @@ const SearchPage = React.memo(function SearchPage({
 const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate,
   uiCriterion, onChangeCriterion,
-  flightsCount, onShare, onShareWhatsApp, shareStatus,
+  flightsCount, onShare, onShareWhatsApp, onShareTelegram, onShareEmail, shareStatus,
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
+  searchBadges = [],
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -1116,10 +1171,25 @@ const WinnerCard = React.memo(function WinnerCard({
           <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
             <span className="wc-wa-icon">💬</span> WhatsApp
           </button>
+          <button type="button" className="wc-action-btn wc-action-btn--telegram" onClick={onShareTelegram}>
+            ✈ Telegram
+          </button>
+          <button type="button" className="wc-action-btn wc-action-btn--email" onClick={onShareEmail}>
+            ✉ Email
+          </button>
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
           </button>
         </div>
+
+        {/* Search badges */}
+        {searchBadges.length > 0 && (
+          <div className="wc-badges">
+            {searchBadges.map((b, i) => (
+              <span key={i} className="wc-badge">{b}</span>
+            ))}
+          </div>
+        )}
 
         <div className="wc-disclaimer">{t("results.disclaimer")}</div>
       </div>
@@ -1538,6 +1608,32 @@ export default function App() {
     trackEvent("share_whatsapp", { destination: code });
   };
 
+  const handleShareTelegram = () => {
+    if (!bestDestination) return;
+    const code = normalizeCode(bestDestination.destination);
+    const destName = destLabel(code);
+    const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+    trackEvent("share_telegram", { destination: code });
+  };
+
+  const handleShareEmail = () => {
+    if (!bestDestination) return;
+    const code = normalizeCode(bestDestination.destination);
+    const destName = destLabel(code);
+    const subject = `FlyndMe — ${t("results.eyebrow")}: ${destName}`;
+    const body = [
+      `✈ ${destName}`,
+      `${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}`,
+      `${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
+      "",
+      window.location.href,
+    ].join("\n");
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    trackEvent("share_email", { destination: code });
+  };
+
   // ── Simple analytics (beacon-based, no external deps) ─────────────────────
 
   function trackEvent(event, data = {}) {
@@ -1787,10 +1883,18 @@ export default function App() {
             flightsCount={flights.length}
             onShare={handleShare}
             onShareWhatsApp={handleShareWhatsApp}
+            onShareTelegram={handleShareTelegram}
+            onShareEmail={handleShareEmail}
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
             currency={currency}
+            searchBadges={[
+              cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
+              directOnly && t("search.directOnly"),
+              flexEnabled && `± ${flexDays} ${t("search.flexDaysLabel") || "days"}`,
+              tripType === "roundtrip" && t("search.roundtrip"),
+            ].filter(Boolean)}
           />
 
           {/* Celebrate badge for cheap flights (avg < €50/pp) */}
@@ -1807,15 +1911,15 @@ export default function App() {
           {/* Destinations analyzed counter */}
           <div className="fm-stats-bar view-enter">
             <span className="fm-stats-item">
-              <strong>{flights.length}</strong> {t("results.destsAnalyzed")}
+              <AnimatedStat value={flights.length} /> {t("results.destsAnalyzed")}
             </span>
             <span className="fm-stats-sep">·</span>
             <span className="fm-stats-item">
-              <strong>{cleanOrigins.length}</strong> {t("results.originsUsed")}
+              <AnimatedStat value={cleanOrigins.length} /> {t("results.originsUsed")}
             </span>
             <span className="fm-stats-sep">·</span>
             <span className="fm-stats-item">
-              <strong>{flights.length * cleanOrigins.length}</strong> {t("results.routesCompared")}
+              <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
             </span>
           </div>
 
