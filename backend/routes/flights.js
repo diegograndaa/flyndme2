@@ -155,6 +155,7 @@ router.post("/multi-origin", async (req, res) => {
       dateMode,
       flexDays,
       nonStop,
+      travelClass,
       optimizeBy,
       maxBudgetPerTraveler,
       maxBudgetPerFlight,
@@ -213,7 +214,7 @@ router.post("/multi-origin", async (req, res) => {
     // ── Cache ─────────────────────────────────────────────────────────────────
     const cacheKey = JSON.stringify({
       originList, destinations, departureDate, returnDate,
-      tripType, dateMode, flexDays, nonStop, optimizeBy, safeMaxAvg, safeMaxFlight,
+      tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
     });
     const cached = getCached(cacheKey);
     if (cached) {
@@ -265,6 +266,7 @@ router.post("/multi-origin", async (req, res) => {
 
     // ── Search: process destinations in parallel chunks (respect rate limits) ──────
     const optionsBase = { nonStop, max: 5 };
+    if (travelClass) optionsBase.travelClass = travelClass;
     const enriched    = [];
 
     console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas = ${combinations} llamadas`);

@@ -106,6 +106,10 @@
     "paxTooltip": "Number of travelers from this city",
     "directOnly": "Direct flights only",
     "directHint": "Show only non-stop flights",
+    "cabinLabel": "Cabin class",
+    "cabinEconomy": "Economy",
+    "cabinPremium": "Premium",
+    "cabinBusiness": "Business",
     "currencyLabel": "Currency"
   },
   "results": {
@@ -148,7 +152,16 @@
     "sortPrice": "Price",
     "sortFairness": "Fairness",
     "celebrate": "Great deal!",
-    "celebrateSub": "This is one of the cheapest group flights we've found"
+    "celebrateSub": "This is one of the cheapest group flights we've found",
+    "originsUsed": "origins",
+    "routesCompared": "routes compared",
+    "compareVs": "Compare"
+  },
+  "vs": {
+    "title": "Compare destinations",
+    "totalCost": "Total group cost",
+    "avgPerPerson": "Avg per person",
+    "fairness": "Fairness score"
   },
   "fairness": {
     "veryBalanced": "Very balanced",

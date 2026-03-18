@@ -228,8 +228,9 @@ async function searchFlightOffer(origin, destination, departureDate, options = {
     currencyCode: options.currencyCode || "EUR",
     max:          options.max > 0     ? options.max    : 5,
   };
-  if (options.nonStop !== undefined) params.nonStop     = options.nonStop;
-  if (options.returnDate)            params.returnDate  = options.returnDate;
+  if (options.nonStop !== undefined) params.nonStop       = options.nonStop;
+  if (options.returnDate)            params.returnDate    = options.returnDate;
+  if (options.travelClass)           params.travelClass   = options.travelClass;
 
   const cacheKey = makeCacheKey(origin, destination, departureDate, options);
   const cached   = fromCache(cacheKey);

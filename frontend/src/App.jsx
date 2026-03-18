@@ -420,6 +420,7 @@ const SearchPage = React.memo(function SearchPage({
   selectedDests, setSelectedDests,
   passengers, setPassengers,
   directOnly, setDirectOnly,
+  cabinClass, setCabinClass,
   currency, setCurrency,
   loading, error,
   onSubmit,
@@ -707,6 +708,20 @@ const SearchPage = React.memo(function SearchPage({
                       <input className="form-check-input" type="checkbox" id="directSwitch"
                         checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} disabled={loading} />
                     </div>
+                  </div>
+                </div>
+
+                {/* Cabin class */}
+                <div className="sf-section">
+                  <div className="sf-label mb-1">{t("search.cabinLabel")}</div>
+                  <div className="sf-pills">
+                    {[["ECONOMY", t("search.cabinEconomy")], ["PREMIUM_ECONOMY", t("search.cabinPremium")], ["BUSINESS", t("search.cabinBusiness")]].map(([v, l]) => (
+                      <button key={v} type="button"
+                        className={`sf-pill sf-pill--sm${cabinClass === v ? " sf-pill--active" : ""}`}
+                        onClick={() => setCabinClass(v)} disabled={loading}>
+                        {l}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1112,6 +1127,69 @@ const WinnerCard = React.memo(function WinnerCard({
   );
 });
 
+// ─── VS Compare (side-by-side) ───────────────────────────────────────────────
+
+const VsCompare = React.memo(function VsCompare({ flights, bestDestination, currency }) {
+  const { t } = useI18n();
+  const [leftIdx, setLeftIdx]   = useState(0);
+  const [rightIdx, setRightIdx] = useState(Math.min(1, flights.length - 1));
+
+  const left  = flights[leftIdx];
+  const right = flights[rightIdx];
+  if (!left || !right) return null;
+
+  const fmtPrice = (eur) => currency === "EUR" ? formatEur(eur) : convertPrice(eur, currency);
+
+  const rows = [
+    { label: t("vs.totalCost"), left: fmtPrice(left.totalCostEUR), right: fmtPrice(right.totalCostEUR), winner: left.totalCostEUR < right.totalCostEUR ? "left" : left.totalCostEUR > right.totalCostEUR ? "right" : "tie" },
+    { label: t("vs.avgPerPerson"), left: fmtPrice(left.averageCostPerTraveler), right: fmtPrice(right.averageCostPerTraveler), winner: left.averageCostPerTraveler < right.averageCostPerTraveler ? "left" : left.averageCostPerTraveler > right.averageCostPerTraveler ? "right" : "tie" },
+    { label: t("vs.fairness"), left: `${left.fairnessScore ?? "—"}/100`, right: `${right.fairnessScore ?? "—"}/100`, winner: (left.fairnessScore || 0) > (right.fairnessScore || 0) ? "left" : (left.fairnessScore || 0) < (right.fairnessScore || 0) ? "right" : "tie" },
+  ];
+
+  return (
+    <div className="vs-wrap mt-4 view-enter">
+      <h3 className="vs-title">{t("vs.title")}</h3>
+
+      {/* Selectors */}
+      <div className="vs-selectors">
+        <select className="vs-select" value={leftIdx} onChange={(e) => setLeftIdx(Number(e.target.value))}>
+          {flights.map((f, i) => (
+            <option key={i} value={i}>{normalizeCode(f.destination)} — {cityOf(normalizeCode(f.destination)) || f.destination}</option>
+          ))}
+        </select>
+        <span className="vs-badge">VS</span>
+        <select className="vs-select" value={rightIdx} onChange={(e) => setRightIdx(Number(e.target.value))}>
+          {flights.map((f, i) => (
+            <option key={i} value={i}>{normalizeCode(f.destination)} — {cityOf(normalizeCode(f.destination)) || f.destination}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Comparison table */}
+      <div className="vs-table">
+        <div className="vs-header">
+          <div className="vs-col vs-col--label" />
+          <div className="vs-col vs-col--dest">
+            <span className="vs-dest-code">{normalizeCode(left.destination)}</span>
+            <span className="vs-dest-city">{cityOf(normalizeCode(left.destination))}</span>
+          </div>
+          <div className="vs-col vs-col--dest">
+            <span className="vs-dest-code">{normalizeCode(right.destination)}</span>
+            <span className="vs-dest-city">{cityOf(normalizeCode(right.destination))}</span>
+          </div>
+        </div>
+        {rows.map((r, i) => (
+          <div key={i} className="vs-row">
+            <div className="vs-col vs-col--label">{r.label}</div>
+            <div className={`vs-col vs-col--val${r.winner === "left" ? " vs-col--winner" : ""}`}>{r.left}</div>
+            <div className={`vs-col vs-col--val${r.winner === "right" ? " vs-col--winner" : ""}`}>{r.right}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1184,6 +1262,7 @@ export default function App() {
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
   const [passengers,    setPassengers]    = useState([1]); // passengers per origin
   const [directOnly,    setDirectOnly]    = useState(false);
+  const [cabinClass,    setCabinClass]    = useState("ECONOMY");
   const [currency,      setCurrency]      = useState("EUR");
 
   // Results
@@ -1528,6 +1607,7 @@ export default function App() {
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
         ...(selectedDests.length > 0 && { destinations: selectedDests }),
         ...(directOnly && { nonStop: true }),
+        ...(cabinClass !== "ECONOMY" && { travelClass: cabinClass }),
       };
 
       const MAX_RETRIES = 3;
@@ -1677,6 +1757,7 @@ export default function App() {
           selectedDests={selectedDests} setSelectedDests={setSelectedDests}
           passengers={passengers}     setPassengers={setPassengers}
           directOnly={directOnly}     setDirectOnly={setDirectOnly}
+          cabinClass={cabinClass}     setCabinClass={setCabinClass}
           currency={currency}         setCurrency={setCurrency}
           loading={loading}           error={error}
           onSubmit={handleSubmit}
@@ -1723,6 +1804,21 @@ export default function App() {
             </div>
           )}
 
+          {/* Destinations analyzed counter */}
+          <div className="fm-stats-bar view-enter">
+            <span className="fm-stats-item">
+              <strong>{flights.length}</strong> {t("results.destsAnalyzed")}
+            </span>
+            <span className="fm-stats-sep">·</span>
+            <span className="fm-stats-item">
+              <strong>{cleanOrigins.length}</strong> {t("results.originsUsed")}
+            </span>
+            <span className="fm-stats-sep">·</span>
+            <span className="fm-stats-item">
+              <strong>{flights.length * cleanOrigins.length}</strong> {t("results.routesCompared")}
+            </span>
+          </div>
+
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -1754,6 +1850,13 @@ export default function App() {
                 onClick={() => setShowAlt(showAlt === "list" ? false : "list")}>
                 📋 {t("results.otherOptions")}
               </button>
+              {flights.length >= 2 && (
+                <button type="button"
+                  className={`rv-tab${showAlt === "vs" ? " rv-tab--active" : ""}`}
+                  onClick={() => setShowAlt(showAlt === "vs" ? false : "vs")}>
+                  ⚡ {t("results.compareVs")}
+                </button>
+              )}
             </div>
           )}
 
@@ -1807,6 +1910,11 @@ export default function App() {
                 />
               </ErrorBoundary>
             </div>
+          )}
+
+          {/* Side-by-side compare (VS) */}
+          {showAlt === "vs" && flights.length >= 2 && (
+            <VsCompare flights={flights} bestDestination={bestDestination} currency={currency} />
           )}
         </main>
       )}

@@ -106,6 +106,10 @@
     "paxTooltip": "Número de viajeros desde esta ciudad",
     "directOnly": "Solo vuelos directos",
     "directHint": "Mostrar solo vuelos sin escalas",
+    "cabinLabel": "Clase de cabina",
+    "cabinEconomy": "Turista",
+    "cabinPremium": "Premium",
+    "cabinBusiness": "Business",
     "currencyLabel": "Moneda"
   },
   "results": {
@@ -148,7 +152,16 @@
     "sortPrice": "Precio",
     "sortFairness": "Equidad",
     "celebrate": "¡Gran oferta!",
-    "celebrateSub": "Este es uno de los vuelos de grupo más baratos que hemos encontrado"
+    "celebrateSub": "Este es uno de los vuelos de grupo más baratos que hemos encontrado",
+    "originsUsed": "orígenes",
+    "routesCompared": "rutas comparadas",
+    "compareVs": "Comparar"
+  },
+  "vs": {
+    "title": "Comparar destinos",
+    "totalCost": "Coste total del grupo",
+    "avgPerPerson": "Media por persona",
+    "fairness": "Puntuación de equidad"
   },
   "fairness": {
     "veryBalanced": "Muy equilibrado",
