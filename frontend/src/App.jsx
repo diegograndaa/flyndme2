@@ -163,6 +163,78 @@ const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
   );
 });
 
+// ─── Favorites (localStorage) ───────────────────────────────────────────────
+
+function useFavorites() {
+  const KEY = "flyndme_favorites";
+  const [favs, setFavs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
+  });
+
+  const toggle = useCallback((dest) => {
+    setFavs((prev) => {
+      const code = normalizeCode(dest.destination);
+      const exists = prev.find((f) => f.code === code);
+      const updated = exists
+        ? prev.filter((f) => f.code !== code)
+        : [{ code, city: cityOf(code) || code, price: dest.averageCostPerTraveler, ts: Date.now() }, ...prev].slice(0, 20);
+      try { localStorage.setItem(KEY, JSON.stringify(updated)); } catch { /* */ }
+      return updated;
+    });
+  }, []);
+
+  const isFav = useCallback((destCode) => {
+    return favs.some((f) => f.code === normalizeCode(destCode));
+  }, [favs]);
+
+  return { favs, toggle, isFav };
+}
+
+// ─── CSV export ─────────────────────────────────────────────────────────────
+
+function exportResultsCSV(flights, origins, currency) {
+  const rows = [["Destination", "City", "Total (EUR)", "Avg/person (EUR)", "Fairness", ...origins.map((o) => `${o} price`)]];
+  flights.forEach((f) => {
+    const code = normalizeCode(f.destination);
+    const priceMap = {};
+    (f.flights || []).forEach((fl) => { priceMap[String(fl.origin).toUpperCase()] = fl.price; });
+    rows.push([
+      code,
+      cityOf(code) || "",
+      f.totalCostEUR?.toFixed(2) || "",
+      f.averageCostPerTraveler?.toFixed(2) || "",
+      f.fairnessScore ?? "",
+      ...origins.map((o) => priceMap[o]?.toFixed(2) || ""),
+    ]);
+  });
+  const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `flyndme-results-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Friendly error display ─────────────────────────────────────────────────
+
+const FriendlyError = React.memo(function FriendlyError({ message, onRetry }) {
+  const { t } = useI18n();
+  return (
+    <div className="fm-error-state">
+      <div className="fm-error-icon">😕</div>
+      <h3 className="fm-error-title">{t("errors.friendlyTitle")}</h3>
+      <p className="fm-error-message">{message}</p>
+      {onRetry && (
+        <button type="button" className="btn-fm-primary" onClick={onRetry}>
+          {t("errors.tryAgain")}
+        </button>
+      )}
+    </div>
+  );
+});
+
 // ─── Loading tips carousel ──────────────────────────────────────────────────
 
 const LoadingTips = React.memo(function LoadingTips() {
@@ -199,6 +271,7 @@ const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
   const { t } = useI18n();
   const steps = t("loading.steps") || ["Searching", "Comparing", "Preparing"];
   const [activeStep, setActiveStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const timers = [
@@ -208,7 +281,15 @@ const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Countdown timer
+  useEffect(() => {
+    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const numCombinations = Math.max(origins.length, 1) * 36;
+  const estimatedTotal = Math.max(15, Math.ceil(numCombinations / 5));
+  const progressPct = Math.min(95, (elapsed / estimatedTotal) * 100);
 
   return (
     <div className="container py-4" style={{ maxWidth: 1080 }}>
@@ -225,7 +306,16 @@ const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
         ))}
       </div>
 
-      <p className="sk-hint">{t("loading.skeletonHint", { n: numCombinations })}</p>
+      {/* Timer + progress bar */}
+      <div className="sk-timer-wrap">
+        <div className="sk-timer-bar">
+          <div className="sk-timer-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+        <div className="sk-timer-text">
+          <span>{t("loading.skeletonHint", { n: numCombinations })}</span>
+          <span className="sk-timer-clock">{elapsed}s</span>
+        </div>
+      </div>
 
       {/* Travel tips carousel */}
       <LoadingTips />
@@ -427,6 +517,25 @@ const Landing = React.memo(function Landing({ onStart }) {
                 <h3 className="lp-usecase-name">{uc.title}</h3>
                 <p className="lp-usecase-desc">{uc.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Popular routes */}
+      <section className="lp-routes">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <h2 className="lp-routes-title">{t("landing.routesTitle")}</h2>
+          <p className="lp-routes-sub">{t("landing.routesSub")}</p>
+          <div className="lp-routes-grid">
+            {(t("landing.routes") || []).map((route, i) => (
+              <button key={i} type="button" className="lp-route-card" onClick={() => {
+                onStart();
+              }}>
+                <span className="lp-route-emoji">{route.emoji}</span>
+                <span className="lp-route-name">{route.name}</span>
+                <span className="lp-route-cities">{route.cities}</span>
+              </button>
             ))}
           </div>
         </div>
@@ -861,7 +970,7 @@ const SearchPage = React.memo(function SearchPage({
               </div>
             )}
 
-            {error && <div className="alert alert-danger py-2 mt-3" aria-live="polite">{error}</div>}
+            {error && <FriendlyError message={error} onRetry={onSubmit} />}
 
             <div className="sf-submit-wrap">
               <button type="submit" className="btn-fm-primary w-100 py-3 fw-bold fs-6" disabled={loading}>
@@ -924,6 +1033,7 @@ const WinnerCard = React.memo(function WinnerCard({
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
   searchBadges = [],
+  isFav = false, onToggleFav,
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -968,6 +1078,9 @@ const WinnerCard = React.memo(function WinnerCard({
           <span className="wc-dest-code">{city || code}</span>
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
+        <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
+          {isFav ? "❤️" : "🤍"}
+        </button>
       </div>
 
       {/* Summary strip */}
@@ -1265,6 +1378,7 @@ const VsCompare = React.memo(function VsCompare({ flights, bestDestination, curr
 export default function App() {
   const { t } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
+  const { favs, toggle: toggleFav, isFav } = useFavorites();
 
   // View: 'landing' | 'search' | 'results'
   const [view, setViewRaw] = useState("landing");
@@ -1895,6 +2009,8 @@ export default function App() {
               flexEnabled && `± ${flexDays} ${t("search.flexDaysLabel") || "days"}`,
               tripType === "roundtrip" && t("search.roundtrip"),
             ].filter(Boolean)}
+            isFav={isFav(bestDestination.destination)}
+            onToggleFav={() => toggleFav(bestDestination)}
           />
 
           {/* Celebrate badge for cheap flights (avg < €50/pp) */}
@@ -1921,6 +2037,9 @@ export default function App() {
             <span className="fm-stats-item">
               <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
             </span>
+            <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
+              📥 CSV
+            </button>
           </div>
 
           {/* JSON-LD structured data for SEO */}

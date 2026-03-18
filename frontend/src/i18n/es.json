@@ -43,6 +43,16 @@
     "exampleDest": "LIS · Lisboa",
     "exampleTotal": "total del grupo",
     "getStarted": "Empezar",
+    "routesTitle": "Rutas populares de grupo",
+    "routesSub": "Haz clic en una ruta para empezar a buscar",
+    "routes": [
+      { "emoji": "🇪🇸", "name": "Escapada mediterránea", "cities": "MAD · LON · BER → BCN, LIS, ROM" },
+      { "emoji": "🎉", "name": "Despedida de soltero", "cities": "LON · DUB · AMS → BUD, PRG, BCN" },
+      { "emoji": "🏔️", "name": "Aventura alpina", "cities": "MUC · MIL · ZRH → VIE, INN, GVA" },
+      { "emoji": "☀️", "name": "Reunión en la playa", "cities": "PAR · BER · MAD → PMI, AGP, MLA" },
+      { "emoji": "🎄", "name": "Mercadillos navideños", "cities": "LON · MAD · ROM → VIE, PRG, BUD" },
+      { "emoji": "🎓", "name": "Reunión Erasmus", "cities": "MAD · PAR · BER → LIS, ROM, ATH" }
+    ],
     "useCasesTitle": "¿Quién usa FlyndMe?",
     "useCases": [
       { "icon": "🌍", "title": "Amigos en distintos países", "desc": "Deja de comparar vuelos ciudad por ciudad. FlyndMe lo hace en segundos." },
@@ -155,7 +165,9 @@
     "celebrateSub": "Este es uno de los vuelos de grupo más baratos que hemos encontrado",
     "originsUsed": "orígenes",
     "routesCompared": "rutas comparadas",
-    "compareVs": "Comparar"
+    "compareVs": "Comparar",
+    "favorite": "Guardar en favoritos",
+    "exportCSV": "Exportar resultados como CSV"
   },
   "vs": {
     "title": "Comparar destinos",
@@ -179,7 +191,9 @@
     "noBudgetResults": "Sin resultados dentro de ese presupuesto. Sube el límite o desactívalo.",
     "noResults": "Sin resultados para esas ciudades y fechas. Prueba con otras fechas.",
     "serverWaking": "El servidor se está iniciando. Reintentando automáticamente…",
-    "unexpected": "Algo salió mal. Inténtalo de nuevo."
+    "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "friendlyTitle": "Vaya, algo salió mal",
+    "tryAgain": "Intentar de nuevo"
   },
   "alt": {
     "recommended": "Recomendado",

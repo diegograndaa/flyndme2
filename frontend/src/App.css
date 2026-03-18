@@ -3000,3 +3000,187 @@ html {
     box-shadow: 0 -4px 16px rgba(0,0,0,.3);
   }
 }
+
+/* ── Favorite button ──────────────────────────────────────────── */
+
+.wc-fav-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s, background .2s;
+  z-index: 5;
+  box-shadow: var(--shadow-sm);
+}
+.wc-fav-btn:hover {
+  transform: scale(1.15);
+  background: rgba(255,255,255,.95);
+}
+.wc-fav-btn--active {
+  animation: favPop .3s ease;
+}
+@keyframes favPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+[data-theme="dark"] .wc-fav-btn {
+  background: rgba(17,24,39,.85);
+}
+
+/* ── CSV export button in stats bar ───────────────────────────── */
+
+.fm-stats-export {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--primary-50);
+  color: var(--primary);
+  border: 1px solid rgba(0,98,227,.15);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.fm-stats-export:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+[data-theme="dark"] .fm-stats-export {
+  background: #1A2744;
+  border-color: #334155;
+}
+
+/* ── Search timer (countdown bar) ─────────────────────────────── */
+
+.sk-timer-wrap {
+  margin: 12px 0 20px;
+}
+.sk-timer-bar {
+  height: 6px;
+  background: var(--slate-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.sk-timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+  border-radius: var(--radius-full);
+  transition: width .8s ease;
+}
+.sk-timer-text {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--slate-500);
+}
+.sk-timer-clock {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+[data-theme="dark"] .sk-timer-bar {
+  background: #1E293B;
+}
+
+/* ── Friendly error state ─────────────────────────────────────── */
+
+.fm-error-state {
+  text-align: center;
+  padding: 24px 16px;
+  margin-top: 12px;
+}
+.fm-error-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.fm-error-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+.fm-error-message {
+  font-size: 14px;
+  color: var(--slate-500);
+  margin: 0 0 16px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Popular routes on landing ────────────────────────────────── */
+
+.lp-routes {
+  padding: 48px 0;
+}
+.lp-routes-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+.lp-routes-sub {
+  text-align: center;
+  font-size: 15px;
+  color: var(--slate-500);
+  margin: 0 0 28px;
+}
+.lp-routes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.lp-route-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.lp-route-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.lp-route-emoji {
+  font-size: 28px;
+}
+.lp-route-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.lp-route-cities {
+  font-size: 12px;
+  color: var(--slate-400);
+}
+[data-theme="dark"] .lp-route-card {
+  background: #111827;
+  border-color: #1E293B;
+}
+
+@media (max-width: 480px) {
+  .lp-routes-grid { grid-template-columns: repeat(2, 1fr); }
+  .lp-route-card { padding: 14px 10px; }
+}
