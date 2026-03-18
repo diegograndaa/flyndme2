@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense, startTransition } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import FlightResults from "./components/FlightResults";
-import DestinationMap from "./components/DestinationMap";
-import CompareChart from "./components/CompareChart";
 import { SearchProgress } from "./components/SearchUX";
+
+// Lazy-load heavy visual components (map SVG + chart) for smaller initial bundle
+const DestinationMap = React.lazy(() => import("./components/DestinationMap"));
+const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
@@ -341,14 +343,21 @@ const SearchPage = React.memo(function SearchPage({
   const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
   const filterVal = origins[safeIdx]?.trim().toLowerCase() || "";
 
-  const filtered = AIRPORTS.filter((a) => {
-    if (!filterVal) return true;
-    return (
+  // Memoize airport filtering to avoid blocking the main thread on every keystroke (fixes INP)
+  const filtered = useMemo(() => {
+    if (!filterVal) return AIRPORTS;
+    return AIRPORTS.filter((a) =>
       a.code.toLowerCase().includes(filterVal) ||
       a.city.toLowerCase().includes(filterVal) ||
       a.country.toLowerCase().includes(filterVal)
     );
-  });
+  }, [filterVal]);
+
+  // Memoize destination airports (excludes selected origins)
+  const destAirports = useMemo(() => {
+    const originCodes = new Set(origins.map(o => normalizeCode(o)));
+    return AIRPORTS.filter(a => !originCodes.has(a.code));
+  }, [origins]);
 
   const handleClickAirport = (code) => {
     const copy = [...origins];
@@ -416,9 +425,12 @@ const SearchPage = React.memo(function SearchPage({
                         placeholder={t("search.placeholder")}
                         value={origin}
                         onChange={(e) => {
-                          const copy = [...origins];
-                          copy[idx] = e.target.value.toUpperCase();
-                          setOrigins(copy);
+                          const val = e.target.value.toUpperCase();
+                          startTransition(() => {
+                            const copy = [...origins];
+                            copy[idx] = val;
+                            setOrigins(copy);
+                          });
                         }}
                         onFocus={() => setActiveIdx(idx)}
                         disabled={loading}
@@ -631,7 +643,7 @@ const SearchPage = React.memo(function SearchPage({
                       </div>
                       {/* Individual city toggles */}
                       <div className="sf-dest-grid">
-                        {AIRPORTS.filter(a => !origins.some(o => normalizeCode(o) === a.code)).map((a) => {
+                        {destAirports.map((a) => {
                           const isOn = selectedDests.length === 0 || selectedDests.includes(a.code);
                           return (
                             <button key={a.code} type="button"
@@ -639,8 +651,7 @@ const SearchPage = React.memo(function SearchPage({
                               onClick={() => {
                                 if (selectedDests.length === 0) {
                                   // Switch from "all" to "all except this one"
-                                  const allCodes = AIRPORTS.filter(x => !origins.some(o => normalizeCode(o) === x.code)).map(x => x.code);
-                                  setSelectedDests(allCodes.filter(c => c !== a.code));
+                                  setSelectedDests(destAirports.map(x => x.code).filter(c => c !== a.code));
                                 } else if (selectedDests.includes(a.code)) {
                                   setSelectedDests(selectedDests.filter(c => c !== a.code));
                                 } else {
@@ -1535,13 +1546,21 @@ export default function App() {
 
           {showAlt === "map" && flights.length > 1 && (
             <div className="mt-3 view-enter">
-              <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
+              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+                <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
+                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
           {showAlt === "compare" && flights.length > 1 && (
             <div className="mt-3 view-enter">
-              <CompareChart flights={flights} bestDestination={bestDestination} />
+              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+                <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
+                  <CompareChart flights={flights} bestDestination={bestDestination} />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
