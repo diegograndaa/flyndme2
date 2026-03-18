@@ -3864,3 +3864,159 @@ html {
     100% { opacity: 0; transform: translate(var(--dx, 60px), var(--dy, 40px)) rotate(220deg) scale(0.3); }
   }
 }
+
+/* ═══════════════ Round 13 ═══════════════════════════════════ */
+
+/* ── Inline autocomplete dropdown ───────────────────────────── */
+
+.sf-ac-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.sf-ac-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background .12s;
+  font-size: 13px;
+}
+.sf-ac-item:hover,
+.sf-ac-item--hl {
+  background: var(--slate-50);
+}
+.sf-ac-code {
+  font-weight: 800;
+  color: var(--navy);
+  min-width: 36px;
+  font-size: 14px;
+}
+.sf-ac-city {
+  flex: 1;
+  color: var(--slate-600);
+}
+.sf-ac-country {
+  font-size: 12px;
+  color: var(--slate-400);
+}
+[data-theme="dark"] .sf-ac-dropdown {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .sf-ac-item:hover,
+[data-theme="dark"] .sf-ac-item--hl {
+  background: #1E293B;
+}
+[data-theme="dark"] .sf-ac-code {
+  color: #E2E8F0;
+}
+[data-theme="dark"] .sf-ac-city {
+  color: #94A3B8;
+}
+
+/* Make input wrap relative for dropdown positioning */
+.sf-input-wrap {
+  position: relative;
+}
+
+/* ── Cheapest-day weekday badge variant ─────────────────────── */
+
+.sf-weekday-badge--cheap {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+[data-theme="dark"] .sf-weekday-badge--cheap {
+  background: rgba(22,163,74,.18);
+  color: #4ADE80;
+}
+
+/* ── Animated gradient border on winner card ────────────────── */
+
+.wc-card--entered {
+  position: relative;
+}
+.wc-card--entered::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-lg, 16px) + 2px);
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899, #F59E0B, #3B82F6);
+  background-size: 300% 300%;
+  animation: gradientShift 4s ease infinite;
+  z-index: -1;
+  opacity: .7;
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Fairness help badge ────────────────────────────────────── */
+
+.wc-fairness-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  color: rgba(255,255,255,.6);
+  cursor: help;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.wc-tooltip--fairness {
+  min-width: 200px;
+  white-space: normal;
+}
+
+/* ── Search empty state ─────────────────────────────────────── */
+
+.sf-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  margin-bottom: 12px;
+  text-align: center;
+  border: 2px dashed var(--slate-200);
+  border-radius: var(--radius-md);
+  background: var(--slate-50);
+  animation: fadeSlideIn .4s ease;
+}
+.sf-empty-icon {
+  font-size: 36px;
+  animation: floatBounce 3s ease-in-out infinite;
+}
+.sf-empty-text {
+  font-size: 14px;
+  color: var(--slate-500);
+  font-weight: 500;
+}
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+[data-theme="dark"] .sf-empty-state {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .sf-empty-text {
+  color: #94A3B8;
+}

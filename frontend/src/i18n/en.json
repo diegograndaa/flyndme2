@@ -129,7 +129,8 @@
     "unknownAirport": "Unknown airport — pick from the list",
     "moveUp": "Move up",
     "moveDown": "Move down",
-    "kbdHint": "Press Enter to search"
+    "kbdHint": "Press Enter to search",
+    "emptyHint": "Start by adding each traveler's departure city below"
   },
   "results": {
     "eyebrow": "Recommended destination",

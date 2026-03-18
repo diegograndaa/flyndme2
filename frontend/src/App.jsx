@@ -685,6 +685,8 @@ const SearchPage = React.memo(function SearchPage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [showMobileAirports, setShowMobileAirports] = useState(false);
+  const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
+  const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
 
   const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
 
@@ -700,6 +702,19 @@ const SearchPage = React.memo(function SearchPage({
       a.country.toLowerCase().includes(filterVal)
     );
   }, [filterVal]);
+
+  // Inline autocomplete suggestions (max 5, only when typing 1+ chars)
+  const acSuggestions = useMemo(() => {
+    if (acFocus < 0) return [];
+    const val = (origins[acFocus] || "").trim().toLowerCase();
+    if (!val || val.length < 1) return [];
+    // Don't show if already a valid code
+    if (AIRPORT_MAP[val.toUpperCase()]) return [];
+    return AIRPORTS.filter((a) =>
+      a.code.toLowerCase().includes(val) ||
+      a.city.toLowerCase().includes(val)
+    ).slice(0, 5);
+  }, [acFocus, origins]);
 
   // Memoize destination airports (excludes selected origins)
   const destAirports = useMemo(() => {
@@ -755,6 +770,14 @@ const SearchPage = React.memo(function SearchPage({
           )}
 
           <form onSubmit={onSubmit} noValidate>
+            {/* Empty state prompt */}
+            {origins.length === 1 && !origins[0].trim() && !loading && (
+              <div className="sf-empty-state">
+                <div className="sf-empty-icon">🗺️</div>
+                <div className="sf-empty-text">{t("search.emptyHint")}</div>
+              </div>
+            )}
+
             {/* Origins */}
             <div className="sf-section">
               <div className="sf-label">{t("search.originLabel")}</div>
@@ -780,11 +803,39 @@ const SearchPage = React.memo(function SearchPage({
                             copy[idx] = val;
                             setOrigins(copy);
                           });
+                          setAcFocus(idx);
+                          setAcHighlight(0);
                         }}
-                        onFocus={() => setActiveIdx(idx)}
+                        onFocus={() => { setActiveIdx(idx); setAcFocus(idx); setAcHighlight(0); }}
+                        onBlur={() => setTimeout(() => setAcFocus(-1), 150)}
+                        onKeyDown={(e) => {
+                          if (acFocus === idx && acSuggestions.length > 0) {
+                            if (e.key === "ArrowDown") { e.preventDefault(); setAcHighlight((h) => Math.min(h + 1, acSuggestions.length - 1)); }
+                            else if (e.key === "ArrowUp") { e.preventDefault(); setAcHighlight((h) => Math.max(h - 1, 0)); }
+                            else if (e.key === "Enter" && acSuggestions[acHighlight]) {
+                              e.preventDefault();
+                              const copy = [...origins]; copy[idx] = acSuggestions[acHighlight].code; setOrigins(copy); setAcFocus(-1);
+                            }
+                          }
+                        }}
                         disabled={loading}
                         autoComplete="off"
                       />
+                      {/* Inline autocomplete dropdown */}
+                      {acFocus === idx && acSuggestions.length > 0 && (
+                        <div className="sf-ac-dropdown">
+                          {acSuggestions.map((a, ai) => (
+                            <div key={a.code}
+                              className={`sf-ac-item${ai === acHighlight ? " sf-ac-item--hl" : ""}`}
+                              onMouseDown={(e) => { e.preventDefault(); const copy = [...origins]; copy[idx] = a.code; setOrigins(copy); setAcFocus(-1); }}
+                              onMouseEnter={() => setAcHighlight(ai)}>
+                              <span className="sf-ac-code">{a.code}</span>
+                              <span className="sf-ac-city">{a.city}</span>
+                              <span className="sf-ac-country">{countryFlag(a.code)} {a.country}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {city && origin.trim() && (
                         <span className="sf-input-city">{countryFlag(code)} {city}</span>
                       )}
@@ -887,7 +938,7 @@ const SearchPage = React.memo(function SearchPage({
                     <input type="date" className="form-control sf-input"
                       value={departureDate} min={todayISO()}
                       onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
-                    {departureDate && <span className="sf-weekday-badge">{weekdayOf(departureDate)}</span>}
+                    {departureDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(departureDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(departureDate)}</span>}
                   </div>
                 </div>
                 {tripType === "roundtrip" && (
@@ -897,7 +948,7 @@ const SearchPage = React.memo(function SearchPage({
                       <input type="date" className="form-control sf-input"
                         value={returnDate} min={departureDate || todayISO()}
                         onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
-                      {returnDate && <span className="sf-weekday-badge">{weekdayOf(returnDate)}</span>}
+                      {returnDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(returnDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(returnDate)}</span>}
                     </div>
                   </div>
                 )}
@@ -1350,8 +1401,8 @@ const WinnerCard = React.memo(function WinnerCard({
           }
         </div>
         <div className="wc-summary-divider" />
-        <div className="wc-summary-item">
-          <div className="wc-summary-label">{t("results.fairnessLabel")}</div>
+        <div className="wc-summary-item wc-summary-item--tooltip">
+          <div className="wc-summary-label">{t("results.fairnessLabel")} <span className="wc-fairness-help">?</span></div>
           <div className="wc-summary-fairness">
             <svg className="wc-fairness-ring" viewBox="0 0 40 40" width="44" height="44">
               <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
@@ -1363,6 +1414,13 @@ const WinnerCard = React.memo(function WinnerCard({
                 {(dest.fairnessScore ?? 0).toFixed(0)}
               </text>
             </svg>
+          </div>
+          <div className="wc-tooltip wc-tooltip--fairness">
+            <div>{t("results.fairnessHelp")}</div>
+            <div className="wc-tooltip-row" style={{ marginTop: 6 }}>
+              <span>{t("results.maxSpread")}</span>
+              <span>{formatEur(dest.priceSpread ?? 0, 0)}</span>
+            </div>
           </div>
         </div>
         {dep && (
@@ -2212,6 +2270,12 @@ export default function App() {
           setFlights(adjusted);
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
+          // Preload top destination images for smoother results UX
+          adjusted.slice(0, 6).forEach((d) => {
+            const img = new Image();
+            img.src = getCityImage(normalizeCode(d.destination), getBaseUrl(), { w: 1200, h: 500 });
+          });
+
           setView("results");
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: "smooth" });
