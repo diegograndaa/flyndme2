@@ -199,7 +199,9 @@
     "alertHint": "Want to track price changes for this route?",
     "comingSoon": "Coming soon",
     "totalDistance": "Total group travel: {{km}} km",
-    "avgDistance": "~{{km}} km avg per traveler"
+    "avgDistance": "~{{km}} km avg per traveler",
+    "flightComparison": "Flight comparison",
+    "tripSummaryDays": "days"
   },
   "vs": {
     "title": "Compare destinations",

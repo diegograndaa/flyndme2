@@ -1601,15 +1601,17 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
       </div>
 
-      {/* Destination quick info (timezone, language) */}
+      {/* Destination quick info (timezone, language, weather) */}
       {(() => {
         const qi = destQuickInfo(code);
-        if (!qi) return null;
+        const weather = getWeatherHint(code, dep || depDate, t);
+        if (!qi && !weather) return null;
         return (
           <div className="wc-quick-info">
-            {qi.tz && <span className="wc-quick-info-item">🕐 UTC{qi.tz}</span>}
-            {qi.lang && <span className="wc-quick-info-item">🗣️ {qi.lang}</span>}
-            {qi.currency && <span className="wc-quick-info-item">💱 {qi.currency}</span>}
+            {qi?.tz && <span className="wc-quick-info-item">🕐 UTC{qi.tz}</span>}
+            {qi?.lang && <span className="wc-quick-info-item">🗣️ {qi.lang}</span>}
+            {qi?.currency && <span className="wc-quick-info-item">💱 {qi.currency}</span>}
+            {weather && <span className="wc-quick-info-item">{weather}</span>}
           </div>
         );
       })()}
@@ -1855,7 +1857,83 @@ const WinnerCard = React.memo(function WinnerCard({
                 );
               })}
             </div>
+
+              {/* Flight time comparison mini-table */}
+              {cleanOrigins.length > 1 && breakdown.length > 1 && (() => {
+                const durations = breakdown.map((f) => {
+                  const itin = f.offer?.itineraries?.[0];
+                  const dur = itin?.duration || "";
+                  const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+                  const mins = match ? (parseInt(match[1] || 0) * 60) + parseInt(match[2] || 0) : 0;
+                  const durText = dur ? dur.replace("PT", "").replace("H", "h ").replace("M", "m").trim() : "";
+                  return { origin: String(f.origin).toUpperCase(), mins, durText, price: f.price };
+                }).filter(d => d.mins > 0);
+                if (durations.length < 2) return null;
+                const maxMins = Math.max(...durations.map(d => d.mins));
+                return (
+                  <div className="wc-flight-compare-section">
+                    <div className="wc-flight-compare-title">{t("results.flightComparison")}</div>
+                    {durations.map((d) => {
+                      const pct = maxMins > 0 ? (d.mins / maxMins) * 100 : 0;
+                      const color = d.mins <= 120 ? "#22C55E" : d.mins <= 300 ? "var(--primary)" : "#F59E0B";
+                      return (
+                        <div key={d.origin} className="wc-flight-compare-row">
+                          <span className="wc-flight-compare-origin">{d.origin}</span>
+                          <div className="wc-flight-compare-bar-wrap">
+                            <div className="wc-flight-compare-bar-fill" style={{ width: `${pct}%`, background: color }} />
+                          </div>
+                          <span className="wc-flight-compare-dur">{d.durText}</span>
+                          <span className="wc-flight-compare-price">{currency === "EUR" ? formatEur(d.price, 0) : convertPrice(d.price, currency)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
             </div>{/* /wc-booking-collapse */}
+          </div>
+        )}
+
+        {/* Trip summary compact card */}
+        {cleanOrigins.length > 0 && (
+          <div className="wc-trip-summary">
+            <div className="wc-trip-summary-item">
+              <span className="wc-trip-summary-value">{cleanOrigins.length}</span>
+              <span className="wc-trip-summary-label">{t("results.originsUsed")}</span>
+            </div>
+            <div className="wc-trip-summary-sep" />
+            <div className="wc-trip-summary-item">
+              <span className="wc-trip-summary-value">{currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}</span>
+              <span className="wc-trip-summary-label">{t("results.avgPerPerson")}</span>
+            </div>
+            <div className="wc-trip-summary-sep" />
+            <div className="wc-trip-summary-item">
+              <span className="wc-trip-summary-value">{(dest.fairnessScore ?? 0).toFixed(0)}</span>
+              <span className="wc-trip-summary-label">{t("results.fairnessLabel")}</span>
+            </div>
+            {tripDays > 0 && (
+              <>
+                <div className="wc-trip-summary-sep" />
+                <div className="wc-trip-summary-item">
+                  <span className="wc-trip-summary-value">{tripDays}</span>
+                  <span className="wc-trip-summary-label">{t("results.tripSummaryDays")}</span>
+                </div>
+              </>
+            )}
+            {(() => {
+              const km = approxDistKm(cleanOrigins[0], code);
+              if (!km) return null;
+              return (
+                <>
+                  <div className="wc-trip-summary-sep" />
+                  <div className="wc-trip-summary-item">
+                    <span className="wc-trip-summary-value">{Math.round(km).toLocaleString()}</span>
+                    <span className="wc-trip-summary-label">km</span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 

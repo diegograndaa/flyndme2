@@ -199,7 +199,9 @@
     "alertHint": "¿Quieres seguir los cambios de precio de esta ruta?",
     "comingSoon": "Próximamente",
     "totalDistance": "Distancia total del grupo: {{km}} km",
-    "avgDistance": "~{{km}} km media por viajero"
+    "avgDistance": "~{{km}} km media por viajero",
+    "flightComparison": "Comparación de vuelos",
+    "tripSummaryDays": "días"
   },
   "vs": {
     "title": "Comparar destinos",
