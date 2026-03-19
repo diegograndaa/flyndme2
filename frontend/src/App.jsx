@@ -607,7 +607,7 @@ const FaqItem = React.memo(function FaqItem({ q, a }) {
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 
-const Landing = React.memo(function Landing({ onStart }) {
+const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
   const { t } = useI18n();
 
   const chips = t("landing.chips");
@@ -721,7 +721,15 @@ const Landing = React.memo(function Landing({ onStart }) {
           <div className="lp-routes-grid">
             {(t("landing.routes") || []).map((route, i) => (
               <button key={i} type="button" className="lp-route-card" onClick={() => {
-                onStart();
+                // Parse "MAD · LON · BER → BCN, LIS, ROM" into origins + destinations
+                const parts = (route.cities || "").split("→").map(s => s.trim());
+                const origins = (parts[0] || "").split("·").map(s => s.trim()).filter(Boolean);
+                const dests = (parts[1] || "").split(",").map(s => s.trim()).filter(Boolean);
+                if (origins.length && onStartWithRoute) {
+                  onStartWithRoute(origins, dests);
+                } else {
+                  onStart();
+                }
               }}>
                 <span className="lp-route-emoji">{route.emoji}</span>
                 <span className="lp-route-name">{route.name}</span>
@@ -944,6 +952,26 @@ const SearchPage = React.memo(function SearchPage({
         <div className="sf-form fm-card">
           <h2 className="sf-title">{t("search.title")}</h2>
           <p className="sf-sub">{t("search.subtitle")}</p>
+
+          {/* Form completion indicators */}
+          {!loading && (
+            <div className="sf-completion-strip">
+              <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? " sf-completion-step--done" : ""}`}>
+                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? "✓" : "1"}</span>
+                <span className="sf-completion-label">{t("search.completionOrigins")}</span>
+              </div>
+              <div className="sf-completion-line" />
+              <div className={`sf-completion-step${departureDate ? " sf-completion-step--done" : ""}`}>
+                <span className="sf-completion-icon">{departureDate ? "✓" : "2"}</span>
+                <span className="sf-completion-label">{t("search.completionDates")}</span>
+              </div>
+              <div className="sf-completion-line" />
+              <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? " sf-completion-step--done" : ""}`}>
+                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? "✓" : "3"}</span>
+                <span className="sf-completion-label">{t("search.completionReady")}</span>
+              </div>
+            </div>
+          )}
 
           {/* Recent searches */}
           {recentSearches?.length > 0 && !loading && (
@@ -1562,6 +1590,16 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>
           <span className="wc-dest-code">{city || code}</span>
           {city && <span className="wc-dest-city">{code}</span>}
+          {/* Destination category tags */}
+          {(() => {
+            const cats = destCategoryTags(code, t);
+            if (!cats.length) return null;
+            return (
+              <div className="wc-dest-categories">
+                {cats.map(c => <span key={c.key} className={`wc-dest-cat wc-dest-cat--${c.key}`}>{c.label}</span>)}
+              </div>
+            );
+          })()}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
@@ -2103,6 +2141,62 @@ const VsCompare = React.memo(function VsCompare({ flights, bestDestination, curr
     </div>
   );
 });
+
+// ─── Search params summary (results page) ────────────────────────────────────
+
+const SearchParamsSummary = React.memo(function SearchParamsSummary({
+  origins, departureDate, returnDate, tripType, flexEnabled, flexDays,
+  cabinClass, directOnly, budgetEnabled, maxBudget, currency,
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+
+  const tags = [
+    tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway"),
+    departureDate && formatDate(departureDate),
+    tripType === "roundtrip" && returnDate && `→ ${formatDate(returnDate)}`,
+    flexEnabled && `±${flexDays}d`,
+    cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
+    directOnly && t("search.directOnly"),
+    budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
+  ].filter(Boolean);
+
+  return (
+    <div className="fm-search-summary">
+      <button type="button" className="fm-search-summary-toggle" onClick={() => setOpen(v => !v)}>
+        <div className="fm-search-summary-origins">
+          {origins.map(o => (
+            <span key={o} className="fm-search-summary-chip">{countryFlag(o)} {o}</span>
+          ))}
+        </div>
+        <span className={`fm-search-summary-chevron${open ? " fm-search-summary-chevron--open" : ""}`}>▾</span>
+      </button>
+      {open && (
+        <div className="fm-search-summary-tags">
+          {tags.map((tag, i) => (
+            <span key={i} className="fm-search-summary-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ─── Destination category tags ───────────────────────────────────────────────
+
+const DEST_CATEGORIES = {
+  beach:   new Set(["AGP","PMI","TFS","NCE","MLA","DBV","SPU","RHO","TLV"]),
+  budget:  new Set(["OPO","NAP","KRK","BEG","OTP","SOF","TIA","RAK","TLL","RIX","VNO","SKG"]),
+  capital: new Set(["LON","PAR","ROM","BER","MAD","LIS","VIE","PRG","ATH","CPH","BUD","DUB","BRU","WAW","OSL","HEL","STO"]),
+};
+
+function destCategoryTags(code, t) {
+  const tags = [];
+  if (DEST_CATEGORIES.beach.has(code))   tags.push({ key: "beach",   label: t("search.destCatBeach") });
+  if (DEST_CATEGORIES.budget.has(code))  tags.push({ key: "budget",  label: t("search.destCatBudget") });
+  if (DEST_CATEGORIES.capital.has(code)) tags.push({ key: "capital", label: t("search.destCatCapital") });
+  return tags;
+}
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
@@ -2812,7 +2906,12 @@ export default function App() {
       <div id="main-content">
       {view === "landing" && (
         <div className="view-enter" key="landing">
-          <Landing onStart={() => setView("search")} />
+          <Landing onStart={() => setView("search")} onStartWithRoute={(origins, dests) => {
+            setOrigins(origins);
+            setPassengers(origins.map(() => 1));
+            if (dests.length) setSelectedDests(dests);
+            setView("search");
+          }} />
         </div>
       )}
 
@@ -2862,6 +2961,21 @@ export default function App() {
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
+
+          {/* Search params summary (collapsible) */}
+          <SearchParamsSummary
+            origins={cleanOrigins}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            flexEnabled={flexEnabled}
+            flexDays={flexDays}
+            cabinClass={cabinClass}
+            directOnly={directOnly}
+            budgetEnabled={budgetEnabled}
+            maxBudget={maxBudget}
+            currency={currency}
+          />
 
           {/* Sticky results mini-bar */}
           <div className="fm-sticky-bar">
@@ -2926,6 +3040,24 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* Best weekday insight */}
+          {(() => {
+            const depD = bestDestination.bestDate || departureDate;
+            if (!depD) return null;
+            const dayName = weekdayOf(depD);
+            const isCheapDay = ["Tue", "Wed", "Mar", "Mié"].includes(dayName);
+            return (
+              <div className={`fm-weekday-insight view-enter${isCheapDay ? " fm-weekday-insight--cheap" : ""}`}>
+                <span className="fm-weekday-insight-icon">{isCheapDay ? "💡" : "📅"}</span>
+                <span className="fm-weekday-insight-text">
+                  {isCheapDay
+                    ? t("results.weekdayCheap", { day: dayName })
+                    : t("results.weekdayNormal", { day: dayName })}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">

@@ -133,7 +133,10 @@
     "moveUp": "Subir",
     "moveDown": "Bajar",
     "kbdHint": "Pulsa Enter para buscar",
-    "emptyHint": "Empieza añadiendo la ciudad de salida de cada viajero"
+    "emptyHint": "Empieza añadiendo la ciudad de salida de cada viajero",
+    "completionOrigins": "Ciudades",
+    "completionDates": "Fechas",
+    "completionReady": "Listo"
   },
   "results": {
     "eyebrow": "Destino recomendado",
@@ -201,7 +204,9 @@
     "totalDistance": "Distancia total del grupo: {{km}} km",
     "avgDistance": "~{{km}} km media por viajero",
     "flightComparison": "Comparación de vuelos",
-    "tripSummaryDays": "días"
+    "tripSummaryDays": "días",
+    "weekdayCheap": "Vuelo en {{day}} — ¡suele ser uno de los días más baratos!",
+    "weekdayNormal": "Vuelo en {{day}}"
   },
   "vs": {
     "title": "Comparar destinos",
