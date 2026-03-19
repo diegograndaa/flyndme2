@@ -5800,3 +5800,124 @@ html {
 [data-theme="dark"] .app-footer-link:hover { color: #60A5FA; }
 [data-theme="dark"] .app-footer-copy { color: #475569; }
 [data-theme="dark"] .app-footer-tagline { color: #475569; }
+
+/* ── Price Confidence Meter ────────────────────────────────── */
+
+.fm-confidence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.fm-confidence-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+.fm-confidence-label {
+  color: var(--slate-600);
+  white-space: nowrap;
+}
+.fm-confidence-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--slate-200);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+.fm-confidence-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease;
+}
+.fm-confidence--high .fm-confidence-fill { background: #22C55E; }
+.fm-confidence--medium .fm-confidence-fill { background: #F59E0B; }
+.fm-confidence--low .fm-confidence-fill { background: #EF4444; }
+[data-theme="dark"] .fm-confidence {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-confidence-label { color: #94A3B8; }
+[data-theme="dark"] .fm-confidence-bar { background: #1E293B; }
+
+/* ── Origin Savings Card ───────────────────────────────────── */
+
+.fm-origin-savings {
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  margin: 14px 0;
+}
+.fm-origin-savings-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 12px;
+}
+.fm-origin-savings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fm-origin-savings-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fm-origin-savings-code {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-600);
+  min-width: 60px;
+}
+.fm-origin-savings-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--slate-100);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fm-origin-savings-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22C55E, #16A34A);
+  border-radius: 4px;
+  transition: width .6s ease;
+}
+.fm-origin-savings-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #16A34A;
+  min-width: 50px;
+  text-align: right;
+}
+.fm-origin-savings-note {
+  font-size: 11px;
+  color: var(--slate-400);
+  margin-top: 8px;
+}
+[data-theme="dark"] .fm-origin-savings {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-origin-savings-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-origin-savings-code { color: #94A3B8; }
+[data-theme="dark"] .fm-origin-savings-bar-wrap { background: #1E293B; }
+[data-theme="dark"] .fm-origin-savings-amount { color: #86EFAC; }
+[data-theme="dark"] .fm-origin-savings-note { color: #64748B; }
+
+/* ── Airline Logo in Booking Cards ─────────────────────────── */
+
+.wc-airline-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+}

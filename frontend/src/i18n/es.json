@@ -216,7 +216,13 @@
     "weekdayCheap": "Vuelo en {{day}} — ¡suele ser uno de los días más baratos!",
     "weekdayNormal": "Vuelo en {{day}}",
     "topDestinations": "Top 3 destinos para tu grupo",
-    "priceDistribution": "Distribución de precio por origen"
+    "priceDistribution": "Distribución de precio por origen",
+    "confidenceHigh": "Alta confianza en precios",
+    "confidenceMedium": "Confianza media",
+    "confidenceLow": "Baja confianza — los precios pueden variar",
+    "savingsPerOrigin": "Lo que ahorra cada viajero",
+    "savingsVsWorst": "vs volar a {{dest}}",
+    "copySearchLink": "Copiar enlace de búsqueda"
   },
   "vs": {
     "title": "Comparar destinos",
@@ -337,6 +343,7 @@
     "date": "Fecha: {{date}}",
     "perOrigin": "Por origen: {{details}}",
     "linkCopied": "¡Enlace copiado! Compártelo con tu grupo.",
+    "searchLinkCopied": "¡Enlace de búsqueda copiado!",
     "expired": "Este enlace ha expirado o no existe.",
     "sharing": "Generando enlace…"
   },

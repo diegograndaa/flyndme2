@@ -490,6 +490,84 @@ function ResultsSkeleton() {
 
 // ─── Top 3 destinations podium ─────────────────────────────────────────────────
 
+// ─── Airline logo helper ──────────────────────────────────────────────────────
+
+const AIRLINE_LOGOS = {};
+function airlineLogo(iata) {
+  if (!iata || iata.length < 2) return null;
+  return `https://images.kiwi.com/airlines/64/${iata}.png`;
+}
+
+// ─── Price confidence meter ──────────────────────────────────────────────────
+
+function PriceConfidence({ breakdown, t }) {
+  // Estimate confidence from data availability:
+  // - all origins have prices → high
+  // - has offer details (itineraries) → higher
+  // - breakdown has duration → highest
+  const total = breakdown.length;
+  if (!total) return null;
+  const withPrice = breakdown.filter(f => typeof f.price === "number").length;
+  const withOffer = breakdown.filter(f => f.offer?.itineraries?.[0]).length;
+  const pricePct = Math.round((withPrice / total) * 100);
+  const offerPct = Math.round((withOffer / total) * 100);
+  const confidence = Math.round((pricePct * 0.6) + (offerPct * 0.4));
+  const level = confidence >= 85 ? "high" : confidence >= 55 ? "medium" : "low";
+  const labels = { high: t("results.confidenceHigh"), medium: t("results.confidenceMedium"), low: t("results.confidenceLow") };
+
+  return (
+    <div className={`fm-confidence fm-confidence--${level}`}>
+      <span className="fm-confidence-icon">{level === "high" ? "🟢" : level === "medium" ? "🟡" : "🔴"}</span>
+      <span className="fm-confidence-label">{labels[level]}</span>
+      <div className="fm-confidence-bar">
+        <div className="fm-confidence-fill" style={{ width: `${confidence}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Per-origin savings card ─────────────────────────────────────────────────
+
+function OriginSavingsCard({ bestDest, allFlights, origins, currency, t }) {
+  if (!allFlights || allFlights.length < 2 || !bestDest?.flights?.length) return null;
+
+  // For each origin, find what they'd pay at the most expensive destination vs this one
+  const worstDest = [...allFlights].sort((a, b) => b.totalCostEUR - a.totalCostEUR)[0];
+  if (!worstDest?.flights?.length) return null;
+
+  const savings = origins.map(o => {
+    const bestPrice = bestDest.flights.find(f => String(f.origin).toUpperCase() === o)?.price;
+    const worstPrice = worstDest.flights.find(f => String(f.origin).toUpperCase() === o)?.price;
+    if (typeof bestPrice !== "number" || typeof worstPrice !== "number") return null;
+    return { origin: o, saved: worstPrice - bestPrice, bestPrice, worstPrice };
+  }).filter(Boolean);
+
+  if (!savings.length || savings.every(s => s.saved <= 0)) return null;
+  const maxSaved = Math.max(...savings.map(s => s.saved));
+
+  return (
+    <div className="fm-origin-savings view-enter">
+      <div className="fm-origin-savings-title">{t("results.savingsPerOrigin")}</div>
+      <div className="fm-origin-savings-grid">
+        {savings.map(s => (
+          <div key={s.origin} className="fm-origin-savings-item">
+            <span className="fm-origin-savings-code">{countryFlag(s.origin)} {s.origin}</span>
+            <div className="fm-origin-savings-bar-wrap">
+              <div className="fm-origin-savings-bar" style={{ width: `${maxSaved > 0 ? (s.saved / maxSaved) * 100 : 0}%` }} />
+            </div>
+            <span className="fm-origin-savings-amount">
+              {s.saved > 0
+                ? `−${currency === "EUR" ? formatEur(s.saved, 0) : convertPrice(s.saved, currency)}`
+                : "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="fm-origin-savings-note">{t("results.savingsVsWorst", { dest: destLabel(normalizeCode(worstDest.destination)) })}</div>
+    </div>
+  );
+}
+
 function TopDestinationsPodium({ flights, currency, onSelect }) {
   const { t } = useI18n();
   if (!flights || flights.length < 3) return null;
@@ -1632,7 +1710,7 @@ const WinnerCard = React.memo(function WinnerCard({
   dest, origins, tripType, returnDate, departureDate: depDate,
   uiCriterion, onChangeCriterion,
   flightsCount, allFlights = [], lastBestPrice = 0,
-  onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, shareStatus,
+  onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, onCopySearchLink, shareStatus,
   onViewAlternatives, onChangeSearch,
   currency = "EUR",
   searchBadges = [],
@@ -1952,7 +2030,7 @@ const WinnerCard = React.memo(function WinnerCard({
                     {(airline || stops !== null || durationText) && (
                       <div className="wc-flight-meta">
                         <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.outbound")}</span>
-                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><span className="wc-airline-badge">{airline}</span></span>}
+                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><img src={airlineLogo(airline)} alt={airline} className="wc-airline-logo" onError={(e) => { e.currentTarget.style.display = "none"; }} /><span className="wc-airline-badge">{airline}</span></span>}
                         {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
                         {stops !== null && (
                           <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
@@ -2105,6 +2183,9 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
         )}
 
+        {/* Price confidence meter */}
+        <PriceConfidence breakdown={breakdown} t={t} />
+
         {/* Fairness detail (collapsible mini) */}
         <div className="wc-fairness-detail">
           <div className="wc-fairness-bar-full">
@@ -2149,6 +2230,11 @@ const WinnerCard = React.memo(function WinnerCard({
           {typeof navigator !== "undefined" && navigator.share && (
             <button type="button" className="wc-action-btn wc-action-btn--native" onClick={onShareNative}>
               📤 {t("results.shareNative")}
+            </button>
+          )}
+          {onCopySearchLink && (
+            <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink}>
+              🔗 {t("results.copySearchLink")}
             </button>
           )}
           <button type="button" className="wc-share-img-btn" onClick={() => {
@@ -2765,6 +2851,23 @@ export default function App() {
     trackEvent("share_email", { destination: code });
   };
 
+  // ── Copy search params as URL ─────────────────────────────────────────────
+
+  const handleCopySearchLink = () => {
+    const params = new URLSearchParams();
+    cleanOrigins.forEach(o => params.append("o", o));
+    if (departureDate) params.set("dep", departureDate);
+    if (tripType === "roundtrip" && returnDate) params.set("ret", returnDate);
+    params.set("trip", tripType);
+    if (optimizeBy !== "total") params.set("opt", optimizeBy);
+    if (directOnly) params.set("direct", "1");
+    if (cabinClass !== "ECONOMY") params.set("cabin", cabinClass);
+    if (currency !== "EUR") params.set("cur", currency);
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    copyText(url);
+    setToast({ message: t("share.searchLinkCopied"), type: "success" });
+  };
+
   // ── Native Web Share API (mobile) ──────────────────────────────────────────
 
   const handleShareNative = async () => {
@@ -3135,6 +3238,7 @@ export default function App() {
             onShareTelegram={handleShareTelegram}
             onShareEmail={handleShareEmail}
             onShareNative={handleShareNative}
+            onCopySearchLink={handleCopySearchLink}
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
@@ -3246,6 +3350,9 @@ export default function App() {
           {bestDestination?.flights?.length >= 2 && (
             <PriceDonut breakdown={bestDestination.flights} currency={currency} />
           )}
+
+          {/* Per-origin savings breakdown */}
+          <OriginSavingsCard bestDest={bestDestination} allFlights={flights} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* Destinations analyzed counter */}
           <div className="fm-stats-bar view-enter">
