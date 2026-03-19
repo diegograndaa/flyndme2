@@ -2,7 +2,9 @@
   "header": {
     "tagline": "Queda mejor, vuela justo",
     "newSearch": "Nueva búsqueda",
-    "home": "Inicio"
+    "home": "Inicio",
+    "serverOnline": "Servidor activo",
+    "serverWaking": "Servidor iniciándose…"
   },
   "landing": {
     "eyebrow": "✈ FlyndMe",
@@ -39,6 +41,12 @@
         "q": "¿Los precios son exactos?",
         "a": "Son precios reales de Amadeus, pero pueden variar ligeramente en el momento de reservar."
       }
+    ],
+    "testimonialsTitle": "Lo que dicen los viajeros",
+    "testimonials": [
+      { "text": "Antes pasábamos horas comparando vuelos desde 4 ciudades. FlyndMe encontró nuestro punto de encuentro en segundos.", "name": "Laura M.", "origin": "Madrid", "avatar": "👩‍💼", "stars": 5 },
+      { "text": "Perfecto para nuestra reunión Erasmus. Seis amigos, seis países, una búsqueda. Genial.", "name": "Jonas K.", "origin": "Berlín", "avatar": "🧑‍🎓", "stars": 5 },
+      { "text": "Mi pareja vive en Londres y yo en Lisboa. Esta herramienta nos ahorra mucho tiempo buscando fines de semana baratos.", "name": "Sofia R.", "origin": "Lisboa", "avatar": "👩‍🦰", "stars": 5 }
     ],
     "exampleTitle": "Mira cómo funciona",
     "exampleSub": "3 amigos en Madrid, Londres y Berlín quieren encontrarse. FlyndMe compara vuelos y encuentra el mejor punto de encuentro.",
@@ -206,7 +214,9 @@
     "flightComparison": "Comparación de vuelos",
     "tripSummaryDays": "días",
     "weekdayCheap": "Vuelo en {{day}} — ¡suele ser uno de los días más baratos!",
-    "weekdayNormal": "Vuelo en {{day}}"
+    "weekdayNormal": "Vuelo en {{day}}",
+    "topDestinations": "Top 3 destinos para tu grupo",
+    "priceDistribution": "Distribución de precio por origen"
   },
   "vs": {
     "title": "Comparar destinos",
@@ -310,6 +320,12 @@
     "counterSub": "Únete y encuentra tu mejor punto de encuentro"
   },
   "footer": "FlyndMe — Encuentra dónde reunirte con tu grupo al mejor precio.",
+  "footerBrand": "FlyndMe",
+  "footerTagline": "Encuentra el lugar más barato para reunir a tu grupo.",
+  "footerHow": "Cómo funciona",
+  "footerFaq": "Preguntas frecuentes",
+  "footerContact": "Contacto",
+  "footerCopy": "© 2026 FlyndMe. Todos los derechos reservados.",
   "pwa": {
     "installHint": "Añade a tu pantalla de inicio para acceder más rápido",
     "install": "Instalar"

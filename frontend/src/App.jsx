@@ -488,6 +488,114 @@ function ResultsSkeleton() {
   );
 }
 
+// ─── Top 3 destinations podium ─────────────────────────────────────────────────
+
+function TopDestinationsPodium({ flights, currency, onSelect }) {
+  const { t } = useI18n();
+  if (!flights || flights.length < 3) return null;
+
+  const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR).slice(0, 3);
+  const medals = ["🥇", "🥈", "🥉"];
+  const positions = [1, 0, 2]; // visual order: 2nd, 1st, 3rd for podium effect
+
+  return (
+    <div className="fm-podium view-enter">
+      <div className="fm-podium-title">{t("results.topDestinations")}</div>
+      <div className="fm-podium-cards">
+        {positions.map((pos) => {
+          const dest = sorted[pos];
+          if (!dest) return null;
+          const code = normalizeCode(dest.destination);
+          const city = cityOf(code);
+          return (
+            <button key={code} type="button"
+              className={`fm-podium-card fm-podium-card--pos${pos + 1}`}
+              onClick={() => onSelect?.(dest)}>
+              <span className="fm-podium-medal">{medals[pos]}</span>
+              <span className="fm-podium-city">{city || code}</span>
+              <span className="fm-podium-code">{code}</span>
+              <span className="fm-podium-price">
+                {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
+                <span className="fm-podium-pp">/pp</span>
+              </span>
+              <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
+                {(dest.fairnessScore ?? 0).toFixed(0)}/100
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Price distribution donut ──────────────────────────────────────────────────
+
+function PriceDonut({ breakdown, currency }) {
+  const { t } = useI18n();
+  if (!breakdown || breakdown.length < 2) return null;
+  const total = breakdown.reduce((s, f) => s + (f.price || 0), 0);
+  if (total <= 0) return null;
+
+  const colors = ["#0062E3", "#05C3A8", "#7C3AED", "#F59E0B", "#EF4444", "#06B6D4", "#8B5CF6", "#EC4899"];
+  const r = 40, cx = 50, cy = 50;
+  const circumference = 2 * Math.PI * r;
+
+  let offset = 0;
+  const segments = breakdown.map((f, i) => {
+    const pct = f.price / total;
+    const dash = pct * circumference;
+    const seg = { dash, offset, color: colors[i % colors.length], origin: String(f.origin).toUpperCase(), pct: Math.round(pct * 100) };
+    offset += dash;
+    return seg;
+  });
+
+  return (
+    <div className="fm-donut-wrap view-enter">
+      <div className="fm-donut-title">{t("results.priceDistribution")}</div>
+      <div className="fm-donut-content">
+        <svg viewBox="0 0 100 100" width="100" height="100" className="fm-donut-svg">
+          {segments.map((s, i) => (
+            <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+              stroke={s.color} strokeWidth="16"
+              strokeDasharray={`${s.dash} ${circumference - s.dash}`}
+              strokeDashoffset={-s.offset}
+              transform="rotate(-90 50 50)"
+              style={{ transition: "stroke-dasharray .6s ease, stroke-dashoffset .6s ease" }} />
+          ))}
+        </svg>
+        <div className="fm-donut-legend">
+          {segments.map((s, i) => (
+            <div key={i} className="fm-donut-legend-item">
+              <span className="fm-donut-legend-dot" style={{ background: s.color }} />
+              <span className="fm-donut-legend-origin">{s.origin}</span>
+              <span className="fm-donut-legend-pct">{s.pct}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Backend connection status ─────────────────────────────────────────────────
+
+function useBackendStatus(apiBase) {
+  const [status, setStatus] = useState("unknown"); // unknown | online | offline
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: AbortSignal.timeout?.(5000) })
+        .then(res => { if (!cancelled) setStatus(res.ok ? "online" : "offline"); })
+        .catch(() => { if (!cancelled) setStatus("offline"); });
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [apiBase]);
+  return status;
+}
+
 // ─── Error boundary ───────────────────────────────────────────────────────────
 
 class ErrorBoundary extends React.Component {
@@ -735,6 +843,28 @@ const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
                 <span className="lp-route-name">{route.name}</span>
                 <span className="lp-route-cities">{route.cities}</span>
               </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="lp-testimonials">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <h2 className="lp-testimonials-title">{t("landing.testimonialsTitle")}</h2>
+          <div className="lp-testimonials-grid">
+            {(t("landing.testimonials") || []).map((item, i) => (
+              <div key={i} className="lp-testimonial-card">
+                <div className="lp-testimonial-stars">{"★".repeat(item.stars || 5)}</div>
+                <p className="lp-testimonial-text">{item.text}</p>
+                <div className="lp-testimonial-author">
+                  <span className="lp-testimonial-avatar">{item.avatar}</span>
+                  <div>
+                    <span className="lp-testimonial-name">{item.name}</span>
+                    <span className="lp-testimonial-origin">{item.origin}</span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -2204,6 +2334,7 @@ export default function App() {
   const { t } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
   const { favs, toggle: toggleFav, isFav } = useFavorites();
+  const backendStatus = useBackendStatus(API_BASE);
 
   // View: 'landing' | 'search' | 'results'
   const [view, setViewRaw] = useState("landing");
@@ -2845,6 +2976,7 @@ export default function App() {
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
             <span className="app-logo-sub">{t("header.tagline")}</span>
+            <span className={`fm-backend-dot fm-backend-dot--${backendStatus}`} title={backendStatus === "online" ? t("header.serverOnline") : backendStatus === "offline" ? t("header.serverWaking") : ""} />
           </div>
           <div className="d-flex align-items-center gap-2">
             {favs.length > 0 && (
@@ -3101,6 +3233,20 @@ export default function App() {
             </div>
           )}
 
+          {/* Top 3 destinations podium */}
+          <TopDestinationsPodium flights={flights} currency={currency} onSelect={(dest) => {
+            // Switch to that destination in criteria view
+            const idx = flights.findIndex(f => f.destination === dest.destination);
+            if (idx >= 0) {
+              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
+            }
+          }} />
+
+          {/* Price distribution donut */}
+          {bestDestination?.flights?.length >= 2 && (
+            <PriceDonut breakdown={bestDestination.flights} currency={currency} />
+          )}
+
           {/* Destinations analyzed counter */}
           <div className="fm-stats-bar view-enter">
             <span className="fm-stats-item">
@@ -3280,7 +3426,16 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="container" style={{ maxWidth: 1080 }}>
-          {t("footer")}
+          <div className="app-footer-inner">
+            <span className="app-footer-brand">{t("footerBrand")}</span>
+            <span className="app-footer-tagline">{t("footerTagline")}</span>
+            <nav className="app-footer-links">
+              <a className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</a>
+              <a className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: "smooth" }); }, 100); }}>{t("footerFaq")}</a>
+              <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
+            </nav>
+            <span className="app-footer-copy">{t("footerCopy")}</span>
+          </div>
         </div>
       </footer>
     </div>

@@ -5469,3 +5469,334 @@ html {
   border-color: rgba(34,197,94,.15);
   color: #86EFAC;
 }
+
+/* ── Top Destinations Podium ─────────────────────────────────── */
+
+.fm-podium {
+  margin: 16px 0 20px;
+}
+.fm-podium-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 12px;
+}
+.fm-podium-cards {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+}
+.fm-podium-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 16px 12px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  min-width: 100px;
+}
+.fm-podium-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+.fm-podium-card--pos1 {
+  background: linear-gradient(145deg, #FFFBEB, #FEF3C7);
+  border-color: #FCD34D;
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(251,191,36,.18);
+}
+.fm-podium-card--pos1:hover {
+  transform: scale(1.08) translateY(-3px);
+}
+.fm-podium-card--pos2 {
+  background: linear-gradient(145deg, #F9FAFB, #F1F5F9);
+  border-color: #CBD5E1;
+}
+.fm-podium-card--pos3 {
+  background: linear-gradient(145deg, #FFF7ED, #FFEDD5);
+  border-color: #FDBA74;
+}
+.fm-podium-medal {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+.fm-podium-city {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-800);
+  line-height: 1.2;
+}
+.fm-podium-code {
+  font-size: 11px;
+  color: var(--slate-400);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.fm-podium-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blue-600);
+}
+.fm-podium-pp {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--slate-400);
+  margin-left: 2px;
+}
+.fm-podium-fairness {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+[data-theme="dark"] .fm-podium-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-podium-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .fm-podium-card--pos1 {
+  background: linear-gradient(145deg, #292524, #1C1917);
+  border-color: #92400E;
+  box-shadow: 0 4px 16px rgba(251,191,36,.08);
+}
+[data-theme="dark"] .fm-podium-card--pos2 {
+  background: linear-gradient(145deg, #1E293B, #0F172A);
+  border-color: #475569;
+}
+[data-theme="dark"] .fm-podium-card--pos3 {
+  background: linear-gradient(145deg, #1C1917, #171717);
+  border-color: #9A3412;
+}
+[data-theme="dark"] .fm-podium-city { color: #F1F5F9; }
+[data-theme="dark"] .fm-podium-code { color: #64748B; }
+[data-theme="dark"] .fm-podium-price { color: #60A5FA; }
+@media (max-width: 600px) {
+  .fm-podium-cards { gap: 6px; }
+  .fm-podium-card { min-width: 80px; padding: 10px 10px 8px; }
+  .fm-podium-medal { font-size: 22px; }
+  .fm-podium-price { font-size: 14px; }
+}
+
+/* ── Price Donut Chart ──────────────────────────────────────── */
+
+.fm-donut-wrap {
+  margin: 14px 0;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+}
+.fm-donut-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 12px;
+}
+.fm-donut-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.fm-donut-svg {
+  flex-shrink: 0;
+}
+.fm-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.fm-donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.fm-donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fm-donut-legend-origin {
+  color: var(--slate-600);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fm-donut-legend-pct {
+  font-weight: 600;
+  color: var(--slate-800);
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .fm-donut-wrap {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-donut-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-donut-legend-origin { color: #94A3B8; }
+[data-theme="dark"] .fm-donut-legend-pct { color: #E2E8F0; }
+
+/* ── Backend Status Dot ─────────────────────────────────────── */
+
+.fm-backend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+  background: #94A3B8;
+  transition: background .3s;
+}
+.fm-backend-dot--online {
+  background: #22C55E;
+  box-shadow: 0 0 6px rgba(34,197,94,.4);
+}
+.fm-backend-dot--offline {
+  background: #F59E0B;
+  animation: fm-dot-pulse 1.5s ease-in-out infinite;
+}
+@keyframes fm-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+/* ── Testimonials ───────────────────────────────────────────── */
+
+.lp-testimonials {
+  padding: 48px 0 32px;
+}
+.lp-testimonials-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--slate-800);
+  text-align: center;
+  margin-bottom: 28px;
+}
+.lp-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.lp-testimonial-card {
+  padding: 20px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  transition: transform .2s, box-shadow .2s;
+}
+.lp-testimonial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.06);
+}
+.lp-testimonial-stars {
+  color: #FBBF24;
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.lp-testimonial-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--slate-600);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+.lp-testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lp-testimonial-avatar {
+  font-size: 28px;
+  line-height: 1;
+}
+.lp-testimonial-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  display: block;
+}
+.lp-testimonial-origin {
+  font-size: 12px;
+  color: var(--slate-400);
+  display: block;
+}
+[data-theme="dark"] .lp-testimonials-title { color: #F1F5F9; }
+[data-theme="dark"] .lp-testimonial-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+[data-theme="dark"] .lp-testimonial-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+[data-theme="dark"] .lp-testimonial-text { color: #94A3B8; }
+[data-theme="dark"] .lp-testimonial-name { color: #E2E8F0; }
+[data-theme="dark"] .lp-testimonial-origin { color: #64748B; }
+@media (max-width: 768px) {
+  .lp-testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 16px;
+  }
+}
+@media (min-width: 769px) and (max-width: 960px) {
+  .lp-testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Enhanced Footer ────────────────────────────────────────── */
+
+.app-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.app-footer-brand {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--slate-600);
+}
+.app-footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.app-footer-link {
+  font-size: 13px;
+  color: var(--slate-400);
+  text-decoration: none;
+  transition: color .2s;
+  cursor: pointer;
+}
+.app-footer-link:hover {
+  color: var(--blue-600);
+}
+.app-footer-copy {
+  font-size: 12px;
+  color: var(--slate-400);
+}
+.app-footer-tagline {
+  font-size: 12px;
+  color: var(--slate-400);
+  text-align: center;
+}
+[data-theme="dark"] .app-footer-brand { color: #94A3B8; }
+[data-theme="dark"] .app-footer-link { color: #64748B; }
+[data-theme="dark"] .app-footer-link:hover { color: #60A5FA; }
+[data-theme="dark"] .app-footer-copy { color: #475569; }
+[data-theme="dark"] .app-footer-tagline { color: #475569; }

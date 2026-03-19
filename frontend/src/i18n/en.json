@@ -2,7 +2,9 @@
   "header": {
     "tagline": "Meet smarter, fly fair",
     "newSearch": "New search",
-    "home": "Home"
+    "home": "Home",
+    "serverOnline": "Server online",
+    "serverWaking": "Server waking up…"
   },
   "landing": {
     "eyebrow": "✈ FlyndMe",
@@ -39,6 +41,12 @@
         "q": "Are the prices exact?",
         "a": "They're real prices from Amadeus, but may vary slightly at the time of booking."
       }
+    ],
+    "testimonialsTitle": "What travelers say",
+    "testimonials": [
+      { "text": "We used to spend hours comparing flights from 4 cities. FlyndMe found our meeting point in seconds.", "name": "Laura M.", "origin": "Madrid", "avatar": "👩‍💼", "stars": 5 },
+      { "text": "Perfect for our Erasmus reunion! Six friends, six countries, one search. Genius.", "name": "Jonas K.", "origin": "Berlin", "avatar": "🧑‍🎓", "stars": 5 },
+      { "text": "My partner lives in London and I'm in Lisbon. This tool saves us so much time finding cheap weekends.", "name": "Sofia R.", "origin": "Lisbon", "avatar": "👩‍🦰", "stars": 5 }
     ],
     "exampleTitle": "See how it works",
     "exampleSub": "3 friends in Madrid, London and Berlin want to meet up. FlyndMe compares flights and finds the best meeting point.",
@@ -206,7 +214,9 @@
     "flightComparison": "Flight comparison",
     "tripSummaryDays": "days",
     "weekdayCheap": "Flying on {{day}} — typically one of the cheapest days!",
-    "weekdayNormal": "Flying on {{day}}"
+    "weekdayNormal": "Flying on {{day}}",
+    "topDestinations": "Top 3 destinations for your group",
+    "priceDistribution": "Price share by origin"
   },
   "vs": {
     "title": "Compare destinations",
@@ -310,6 +320,12 @@
     "counterSub": "Join them and find your best meeting point"
   },
   "footer": "FlyndMe — Find where to meet your group at the best price.",
+  "footerBrand": "FlyndMe",
+  "footerTagline": "Find the cheapest place to meet your group.",
+  "footerHow": "How it works",
+  "footerFaq": "FAQ",
+  "footerContact": "Contact",
+  "footerCopy": "© 2026 FlyndMe. All rights reserved.",
   "pwa": {
     "installHint": "Add to your home screen for faster access",
     "install": "Install"
