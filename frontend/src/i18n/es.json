@@ -239,7 +239,8 @@
     "planTripSub": "Enlaces útiles para {{city}}",
     "planHotels": "Buscar hoteles",
     "planActivities": "Actividades",
-    "planMap": "Explorar mapa"
+    "planMap": "Explorar mapa",
+    "timelineTitle": "Horarios de vuelo por origen"
   },
   "vs": {
     "title": "Comparar destinos",
@@ -405,5 +406,9 @@
     "fairness": "Equidad",
     "popularity": "Cobertura",
     "value": "Valor"
+  },
+  "history": {
+    "title": "Tus búsquedas recientes",
+    "clear": "Borrar todo"
   }
 }

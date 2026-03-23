@@ -805,6 +805,188 @@ function DestRadarChart({ flights, bestDest, t }) {
   );
 }
 
+// ─── Flight Timeline (visual per-origin departure/arrival) ─────────────────
+
+function FlightTimeline({ bestDest, origins, t }) {
+  if (!bestDest?.flights?.length) return null;
+  const legs = bestDest.flights.map(f => {
+    const origin = String(f.origin).toUpperCase();
+    const itin = f.offer?.itineraries?.[0];
+    if (!itin?.segments?.length) return null;
+    const firstSeg = itin.segments[0];
+    const lastSeg = itin.segments[itin.segments.length - 1];
+    const depTime = firstSeg.departure?.at ? new Date(firstSeg.departure.at) : null;
+    const arrTime = lastSeg.arrival?.at ? new Date(lastSeg.arrival.at) : null;
+    if (!depTime || !arrTime) return null;
+    const durationMin = Math.round((arrTime - depTime) / 60000);
+    const hours = Math.floor(durationMin / 60);
+    const mins = durationMin % 60;
+    const airline = firstSeg.carrierCode || "";
+    const stops = itin.segments.length - 1;
+    return { origin, depTime, arrTime, durationMin, hours, mins, airline, stops };
+  }).filter(Boolean);
+
+  if (!legs.length) return null;
+
+  // Find earliest dep and latest arr to compute time span
+  const earliestDep = Math.min(...legs.map(l => l.depTime.getTime()));
+  const latestArr = Math.max(...legs.map(l => l.arrTime.getTime()));
+  const totalSpan = latestArr - earliestDep || 1;
+
+  const fmtTime = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+  return (
+    <div className="fm-timeline view-enter">
+      <div className="fm-timeline-title">{t("results.timelineTitle")}</div>
+      <div className="fm-timeline-grid">
+        {legs.map(leg => {
+          const leftPct = ((leg.depTime.getTime() - earliestDep) / totalSpan) * 100;
+          const widthPct = ((leg.arrTime.getTime() - leg.depTime.getTime()) / totalSpan) * 100;
+          return (
+            <div key={leg.origin} className="fm-timeline-row">
+              <span className="fm-timeline-origin">{countryFlag(leg.origin)} {leg.origin}</span>
+              <div className="fm-timeline-track">
+                <div className="fm-timeline-bar"
+                  style={{ left: `${leftPct}%`, width: `${Math.max(widthPct, 4)}%` }}
+                  title={`${fmtTime(leg.depTime)} → ${fmtTime(leg.arrTime)}`}>
+                  <span className="fm-timeline-bar-label">
+                    {leg.hours}h{leg.mins > 0 ? `${leg.mins}m` : ""}
+                    {leg.stops > 0 ? ` · ${leg.stops} stop${leg.stops > 1 ? "s" : ""}` : ""}
+                  </span>
+                </div>
+              </div>
+              <span className="fm-timeline-times">
+                <span className="fm-timeline-dep">{fmtTime(leg.depTime)}</span>
+                <span className="fm-timeline-arr">{fmtTime(leg.arrTime)}</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Search History Panel ─────────────────────────────────────────────────
+
+function SearchHistoryPanel({ searches, onLoad, onClear, t }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!searches || !searches.length) return null;
+
+  return (
+    <div className="fm-history view-enter">
+      <button type="button" className="fm-history-toggle" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+        <span className="fm-history-toggle-left">
+          <span className="fm-history-icon">🕘</span>
+          <span className="fm-history-title">{t("history.title")}</span>
+          <span className="fm-history-count">{searches.length}</span>
+        </span>
+        <span className={`fm-history-chevron${expanded ? " fm-history-chevron--open" : ""}`}>▾</span>
+      </button>
+      {expanded && (
+        <div className="fm-history-body">
+          {searches.slice(0, 10).map((s, i) => (
+            <button key={i} type="button" className="fm-history-item" onClick={() => { onLoad(s); setExpanded(false); }}>
+              <span className="fm-history-item-origins">{(s.origins || []).join(" · ")}</span>
+              <span className="fm-history-item-date">{s.departureDate || "—"}</span>
+              {s.bestDest && <span className="fm-history-item-dest">→ {s.bestDest}</span>}
+              {s.bestPrice != null && <span className="fm-history-item-price">{formatEur(s.bestPrice, 0)}</span>}
+            </button>
+          ))}
+          <button type="button" className="fm-history-clear" onClick={onClear}>{t("history.clear")}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Destination Weather Hint (seasonal) ──────────────────────────────────
+
+function DestWeatherBadge({ destCode, departureDate, t }) {
+  const hint = getWeatherHint(destCode, departureDate, t);
+  if (!hint) return null;
+  return (
+    <div className="fm-weather-badge view-enter">
+      <span className="fm-weather-badge-text">{hint}</span>
+    </div>
+  );
+}
+
+// ─── Reduced Motion + High Contrast accessibility hook ────────────────────
+
+function useA11yPrefs() {
+  const [reducedMotion, setReducedMotion] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || false;
+  });
+  const [highContrast, setHighContrast] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(prefers-contrast: more)")?.matches || false;
+  });
+
+  useEffect(() => {
+    const mqMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mqContrast = window.matchMedia("(prefers-contrast: more)");
+    const hMotion = (e) => setReducedMotion(e.matches);
+    const hContrast = (e) => setHighContrast(e.matches);
+    mqMotion.addEventListener("change", hMotion);
+    mqContrast.addEventListener("change", hContrast);
+    return () => {
+      mqMotion.removeEventListener("change", hMotion);
+      mqContrast.removeEventListener("change", hContrast);
+    };
+  }, []);
+
+  return { reducedMotion, highContrast };
+}
+
+// ─── Results Summary Card (compact printable overview) ────────────────────
+
+function ResultsSummaryCard({ bestDest, origins, flights, currency, departureDate, returnDate, tripType, t }) {
+  if (!bestDest) return null;
+  const destCode = normalizeCode(bestDest.destination);
+  const city = cityOf(destCode) || destCode;
+  const total = bestDest.totalCostEUR || 0;
+  const avg = bestDest.averageCostPerTraveler || 0;
+  const fairness = bestDest.fairnessScore ?? 0;
+  const analyzed = flights?.length || 0;
+
+  return (
+    <div className="fm-summary-card view-enter">
+      <div className="fm-summary-card-header">
+        <span className="fm-summary-card-dest">{city}</span>
+        <span className="fm-summary-card-code">{destCode}</span>
+      </div>
+      <div className="fm-summary-card-grid">
+        <div className="fm-summary-card-stat">
+          <span className="fm-summary-card-stat-label">{t("results.groupTotal")}</span>
+          <span className="fm-summary-card-stat-value">{currency === "EUR" ? formatEur(total, 0) : convertPrice(total, currency)}</span>
+        </div>
+        <div className="fm-summary-card-stat">
+          <span className="fm-summary-card-stat-label">{t("results.avgPerPerson")}</span>
+          <span className="fm-summary-card-stat-value">{currency === "EUR" ? formatEur(avg, 0) : convertPrice(avg, currency)}</span>
+        </div>
+        <div className="fm-summary-card-stat">
+          <span className="fm-summary-card-stat-label">{t("results.fairnessLabel")}</span>
+          <span className="fm-summary-card-stat-value" style={{ color: fairnessColor(fairness) }}>{fairness.toFixed(0)}/100</span>
+        </div>
+        <div className="fm-summary-card-stat">
+          <span className="fm-summary-card-stat-label">{t("results.destsAnalyzed")}</span>
+          <span className="fm-summary-card-stat-value">{analyzed}</span>
+        </div>
+      </div>
+      <div className="fm-summary-card-origins">
+        {origins.map(o => <span key={o} className="fm-summary-card-origin">{countryFlag(o)} {o}</span>)}
+      </div>
+      {departureDate && (
+        <div className="fm-summary-card-dates">
+          {departureDate}{tripType === "roundtrip" && returnDate ? ` → ${returnDate}` : ""}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TopDestinationsPodium({ flights, currency, onSelect }) {
   const { t } = useI18n();
   if (!flights || flights.length < 3) return null;
@@ -2764,6 +2946,13 @@ export default function App() {
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
   const { favs, toggle: toggleFav, isFav } = useFavorites();
   const backendStatus = useBackendStatus(API_BASE);
+  const { reducedMotion, highContrast } = useA11yPrefs();
+
+  // Set a11y attributes on root
+  useEffect(() => {
+    document.documentElement.setAttribute("data-reduced-motion", reducedMotion ? "true" : "false");
+    document.documentElement.setAttribute("data-high-contrast", highContrast ? "true" : "false");
+  }, [reducedMotion, highContrast]);
 
   // View: 'landing' | 'search' | 'results'
   const [view, setViewRaw] = useState("landing");
@@ -3523,6 +3712,15 @@ export default function App() {
             if (dests.length) setSelectedDests(dests);
             setView("search");
           }} />
+          {/* Search history panel on landing */}
+          <div className="container" style={{ maxWidth: 1080 }}>
+            <SearchHistoryPanel
+              searches={recentSearches}
+              onLoad={(entry) => { loadRecentSearch(entry); setView("search"); }}
+              onClear={clearRecentSearches}
+              t={t}
+            />
+          </div>
         </div>
       )}
 
@@ -3680,6 +3878,13 @@ export default function App() {
             );
           })()}
 
+          {/* Weather / season hint for destination */}
+          <DestWeatherBadge
+            destCode={normalizeCode(bestDestination.destination)}
+            departureDate={bestDestination.bestDate || departureDate}
+            t={t}
+          />
+
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
             <span className="fm-alert-hint-icon">🔔</span>
@@ -3739,11 +3944,26 @@ export default function App() {
           {/* Destination radar chart */}
           <DestRadarChart flights={flights} bestDest={bestDestination} t={t} />
 
+          {/* Flight timeline (visual per-origin) */}
+          <FlightTimeline bestDest={bestDestination} origins={cleanOrigins} t={t} />
+
           {/* Cost split calculator */}
           <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* Per-origin savings breakdown */}
           <OriginSavingsCard bestDest={bestDestination} allFlights={flights} origins={cleanOrigins} currency={currency} t={t} />
+
+          {/* Results summary card (compact printable overview) */}
+          <ResultsSummaryCard
+            bestDest={bestDestination}
+            origins={cleanOrigins}
+            flights={flights}
+            currency={currency}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            t={t}
+          />
 
           {/* Destinations analyzed counter */}
           <div className="fm-stats-bar view-enter">

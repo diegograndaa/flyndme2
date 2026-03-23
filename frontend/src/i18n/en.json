@@ -239,7 +239,8 @@
     "planTripSub": "Useful links for {{city}}",
     "planHotels": "Find hotels",
     "planActivities": "Activities",
-    "planMap": "Explore map"
+    "planMap": "Explore map",
+    "timelineTitle": "Flight schedule by origin"
   },
   "vs": {
     "title": "Compare destinations",
@@ -405,5 +406,9 @@
     "fairness": "Fairness",
     "popularity": "Coverage",
     "value": "Value"
+  },
+  "history": {
+    "title": "Your recent searches",
+    "clear": "Clear all"
   }
 }
