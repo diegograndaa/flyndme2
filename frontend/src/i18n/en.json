@@ -388,5 +388,22 @@
     "help": "Show this help",
     "home": "Go to home page",
     "search": "Go to search"
+  },
+  "checklist": {
+    "title": "Travel preparation checklist",
+    "passport": "Check passport validity",
+    "insurance": "Get travel insurance",
+    "accommodation": "Book accommodation",
+    "transport": "Plan airport transfer",
+    "currency": "Check local currency & payments",
+    "charger": "Pack adapter/charger",
+    "returnConfirm": "Confirm return flight details"
+  },
+  "radar": {
+    "title": "Top 2 destinations compared",
+    "price": "Price",
+    "fairness": "Fairness",
+    "popularity": "Coverage",
+    "value": "Value"
   }
 }

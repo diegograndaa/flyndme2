@@ -663,6 +663,148 @@ function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
   );
 }
 
+// ─── Group Travel Checklist ──────────────────────────────────────────────────
+
+function TravelChecklist({ destCode, tripType, t }) {
+  const [open, setOpen] = useState(false);
+  const [checked, setChecked] = useState({});
+
+  const items = useMemo(() => {
+    const base = [
+      { id: "passport", icon: "🛂", label: t("checklist.passport") },
+      { id: "insurance", icon: "🏥", label: t("checklist.insurance") },
+      { id: "accommodation", icon: "🏨", label: t("checklist.accommodation") },
+      { id: "transport", icon: "🚕", label: t("checklist.transport") },
+      { id: "currency", icon: "💱", label: t("checklist.currency") },
+      { id: "charger", icon: "🔌", label: t("checklist.charger") },
+    ];
+    if (tripType === "roundtrip") {
+      base.push({ id: "return", icon: "🔙", label: t("checklist.returnConfirm") });
+    }
+    return base;
+  }, [destCode, tripType, t]);
+
+  const progress = items.length ? Math.round((Object.values(checked).filter(Boolean).length / items.length) * 100) : 0;
+
+  return (
+    <div className="fm-checklist view-enter">
+      <button type="button" className="fm-checklist-toggle" onClick={() => setOpen(v => !v)} aria-expanded={open}>
+        <span className="fm-checklist-toggle-left">
+          <span className="fm-checklist-icon">📋</span>
+          <span className="fm-checklist-title">{t("checklist.title")}</span>
+        </span>
+        <span className="fm-checklist-progress">
+          <span className="fm-checklist-pct">{progress}%</span>
+          <span className={`fm-checklist-chevron${open ? " fm-checklist-chevron--open" : ""}`}>▾</span>
+        </span>
+      </button>
+      {open && (
+        <div className="fm-checklist-body">
+          {items.map(item => (
+            <label key={item.id} className={`fm-checklist-item${checked[item.id] ? " fm-checklist-item--done" : ""}`}>
+              <input
+                type="checkbox"
+                className="fm-checklist-check"
+                checked={!!checked[item.id]}
+                onChange={() => setChecked(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+              />
+              <span className="fm-checklist-item-icon">{item.icon}</span>
+              <span className="fm-checklist-item-label">{item.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Destination Radar Chart (SVG) ───────────────────────────────────────────
+
+function DestRadarChart({ flights, bestDest, t }) {
+  if (!flights || flights.length < 2 || !bestDest) return null;
+
+  // Compare top 2 destinations on 4 axes: price, fairness, distance, stops
+  const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR);
+  const d1 = sorted[0];
+  const d2 = sorted[1];
+  if (!d1 || !d2) return null;
+
+  const axes = [
+    { key: "price", label: t("radar.price") },
+    { key: "fairness", label: t("radar.fairness") },
+    { key: "destinations", label: t("radar.popularity") },
+    { key: "value", label: t("radar.value") },
+  ];
+
+  // Normalize values to 0-1 scale
+  const maxPrice = Math.max(d1.averageCostPerTraveler || 1, d2.averageCostPerTraveler || 1);
+  const normalize = (dest) => [
+    1 - ((dest.averageCostPerTraveler || 0) / maxPrice), // price: lower = better
+    (dest.fairnessScore || 0) / 100,
+    Math.min(1, (dest.flights?.length || 0) / 6), // how many origins have coverage
+    dest.fairnessScore > 70 && dest.averageCostPerTraveler < maxPrice * 0.8 ? 0.9 : 0.5,
+  ];
+
+  const v1 = normalize(d1);
+  const v2 = normalize(d2);
+
+  const cx = 80, cy = 80, r = 60;
+  const angleStep = (2 * Math.PI) / axes.length;
+
+  const toPoints = (vals) => vals.map((v, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    return [cx + r * v * Math.cos(angle), cy + r * v * Math.sin(angle)];
+  });
+
+  const p1 = toPoints(v1);
+  const p2 = toPoints(v2);
+  const axisEnds = axes.map((_, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  });
+  const labelPos = axes.map((_, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    return [cx + (r + 18) * Math.cos(angle), cy + (r + 18) * Math.sin(angle)];
+  });
+
+  return (
+    <div className="fm-radar view-enter">
+      <div className="fm-radar-title">{t("radar.title")}</div>
+      <div className="fm-radar-content">
+        <svg viewBox="0 0 160 160" width="160" height="160" className="fm-radar-svg">
+          {/* Grid circles */}
+          {[0.33, 0.66, 1].map(s => (
+            <circle key={s} cx={cx} cy={cy} r={r * s} fill="none" stroke="var(--slate-200)" strokeWidth=".5" />
+          ))}
+          {/* Axis lines */}
+          {axisEnds.map((e, i) => (
+            <line key={i} x1={cx} y1={cy} x2={e[0]} y2={e[1]} stroke="var(--slate-200)" strokeWidth=".5" />
+          ))}
+          {/* Area 1 (winner) */}
+          <polygon points={p1.map(p => p.join(",")).join(" ")} fill="rgba(59,130,246,.15)" stroke="#3B82F6" strokeWidth="1.5" />
+          {/* Area 2 (runner-up) */}
+          <polygon points={p2.map(p => p.join(",")).join(" ")} fill="rgba(234,88,12,.1)" stroke="#EA580C" strokeWidth="1" strokeDasharray="3,2" />
+          {/* Axis labels */}
+          {labelPos.map((lp, i) => (
+            <text key={i} x={lp[0]} y={lp[1]} textAnchor="middle" dominantBaseline="middle"
+              fontSize="7" fill="var(--slate-500)" fontWeight="600">{axes[i].label}</text>
+          ))}
+        </svg>
+        <div className="fm-radar-legend">
+          <span className="fm-radar-legend-item">
+            <span className="fm-radar-dot" style={{ background: "#3B82F6" }} />
+            {cityOf(normalizeCode(d1.destination)) || d1.destination}
+          </span>
+          <span className="fm-radar-legend-item">
+            <span className="fm-radar-dot" style={{ background: "#EA580C" }} />
+            {cityOf(normalizeCode(d2.destination)) || d2.destination}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TopDestinationsPodium({ flights, currency, onSelect }) {
   const { t } = useI18n();
   if (!flights || flights.length < 3) return null;
@@ -3594,6 +3736,9 @@ export default function App() {
             <PriceDonut breakdown={bestDestination.flights} currency={currency} />
           )}
 
+          {/* Destination radar chart */}
+          <DestRadarChart flights={flights} bestDest={bestDestination} t={t} />
+
           {/* Cost split calculator */}
           <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
@@ -3723,6 +3868,13 @@ export default function App() {
           {showAlt === "vs" && flights.length >= 2 && (
             <VsCompare flights={flights} bestDestination={bestDestination} currency={currency} />
           )}
+
+          {/* Travel checklist */}
+          <TravelChecklist
+            destCode={normalizeCode(bestDestination.destination)}
+            tripType={tripType}
+            t={t}
+          />
 
           {/* Plan your trip CTA */}
           <PlanYourTripCTA

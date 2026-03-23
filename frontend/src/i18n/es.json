@@ -388,5 +388,22 @@
     "help": "Mostrar esta ayuda",
     "home": "Ir a inicio",
     "search": "Ir a búsqueda"
+  },
+  "checklist": {
+    "title": "Checklist de preparación del viaje",
+    "passport": "Comprobar validez del pasaporte",
+    "insurance": "Contratar seguro de viaje",
+    "accommodation": "Reservar alojamiento",
+    "transport": "Planificar traslado al aeropuerto",
+    "currency": "Verificar moneda local y pagos",
+    "charger": "Llevar adaptador/cargador",
+    "returnConfirm": "Confirmar detalles del vuelo de vuelta"
+  },
+  "radar": {
+    "title": "Top 2 destinos comparados",
+    "price": "Precio",
+    "fairness": "Equidad",
+    "popularity": "Cobertura",
+    "value": "Valor"
   }
 }

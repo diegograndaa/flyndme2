@@ -6377,17 +6377,165 @@ html {
 
 /* ── Print Styles ──────────────────────────────────────────── */
 
+/* ── Travel Checklist ───────────────────────────────────────── */
+
+.fm-checklist {
+  margin: 14px 0;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.fm-checklist-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background .2s;
+}
+.fm-checklist-toggle:hover { background: var(--slate-50, #F8FAFC); }
+.fm-checklist-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fm-checklist-icon { font-size: 18px; }
+.fm-checklist-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+.fm-checklist-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fm-checklist-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-600);
+}
+.fm-checklist-chevron {
+  font-size: 14px;
+  color: var(--slate-400);
+  transition: transform .2s;
+}
+.fm-checklist-chevron--open { transform: rotate(180deg); }
+.fm-checklist-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fm-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--slate-50, #F8FAFC);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .2s, opacity .2s;
+}
+.fm-checklist-item--done {
+  opacity: .55;
+  text-decoration: line-through;
+}
+.fm-checklist-item:hover { background: var(--slate-100); }
+.fm-checklist-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue-600);
+  cursor: pointer;
+}
+.fm-checklist-item-icon { font-size: 16px; }
+.fm-checklist-item-label {
+  font-size: 13px;
+  color: var(--slate-700);
+}
+[data-theme="dark"] .fm-checklist {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-checklist-toggle:hover { background: #0F172A; }
+[data-theme="dark"] .fm-checklist-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-checklist-pct { color: #60A5FA; }
+[data-theme="dark"] .fm-checklist-item { background: #0F172A; }
+[data-theme="dark"] .fm-checklist-item:hover { background: #1E293B; }
+[data-theme="dark"] .fm-checklist-item-label { color: #94A3B8; }
+
+/* ── Destination Radar Chart ───────────────────────────────── */
+
+.fm-radar {
+  margin: 14px 0;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+}
+.fm-radar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 12px;
+}
+.fm-radar-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.fm-radar-svg {
+  flex-shrink: 0;
+}
+.fm-radar-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fm-radar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+.fm-radar-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .fm-radar {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-radar-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-radar-legend-item { color: #E2E8F0; }
+[data-theme="dark"] .fm-radar-svg circle { stroke: #334155; }
+[data-theme="dark"] .fm-radar-svg line { stroke: #334155; }
+[data-theme="dark"] .fm-radar-svg text { fill: #94A3B8; }
+@media (max-width: 600px) {
+  .fm-radar-content { flex-direction: column; }
+}
+
+/* ── Print Styles ──────────────────────────────────────────── */
+
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
   .pwa-banner, .fm-toast, .fm-shortcuts-overlay,
   .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research,
-  .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb,
+  .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb, .fm-checklist,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
   .wc-image { max-height: 200px; }
-  .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap {
+  .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
