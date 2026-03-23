@@ -53,6 +53,12 @@
     "exampleWinner": "Recommended destination",
     "exampleDest": "LIS · Lisbon",
     "exampleTotal": "group total",
+    "trustBadges": [
+      { "icon": "🆓", "text": "100% Free" },
+      { "icon": "🔒", "text": "No login required" },
+      { "icon": "✈️", "text": "Real Amadeus data" },
+      { "icon": "⚡", "text": "Results in seconds" }
+    ],
     "getStarted": "Get started",
     "routesTitle": "Popular group routes",
     "routesSub": "Click a route to get started with a search",
@@ -364,5 +370,12 @@
   "a11y": {
     "skipToContent": "Skip to content",
     "scrollToTop": "Scroll to top"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "escape": "Go back / close panel",
+    "help": "Show this help",
+    "home": "Go to home page",
+    "search": "Go to search"
   }
 }

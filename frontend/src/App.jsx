@@ -793,6 +793,61 @@ const FaqItem = React.memo(function FaqItem({ q, a }) {
 
 // ─── Landing ──────────────────────────────────────────────────────────────────
 
+// ─── Animated mini-demo for landing ──────────────────────────────────────────
+
+function LandingMiniDemo({ t }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { origins: ["MAD"], dest: "", price: "" },
+    { origins: ["MAD", "LON"], dest: "", price: "" },
+    { origins: ["MAD", "LON", "BER"], dest: "", price: "" },
+    { origins: ["MAD", "LON", "BER"], dest: "LIS", price: "€89" },
+  ];
+  useEffect(() => {
+    const t1 = setTimeout(() => setStep(1), 1200);
+    const t2 = setTimeout(() => setStep(2), 2400);
+    const t3 = setTimeout(() => setStep(3), 3800);
+    const t4 = setTimeout(() => setStep(0), 7000);
+    const interval = setInterval(() => {
+      setStep(0);
+      setTimeout(() => setStep(1), 1200);
+      setTimeout(() => setStep(2), 2400);
+      setTimeout(() => setStep(3), 3800);
+    }, 7000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearInterval(interval); };
+  }, []);
+
+  const cur = steps[step];
+  return (
+    <div className="lp-mini-demo">
+      <div className="lp-mini-demo-window">
+        <div className="lp-mini-demo-bar">
+          <span className="lp-mini-demo-dot lp-mini-demo-dot--red" />
+          <span className="lp-mini-demo-dot lp-mini-demo-dot--yellow" />
+          <span className="lp-mini-demo-dot lp-mini-demo-dot--green" />
+          <span className="lp-mini-demo-bar-title">FlyndMe</span>
+        </div>
+        <div className="lp-mini-demo-body">
+          <div className="lp-mini-demo-origins">
+            {cur.origins.map((o, i) => (
+              <span key={o} className="lp-mini-demo-chip" style={{ animationDelay: `${i * 0.15}s` }}>
+                {countryFlag(o)} {o}
+              </span>
+            ))}
+          </div>
+          {cur.dest && (
+            <div className="lp-mini-demo-result">
+              <span className="lp-mini-demo-arrow">→</span>
+              <span className="lp-mini-demo-dest">{countryFlag(cur.dest)} {cur.dest}</span>
+              <span className="lp-mini-demo-price">{cur.price}/pp</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
   const { t } = useI18n();
 
@@ -859,6 +914,27 @@ const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Trust badges */}
+      <section className="lp-trust">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <div className="lp-trust-grid">
+            {(t("landing.trustBadges") || []).map((b, i) => (
+              <div key={i} className="lp-trust-badge">
+                <span className="lp-trust-icon">{b.icon}</span>
+                <span className="lp-trust-text">{b.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Animated mini demo */}
+      <section className="lp-demo-section">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <LandingMiniDemo t={t} />
         </div>
       </section>
 
@@ -969,6 +1045,36 @@ const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
 });
 
 // ─── Breadcrumb ──────────────────────────────────────────────────────────────
+
+// ─── Keyboard shortcuts overlay ──────────────────────────────────────────────
+
+function KeyboardShortcutsOverlay({ show, onClose, t }) {
+  if (!show) return null;
+  const shortcuts = [
+    { key: "Esc", desc: t("shortcuts.escape") },
+    { key: "?", desc: t("shortcuts.help") },
+    { key: "H", desc: t("shortcuts.home") },
+    { key: "S", desc: t("shortcuts.search") },
+  ];
+  return (
+    <div className="fm-shortcuts-overlay" onClick={onClose}>
+      <div className="fm-shortcuts-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="fm-shortcuts-header">
+          <span className="fm-shortcuts-title">{t("shortcuts.title")}</span>
+          <button type="button" className="fm-shortcuts-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="fm-shortcuts-list">
+          {shortcuts.map(s => (
+            <div key={s.key} className="fm-shortcuts-row">
+              <kbd className="fm-shortcuts-key">{s.key}</kbd>
+              <span className="fm-shortcuts-desc">{s.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Breadcrumb({ current, onNavigate }) {
   const { t } = useI18n();
@@ -2467,11 +2573,20 @@ export default function App() {
 
       // Escape: close panels first, then go back
       if (e.key === "Escape") {
+        if (showShortcuts) { setShowShortcuts(false); return; }
         if (showFavPanel) { setShowFavPanel(false); return; }
         const cur = viewRef.current;
         if (cur === "results") setView("search");
         else if (cur === "search") setView("landing");
       }
+      // ? = show shortcuts
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        setShowShortcuts(v => !v); return;
+      }
+      // H = go home
+      if (e.key.toLowerCase() === "h") { setView("landing"); return; }
+      // S = go to search
+      if (e.key.toLowerCase() === "s") { setView("search"); return; }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -2507,6 +2622,7 @@ export default function App() {
   const [shareStatus, setShareStatus] = useState("");
   const [toast,       setToast]       = useState(null); // { message, type }
   const [showFavPanel, setShowFavPanel] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // Last search best price (for comparison)
   const [lastBestPrice, setLastBestPrice] = useState(() => {
@@ -2670,6 +2786,26 @@ export default function App() {
         window.history.replaceState({}, "", window.location.pathname);
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Load search params from URL (from copy-search-link) ────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("share")) return; // handled above
+    const urlOrigins = params.getAll("o").map(s => s.trim().toUpperCase()).filter(Boolean);
+    if (!urlOrigins.length) return;
+    setOrigins(urlOrigins);
+    setPassengers(urlOrigins.map(() => 1));
+    if (params.get("dep")) setDepartureDate(params.get("dep"));
+    if (params.get("ret")) setReturnDate(params.get("ret"));
+    if (params.get("trip")) setTripType(params.get("trip"));
+    if (params.get("opt")) setOptimizeBy(params.get("opt"));
+    if (params.get("direct") === "1") setDirectOnly(true);
+    if (params.get("cabin")) setCabinClass(params.get("cabin"));
+    if (params.get("cur")) setCurrency(params.get("cur"));
+    setView("search");
+    window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -3137,6 +3273,9 @@ export default function App() {
       {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
 
+      {/* Keyboard shortcuts overlay */}
+      <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t} />
+
       {/* Views */}
       <div id="main-content">
       {view === "landing" && (
@@ -3218,6 +3357,15 @@ export default function App() {
               <span className="fm-sticky-dest">✈ {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
               <span className="fm-sticky-price">{currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency)}/pp</span>
               <span className="fm-sticky-origins">{cleanOrigins.join(" · ")}</span>
+              <div className="fm-currency-switcher">
+                {["EUR", "GBP", "USD"].map(c => (
+                  <button key={c} type="button"
+                    className={`fm-currency-btn${currency === c ? " fm-currency-btn--active" : ""}`}
+                    onClick={() => setCurrency(c)}>
+                    {FX_SYMBOLS[c]}
+                  </button>
+                ))}
+              </div>
               <button type="button" className="fm-sticky-btn" onClick={() => setView("search")}>{t("results.changeSearch")}</button>
             </div>
           </div>

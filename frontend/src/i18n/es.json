@@ -53,6 +53,12 @@
     "exampleWinner": "Destino recomendado",
     "exampleDest": "LIS · Lisboa",
     "exampleTotal": "total del grupo",
+    "trustBadges": [
+      { "icon": "🆓", "text": "100% Gratis" },
+      { "icon": "🔒", "text": "Sin registro" },
+      { "icon": "✈️", "text": "Datos reales de Amadeus" },
+      { "icon": "⚡", "text": "Resultados en segundos" }
+    ],
     "getStarted": "Empezar",
     "routesTitle": "Rutas populares de grupo",
     "routesSub": "Haz clic en una ruta para empezar a buscar",
@@ -364,5 +370,12 @@
   "a11y": {
     "skipToContent": "Ir al contenido",
     "scrollToTop": "Ir arriba"
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "escape": "Volver / cerrar panel",
+    "help": "Mostrar esta ayuda",
+    "home": "Ir a inicio",
+    "search": "Ir a búsqueda"
   }
 }
