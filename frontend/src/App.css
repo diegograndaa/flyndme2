@@ -6199,3 +6199,197 @@ html {
   .lp-trust-badge { padding: 6px 10px; font-size: 12px; }
   .lp-mini-demo-window { width: 100%; }
 }
+
+/* ── Cost Split Calculator ─────────────────────────────────── */
+
+.fm-split-card {
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  margin: 14px 0;
+}
+.fm-split-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fm-split-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+.fm-split-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--slate-100);
+  border-radius: 8px;
+  padding: 2px;
+}
+.fm-split-pill {
+  border: none;
+  background: transparent;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: all .2s;
+}
+.fm-split-pill--active {
+  background: var(--white);
+  color: var(--blue-600);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.fm-split-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fm-split-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--slate-50, #F8FAFC);
+  border-radius: 10px;
+}
+.fm-split-origin {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-600);
+  min-width: 60px;
+}
+.fm-split-pays {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--slate-800);
+  min-width: 60px;
+}
+.fm-split-diff {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate-400);
+  margin-left: auto;
+}
+.fm-split-diff--overpaid {
+  color: #16A34A;
+}
+.fm-split-diff--underpaid {
+  color: #DC2626;
+}
+.fm-split-note {
+  font-size: 11px;
+  color: var(--slate-400);
+  margin-top: 10px;
+  text-align: center;
+}
+[data-theme="dark"] .fm-split-card {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-split-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-split-toggle { background: #0F172A; }
+[data-theme="dark"] .fm-split-pill { color: #64748B; }
+[data-theme="dark"] .fm-split-pill--active { background: #334155; color: #60A5FA; box-shadow: none; }
+[data-theme="dark"] .fm-split-row { background: #0F172A; }
+[data-theme="dark"] .fm-split-origin { color: #94A3B8; }
+[data-theme="dark"] .fm-split-pays { color: #F1F5F9; }
+[data-theme="dark"] .fm-split-diff { color: #64748B; }
+[data-theme="dark"] .fm-split-diff--overpaid { color: #86EFAC; }
+[data-theme="dark"] .fm-split-diff--underpaid { color: #FCA5A5; }
+[data-theme="dark"] .fm-split-note { color: #475569; }
+
+/* ── Plan Your Trip CTA ────────────────────────────────────── */
+
+.fm-plan-trip {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(59,130,246,.04), rgba(124,58,237,.04));
+  border: 1px solid rgba(59,130,246,.15);
+  border-radius: 14px;
+  margin: 16px 0;
+  text-align: center;
+}
+.fm-plan-trip-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin-bottom: 4px;
+}
+.fm-plan-trip-subtitle {
+  font-size: 13px;
+  color: var(--slate-500);
+  margin-bottom: 16px;
+}
+.fm-plan-trip-links {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fm-plan-trip-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+}
+.fm-plan-trip-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.06);
+  border-color: var(--blue-400, #60A5FA);
+  color: var(--blue-600);
+}
+.fm-plan-trip-link-icon {
+  font-size: 18px;
+}
+[data-theme="dark"] .fm-plan-trip {
+  background: linear-gradient(135deg, rgba(59,130,246,.04), rgba(124,58,237,.04));
+  border-color: rgba(59,130,246,.12);
+}
+[data-theme="dark"] .fm-plan-trip-title { color: #F1F5F9; }
+[data-theme="dark"] .fm-plan-trip-subtitle { color: #64748B; }
+[data-theme="dark"] .fm-plan-trip-link {
+  background: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+[data-theme="dark"] .fm-plan-trip-link:hover {
+  border-color: #60A5FA;
+  color: #60A5FA;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+@media (max-width: 600px) {
+  .fm-plan-trip-links { flex-direction: column; align-items: center; }
+  .fm-plan-trip-link { width: 100%; justify-content: center; }
+}
+
+/* ── Print Styles ──────────────────────────────────────────── */
+
+@media print {
+  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
+  .pwa-banner, .fm-toast, .fm-shortcuts-overlay,
+  .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research,
+  .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb,
+  .sf-completion-strip, .sf-recent { display: none !important; }
+  body { background: white !important; }
+  .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
+  .wc-card::before { display: none !important; }
+  .wc-image { max-height: 200px; }
+  .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+}

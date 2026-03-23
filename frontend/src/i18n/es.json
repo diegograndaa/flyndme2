@@ -228,7 +228,18 @@
     "confidenceLow": "Baja confianza — los precios pueden variar",
     "savingsPerOrigin": "Lo que ahorra cada viajero",
     "savingsVsWorst": "vs volar a {{dest}}",
-    "copySearchLink": "Copiar enlace de búsqueda"
+    "copySearchLink": "Copiar enlace de búsqueda",
+    "splitTitle": "Dividir costes",
+    "splitEqual": "Partes iguales",
+    "splitActual": "Cada uno el suyo",
+    "splitGets": "recupera",
+    "splitOwes": "debe",
+    "splitNote": "Al dividir en partes iguales, los que tienen vuelos más baratos compensan a los que pagan más.",
+    "planTripTitle": "Planifica tu viaje",
+    "planTripSub": "Enlaces útiles para {{city}}",
+    "planHotels": "Buscar hoteles",
+    "planActivities": "Actividades",
+    "planMap": "Explorar mapa"
   },
   "vs": {
     "title": "Comparar destinos",

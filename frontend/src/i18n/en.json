@@ -228,7 +228,18 @@
     "confidenceLow": "Low confidence — prices may vary",
     "savingsPerOrigin": "What each traveler saves",
     "savingsVsWorst": "vs flying to {{dest}}",
-    "copySearchLink": "Copy search link"
+    "copySearchLink": "Copy search link",
+    "splitTitle": "Cost split",
+    "splitEqual": "Split equally",
+    "splitActual": "Each pays own",
+    "splitGets": "gets back",
+    "splitOwes": "owes",
+    "splitNote": "In equal split, those with cheaper flights compensate those with pricier ones.",
+    "planTripTitle": "Plan your trip",
+    "planTripSub": "Useful links for {{city}}",
+    "planHotels": "Find hotels",
+    "planActivities": "Activities",
+    "planMap": "Explore map"
   },
   "vs": {
     "title": "Compare destinations",
