@@ -987,6 +987,302 @@ function ResultsSummaryCard({ bestDest, origins, flights, currency, departureDat
   );
 }
 
+// ─── Price per km ranking ──────────────────────────────────────────────────
+
+function PricePerKmRanking({ flights, origins, currency, t }) {
+  if (!flights || flights.length < 2 || !origins.length) return null;
+
+  const ranked = flights.map(f => {
+    const code = normalizeCode(f.destination);
+    let totalKm = 0, count = 0;
+    origins.forEach(o => {
+      const km = approxDistKm(o, code);
+      if (km) { totalKm += km; count++; }
+    });
+    if (!count || !f.totalCostEUR) return null;
+    const avgKm = totalKm / count;
+    const pricePerKm = (f.averageCostPerTraveler || 0) / (avgKm || 1);
+    return { code, city: cityOf(code) || code, pricePerKm, avgKm: Math.round(avgKm), avg: f.averageCostPerTraveler || 0 };
+  }).filter(Boolean).sort((a, b) => a.pricePerKm - b.pricePerKm).slice(0, 5);
+
+  if (!ranked.length) return null;
+  const maxPpk = Math.max(...ranked.map(r => r.pricePerKm));
+
+  return (
+    <div className="fm-ppkm view-enter">
+      <div className="fm-ppkm-title">{t("results.pricePerKm")}</div>
+      <div className="fm-ppkm-sub">{t("results.pricePerKmSub")}</div>
+      <div className="fm-ppkm-list">
+        {ranked.map((r, i) => (
+          <div key={r.code} className="fm-ppkm-row">
+            <span className="fm-ppkm-rank">{i + 1}</span>
+            <span className="fm-ppkm-city">{r.city}</span>
+            <div className="fm-ppkm-bar-wrap">
+              <div className="fm-ppkm-bar" style={{ width: `${maxPpk > 0 ? (r.pricePerKm / maxPpk) * 100 : 0}%` }} />
+            </div>
+            <span className="fm-ppkm-value">{(r.pricePerKm * 100).toFixed(1)}¢/km</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Group Arrival Sync indicator ──────────────────────────────────────────
+
+function GroupArrivalSync({ bestDest, t }) {
+  if (!bestDest?.flights?.length) return null;
+
+  const arrTimes = bestDest.flights.map(f => {
+    const itin = f.offer?.itineraries?.[0];
+    if (!itin?.segments?.length) return null;
+    const lastSeg = itin.segments[itin.segments.length - 1];
+    return lastSeg.arrival?.at ? new Date(lastSeg.arrival.at).getTime() : null;
+  }).filter(Boolean);
+
+  if (arrTimes.length < 2) return null;
+
+  const earliest = Math.min(...arrTimes);
+  const latest = Math.max(...arrTimes);
+  const spreadMin = Math.round((latest - earliest) / 60000);
+  const spreadHrs = Math.floor(spreadMin / 60);
+  const spreadMins = spreadMin % 60;
+
+  let syncLevel, syncIcon;
+  if (spreadMin <= 60) { syncLevel = "great"; syncIcon = "🟢"; }
+  else if (spreadMin <= 180) { syncLevel = "good"; syncIcon = "🟡"; }
+  else { syncLevel = "wide"; syncIcon = "🔴"; }
+
+  const spreadLabel = spreadHrs > 0
+    ? `${spreadHrs}h${spreadMins > 0 ? ` ${spreadMins}m` : ""}`
+    : `${spreadMins}m`;
+
+  return (
+    <div className={`fm-arrival-sync fm-arrival-sync--${syncLevel} view-enter`}>
+      <span className="fm-arrival-sync-icon">{syncIcon}</span>
+      <div className="fm-arrival-sync-text">
+        <span className="fm-arrival-sync-label">{t("results.arrivalSync")}</span>
+        <span className="fm-arrival-sync-spread">
+          {t("results.arrivalSpread", { time: spreadLabel })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Share as Story (canvas-based vertical card) ──────────────────────────
+
+function ShareAsStoryBtn({ bestDest, origins, currency, departureDate, t }) {
+  const canvasRef = useRef(null);
+  if (!bestDest) return null;
+
+  const handleGenerate = async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 540;
+    canvas.height = 960;
+    const ctx = canvas.getContext("2d");
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, 960);
+    grad.addColorStop(0, "#0F172A");
+    grad.addColorStop(0.5, "#1E3A5F");
+    grad.addColorStop(1, "#0F172A");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 540, 960);
+
+    // Decorative circles
+    ctx.beginPath();
+    ctx.arc(440, 120, 80, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(59,130,246,.15)";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(100, 800, 60, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(16,185,129,.1)";
+    ctx.fill();
+
+    // Brand
+    ctx.fillStyle = "#60A5FA";
+    ctx.font = "bold 16px system-ui, -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("✈ FlyndMe", 270, 80);
+
+    // Destination city
+    const destCode = normalizeCode(bestDest.destination);
+    const city = cityOf(destCode) || destCode;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 42px system-ui, -apple-system, sans-serif";
+    ctx.fillText(city, 270, 200);
+
+    // Code
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = "600 18px system-ui, -apple-system, sans-serif";
+    ctx.fillText(destCode, 270, 240);
+
+    // Divider line
+    ctx.strokeStyle = "rgba(255,255,255,.1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(120, 280);
+    ctx.lineTo(420, 280);
+    ctx.stroke();
+
+    // Stats
+    const total = bestDest.totalCostEUR || 0;
+    const avg = bestDest.averageCostPerTraveler || 0;
+    const fairness = bestDest.fairnessScore ?? 0;
+    const fmtPrice = (v) => currency === "EUR" ? `€${Math.round(v)}` : convertPrice(v, currency);
+
+    const stats = [
+      { label: t("results.groupTotal"), value: fmtPrice(total) },
+      { label: t("results.avgPerPerson"), value: fmtPrice(avg) },
+      { label: t("results.fairnessLabel"), value: `${fairness.toFixed(0)}/100` },
+    ];
+
+    stats.forEach((s, i) => {
+      const y = 340 + i * 90;
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "500 14px system-ui, -apple-system, sans-serif";
+      ctx.fillText(s.label, 270, y);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 32px system-ui, -apple-system, sans-serif";
+      ctx.fillText(s.value, 270, y + 38);
+    });
+
+    // Origins
+    ctx.fillStyle = "#64748B";
+    ctx.font = "500 14px system-ui, -apple-system, sans-serif";
+    ctx.fillText(origins.join("  ·  "), 270, 650);
+
+    // Date
+    if (departureDate) {
+      ctx.fillStyle = "#475569";
+      ctx.font = "500 13px system-ui, -apple-system, sans-serif";
+      ctx.fillText(departureDate, 270, 690);
+    }
+
+    // Footer
+    ctx.fillStyle = "#334155";
+    ctx.font = "500 12px system-ui, -apple-system, sans-serif";
+    ctx.fillText("flyndme.com", 270, 920);
+
+    // Convert to blob and share/download
+    canvas.toBlob(async (blob) => {
+      if (navigator.share && navigator.canShare?.({ files: [new File([blob], "flyndme-story.png", { type: "image/png" })] })) {
+        try {
+          await navigator.share({
+            files: [new File([blob], "flyndme-story.png", { type: "image/png" })],
+            title: `FlyndMe - ${city}`,
+          });
+        } catch { /* user cancelled */ }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "flyndme-story.png";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }, "image/png");
+  };
+
+  return (
+    <button type="button" className="fm-story-btn" onClick={handleGenerate} title={t("results.shareStory")}>
+      <span className="fm-story-btn-icon">📱</span>
+      <span>{t("results.shareStory")}</span>
+    </button>
+  );
+}
+
+// ─── Destination Quick Facts ──────────────────────────────────────────────
+
+function DestQuickFacts({ destCode, t }) {
+  const info = destQuickInfo(destCode);
+  if (!info) return null;
+
+  const PLUG_TYPES = {
+    "UK": "G (UK)", "ES": "C/F (EU)", "FR": "C/E (EU)", "DE": "C/F (EU)",
+    "IT": "C/F/L (EU)", "PT": "C/F (EU)", "NL": "C/F (EU)", "GR": "C/F (EU)",
+    "CZ": "C/E (EU)", "HU": "C/F (EU)", "PL": "C/E (EU)", "AT": "C/F (EU)",
+    "BE": "C/E (EU)", "IE": "G (UK)", "DK": "C/K (EU)", "SE": "C/F (EU)",
+    "NO": "C/F (EU)", "FI": "C/F (EU)", "HR": "C/F (EU)", "BG": "C/F (EU)",
+    "RO": "C/F (EU)", "TR": "C/F (EU)", "MA": "C/E (EU)", "MT": "G (UK)",
+    "CH": "C/J (CH)", "IS": "C/F (EU)",
+  };
+
+  const CURRENCIES = {
+    "UK": "GBP (£)", "ES": "EUR (€)", "FR": "EUR (€)", "DE": "EUR (€)",
+    "IT": "EUR (€)", "PT": "EUR (€)", "NL": "EUR (€)", "GR": "EUR (€)",
+    "CZ": "CZK (Kč)", "HU": "HUF (Ft)", "PL": "PLN (zł)", "AT": "EUR (€)",
+    "BE": "EUR (€)", "IE": "EUR (€)", "DK": "DKK (kr)", "SE": "SEK (kr)",
+    "NO": "NOK (kr)", "FI": "EUR (€)", "HR": "EUR (€)", "BG": "BGN (лв)",
+    "RO": "RON (lei)", "TR": "TRY (₺)", "MA": "MAD (د.م.)", "MT": "EUR (€)",
+    "CH": "CHF (Fr)", "IS": "ISK (kr)",
+  };
+
+  // Derive country from airport code (rough)
+  const AIRPORT_COUNTRY = {
+    LON: "UK", LHR: "UK", LGW: "UK", STN: "UK", LTN: "UK",
+    MAD: "ES", BCN: "ES", AGP: "ES", PMI: "ES",
+    PAR: "FR", CDG: "FR", ORY: "FR",
+    ROM: "IT", FCO: "IT", MXP: "IT", MIL: "IT", NAP: "IT",
+    BER: "DE", FRA: "DE", MUC: "DE",
+    LIS: "PT", OPO: "PT", AMS: "NL",
+    ATH: "GR", SKG: "GR", RHO: "GR",
+    PRG: "CZ", BUD: "HU", WAW: "PL", KRK: "PL",
+    VIE: "AT", BRU: "BE", DUB: "IE",
+    CPH: "DK", STO: "SE", ARN: "SE", OSL: "NO", HEL: "FI",
+    DBV: "HR", SPU: "HR", SOF: "BG", OTP: "RO", BEG: "RS",
+    IST: "TR", RAK: "MA", MLA: "MT", TIA: "AL",
+    GVA: "CH", ZRH: "CH", TLL: "EE", RIX: "LV", VNO: "LT",
+    TLV: "IL",
+  };
+
+  const country = AIRPORT_COUNTRY[destCode];
+  const plug = country ? PLUG_TYPES[country] : null;
+  const curr = country ? CURRENCIES[country] : null;
+
+  const facts = [
+    { icon: "🗣️", label: t("facts.language"), value: info.lang },
+    { icon: "🕐", label: t("facts.timezone"), value: `UTC${info.tz}` },
+    curr && { icon: "💰", label: t("facts.currency"), value: curr },
+    plug && { icon: "🔌", label: t("facts.plugType"), value: plug },
+  ].filter(Boolean);
+
+  return (
+    <div className="fm-facts view-enter">
+      <div className="fm-facts-title">{t("facts.title")}</div>
+      <div className="fm-facts-grid">
+        {facts.map((f, i) => (
+          <div key={i} className="fm-facts-item">
+            <span className="fm-facts-item-icon">{f.icon}</span>
+            <div className="fm-facts-item-text">
+              <span className="fm-facts-item-label">{f.label}</span>
+              <span className="fm-facts-item-value">{f.value}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Scroll Progress Bar ──────────────────────────────────────────────────
+
+function ScrollProgressBar() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      setPct(docH > 0 ? Math.min(100, (window.scrollY / docH) * 100) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (pct < 1) return null;
+  return <div className="fm-scroll-progress" style={{ width: `${pct}%` }} />;
+}
+
 function TopDestinationsPodium({ flights, currency, onSelect }) {
   const { t } = useI18n();
   if (!flights || flights.length < 3) return null;
@@ -3885,6 +4181,9 @@ export default function App() {
             t={t}
           />
 
+          {/* Destination quick facts */}
+          <DestQuickFacts destCode={normalizeCode(bestDestination.destination)} t={t} />
+
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
             <span className="fm-alert-hint-icon">🔔</span>
@@ -3947,11 +4246,17 @@ export default function App() {
           {/* Flight timeline (visual per-origin) */}
           <FlightTimeline bestDest={bestDestination} origins={cleanOrigins} t={t} />
 
+          {/* Group arrival sync indicator */}
+          <GroupArrivalSync bestDest={bestDestination} t={t} />
+
           {/* Cost split calculator */}
           <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* Per-origin savings breakdown */}
           <OriginSavingsCard bestDest={bestDestination} allFlights={flights} origins={cleanOrigins} currency={currency} t={t} />
+
+          {/* Price per km ranking */}
+          <PricePerKmRanking flights={flights} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* Results summary card (compact printable overview) */}
           <ResultsSummaryCard
@@ -3989,6 +4294,13 @@ export default function App() {
             <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
               📥 CSV
             </button>
+            <ShareAsStoryBtn
+              bestDest={bestDestination}
+              origins={cleanOrigins}
+              currency={currency}
+              departureDate={departureDate}
+              t={t}
+            />
           </div>
 
           {/* JSON-LD structured data for SEO */}
@@ -4136,6 +4448,9 @@ export default function App() {
         </main>
       )}
       </div>{/* /main-content */}
+
+      {/* Scroll progress bar */}
+      <ScrollProgressBar />
 
       {/* Scroll to top */}
       <ScrollToTopBtn />

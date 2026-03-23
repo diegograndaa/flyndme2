@@ -240,7 +240,12 @@
     "planHotels": "Buscar hoteles",
     "planActivities": "Actividades",
     "planMap": "Explorar mapa",
-    "timelineTitle": "Horarios de vuelo por origen"
+    "timelineTitle": "Horarios de vuelo por origen",
+    "pricePerKm": "Mejor valor por distancia",
+    "pricePerKmSub": "Menor coste por kilómetro = mejor relación calidad-precio",
+    "arrivalSync": "Sincronización de llegadas",
+    "arrivalSpread": "Todos llegan en un rango de {{time}}",
+    "shareStory": "Compartir como story"
   },
   "vs": {
     "title": "Comparar destinos",
@@ -410,5 +415,12 @@
   "history": {
     "title": "Tus búsquedas recientes",
     "clear": "Borrar todo"
+  },
+  "facts": {
+    "title": "Datos rápidos sobre tu destino",
+    "language": "Idioma",
+    "timezone": "Zona horaria",
+    "currency": "Moneda",
+    "plugType": "Tipo de enchufe"
   }
 }

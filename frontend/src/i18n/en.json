@@ -240,7 +240,12 @@
     "planHotels": "Find hotels",
     "planActivities": "Activities",
     "planMap": "Explore map",
-    "timelineTitle": "Flight schedule by origin"
+    "timelineTitle": "Flight schedule by origin",
+    "pricePerKm": "Best value by distance",
+    "pricePerKmSub": "Lower cost per kilometer = better value for money",
+    "arrivalSync": "Group arrival sync",
+    "arrivalSpread": "Everyone arrives within {{time}}",
+    "shareStory": "Share as story"
   },
   "vs": {
     "title": "Compare destinations",
@@ -410,5 +415,12 @@
   "history": {
     "title": "Your recent searches",
     "clear": "Clear all"
+  },
+  "facts": {
+    "title": "Quick facts about your destination",
+    "language": "Language",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "plugType": "Plug type"
   }
 }
