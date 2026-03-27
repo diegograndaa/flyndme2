@@ -1180,6 +1180,145 @@ function GroupChatLink({ bestDest, origins, departureDate, returnDate, tripType,
   );
 }
 
+// ─── Baggage Reminder ─────────────────────────────────────────────────────
+
+function BaggageReminder({ bestDest, t }) {
+  if (!bestDest?.flights?.length) return null;
+
+  // Detect budget airlines from carrier codes
+  const BUDGET_CARRIERS = new Set([
+    "FR", "W6", "U2", "VY", "NK", "F9", "TP", "DY", "HV", "LS",
+    "QS", "PC", "XR", "TO", "BJ", "ZB", "EW"
+  ]);
+
+  const budgetLegs = bestDest.flights.filter(f => {
+    const itin = f.offer?.itineraries?.[0];
+    if (!itin?.segments?.length) return false;
+    return itin.segments.some(s => BUDGET_CARRIERS.has(s.carrierCode));
+  });
+
+  if (!budgetLegs.length) return null;
+
+  const carriers = [...new Set(budgetLegs.flatMap(f => {
+    const itin = f.offer?.itineraries?.[0];
+    return (itin?.segments || []).filter(s => BUDGET_CARRIERS.has(s.carrierCode)).map(s => s.carrierCode);
+  }))];
+
+  return (
+    <div className="fm-baggage view-enter">
+      <span className="fm-baggage-icon">🧳</span>
+      <div className="fm-baggage-text">
+        <span className="fm-baggage-title">{t("baggage.title")}</span>
+        <span className="fm-baggage-sub">
+          {t("baggage.hint", { airlines: carriers.join(", ") })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Origin Ranking Table ─────────────────────────────────────────────────
+
+function OriginRankingTable({ bestDest, currency, t }) {
+  const [sortBy, setSortBy] = useState("price"); // price | origin
+  if (!bestDest?.flights?.length || bestDest.flights.length < 2) return null;
+
+  const rows = bestDest.flights.map(f => ({
+    origin: String(f.origin).toUpperCase(),
+    price: f.price || 0,
+    airline: f.offer?.itineraries?.[0]?.segments?.[0]?.carrierCode || "—",
+    stops: f.offer?.itineraries?.[0]?.segments ? f.offer.itineraries[0].segments.length - 1 : 0,
+  }));
+
+  const sorted = [...rows].sort((a, b) => sortBy === "price" ? a.price - b.price : a.origin.localeCompare(b.origin));
+  const cheapest = Math.min(...rows.map(r => r.price));
+  const priciest = Math.max(...rows.map(r => r.price));
+
+  return (
+    <div className="fm-origin-table view-enter">
+      <div className="fm-origin-table-header">
+        <span className="fm-origin-table-title">{t("originTable.title")}</span>
+        <div className="fm-origin-table-sort">
+          {[["price", t("originTable.byPrice")], ["origin", t("originTable.byOrigin")]].map(([v, l]) => (
+            <button key={v} type="button"
+              className={`fm-origin-table-pill${sortBy === v ? " fm-origin-table-pill--active" : ""}`}
+              onClick={() => setSortBy(v)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div className="fm-origin-table-rows">
+        {sorted.map((r, i) => (
+          <div key={r.origin} className={`fm-origin-table-row${r.price === cheapest ? " fm-origin-table-row--best" : r.price === priciest ? " fm-origin-table-row--worst" : ""}`}>
+            <span className="fm-origin-table-pos">{i + 1}</span>
+            <span className="fm-origin-table-flag">{countryFlag(r.origin)}</span>
+            <span className="fm-origin-table-code">{r.origin}</span>
+            <span className="fm-origin-table-airline">{r.airline}</span>
+            <span className="fm-origin-table-stops">
+              {r.stops === 0 ? t("results.direct") : `${r.stops}✈`}
+            </span>
+            <span className="fm-origin-table-price">
+              {currency === "EUR" ? formatEur(r.price, 0) : convertPrice(r.price, currency)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Trip Type Insight ────────────────────────────────────────────────────
+
+function TripTypeInsight({ tripType, bestDest, departureDate, t }) {
+  if (!bestDest || tripType !== "roundtrip") return null;
+
+  const avg = bestDest.averageCostPerTraveler || 0;
+  if (avg <= 0) return null;
+
+  // Estimate: one-way is typically 60-75% of round trip price
+  // So 2 one-ways ≈ 120-150% of round trip
+  const estTwoOneWays = avg * 1.35;
+  const savingPct = Math.round(((estTwoOneWays - avg) / estTwoOneWays) * 100);
+
+  if (savingPct < 5) return null;
+
+  return (
+    <div className="fm-triptype-insight view-enter">
+      <span className="fm-triptype-insight-icon">💡</span>
+      <span className="fm-triptype-insight-text">
+        {t("tripInsight.roundtripSaving", { pct: savingPct })}
+      </span>
+    </div>
+  );
+}
+
+// ─── Destination Image Banner ─────────────────────────────────────────────
+
+function DestImageBanner({ destCode }) {
+  const imgUrl = getCityImage(destCode, getBaseUrl(), { w: 1200, h: 300 });
+  const city = cityOf(destCode) || destCode;
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error || !imgUrl) return null;
+
+  return (
+    <div className={`fm-dest-banner${loaded ? " fm-dest-banner--loaded" : ""}`}>
+      <img
+        src={imgUrl}
+        alt={city}
+        className="fm-dest-banner-img"
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        loading="lazy"
+      />
+      <div className="fm-dest-banner-overlay">
+        <span className="fm-dest-banner-city">{city}</span>
+        <span className="fm-dest-banner-code">{destCode}</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -4294,6 +4433,9 @@ export default function App() {
             </div>
           </div>
 
+          {/* Destination image banner */}
+          <DestImageBanner destCode={normalizeCode(bestDestination.destination)} />
+
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -4387,6 +4529,9 @@ export default function App() {
             <span className="fm-alert-hint-badge">{t("results.comingSoon")}</span>
           </div>
 
+          {/* Trip type insight */}
+          <TripTypeInsight tripType={tripType} bestDest={bestDestination} departureDate={departureDate} t={t} />
+
           {/* CO2 estimate */}
           <CO2EstimateBadge bestDest={bestDestination} origins={cleanOrigins} t={t} />
 
@@ -4450,6 +4595,12 @@ export default function App() {
 
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />
+
+          {/* Origin ranking table */}
+          <OriginRankingTable bestDest={bestDestination} currency={currency} t={t} />
+
+          {/* Baggage reminder for budget airlines */}
+          <BaggageReminder bestDest={bestDestination} t={t} />
 
           {/* Cost split calculator */}
           <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />

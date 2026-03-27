@@ -7281,7 +7281,221 @@ html {
   .fm-groupchat-btn { justify-content: center; }
 }
 
-/* ── Print Styles (Round 27 updated) ──────────────────────── */
+/* ── Baggage Reminder ─────────────────────────────────────── */
+
+.fm-baggage {
+  margin: 8px 0;
+  padding: 10px 14px;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.fm-baggage-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.fm-baggage-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fm-baggage-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9A3412;
+}
+.fm-baggage-sub {
+  font-size: 11px;
+  color: #C2410C;
+}
+[data-theme="dark"] .fm-baggage {
+  background: rgba(234,88,12,.1);
+  border-color: rgba(234,88,12,.3);
+}
+[data-theme="dark"] .fm-baggage-title { color: #FB923C; }
+[data-theme="dark"] .fm-baggage-sub { color: #FDBA74; }
+
+/* ── Origin Ranking Table ────────────────────────────────── */
+
+.fm-origin-table {
+  margin: 14px 0;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+}
+.fm-origin-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fm-origin-table-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+.fm-origin-table-sort {
+  display: flex;
+  gap: 4px;
+}
+.fm-origin-table-pill {
+  padding: 3px 10px;
+  border: 1px solid var(--slate-200);
+  background: transparent;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: all .15s;
+}
+.fm-origin-table-pill--active {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+  color: white;
+}
+.fm-origin-table-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fm-origin-table-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--slate-50);
+  border-radius: 8px;
+  transition: background .15s;
+}
+.fm-origin-table-row:hover { background: var(--blue-50); }
+.fm-origin-table-row--best {
+  background: #ECFDF5;
+  border-left: 3px solid #10B981;
+}
+.fm-origin-table-row--worst {
+  background: #FEF2F2;
+  border-left: 3px solid #EF4444;
+}
+.fm-origin-table-pos {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--slate-400);
+  min-width: 16px;
+  text-align: center;
+}
+.fm-origin-table-flag { font-size: 14px; }
+.fm-origin-table-code {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  min-width: 36px;
+}
+.fm-origin-table-airline {
+  font-size: 11px;
+  color: var(--slate-500);
+  font-weight: 500;
+  min-width: 24px;
+}
+.fm-origin-table-stops {
+  font-size: 10px;
+  color: var(--slate-400);
+  min-width: 30px;
+}
+.fm-origin-table-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin-left: auto;
+}
+[data-theme="dark"] .fm-origin-table {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-origin-table-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-origin-table-pill { border-color: #334155; color: #94A3B8; }
+[data-theme="dark"] .fm-origin-table-pill--active { background: #3B82F6; border-color: #3B82F6; color: white; }
+[data-theme="dark"] .fm-origin-table-row { background: #0F172A; }
+[data-theme="dark"] .fm-origin-table-row:hover { background: #1E293B; }
+[data-theme="dark"] .fm-origin-table-row--best { background: rgba(16,185,129,.1); border-color: #10B981; }
+[data-theme="dark"] .fm-origin-table-row--worst { background: rgba(239,68,68,.1); border-color: #EF4444; }
+[data-theme="dark"] .fm-origin-table-code { color: #E2E8F0; }
+[data-theme="dark"] .fm-origin-table-price { color: #F1F5F9; }
+
+/* ── Trip Type Insight ───────────────────────────────────── */
+
+.fm-triptype-insight {
+  margin: 6px 0;
+  padding: 8px 14px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fm-triptype-insight-icon { font-size: 16px; }
+.fm-triptype-insight-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E40AF;
+}
+[data-theme="dark"] .fm-triptype-insight {
+  background: rgba(59,130,246,.1);
+  border-color: rgba(59,130,246,.3);
+}
+[data-theme="dark"] .fm-triptype-insight-text { color: #60A5FA; }
+
+/* ── Destination Image Banner ────────────────────────────── */
+
+.fm-dest-banner {
+  position: relative;
+  margin: -16px -12px 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  height: 160px;
+  background: var(--slate-100);
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.fm-dest-banner--loaded { opacity: 1; }
+.fm-dest-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.fm-dest-banner-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,.55));
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.fm-dest-banner-city {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,.3);
+}
+.fm-dest-banner-code {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.7);
+}
+@media (max-width: 600px) {
+  .fm-dest-banner { height: 120px; margin: -12px -8px 10px; }
+  .fm-dest-banner-city { font-size: 18px; }
+}
+
+/* ── Print Styles (Round 28 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -7289,14 +7503,15 @@ html {
   .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research,
   .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb, .fm-checklist,
   .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
-  .fm-countdown, .fm-groupchat,
+  .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
   .wc-image { max-height: 200px; }
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
-  .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity {
+  .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
+  .fm-origin-table {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;

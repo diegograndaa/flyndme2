@@ -449,5 +449,17 @@
     "destination": "Destino",
     "origins": "Orígenes",
     "copy": "Copiar mensaje"
+  },
+  "baggage": {
+    "title": "Aviso de equipaje",
+    "hint": "Algunos vuelos usan aerolíneas low-cost ({{airlines}}) — revisa las políticas de equipaje antes de reservar"
+  },
+  "originTable": {
+    "title": "Ranking de precios por origen",
+    "byPrice": "Por precio",
+    "byOrigin": "Por ciudad"
+  },
+  "tripInsight": {
+    "roundtripSaving": "Ida y vuelta ahorra ~{{pct}}% respecto a reservar dos vuelos solo ida"
   }
 }

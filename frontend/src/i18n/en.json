@@ -449,5 +449,17 @@
     "destination": "Destination",
     "origins": "Origins",
     "copy": "Copy message"
+  },
+  "baggage": {
+    "title": "Baggage heads-up",
+    "hint": "Some flights use budget carriers ({{airlines}}) — check carry-on and checked bag policies before booking"
+  },
+  "originTable": {
+    "title": "Price ranking by origin",
+    "byPrice": "By price",
+    "byOrigin": "By city"
+  },
+  "tripInsight": {
+    "roundtripSaving": "Round trip saves ~{{pct}}% compared to booking two separate one-way flights"
   }
 }
