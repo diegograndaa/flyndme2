@@ -987,6 +987,199 @@ function ResultsSummaryCard({ bestDest, origins, flights, currency, departureDat
   );
 }
 
+// ─── Trip Countdown (live departure timer) ────────────────────────────────
+
+function TripCountdown({ departureDate, t }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!departureDate) return null;
+  const dep = new Date(departureDate + "T00:00:00").getTime();
+  const diff = dep - now;
+  if (diff <= 0) return (
+    <div className="fm-countdown fm-countdown--today view-enter">
+      <span className="fm-countdown-icon">🛫</span>
+      <span className="fm-countdown-text">{t("results.countdownToday")}</span>
+    </div>
+  );
+
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+
+  let urgency = "relaxed";
+  if (days <= 1) urgency = "urgent";
+  else if (days <= 7) urgency = "soon";
+  else if (days <= 30) urgency = "coming";
+
+  return (
+    <div className={`fm-countdown fm-countdown--${urgency} view-enter`}>
+      <span className="fm-countdown-icon">{urgency === "urgent" ? "⏰" : urgency === "soon" ? "📆" : "✈️"}</span>
+      <div className="fm-countdown-digits">
+        {days > 0 && <span className="fm-countdown-unit"><strong>{days}</strong>{t("countdown.days")}</span>}
+        <span className="fm-countdown-unit"><strong>{hours}</strong>{t("countdown.hours")}</span>
+        <span className="fm-countdown-unit"><strong>{mins}</strong>{t("countdown.mins")}</span>
+      </div>
+      <span className="fm-countdown-label">{t("countdown.until")}</span>
+    </div>
+  );
+}
+
+// ─── CO2 Estimate Badge ───────────────────────────────────────────────────
+
+function CO2EstimateBadge({ bestDest, origins, t }) {
+  if (!bestDest || !origins.length) return null;
+  const destCode = normalizeCode(bestDest.destination);
+
+  // Average CO2: ~90g per km per passenger (economy class average)
+  const CO2_PER_KM_G = 90;
+  let totalKm = 0, count = 0;
+  origins.forEach(o => {
+    const km = approxDistKm(o, destCode);
+    if (km) { totalKm += km; count++; }
+  });
+  if (!count) return null;
+
+  const avgKm = totalKm / count;
+  const co2PerPerson = Math.round((avgKm * CO2_PER_KM_G) / 1000); // kg
+  const totalCO2 = co2PerPerson * origins.length;
+
+  // Compare: 1 tree absorbs ~22kg CO2/year
+  const treesEquiv = Math.max(1, Math.round(totalCO2 / 22));
+
+  let level = "low";
+  if (co2PerPerson > 200) level = "high";
+  else if (co2PerPerson > 100) level = "medium";
+
+  return (
+    <div className={`fm-co2 fm-co2--${level} view-enter`}>
+      <span className="fm-co2-icon">🌱</span>
+      <div className="fm-co2-text">
+        <span className="fm-co2-main">
+          ~{co2PerPerson} kg CO₂/{t("co2.perPerson")} · {totalCO2} kg {t("co2.groupTotal")}
+        </span>
+        <span className="fm-co2-equiv">
+          ≈ {treesEquiv} {treesEquiv === 1 ? t("co2.tree") : t("co2.trees")} {t("co2.toOffset")}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Popularity Meter ─────────────────────────────────────────
+
+function DestPopularityMeter({ flights, bestDest, t }) {
+  if (!flights || flights.length < 2 || !bestDest) return null;
+
+  const destCode = normalizeCode(bestDest.destination);
+  const coverage = bestDest.flights?.length || 0;
+  const maxCoverage = Math.max(...flights.map(f => f.flights?.length || 0));
+  const totalDests = flights.length;
+
+  // Rank of this destination by total cost
+  const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR);
+  const rank = sorted.findIndex(f => normalizeCode(f.destination) === destCode) + 1;
+
+  const coveragePct = maxCoverage > 0 ? Math.round((coverage / maxCoverage) * 100) : 0;
+
+  return (
+    <div className="fm-popularity view-enter">
+      <div className="fm-popularity-title">{t("popularity.title")}</div>
+      <div className="fm-popularity-stats">
+        <div className="fm-popularity-stat">
+          <span className="fm-popularity-stat-value">#{rank}</span>
+          <span className="fm-popularity-stat-label">{t("popularity.rank", { total: totalDests })}</span>
+        </div>
+        <div className="fm-popularity-stat">
+          <span className="fm-popularity-stat-value">{coverage}/{maxCoverage}</span>
+          <span className="fm-popularity-stat-label">{t("popularity.routes")}</span>
+        </div>
+        <div className="fm-popularity-stat">
+          <div className="fm-popularity-bar-wrap">
+            <div className="fm-popularity-bar" style={{ width: `${coveragePct}%` }} />
+          </div>
+          <span className="fm-popularity-stat-label">{t("popularity.coverage")} {coveragePct}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Group Chat Link generator ────────────────────────────────────────────
+
+function GroupChatLink({ bestDest, origins, departureDate, returnDate, tripType, currency, t }) {
+  const [copied, setCopied] = useState(false);
+  if (!bestDest) return null;
+
+  const destCode = normalizeCode(bestDest.destination);
+  const city = cityOf(destCode) || destCode;
+  const total = bestDest.totalCostEUR || 0;
+  const avg = bestDest.averageCostPerTraveler || 0;
+  const fmtPrice = (v) => currency === "EUR" ? `€${Math.round(v)}` : convertPrice(v, currency);
+
+  const buildMessage = () => {
+    const lines = [
+      `✈️ FlyndMe — ${t("groupChat.header")}`,
+      "",
+      `📍 ${t("groupChat.destination")}: ${city} (${destCode})`,
+      `📅 ${departureDate}${tripType === "roundtrip" && returnDate ? ` → ${returnDate}` : ""}`,
+      `💰 ${t("results.groupTotal")}: ${fmtPrice(total)}`,
+      `👤 ${t("results.avgPerPerson")}: ${fmtPrice(avg)}`,
+      "",
+      `${t("groupChat.origins")}:`,
+    ];
+
+    (bestDest.flights || []).forEach(f => {
+      const o = String(f.origin).toUpperCase();
+      const price = typeof f.price === "number" ? fmtPrice(f.price) : "—";
+      lines.push(`  ${countryFlag(o)} ${o} → ${price}`);
+    });
+
+    lines.push("", `🔗 flyndme.com`, "");
+    return lines.join("\n");
+  };
+
+  const handleCopy = async () => {
+    const msg = buildMessage();
+    try {
+      await navigator.clipboard.writeText(msg);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* fallback */ }
+  };
+
+  const handleWhatsApp = () => {
+    const msg = buildMessage();
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const handleTelegram = () => {
+    const msg = buildMessage();
+    window.open(`https://t.me/share/url?url=${encodeURIComponent("https://flyndme.com")}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  return (
+    <div className="fm-groupchat view-enter">
+      <div className="fm-groupchat-title">{t("groupChat.title")}</div>
+      <div className="fm-groupchat-sub">{t("groupChat.sub")}</div>
+      <div className="fm-groupchat-actions">
+        <button type="button" className="fm-groupchat-btn fm-groupchat-btn--wa" onClick={handleWhatsApp}>
+          <span>💬</span> WhatsApp
+        </button>
+        <button type="button" className="fm-groupchat-btn fm-groupchat-btn--tg" onClick={handleTelegram}>
+          <span>✈️</span> Telegram
+        </button>
+        <button type="button" className="fm-groupchat-btn fm-groupchat-btn--copy" onClick={handleCopy}>
+          <span>{copied ? "✅" : "📋"}</span> {copied ? t("results.copied") : t("groupChat.copy")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -4132,6 +4325,9 @@ export default function App() {
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
+          {/* Trip countdown */}
+          <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
+
           {/* Group savings vs most expensive destination */}
           {flights.length >= 2 && (() => {
             const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
@@ -4190,6 +4386,12 @@ export default function App() {
             <span className="fm-alert-hint-text">{t("results.alertHint")}</span>
             <span className="fm-alert-hint-badge">{t("results.comingSoon")}</span>
           </div>
+
+          {/* CO2 estimate */}
+          <CO2EstimateBadge bestDest={bestDestination} origins={cleanOrigins} t={t} />
+
+          {/* Destination popularity */}
+          <DestPopularityMeter flights={flights} bestDest={bestDestination} t={t} />
 
           {/* Total group distance */}
           {(() => {
@@ -4400,6 +4602,17 @@ export default function App() {
           {showAlt === "vs" && flights.length >= 2 && (
             <VsCompare flights={flights} bestDestination={bestDestination} currency={currency} />
           )}
+
+          {/* Group chat link generator */}
+          <GroupChatLink
+            bestDest={bestDestination}
+            origins={cleanOrigins}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            currency={currency}
+            t={t}
+          />
 
           {/* Travel checklist */}
           <TravelChecklist

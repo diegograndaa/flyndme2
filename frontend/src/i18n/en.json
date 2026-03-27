@@ -422,5 +422,32 @@
     "timezone": "Timezone",
     "currency": "Currency",
     "plugType": "Plug type"
+  },
+  "countdown": {
+    "days": "d",
+    "hours": "h",
+    "mins": "m",
+    "until": "until departure"
+  },
+  "co2": {
+    "perPerson": "person",
+    "groupTotal": "total group",
+    "tree": "tree",
+    "trees": "trees",
+    "toOffset": "to offset/year"
+  },
+  "popularity": {
+    "title": "Destination insights",
+    "rank": "of {{total}} destinations",
+    "routes": "routes with data",
+    "coverage": "coverage"
+  },
+  "groupChat": {
+    "title": "Share with your group",
+    "sub": "Send the trip summary to your group chat",
+    "header": "Group trip found!",
+    "destination": "Destination",
+    "origins": "Origins",
+    "copy": "Copy message"
   }
 }

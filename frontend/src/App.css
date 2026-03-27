@@ -7066,7 +7066,222 @@ html {
   pointer-events: none;
 }
 
-/* ── Print Styles (Round 26 updated) ──────────────────────── */
+/* ── Trip Countdown ───────────────────────────────────────── */
+
+.fm-countdown {
+  margin: 8px 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fm-countdown--relaxed { background: #EFF6FF; border: 1px solid #BFDBFE; }
+.fm-countdown--coming { background: #F0FDF4; border: 1px solid #BBF7D0; }
+.fm-countdown--soon { background: #FFFBEB; border: 1px solid #FDE68A; }
+.fm-countdown--urgent { background: #FEF2F2; border: 1px solid #FECACA; }
+.fm-countdown--today { background: linear-gradient(135deg, #FEF2F2, #FEE2E2); border: 1px solid #FECACA; }
+.fm-countdown-icon { font-size: 18px; }
+.fm-countdown-digits {
+  display: flex;
+  gap: 8px;
+}
+.fm-countdown-unit {
+  font-size: 12px;
+  color: var(--slate-600);
+}
+.fm-countdown-unit strong {
+  font-size: 18px;
+  color: var(--slate-800);
+  margin-right: 2px;
+}
+.fm-countdown-label {
+  font-size: 11px;
+  color: var(--slate-500);
+  margin-left: auto;
+}
+.fm-countdown-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #DC2626;
+}
+[data-theme="dark"] .fm-countdown--relaxed { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.3); }
+[data-theme="dark"] .fm-countdown--coming { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); }
+[data-theme="dark"] .fm-countdown--soon { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); }
+[data-theme="dark"] .fm-countdown--urgent { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
+[data-theme="dark"] .fm-countdown--today { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.3); }
+[data-theme="dark"] .fm-countdown-unit { color: #94A3B8; }
+[data-theme="dark"] .fm-countdown-unit strong { color: #E2E8F0; }
+[data-theme="dark"] .fm-countdown-label { color: #94A3B8; }
+[data-theme="dark"] .fm-countdown-text { color: #F87171; }
+
+/* ── CO2 Estimate Badge ──────────────────────────────────── */
+
+.fm-co2 {
+  margin: 8px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fm-co2--low { background: #ECFDF5; border: 1px solid #A7F3D0; }
+.fm-co2--medium { background: #FFFBEB; border: 1px solid #FDE68A; }
+.fm-co2--high { background: #FEF2F2; border: 1px solid #FECACA; }
+.fm-co2-icon { font-size: 18px; }
+.fm-co2-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fm-co2-main {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+.fm-co2-equiv {
+  font-size: 11px;
+  color: var(--slate-500);
+}
+[data-theme="dark"] .fm-co2--low { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); }
+[data-theme="dark"] .fm-co2--medium { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); }
+[data-theme="dark"] .fm-co2--high { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
+[data-theme="dark"] .fm-co2-main { color: #E2E8F0; }
+[data-theme="dark"] .fm-co2-equiv { color: #94A3B8; }
+
+/* ── Destination Popularity Meter ────────────────────────── */
+
+.fm-popularity {
+  margin: 10px 0;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+}
+.fm-popularity-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 10px;
+}
+.fm-popularity-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.fm-popularity-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 70px;
+}
+.fm-popularity-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue-600);
+}
+.fm-popularity-stat-label {
+  font-size: 10px;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  font-weight: 600;
+}
+.fm-popularity-bar-wrap {
+  width: 80px;
+  height: 8px;
+  background: var(--slate-100);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fm-popularity-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #6366F1);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+[data-theme="dark"] .fm-popularity {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-popularity-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-popularity-stat-value { color: #60A5FA; }
+[data-theme="dark"] .fm-popularity-stat-label { color: #94A3B8; }
+[data-theme="dark"] .fm-popularity-bar-wrap { background: #1E293B; }
+
+/* ── Group Chat Link ─────────────────────────────────────── */
+
+.fm-groupchat {
+  margin: 14px 0;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+}
+.fm-groupchat-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-700);
+  margin-bottom: 2px;
+}
+.fm-groupchat-sub {
+  font-size: 12px;
+  color: var(--slate-500);
+  margin-bottom: 12px;
+}
+.fm-groupchat-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fm-groupchat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.fm-groupchat-btn:hover {
+  transform: scale(1.03);
+}
+.fm-groupchat-btn--wa {
+  background: #25D366;
+  color: white;
+}
+.fm-groupchat-btn--wa:hover { box-shadow: 0 2px 8px rgba(37,211,102,.3); }
+.fm-groupchat-btn--tg {
+  background: #0088CC;
+  color: white;
+}
+.fm-groupchat-btn--tg:hover { box-shadow: 0 2px 8px rgba(0,136,204,.3); }
+.fm-groupchat-btn--copy {
+  background: var(--slate-100);
+  color: var(--slate-700);
+}
+.fm-groupchat-btn--copy:hover { background: var(--slate-200); }
+[data-theme="dark"] .fm-groupchat {
+  background: #111827;
+  border-color: #1E293B;
+}
+[data-theme="dark"] .fm-groupchat-title { color: #E2E8F0; }
+[data-theme="dark"] .fm-groupchat-sub { color: #94A3B8; }
+[data-theme="dark"] .fm-groupchat-btn--copy {
+  background: #1E293B;
+  color: #E2E8F0;
+}
+[data-theme="dark"] .fm-groupchat-btn--copy:hover { background: #334155; }
+@media (max-width: 480px) {
+  .fm-groupchat-actions { flex-direction: column; }
+  .fm-groupchat-btn { justify-content: center; }
+}
+
+/* ── Print Styles (Round 27 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -7074,13 +7289,14 @@ html {
   .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research,
   .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb, .fm-checklist,
   .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
+  .fm-countdown, .fm-groupchat,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
   .wc-image { max-height: 200px; }
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
-  .fm-summary-card, .fm-ppkm, .fm-facts {
+  .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
