@@ -1541,6 +1541,169 @@ function ResultsShareLink({ origins, departureDate, returnDate, tripType, t }) {
   );
 }
 
+// ─── Stopover Info (Round 30) ─────────────────────────────────────────────
+
+function StopoverInfo({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const entries = Object.entries(bestDest.flights).map(([origin, data]) => {
+    const offer = data?.offer || data;
+    const segs = offer?.itineraries?.[0]?.segments || [];
+    const stops = Math.max(0, segs.length - 1);
+    return { origin: normalizeCode(origin), stops };
+  }).filter(Boolean);
+
+  if (!entries.length) return null;
+  const allDirect = entries.every(e => e.stops === 0);
+
+  return (
+    <div className="fm-stopover view-enter">
+      <h4 className="fm-stopover-title">✈️ {t("stopover.title")}</h4>
+      {allDirect && <span className="fm-stopover-alldirect">{t("stopover.allDirect")}</span>}
+      <div className="fm-stopover-list">
+        {entries.map(e => (
+          <div key={e.origin} className="fm-stopover-row">
+            <span className="fm-stopover-origin">{countryFlag(e.origin)} {e.origin}</span>
+            <span className={`fm-stopover-badge fm-stopover-badge--${e.stops === 0 ? "direct" : e.stops === 1 ? "one" : "multi"}`}>
+              {e.stops === 0 ? t("stopover.direct") : e.stops === 1 ? t("stopover.oneStop") : `${e.stops} ${t("stopover.stops")}`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Airline Logos (Round 30) ─────────────────────────────────────────────
+
+function AirlineLogos({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const airlinesSet = new Set();
+  Object.values(bestDest.flights).forEach(data => {
+    const offer = data?.offer || data;
+    const segs = offer?.itineraries?.[0]?.segments || [];
+    segs.forEach(seg => {
+      const code = seg.carrierCode || seg.operating?.carrierCode;
+      if (code) airlinesSet.add(code);
+    });
+  });
+  const airlines = [...airlinesSet];
+  if (!airlines.length) return null;
+
+  return (
+    <div className="fm-airlines view-enter">
+      <span className="fm-airlines-label">{t("airlines.label")}</span>
+      <div className="fm-airlines-logos">
+        {airlines.map(code => (
+          <div key={code} className="fm-airlines-chip">
+            <img
+              src={`https://images.kiwi.com/airlines/64/${code}.png`}
+              alt={code}
+              className="fm-airlines-img"
+              onError={e => { e.target.style.display = "none"; }}
+              loading="lazy"
+            />
+            <span className="fm-airlines-code">{code}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Price History Hint (Round 30) ────────────────────────────────────────
+
+function PriceHistoryHint({ departureDate, bestDest, t }) {
+  if (!departureDate || !bestDest) return null;
+  const now = new Date();
+  const dep = new Date(departureDate + "T00:00:00");
+  const daysAway = Math.round((dep - now) / 86400000);
+  if (daysAway < 0) return null;
+
+  const avgPP = bestDest.averageCostPerTraveler || 0;
+  let trend, icon, msgKey;
+  if (daysAway <= 7) {
+    trend = "rising"; icon = "📈"; msgKey = "priceHint.rising";
+  } else if (daysAway <= 21 && avgPP < 80) {
+    trend = "stable"; icon = "➡️"; msgKey = "priceHint.stable";
+  } else if (daysAway <= 21) {
+    trend = "rising"; icon = "📈"; msgKey = "priceHint.risingModerate";
+  } else if (daysAway <= 60) {
+    trend = "stable"; icon = "➡️"; msgKey = "priceHint.goodWindow";
+  } else {
+    trend = "may-drop"; icon = "📉"; msgKey = "priceHint.mayDrop";
+  }
+
+  return (
+    <div className={`fm-pricehint fm-pricehint--${trend} view-enter`}>
+      <span className="fm-pricehint-icon">{icon}</span>
+      <span className="fm-pricehint-text">{t(msgKey)}</span>
+    </div>
+  );
+}
+
+// ─── Group Budget Gauge (Round 30) ────────────────────────────────────────
+
+function GroupBudgetGauge({ bestDest, origins, budgetEnabled, maxBudget, currency, t }) {
+  if (!budgetEnabled || !maxBudget || !bestDest) return null;
+  const totalBudget = maxBudget * (origins?.length || 1);
+  const totalCost = bestDest.totalCostEUR || 0;
+  const pct = Math.min(100, (totalCost / totalBudget) * 100);
+  const remaining = Math.max(0, totalBudget - totalCost);
+
+  let color;
+  if (pct <= 60) color = "#22c55e";
+  else if (pct <= 85) color = "#f59e0b";
+  else color = "#ef4444";
+
+  return (
+    <div className="fm-budgetgauge view-enter">
+      <h4 className="fm-budgetgauge-title">💰 {t("budgetGauge.title")}</h4>
+      <div className="fm-budgetgauge-track">
+        <div className="fm-budgetgauge-fill" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <div className="fm-budgetgauge-info">
+        <span>{convertPrice(totalCost, currency)} / {convertPrice(totalBudget, currency)}</span>
+        <span className="fm-budgetgauge-remaining">
+          {t("budgetGauge.remaining").replace("{{amount}}", convertPrice(remaining, currency))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Visa Hint (Round 30) ─────────────────────────────────────
+
+const SCHENGEN = new Set(["AT","BE","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IT","LV","LT","LU","MT","NL","NO","PL","PT","SK","SI","ES","SE","CH","LI","HR"]);
+const EU_EEA = new Set([...SCHENGEN, "IE","BG","RO","CY"]);
+
+function DestVisaHint({ destCode, t }) {
+  const info = destQuickInfo(destCode);
+  const cc = info?.country;
+  if (!cc) return null;
+
+  let msgKey, level;
+  if (SCHENGEN.has(cc)) {
+    msgKey = "visa.schengen"; level = "ok";
+  } else if (EU_EEA.has(cc)) {
+    msgKey = "visa.euEea"; level = "ok";
+  } else if (cc === "GB") {
+    msgKey = "visa.uk"; level = "check";
+  } else if (cc === "TR") {
+    msgKey = "visa.turkey"; level = "check";
+  } else if (cc === "MA") {
+    msgKey = "visa.morocco"; level = "check";
+  } else {
+    msgKey = "visa.other"; level = "check";
+  }
+
+  return (
+    <div className={`fm-visa fm-visa--${level} view-enter`}>
+      <span className="fm-visa-icon">{level === "ok" ? "✅" : "⚠️"}</span>
+      <span className="fm-visa-text">{t(msgKey)}</span>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -4658,6 +4821,9 @@ export default function App() {
           {/* Destination image banner */}
           <DestImageBanner destCode={normalizeCode(bestDestination.destination)} />
 
+          {/* Airline logos for winning destination */}
+          <AirlineLogos bestDest={bestDestination} t={t} />
+
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -4695,6 +4861,9 @@ export default function App() {
           {/* Booking window tip */}
           <BookingWindowTip departureDate={bestDestination.bestDate || departureDate} t={t} />
 
+          {/* Price history hint */}
+          <PriceHistoryHint departureDate={bestDestination.bestDate || departureDate} bestDest={bestDestination} t={t} />
+
           {/* Group savings vs most expensive destination */}
           {flights.length >= 2 && (() => {
             const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
@@ -4707,6 +4876,9 @@ export default function App() {
             );
             return null;
           })()}
+
+          {/* Group budget gauge */}
+          <GroupBudgetGauge bestDest={bestDestination} origins={cleanOrigins} budgetEnabled={budgetEnabled} maxBudget={maxBudget} currency={currency} t={t} />
 
           {/* Celebrate badge for cheap flights (avg < €50/pp) */}
           {bestDestination.averageCostPerTraveler < 50 && (
@@ -4749,6 +4921,9 @@ export default function App() {
 
           {/* Destination currency converter */}
           <DestCurrencyConverter destCode={normalizeCode(bestDestination.destination)} t={t} />
+
+          {/* Destination visa hint */}
+          <DestVisaHint destCode={normalizeCode(bestDestination.destination)} t={t} />
 
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
@@ -4826,6 +5001,9 @@ export default function App() {
 
           {/* Flight duration comparison */}
           <FlightDurationComparison bestDest={bestDestination} t={t} />
+
+          {/* Stopover info */}
+          <StopoverInfo bestDest={bestDestination} t={t} />
 
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />

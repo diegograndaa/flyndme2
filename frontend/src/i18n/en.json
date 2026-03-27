@@ -487,5 +487,34 @@
     "label": "Share this search with your group",
     "copy": "Copy link",
     "copied": "Copied!"
+  },
+  "stopover": {
+    "title": "Stopovers",
+    "allDirect": "All direct flights!",
+    "direct": "Direct",
+    "oneStop": "1 stop",
+    "stops": "stops"
+  },
+  "airlines": {
+    "label": "Airlines on this route:"
+  },
+  "priceHint": {
+    "rising": "Prices are likely rising — last-minute fares tend to increase significantly",
+    "risingModerate": "Prices may start climbing — consider booking soon to lock in current rates",
+    "stable": "Current prices look reasonable for this timeframe",
+    "goodWindow": "You're in a good booking window — prices are typically stable at this range",
+    "mayDrop": "Prices may still drop as the date approaches — but availability could decrease"
+  },
+  "budgetGauge": {
+    "title": "Group budget tracker",
+    "remaining": "{{amount}} remaining"
+  },
+  "visa": {
+    "schengen": "Schengen area — EU/EEA citizens travel freely, others may need a Schengen visa",
+    "euEea": "EU/EEA country — free movement for EU citizens, check requirements for others",
+    "uk": "United Kingdom — EU citizens may need to check post-Brexit entry requirements",
+    "turkey": "Turkey — many nationalities need an e-visa (quick online application)",
+    "morocco": "Morocco — visa requirements vary by nationality, check before booking",
+    "other": "Check visa requirements for your nationality before booking"
   }
 }

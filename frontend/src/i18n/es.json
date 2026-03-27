@@ -487,5 +487,34 @@
     "label": "Comparte esta búsqueda con tu grupo",
     "copy": "Copiar enlace",
     "copied": "¡Copiado!"
+  },
+  "stopover": {
+    "title": "Escalas",
+    "allDirect": "¡Todos los vuelos son directos!",
+    "direct": "Directo",
+    "oneStop": "1 escala",
+    "stops": "escalas"
+  },
+  "airlines": {
+    "label": "Aerolíneas en esta ruta:"
+  },
+  "priceHint": {
+    "rising": "Los precios probablemente están subiendo — las tarifas de última hora suelen aumentar mucho",
+    "risingModerate": "Los precios pueden empezar a subir — considera reservar pronto para asegurar la tarifa actual",
+    "stable": "Los precios actuales parecen razonables para este periodo",
+    "goodWindow": "Estás en un buen momento para reservar — los precios suelen ser estables en este rango",
+    "mayDrop": "Los precios podrían bajar conforme se acerque la fecha — pero la disponibilidad podría reducirse"
+  },
+  "budgetGauge": {
+    "title": "Control de presupuesto del grupo",
+    "remaining": "{{amount}} restante"
+  },
+  "visa": {
+    "schengen": "Zona Schengen — ciudadanos UE/EEE viajan libremente, otros pueden necesitar visado Schengen",
+    "euEea": "País UE/EEE — libre circulación para ciudadanos UE, consulta requisitos para otros",
+    "uk": "Reino Unido — ciudadanos UE deben verificar requisitos de entrada post-Brexit",
+    "turkey": "Turquía — muchas nacionalidades necesitan e-visa (solicitud rápida online)",
+    "morocco": "Marruecos — los requisitos de visado varían según nacionalidad, consulta antes de reservar",
+    "other": "Consulta los requisitos de visado para tu nacionalidad antes de reservar"
   }
 }

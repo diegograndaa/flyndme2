@@ -7734,7 +7734,174 @@ html {
   .fm-sharelink { padding: 10px 14px; flex-wrap: wrap; }
 }
 
-/* ── Print Styles (Round 29 updated) ──────────────────────── */
+/* ── Stopover Info (Round 30) ─────────────────────────────── */
+
+.fm-stopover {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-stopover-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+.fm-stopover-alldirect {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-bottom: 10px;
+}
+.fm-stopover-list { display: flex; flex-direction: column; gap: 8px; }
+.fm-stopover-row { display: flex; align-items: center; gap: 10px; }
+.fm-stopover-origin { font-size: 13px; font-weight: 600; color: #475569; min-width: 65px; }
+.fm-stopover-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.fm-stopover-badge--direct { background: #dcfce7; color: #166534; }
+.fm-stopover-badge--one { background: #fef3c7; color: #92400e; }
+.fm-stopover-badge--multi { background: #fef2f2; color: #991b1b; }
+[data-theme="dark"] .fm-stopover { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-stopover-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-stopover-alldirect { background: #052e16; color: #86efac; }
+[data-theme="dark"] .fm-stopover-origin { color: #94a3b8; }
+[data-theme="dark"] .fm-stopover-badge--direct { background: #052e16; color: #86efac; }
+[data-theme="dark"] .fm-stopover-badge--one { background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .fm-stopover-badge--multi { background: #450a0a; color: #fca5a5; }
+
+/* ── Airline Logos (Round 30) ─────────────────────────────── */
+
+.fm-airlines {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.fm-airlines-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+.fm-airlines-logos { display: flex; gap: 8px; flex-wrap: wrap; }
+.fm-airlines-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 10px 4px 5px;
+}
+.fm-airlines-img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.fm-airlines-code { font-size: 12px; font-weight: 700; color: #334155; }
+[data-theme="dark"] .fm-airlines-label { color: #94a3b8; }
+[data-theme="dark"] .fm-airlines-chip { background: #334155; border-color: #475569; }
+[data-theme="dark"] .fm-airlines-code { color: #e2e8f0; }
+
+/* ── Price History Hint (Round 30) ────────────────────────── */
+
+.fm-pricehint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.fm-pricehint--rising { background: #fef2f2; border-color: #fca5a5; }
+.fm-pricehint--stable { background: #f0fdf4; border-color: #86efac; }
+.fm-pricehint--may-drop { background: #eff6ff; border-color: #93c5fd; }
+.fm-pricehint-icon { font-size: 18px; flex-shrink: 0; }
+.fm-pricehint-text { font-size: 13px; color: #334155; line-height: 1.4; }
+[data-theme="dark"] .fm-pricehint--rising { background: #450a0a; border-color: #991b1b; }
+[data-theme="dark"] .fm-pricehint--stable { background: #052e16; border-color: #166534; }
+[data-theme="dark"] .fm-pricehint--may-drop { background: #1e3a5f; border-color: #1d4ed8; }
+[data-theme="dark"] .fm-pricehint-text { color: #e2e8f0; }
+
+/* ── Group Budget Gauge (Round 30) ────────────────────────── */
+
+.fm-budgetgauge {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-budgetgauge-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+.fm-budgetgauge-track {
+  width: 100%;
+  height: 16px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.fm-budgetgauge-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width .6s ease;
+}
+.fm-budgetgauge-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #475569;
+}
+.fm-budgetgauge-remaining { font-weight: 600; color: #059669; }
+[data-theme="dark"] .fm-budgetgauge { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-budgetgauge-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-budgetgauge-track { background: #334155; }
+[data-theme="dark"] .fm-budgetgauge-info { color: #94a3b8; }
+[data-theme="dark"] .fm-budgetgauge-remaining { color: #34d399; }
+
+/* ── Destination Visa Hint (Round 30) ─────────────────────── */
+
+.fm-visa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.fm-visa--ok { background: #f0fdf4; border-color: #86efac; }
+.fm-visa--check { background: #fff7ed; border-color: #fdba74; }
+.fm-visa-icon { font-size: 18px; flex-shrink: 0; }
+.fm-visa-text { font-size: 13px; color: #334155; line-height: 1.4; }
+[data-theme="dark"] .fm-visa--ok { background: #052e16; border-color: #166534; }
+[data-theme="dark"] .fm-visa--check { background: #451a03; border-color: #9a3412; }
+[data-theme="dark"] .fm-visa-text { color: #e2e8f0; }
+
+@media (max-width: 600px) {
+  .fm-stopover { padding: 14px 14px; }
+  .fm-stopover-origin { min-width: 50px; font-size: 12px; }
+  .fm-pricehint { padding: 10px 14px; }
+  .fm-budgetgauge { padding: 14px 14px; }
+  .fm-visa { padding: 10px 14px; }
+}
+
+/* ── Print Styles (Round 30 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -7744,6 +7911,7 @@ html {
   .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
   .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
   .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
+  .fm-pricehint, .fm-visa, .fm-airlines,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -7751,7 +7919,7 @@ html {
   .wc-image { max-height: 200px; }
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
-  .fm-origin-table {
+  .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
