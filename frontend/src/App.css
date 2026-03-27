@@ -7495,7 +7495,246 @@ html {
   .fm-dest-banner-city { font-size: 18px; }
 }
 
-/* ── Print Styles (Round 28 updated) ──────────────────────── */
+/* ── Alternative Dates Hint (Round 29) ────────────────────── */
+
+.fm-altdates {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-altdates-icon { font-size: 22px; flex-shrink: 0; }
+.fm-altdates-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-altdates-title { font-weight: 700; font-size: 13px; color: #92400e; }
+.fm-altdates-text { font-size: 13px; color: #78350f; line-height: 1.4; }
+[data-theme="dark"] .fm-altdates {
+  background: linear-gradient(135deg, #451a03, #78350f);
+  border-color: #b45309;
+}
+[data-theme="dark"] .fm-altdates-title { color: #fcd34d; }
+[data-theme="dark"] .fm-altdates-text { color: #fde68a; }
+
+/* ── Flight Duration Comparison (Round 29) ────────────────── */
+
+.fm-duration {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-duration-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 14px;
+}
+.fm-duration-bars { display: flex; flex-direction: column; gap: 10px; }
+.fm-duration-row { display: flex; align-items: center; gap: 10px; }
+.fm-duration-origin {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  min-width: 65px;
+  text-align: right;
+}
+.fm-duration-barwrap {
+  flex: 1;
+  display: flex;
+  height: 18px;
+  background: #f1f5f9;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.fm-duration-fly {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border-radius: 9px 0 0 9px;
+  min-width: 2px;
+}
+.fm-duration-lay {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  min-width: 2px;
+}
+.fm-duration-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  min-width: 50px;
+}
+.fm-duration-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+.fm-duration-legend-item { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 5px; }
+.fm-duration-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.fm-duration-dot--fly { background: #3b82f6; }
+.fm-duration-dot--lay { background: #f59e0b; }
+[data-theme="dark"] .fm-duration {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+[data-theme="dark"] .fm-duration-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-duration-origin { color: #94a3b8; }
+[data-theme="dark"] .fm-duration-barwrap { background: #334155; }
+[data-theme="dark"] .fm-duration-label { color: #94a3b8; }
+[data-theme="dark"] .fm-duration-legend { border-top-color: #334155; }
+[data-theme="dark"] .fm-duration-legend-item { color: #94a3b8; }
+
+/* ── Destination Currency Converter (Round 29) ────────────── */
+
+.fm-fxcalc {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-fxcalc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+.fm-fxcalc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fm-fxcalc-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+}
+.fm-fxcalc-symbol { font-weight: 700; color: #64748b; font-size: 16px; }
+.fm-fxcalc-input {
+  border: none;
+  background: transparent;
+  width: 80px;
+  padding: 8px 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+}
+.fm-fxcalc-arrow { font-size: 18px; color: #94a3b8; font-weight: 700; }
+.fm-fxcalc-result { display: flex; align-items: baseline; gap: 6px; }
+.fm-fxcalc-converted {
+  font-size: 22px;
+  font-weight: 800;
+  color: #059669;
+}
+.fm-fxcalc-code { font-size: 12px; font-weight: 600; color: #64748b; }
+.fm-fxcalc-note {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+[data-theme="dark"] .fm-fxcalc {
+  background: #1e293b;
+  border-color: #334155;
+}
+[data-theme="dark"] .fm-fxcalc-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-fxcalc-input-wrap { background: #334155; border-color: #475569; }
+[data-theme="dark"] .fm-fxcalc-symbol { color: #94a3b8; }
+[data-theme="dark"] .fm-fxcalc-input { color: #e2e8f0; }
+[data-theme="dark"] .fm-fxcalc-arrow { color: #64748b; }
+[data-theme="dark"] .fm-fxcalc-converted { color: #34d399; }
+[data-theme="dark"] .fm-fxcalc-code { color: #94a3b8; }
+[data-theme="dark"] .fm-fxcalc-note { color: #64748b; }
+
+/* ── Booking Window Tip (Round 29) ────────────────────────── */
+
+.fm-bookwin {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.fm-bookwin--urgent { background: #fef2f2; border-color: #fca5a5; }
+.fm-bookwin--soon { background: #fff7ed; border-color: #fdba74; }
+.fm-bookwin--good { background: #f0fdf4; border-color: #86efac; }
+.fm-bookwin--early { background: #f0fdf4; border-color: #86efac; }
+.fm-bookwin--veryearly { background: #eff6ff; border-color: #93c5fd; }
+.fm-bookwin-icon { font-size: 20px; flex-shrink: 0; }
+.fm-bookwin-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-bookwin-title { font-weight: 700; font-size: 13px; color: #334155; }
+.fm-bookwin-text { font-size: 13px; color: #475569; line-height: 1.4; }
+[data-theme="dark"] .fm-bookwin--urgent { background: #450a0a; border-color: #991b1b; }
+[data-theme="dark"] .fm-bookwin--soon { background: #451a03; border-color: #9a3412; }
+[data-theme="dark"] .fm-bookwin--good { background: #052e16; border-color: #166534; }
+[data-theme="dark"] .fm-bookwin--early { background: #052e16; border-color: #166534; }
+[data-theme="dark"] .fm-bookwin--veryearly { background: #1e3a5f; border-color: #1d4ed8; }
+[data-theme="dark"] .fm-bookwin-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-bookwin-text { color: #cbd5e1; }
+
+/* ── Results Share Link (Round 29) ────────────────────────── */
+
+.fm-sharelink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+}
+.fm-sharelink-icon { font-size: 20px; }
+.fm-sharelink-text {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e40af;
+}
+.fm-sharelink-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.fm-sharelink-btn:hover { background: #1d4ed8; }
+[data-theme="dark"] .fm-sharelink {
+  background: linear-gradient(135deg, #1e3a5f, #1e40af20);
+  border-color: #1d4ed8;
+}
+[data-theme="dark"] .fm-sharelink-text { color: #93c5fd; }
+[data-theme="dark"] .fm-sharelink-btn { background: #1d4ed8; }
+[data-theme="dark"] .fm-sharelink-btn:hover { background: #1e40af; }
+
+@media (max-width: 600px) {
+  .fm-altdates { padding: 10px 14px; }
+  .fm-duration { padding: 14px 14px; }
+  .fm-duration-origin { min-width: 50px; font-size: 12px; }
+  .fm-fxcalc { padding: 14px 14px; }
+  .fm-fxcalc-row { gap: 8px; }
+  .fm-bookwin { padding: 10px 14px; }
+  .fm-sharelink { padding: 10px 14px; flex-wrap: wrap; }
+}
+
+/* ── Print Styles (Round 29 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -7504,6 +7743,7 @@ html {
   .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb, .fm-checklist,
   .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
   .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
+  .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }

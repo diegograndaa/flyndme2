@@ -461,5 +461,31 @@
   },
   "tripInsight": {
     "roundtripSaving": "Round trip saves ~{{pct}}% compared to booking two separate one-way flights"
+  },
+  "altDates": {
+    "title": "Flexible dates tip",
+    "hint": "Flying on {{day}} could save you {{saving}} on average — midweek flights are usually cheaper"
+  },
+  "duration": {
+    "title": "Travel time comparison",
+    "flying": "Flying",
+    "layover": "Layover"
+  },
+  "fxCalc": {
+    "title": "Currency converter",
+    "note": "Approximate rates — check current rates before traveling"
+  },
+  "bookWindow": {
+    "title": "Booking timing",
+    "lastMinute": "Only {{days}} days away — last-minute prices may be higher, book now if you can",
+    "soon": "{{days}} days to departure — good time to lock in your fare before prices rise",
+    "ideal": "{{days}} days out — this is the sweet spot for booking European flights",
+    "early": "{{days}} days ahead — prices may drop closer to departure, but booking now guarantees availability",
+    "veryEarly": "{{days}} days away — you're very early! Consider setting a price alert"
+  },
+  "shareLink": {
+    "label": "Share this search with your group",
+    "copy": "Copy link",
+    "copied": "Copied!"
   }
 }

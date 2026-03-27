@@ -1319,6 +1319,228 @@ function DestImageBanner({ destCode }) {
   );
 }
 
+// ─── Alternative Dates Hint (Round 29) ────────────────────────────────────
+
+function AlternativeDatesHint({ departureDate, t }) {
+  if (!departureDate) return null;
+  const d = new Date(departureDate + "T00:00:00");
+  const dow = d.getDay(); // 0=Sun … 6=Sat
+  // Flights on Tue/Wed tend to be cheapest; Fri/Sun most expensive
+  const CHEAP_DAYS = new Set([2, 3]); // Tue, Wed
+  const EXPENSIVE_DAYS = new Set([0, 5]); // Sun, Fri
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  if (CHEAP_DAYS.has(dow)) return null; // already a cheap day
+
+  // Suggest nearest cheap day
+  const nearestCheap = [2, 3].map(cd => {
+    const diff = cd - dow;
+    return diff >= -3 ? diff : diff + 7;
+  }).sort((a, b) => Math.abs(a) - Math.abs(b))[0];
+
+  const suggestedDate = new Date(d);
+  suggestedDate.setDate(suggestedDate.getDate() + nearestCheap);
+  const sugDay = dayNames[suggestedDate.getDay()];
+  const saving = EXPENSIVE_DAYS.has(dow) ? "15-25%" : "5-15%";
+
+  return (
+    <div className="fm-altdates view-enter">
+      <span className="fm-altdates-icon">📅</span>
+      <div className="fm-altdates-body">
+        <span className="fm-altdates-title">{t("altDates.title")}</span>
+        <span className="fm-altdates-text">
+          {t("altDates.hint").replace("{{day}}", sugDay).replace("{{saving}}", saving)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Flight Duration Comparison (Round 29) ────────────────────────────────
+
+function FlightDurationComparison({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+
+  const entries = Object.entries(bestDest.flights).map(([origin, data]) => {
+    const offer = data?.offer || data;
+    const segs = offer?.itineraries?.[0]?.segments || [];
+    if (!segs.length) return null;
+    const dep = new Date(segs[0].departure?.at);
+    const arr = new Date(segs[segs.length - 1].arrival?.at);
+    const totalMin = Math.round((arr - dep) / 60000);
+    const flyMin = segs.reduce((s, seg) => {
+      const sd = new Date(seg.departure?.at);
+      const sa = new Date(seg.arrival?.at);
+      return s + Math.round((sa - sd) / 60000);
+    }, 0);
+    const layoverMin = Math.max(0, totalMin - flyMin);
+    return { origin: normalizeCode(origin), totalMin, flyMin, layoverMin };
+  }).filter(Boolean);
+
+  if (entries.length < 2) return null;
+
+  const maxMin = Math.max(...entries.map(e => e.totalMin));
+
+  return (
+    <div className="fm-duration view-enter">
+      <h4 className="fm-duration-title">{t("duration.title")}</h4>
+      <div className="fm-duration-bars">
+        {entries.map(e => {
+          const flyPct = maxMin > 0 ? (e.flyMin / maxMin) * 100 : 0;
+          const layPct = maxMin > 0 ? (e.layoverMin / maxMin) * 100 : 0;
+          const hrs = Math.floor(e.totalMin / 60);
+          const mins = e.totalMin % 60;
+          return (
+            <div key={e.origin} className="fm-duration-row">
+              <span className="fm-duration-origin">{countryFlag(e.origin)} {e.origin}</span>
+              <div className="fm-duration-barwrap">
+                <div className="fm-duration-fly" style={{ width: `${flyPct}%` }} />
+                {e.layoverMin > 0 && (
+                  <div className="fm-duration-lay" style={{ width: `${layPct}%` }} />
+                )}
+              </div>
+              <span className="fm-duration-label">{hrs}h {mins > 0 ? `${mins}m` : ""}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="fm-duration-legend">
+        <span className="fm-duration-legend-item"><span className="fm-duration-dot fm-duration-dot--fly" /> {t("duration.flying")}</span>
+        <span className="fm-duration-legend-item"><span className="fm-duration-dot fm-duration-dot--lay" /> {t("duration.layover")}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Currency Converter (Round 29) ───────────────────────────
+
+const DEST_CURRENCIES = {
+  GB: { code: "GBP", symbol: "£", rate: 0.86 },
+  US: { code: "USD", symbol: "$", rate: 1.09 },
+  CH: { code: "CHF", symbol: "CHF", rate: 0.96 },
+  CZ: { code: "CZK", symbol: "Kč", rate: 25.2 },
+  PL: { code: "PLN", symbol: "zł", rate: 4.32 },
+  HU: { code: "HUF", symbol: "Ft", rate: 395 },
+  SE: { code: "SEK", symbol: "kr", rate: 11.3 },
+  DK: { code: "DKK", symbol: "kr", rate: 7.46 },
+  NO: { code: "NOK", symbol: "kr", rate: 11.6 },
+  RO: { code: "RON", symbol: "lei", rate: 4.97 },
+  BG: { code: "BGN", symbol: "лв", rate: 1.96 },
+  HR: { code: "EUR", symbol: "€", rate: 1 },
+  TR: { code: "TRY", symbol: "₺", rate: 35.2 },
+  MA: { code: "MAD", symbol: "MAD", rate: 10.8 },
+  // Eurozone countries get EUR by default
+};
+
+function DestCurrencyConverter({ destCode, t }) {
+  const [eurVal, setEurVal] = useState("50");
+  const info = destQuickInfo(destCode);
+  const countryCode = info?.country || "";
+  const destCurr = DEST_CURRENCIES[countryCode];
+
+  // Skip if destination uses EUR
+  if (!destCurr || destCurr.code === "EUR") return null;
+
+  const numEur = parseFloat(eurVal) || 0;
+  const converted = (numEur * destCurr.rate).toFixed(destCurr.rate > 50 ? 0 : 2);
+
+  return (
+    <div className="fm-fxcalc view-enter">
+      <h4 className="fm-fxcalc-title">💱 {t("fxCalc.title")}</h4>
+      <div className="fm-fxcalc-row">
+        <div className="fm-fxcalc-input-wrap">
+          <span className="fm-fxcalc-symbol">€</span>
+          <input
+            type="number"
+            className="fm-fxcalc-input"
+            value={eurVal}
+            onChange={e => setEurVal(e.target.value)}
+            min="0"
+            step="10"
+          />
+        </div>
+        <span className="fm-fxcalc-arrow">→</span>
+        <div className="fm-fxcalc-result">
+          <span className="fm-fxcalc-converted">{destCurr.symbol} {converted}</span>
+          <span className="fm-fxcalc-code">{destCurr.code}</span>
+        </div>
+      </div>
+      <span className="fm-fxcalc-note">{t("fxCalc.note")}</span>
+    </div>
+  );
+}
+
+// ─── Booking Window Tip (Round 29) ────────────────────────────────────────
+
+function BookingWindowTip({ departureDate, t }) {
+  if (!departureDate) return null;
+  const now = new Date();
+  const dep = new Date(departureDate + "T00:00:00");
+  const daysAway = Math.round((dep - now) / 86400000);
+
+  if (daysAway < 0) return null;
+
+  let level, icon, msgKey;
+  if (daysAway <= 3) {
+    level = "urgent"; icon = "🔴"; msgKey = "bookWindow.lastMinute";
+  } else if (daysAway <= 14) {
+    level = "soon"; icon = "🟠"; msgKey = "bookWindow.soon";
+  } else if (daysAway <= 45) {
+    level = "good"; icon = "🟢"; msgKey = "bookWindow.ideal";
+  } else if (daysAway <= 120) {
+    level = "early"; icon = "🟢"; msgKey = "bookWindow.early";
+  } else {
+    level = "veryearly"; icon = "🔵"; msgKey = "bookWindow.veryEarly";
+  }
+
+  return (
+    <div className={`fm-bookwin fm-bookwin--${level} view-enter`}>
+      <span className="fm-bookwin-icon">{icon}</span>
+      <div className="fm-bookwin-body">
+        <span className="fm-bookwin-title">{t("bookWindow.title")}</span>
+        <span className="fm-bookwin-text">
+          {t(msgKey).replace("{{days}}", daysAway)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Results Share Link (Round 29) ────────────────────────────────────────
+
+function ResultsShareLink({ origins, departureDate, returnDate, tripType, t }) {
+  const [copied, setCopied] = useState(false);
+
+  const buildLink = useCallback(() => {
+    const params = new URLSearchParams();
+    if (origins?.length) params.set("origins", origins.join(","));
+    if (departureDate) params.set("dep", departureDate);
+    if (returnDate) params.set("ret", returnDate);
+    if (tripType) params.set("trip", tripType);
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  }, [origins, departureDate, returnDate, tripType]);
+
+  const handleCopy = useCallback(() => {
+    const link = buildLink();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [buildLink]);
+
+  return (
+    <div className="fm-sharelink view-enter">
+      <span className="fm-sharelink-icon">🔗</span>
+      <span className="fm-sharelink-text">{t("shareLink.label")}</span>
+      <button type="button" className="fm-sharelink-btn" onClick={handleCopy}>
+        {copied ? "✓ " + t("shareLink.copied") : t("shareLink.copy")}
+      </button>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -4470,6 +4692,9 @@ export default function App() {
           {/* Trip countdown */}
           <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
 
+          {/* Booking window tip */}
+          <BookingWindowTip departureDate={bestDestination.bestDate || departureDate} t={t} />
+
           {/* Group savings vs most expensive destination */}
           {flights.length >= 2 && (() => {
             const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
@@ -4522,6 +4747,9 @@ export default function App() {
           {/* Destination quick facts */}
           <DestQuickFacts destCode={normalizeCode(bestDestination.destination)} t={t} />
 
+          {/* Destination currency converter */}
+          <DestCurrencyConverter destCode={normalizeCode(bestDestination.destination)} t={t} />
+
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
             <span className="fm-alert-hint-icon">🔔</span>
@@ -4531,6 +4759,9 @@ export default function App() {
 
           {/* Trip type insight */}
           <TripTypeInsight tripType={tripType} bestDest={bestDestination} departureDate={departureDate} t={t} />
+
+          {/* Alternative dates hint */}
+          <AlternativeDatesHint departureDate={bestDestination.bestDate || departureDate} t={t} />
 
           {/* CO2 estimate */}
           <CO2EstimateBadge bestDest={bestDestination} origins={cleanOrigins} t={t} />
@@ -4592,6 +4823,9 @@ export default function App() {
 
           {/* Flight timeline (visual per-origin) */}
           <FlightTimeline bestDest={bestDestination} origins={cleanOrigins} t={t} />
+
+          {/* Flight duration comparison */}
+          <FlightDurationComparison bestDest={bestDestination} t={t} />
 
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />
@@ -4762,6 +4996,15 @@ export default function App() {
             returnDate={returnDate}
             tripType={tripType}
             currency={currency}
+            t={t}
+          />
+
+          {/* Results share link */}
+          <ResultsShareLink
+            origins={cleanOrigins}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
             t={t}
           />
 

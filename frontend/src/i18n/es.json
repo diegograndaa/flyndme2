@@ -461,5 +461,31 @@
   },
   "tripInsight": {
     "roundtripSaving": "Ida y vuelta ahorra ~{{pct}}% respecto a reservar dos vuelos solo ida"
+  },
+  "altDates": {
+    "title": "Consejo de fechas flexibles",
+    "hint": "Volar en {{day}} podría ahorrarte {{saving}} de media — los vuelos entre semana suelen ser más baratos"
+  },
+  "duration": {
+    "title": "Comparación de tiempo de viaje",
+    "flying": "Volando",
+    "layover": "Escala"
+  },
+  "fxCalc": {
+    "title": "Conversor de moneda",
+    "note": "Tasas aproximadas — consulta las tasas actuales antes de viajar"
+  },
+  "bookWindow": {
+    "title": "Momento de reserva",
+    "lastMinute": "Solo quedan {{days}} días — los precios de última hora pueden ser más altos, reserva ya si puedes",
+    "soon": "{{days}} días para la salida — buen momento para asegurar tu tarifa antes de que suban los precios",
+    "ideal": "{{days}} días — este es el momento ideal para reservar vuelos europeos",
+    "early": "{{days}} días de antelación — los precios podrían bajar más adelante, pero reservar ahora garantiza disponibilidad",
+    "veryEarly": "{{days}} días de antelación — ¡vas muy temprano! Considera poner una alerta de precio"
+  },
+  "shareLink": {
+    "label": "Comparte esta búsqueda con tu grupo",
+    "copy": "Copiar enlace",
+    "copied": "¡Copiado!"
   }
 }
