@@ -1704,6 +1704,187 @@ function DestVisaHint({ destCode, t }) {
   );
 }
 
+// ─── Return Flight Preview (Round 31) ─────────────────────────────────────
+
+function ReturnFlightPreview({ bestDest, tripType, t }) {
+  if (tripType !== "roundtrip" || !bestDest?.flights) return null;
+
+  const entries = Object.entries(bestDest.flights).map(([origin, data]) => {
+    const offer = data?.offer || data;
+    const retItin = offer?.itineraries?.[1];
+    if (!retItin?.segments?.length) return null;
+    const segs = retItin.segments;
+    const dep = segs[0].departure;
+    const arr = segs[segs.length - 1].arrival;
+    const stops = Math.max(0, segs.length - 1);
+    const carrier = segs[0].carrierCode || "";
+    const depTime = dep?.at ? new Date(dep.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    const arrTime = arr?.at ? new Date(arr.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    return { origin: normalizeCode(origin), carrier, stops, depTime, arrTime };
+  }).filter(Boolean);
+
+  if (!entries.length) return null;
+
+  return (
+    <div className="fm-returnflight view-enter">
+      <h4 className="fm-returnflight-title">🔄 {t("returnFlight.title")}</h4>
+      <div className="fm-returnflight-list">
+        {entries.map(e => (
+          <div key={e.origin} className="fm-returnflight-row">
+            <span className="fm-returnflight-origin">{countryFlag(e.origin)} {e.origin}</span>
+            <img
+              src={`https://images.kiwi.com/airlines/64/${e.carrier}.png`}
+              alt={e.carrier}
+              className="fm-returnflight-logo"
+              onError={ev => { ev.target.style.display = "none"; }}
+              loading="lazy"
+            />
+            <span className="fm-returnflight-carrier">{e.carrier}</span>
+            <span className="fm-returnflight-times">{e.depTime} → {e.arrTime}</span>
+            <span className={`fm-stopover-badge fm-stopover-badge--${e.stops === 0 ? "direct" : e.stops === 1 ? "one" : "multi"}`}>
+              {e.stops === 0 ? t("stopover.direct") : e.stops === 1 ? t("stopover.oneStop") : `${e.stops} ${t("stopover.stops")}`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Event Hint (Round 31) ────────────────────────────────────
+
+const DEST_EVENTS = {
+  BCN: [{ m: [6, 7, 8], event: "La Mercè / Beach Season" }, { m: [9], event: "La Mercè Festival" }],
+  FCO: [{ m: [4, 5], event: "Spring in Rome" }, { m: [12], event: "Christmas Markets" }],
+  CDG: [{ m: [6, 7], event: "Summer Festivals" }, { m: [12], event: "Christmas Markets / Lights" }],
+  LIS: [{ m: [6], event: "Santo António Festival" }, { m: [7, 8], event: "Beach Season" }],
+  AMS: [{ m: [4], event: "King's Day / Tulip Season" }, { m: [12], event: "Christmas Markets" }],
+  MXP: [{ m: [4, 5], event: "Fashion Week afterglow" }, { m: [12], event: "Christmas Markets" }],
+  ATH: [{ m: [6, 7, 8], event: "Greek Summer / Island Season" }, { m: [3, 4], event: "Easter Celebrations" }],
+  VIE: [{ m: [12], event: "Christmas Markets / Ball Season" }, { m: [6, 7], event: "Summer Concerts" }],
+  PRG: [{ m: [12], event: "Christmas Markets" }, { m: [6, 7, 8], event: "Summer Beer Gardens" }],
+  DUB: [{ m: [3], event: "St. Patrick's Day" }, { m: [6, 7, 8], event: "Festival Season" }],
+  BER: [{ m: [10], event: "Festival of Lights" }, { m: [12], event: "Christmas Markets" }],
+  CPH: [{ m: [6, 7], event: "Copenhagen Jazz Festival" }, { m: [12], event: "Tivoli Christmas" }],
+  BUD: [{ m: [8], event: "Sziget Festival" }, { m: [12], event: "Christmas Markets / Thermal Baths" }],
+};
+
+function DestEventHint({ destCode, departureDate, t }) {
+  if (!destCode || !departureDate) return null;
+  const events = DEST_EVENTS[destCode];
+  if (!events) return null;
+  const month = new Date(departureDate + "T00:00:00").getMonth() + 1;
+  const match = events.find(e => e.m.includes(month));
+  if (!match) return null;
+
+  return (
+    <div className="fm-destevent view-enter">
+      <span className="fm-destevent-icon">🎭</span>
+      <div className="fm-destevent-body">
+        <span className="fm-destevent-title">{t("destEvent.title")}</span>
+        <span className="fm-destevent-text">{match.event}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Price Breakdown Accordion (Round 31) ─────────────────────────────────
+
+function PriceBreakdownAccordion({ bestDest, currency, t }) {
+  const [open, setOpen] = useState(false);
+  if (!bestDest?.flights) return null;
+
+  const rows = Object.entries(bestDest.flights).map(([origin, data]) => {
+    const offer = data?.offer || data;
+    const price = parseFloat(offer?.price?.total || data?.price || 0);
+    const base = parseFloat(offer?.price?.base || 0);
+    const taxes = price - base;
+    return { origin: normalizeCode(origin), total: price, base, taxes: taxes > 0 ? taxes : 0 };
+  }).filter(r => r.total > 0);
+
+  if (!rows.length) return null;
+
+  return (
+    <div className="fm-pricebd view-enter">
+      <button type="button" className="fm-pricebd-toggle" onClick={() => setOpen(!open)}>
+        <span className="fm-pricebd-toggle-icon">{open ? "▾" : "▸"}</span>
+        <span className="fm-pricebd-toggle-label">{t("priceBreakdown.title")}</span>
+      </button>
+      {open && (
+        <div className="fm-pricebd-content">
+          <div className="fm-pricebd-header">
+            <span>{t("priceBreakdown.origin")}</span>
+            <span>{t("priceBreakdown.base")}</span>
+            <span>{t("priceBreakdown.taxes")}</span>
+            <span>{t("priceBreakdown.total")}</span>
+          </div>
+          {rows.map(r => (
+            <div key={r.origin} className="fm-pricebd-row">
+              <span className="fm-pricebd-origin">{countryFlag(r.origin)} {r.origin}</span>
+              <span className="fm-pricebd-val">{convertPrice(r.base, currency)}</span>
+              <span className="fm-pricebd-val fm-pricebd-val--tax">{convertPrice(r.taxes, currency)}</span>
+              <span className="fm-pricebd-val fm-pricebd-val--total">{convertPrice(r.total, currency)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Group Size Indicator (Round 31) ──────────────────────────────────────
+
+function GroupSizeIndicator({ origins, bestDest, currency, t }) {
+  const [showTotal, setShowTotal] = useState(false);
+  if (!origins?.length || !bestDest) return null;
+  const count = origins.length;
+  const total = bestDest.totalCostEUR || 0;
+  const avg = bestDest.averageCostPerTraveler || 0;
+
+  return (
+    <div className="fm-groupsize view-enter">
+      <div className="fm-groupsize-avatars">
+        {origins.slice(0, 6).map((o, i) => (
+          <span key={o} className="fm-groupsize-avatar" style={{ zIndex: 10 - i }}>
+            {countryFlag(o)}
+          </span>
+        ))}
+        {count > 6 && <span className="fm-groupsize-more">+{count - 6}</span>}
+      </div>
+      <span className="fm-groupsize-label">
+        {count} {t("groupSize.travelers")}
+      </span>
+      <button
+        type="button"
+        className="fm-groupsize-toggle"
+        onClick={() => setShowTotal(!showTotal)}
+      >
+        {showTotal
+          ? `${t("groupSize.total")}: ${convertPrice(total, currency)}`
+          : `${t("groupSize.perPerson")}: ${convertPrice(avg, currency)}`}
+      </button>
+    </div>
+  );
+}
+
+// ─── Search Duration Badge (Round 31) ─────────────────────────────────────
+
+function SearchDurationBadge({ duration, t }) {
+  if (!duration || duration <= 0) return null;
+  let rating, color;
+  if (duration <= 5) { rating = t("searchSpeed.fast"); color = "#22c55e"; }
+  else if (duration <= 15) { rating = t("searchSpeed.normal"); color = "#f59e0b"; }
+  else { rating = t("searchSpeed.slow"); color = "#ef4444"; }
+
+  return (
+    <div className="fm-searchspeed view-enter">
+      <span className="fm-searchspeed-icon">⚡</span>
+      <span className="fm-searchspeed-time">{duration}s</span>
+      <span className="fm-searchspeed-rating" style={{ color }}>{rating}</span>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -4855,6 +5036,9 @@ export default function App() {
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
+          {/* Group size indicator */}
+          <GroupSizeIndicator origins={cleanOrigins} bestDest={bestDestination} currency={currency} t={t} />
+
           {/* Trip countdown */}
           <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
 
@@ -4924,6 +5108,9 @@ export default function App() {
 
           {/* Destination visa hint */}
           <DestVisaHint destCode={normalizeCode(bestDestination.destination)} t={t} />
+
+          {/* Destination event hint */}
+          <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
 
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
@@ -5005,6 +5192,9 @@ export default function App() {
           {/* Stopover info */}
           <StopoverInfo bestDest={bestDestination} t={t} />
 
+          {/* Return flight preview (roundtrip only) */}
+          <ReturnFlightPreview bestDest={bestDestination} tripType={tripType} t={t} />
+
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />
 
@@ -5013,6 +5203,9 @@ export default function App() {
 
           {/* Baggage reminder for budget airlines */}
           <BaggageReminder bestDest={bestDestination} t={t} />
+
+          {/* Price breakdown accordion */}
+          <PriceBreakdownAccordion bestDest={bestDestination} currency={currency} t={t} />
 
           {/* Cost split calculator */}
           <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
@@ -5067,6 +5260,9 @@ export default function App() {
               t={t}
             />
           </div>
+
+          {/* Search duration badge */}
+          <SearchDurationBadge duration={searchDuration} t={t} />
 
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

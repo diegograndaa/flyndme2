@@ -7901,7 +7901,214 @@ html {
   .fm-visa { padding: 10px 14px; }
 }
 
-/* ── Print Styles (Round 30 updated) ──────────────────────── */
+/* ── Return Flight Preview (Round 31) ─────────────────────── */
+
+.fm-returnflight {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-returnflight-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+.fm-returnflight-list { display: flex; flex-direction: column; gap: 8px; }
+.fm-returnflight-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.fm-returnflight-origin { font-weight: 600; color: #475569; min-width: 55px; }
+.fm-returnflight-logo { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+.fm-returnflight-carrier { font-weight: 700; color: #334155; font-size: 12px; }
+.fm-returnflight-times { color: #64748b; font-size: 12px; }
+[data-theme="dark"] .fm-returnflight { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-returnflight-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-returnflight-origin { color: #94a3b8; }
+[data-theme="dark"] .fm-returnflight-carrier { color: #e2e8f0; }
+[data-theme="dark"] .fm-returnflight-times { color: #94a3b8; }
+
+/* ── Destination Event Hint (Round 31) ────────────────────── */
+
+.fm-destevent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, #fdf4ff, #f5d0fe);
+  border: 1px solid #d946ef;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-destevent-icon { font-size: 22px; flex-shrink: 0; }
+.fm-destevent-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-destevent-title { font-weight: 700; font-size: 13px; color: #86198f; }
+.fm-destevent-text { font-size: 13px; color: #701a75; line-height: 1.4; }
+[data-theme="dark"] .fm-destevent {
+  background: linear-gradient(135deg, #4a044e, #86198f30);
+  border-color: #a21caf;
+}
+[data-theme="dark"] .fm-destevent-title { color: #e879f9; }
+[data-theme="dark"] .fm-destevent-text { color: #f0abfc; }
+
+/* ── Price Breakdown Accordion (Round 31) ─────────────────── */
+
+.fm-pricebd {
+  background: white;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+.fm-pricebd-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: left;
+}
+.fm-pricebd-toggle:hover { background: #f8fafc; }
+.fm-pricebd-toggle-icon { font-size: 12px; color: #94a3b8; }
+.fm-pricebd-content { padding: 0 18px 14px; }
+.fm-pricebd-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+.fm-pricebd-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.fm-pricebd-origin { font-weight: 600; color: #334155; }
+.fm-pricebd-val { color: #64748b; }
+.fm-pricebd-val--tax { color: #f59e0b; }
+.fm-pricebd-val--total { font-weight: 700; color: #1e293b; }
+[data-theme="dark"] .fm-pricebd { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-pricebd-toggle { color: #e2e8f0; }
+[data-theme="dark"] .fm-pricebd-toggle:hover { background: #334155; }
+[data-theme="dark"] .fm-pricebd-header { color: #64748b; border-bottom-color: #334155; }
+[data-theme="dark"] .fm-pricebd-origin { color: #e2e8f0; }
+[data-theme="dark"] .fm-pricebd-val { color: #94a3b8; }
+[data-theme="dark"] .fm-pricebd-val--tax { color: #fbbf24; }
+[data-theme="dark"] .fm-pricebd-val--total { color: #e2e8f0; }
+
+/* ── Group Size Indicator (Round 31) ──────────────────────── */
+
+.fm-groupsize {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-groupsize-avatars { display: flex; margin-left: 4px; }
+.fm-groupsize-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-left: -8px;
+  position: relative;
+}
+.fm-groupsize-avatar:first-child { margin-left: 0; }
+.fm-groupsize-more {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  margin-left: -8px;
+}
+.fm-groupsize-label { font-size: 14px; font-weight: 600; color: #334155; }
+.fm-groupsize-toggle {
+  margin-left: auto;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background .2s;
+}
+.fm-groupsize-toggle:hover { background: #e2e8f0; }
+[data-theme="dark"] .fm-groupsize { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-groupsize-avatar { background: #334155; border-color: #1e293b; }
+[data-theme="dark"] .fm-groupsize-more { background: #475569; border-color: #1e293b; color: #e2e8f0; }
+[data-theme="dark"] .fm-groupsize-label { color: #e2e8f0; }
+[data-theme="dark"] .fm-groupsize-toggle { background: #334155; border-color: #475569; color: #e2e8f0; }
+[data-theme="dark"] .fm-groupsize-toggle:hover { background: #475569; }
+
+/* ── Search Duration Badge (Round 31) ─────────────────────── */
+
+.fm-searchspeed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 0;
+  margin-bottom: 10px;
+}
+.fm-searchspeed-icon { font-size: 16px; }
+.fm-searchspeed-time { font-size: 14px; font-weight: 700; color: #334155; }
+.fm-searchspeed-rating { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+[data-theme="dark"] .fm-searchspeed-time { color: #e2e8f0; }
+
+@media (max-width: 600px) {
+  .fm-returnflight { padding: 14px 14px; }
+  .fm-returnflight-row { gap: 6px; }
+  .fm-destevent { padding: 10px 14px; }
+  .fm-pricebd-toggle { padding: 12px 14px; }
+  .fm-pricebd-content { padding: 0 14px 12px; }
+  .fm-pricebd-header, .fm-pricebd-row { grid-template-columns: 1.2fr 1fr 1fr 1fr; font-size: 11px; }
+  .fm-groupsize { padding: 10px 14px; gap: 8px; }
+  .fm-groupsize-avatar { width: 28px; height: 28px; font-size: 14px; }
+  .fm-groupsize-toggle { padding: 5px 10px; font-size: 12px; }
+}
+
+/* ── Print Styles (Round 31 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -7911,7 +8118,8 @@ html {
   .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
   .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
   .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
-  .fm-pricehint, .fm-visa, .fm-airlines,
+  .fm-pricehint, .fm-visa, .fm-airlines, .fm-destevent,
+  .fm-searchspeed, .fm-groupsize,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -7919,7 +8127,8 @@ html {
   .wc-image { max-height: 200px; }
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
-  .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration {
+  .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
+  .fm-returnflight, .fm-pricebd {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;

@@ -516,5 +516,28 @@
     "turkey": "Turquía — muchas nacionalidades necesitan e-visa (solicitud rápida online)",
     "morocco": "Marruecos — los requisitos de visado varían según nacionalidad, consulta antes de reservar",
     "other": "Consulta los requisitos de visado para tu nacionalidad antes de reservar"
+  },
+  "returnFlight": {
+    "title": "Vuelos de vuelta"
+  },
+  "destEvent": {
+    "title": "Qué pasa allí"
+  },
+  "priceBreakdown": {
+    "title": "Desglose de precios por origen",
+    "origin": "Origen",
+    "base": "Tarifa base",
+    "taxes": "Tasas",
+    "total": "Total"
+  },
+  "groupSize": {
+    "travelers": "viajeros",
+    "total": "Total grupo",
+    "perPerson": "Por persona"
+  },
+  "searchSpeed": {
+    "fast": "Ultrarrápido",
+    "normal": "Velocidad normal",
+    "slow": "Tardó un poco"
   }
 }

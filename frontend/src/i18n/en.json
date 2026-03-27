@@ -516,5 +516,28 @@
     "turkey": "Turkey — many nationalities need an e-visa (quick online application)",
     "morocco": "Morocco — visa requirements vary by nationality, check before booking",
     "other": "Check visa requirements for your nationality before booking"
+  },
+  "returnFlight": {
+    "title": "Return flights"
+  },
+  "destEvent": {
+    "title": "What's happening there"
+  },
+  "priceBreakdown": {
+    "title": "Price breakdown by origin",
+    "origin": "Origin",
+    "base": "Base fare",
+    "taxes": "Taxes",
+    "total": "Total"
+  },
+  "groupSize": {
+    "travelers": "travelers",
+    "total": "Group total",
+    "perPerson": "Per person"
+  },
+  "searchSpeed": {
+    "fast": "Lightning fast",
+    "normal": "Normal speed",
+    "slow": "Took a while"
   }
 }
