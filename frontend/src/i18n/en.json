@@ -179,6 +179,8 @@
     "copied": "Copied!",
     "copyFailed": "Copy failed",
     "changeSearch": "Change search",
+    "showDetails": "More details about this destination",
+    "hideDetails": "Hide details",
     "direct": "Direct",
     "stops": "{{n}} stop(s)",
     "outbound": "Outbound",

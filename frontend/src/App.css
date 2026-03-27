@@ -8489,6 +8489,15 @@ html {
 [data-theme="dark"] .fm-codeshare-title { color: #fcd34d; }
 [data-theme="dark"] .fm-codeshare-text { color: #fde68a; }
 
+/* ── More Details Toggle & Section ───────────────────────── */
+.fm-more-toggle { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; margin-top: 16px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px dashed #7dd3fc; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 15px; color: #0369a1; transition: all .2s; }
+.fm-more-toggle:hover { background: linear-gradient(135deg, #e0f2fe, #bae6fd); border-color: #38bdf8; }
+.fm-more-arrow { display: inline-block; transition: transform .3s; font-size: 18px; }
+.fm-more-arrow--open { transform: rotate(180deg); }
+.fm-more-section { margin-top: 8px; }
+[data-theme="dark"] .fm-more-toggle { background: linear-gradient(135deg, #0c4a6e, #075985); border-color: #38bdf8; color: #7dd3fc; }
+[data-theme="dark"] .fm-more-toggle:hover { background: linear-gradient(135deg, #075985, #0369a1); }
+
 /* ── Round 35: Destination Food Culture ──────────────────── */
 .fm-food { display: flex; align-items: center; gap: 12px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
 .fm-food-emoji { font-size: 28px; flex-shrink: 0; }
@@ -8573,7 +8582,7 @@ html {
   .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
   .fm-extcompare, .fm-flightclass, .fm-connwarn, .fm-season,
   .fm-bookmark-btn, .fm-dep24, .fm-solosave, .fm-multicity,
-  .fm-codeshare, .fm-food, .fm-wifi, .fm-earlyam, .fm-phrase,
+  .fm-codeshare, .fm-food, .fm-wifi, .fm-earlyam, .fm-phrase, .fm-more-toggle,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }

@@ -179,6 +179,8 @@
     "copied": "¡Copiado!",
     "copyFailed": "Error al copiar",
     "changeSearch": "Cambiar búsqueda",
+    "showDetails": "Más detalles sobre este destino",
+    "hideDetails": "Ocultar detalles",
     "direct": "Directo",
     "stops": "{{n}} escala(s)",
     "outbound": "Ida",

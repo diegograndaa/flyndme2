@@ -3872,34 +3872,6 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               )}
 
-              {/* Flexible dates toggle */}
-              <div className="sf-flex-toggle mt-3">
-                <div className="d-flex align-items-center justify-content-between">
-                  <div>
-                    <div className="sf-flex-label">{t("search.flexLabel")}</div>
-                    <div className="sf-hint">
-                      {flexEnabled
-                        ? t("search.flexHintOn", { days: flexDays })
-                        : t("search.flexHintOff")}
-                    </div>
-                  </div>
-                  <div className="form-check form-switch mb-0">
-                    <input className="form-check-input" type="checkbox" id="flexSwitch"
-                      checked={flexEnabled} onChange={(e) => setFlexEnabled(e.target.checked)} disabled={loading} />
-                  </div>
-                </div>
-                {flexEnabled && (
-                  <div className="sf-flex-pills mt-2">
-                    {[1, 2, 3].map((d) => (
-                      <button key={d} type="button"
-                        className={`sf-pill sf-pill--sm${flexDays === d ? " sf-pill--active" : ""}`}
-                        onClick={() => setFlexDays(d)} disabled={loading}>
-                        ±{d} {t("search.flexDaysUnit")}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Advanced options toggle */}
@@ -3912,9 +3884,38 @@ const SearchPage = React.memo(function SearchPage({
               <span className={`sf-advanced-arrow${showAdvanced ? " sf-advanced-arrow--open" : ""}`}>▾</span>
             </button>
 
-            {/* Advanced: Optimize + Budget */}
+            {/* Advanced: Flex dates + Optimize + Budget */}
             {showAdvanced && (
               <div className="sf-advanced-panel">
+                {/* Flexible dates */}
+                <div className="sf-section">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div>
+                      <div className="sf-label mb-0">{t("search.flexLabel")}</div>
+                      <div className="sf-hint">
+                        {flexEnabled
+                          ? t("search.flexHintOn", { days: flexDays })
+                          : t("search.flexHintOff")}
+                      </div>
+                    </div>
+                    <div className="form-check form-switch mb-0">
+                      <input className="form-check-input" type="checkbox" id="flexSwitch"
+                        checked={flexEnabled} onChange={(e) => setFlexEnabled(e.target.checked)} disabled={loading} />
+                    </div>
+                  </div>
+                  {flexEnabled && (
+                    <div className="sf-flex-pills mt-2">
+                      {[1, 2, 3].map((d) => (
+                        <button key={d} type="button"
+                          className={`sf-pill sf-pill--sm${flexDays === d ? " sf-pill--active" : ""}`}
+                          onClick={() => setFlexDays(d)} disabled={loading}>
+                          ±{d} {t("search.flexDaysUnit")}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Optimize */}
                 <div className="sf-section">
                   <div className="sf-label">
@@ -4978,6 +4979,7 @@ export default function App() {
   const [toast,       setToast]       = useState(null); // { message, type }
   const [showFavPanel, setShowFavPanel] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   // Last search best price (for comparison)
   const [lastBestPrice, setLastBestPrice] = useState(() => {
@@ -5737,9 +5739,6 @@ export default function App() {
           {/* Destination image banner */}
           <DestImageBanner destCode={normalizeCode(bestDestination.destination)} />
 
-          {/* Airline logos for winning destination */}
-          <AirlineLogos bestDest={bestDestination} t={t} />
-
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -5771,250 +5770,18 @@ export default function App() {
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
-          {/* Group size indicator */}
-          <GroupSizeIndicator origins={cleanOrigins} bestDest={bestDestination} currency={currency} t={t} />
+          {/* ── CORE: Origin ranking table ── */}
+          <OriginRankingTable bestDest={bestDestination} currency={currency} t={t} />
 
-          {/* Departure countdown 24h */}
-          <DepartureCountdown24h bestDest={bestDestination} t={t} />
-
-          {/* Trip countdown */}
-          <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
-
-          {/* Booking window tip */}
-          <BookingWindowTip departureDate={bestDestination.bestDate || departureDate} t={t} />
-
-          {/* Price history hint */}
-          <PriceHistoryHint departureDate={bestDestination.bestDate || departureDate} bestDest={bestDestination} t={t} />
-
-          {/* Group savings vs most expensive destination */}
-          {flights.length >= 2 && (() => {
-            const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
-            const saved = maxTotal - bestDestination.totalCostEUR;
-            if (saved > 10) return (
-              <div className="fm-group-savings view-enter">
-                <span className="fm-group-savings-icon">💰</span>
-                <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
-              </div>
-            );
-            return null;
-          })()}
-
-          {/* Group budget gauge */}
-          <GroupBudgetGauge bestDest={bestDestination} origins={cleanOrigins} budgetEnabled={budgetEnabled} maxBudget={maxBudget} currency={currency} t={t} />
-
-          {/* Price savings vs solo search */}
-          <PriceSavingsVsSolo bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
-
-          {/* Celebrate badge for cheap flights (avg < €50/pp) */}
-          {bestDestination.averageCostPerTraveler < 50 && (
-            <div className="fm-celebrate view-enter">
-              <span className="fm-celebrate-confetti">🎉</span>
-              <div>
-                <strong>{t("results.celebrate")}</strong>
-                <span className="fm-celebrate-sub">{t("results.celebrateSub")}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Best weekday insight */}
-          {(() => {
-            const depD = bestDestination.bestDate || departureDate;
-            if (!depD) return null;
-            const dayName = weekdayOf(depD);
-            const isCheapDay = ["Tue", "Wed", "Mar", "Mié"].includes(dayName);
-            return (
-              <div className={`fm-weekday-insight view-enter${isCheapDay ? " fm-weekday-insight--cheap" : ""}`}>
-                <span className="fm-weekday-insight-icon">{isCheapDay ? "💡" : "📅"}</span>
-                <span className="fm-weekday-insight-text">
-                  {isCheapDay
-                    ? t("results.weekdayCheap", { day: dayName })
-                    : t("results.weekdayNormal", { day: dayName })}
-                </span>
-              </div>
-            );
-          })()}
-
-          {/* Weather / season hint for destination */}
-          <DestWeatherBadge
-            destCode={normalizeCode(bestDestination.destination)}
-            departureDate={bestDestination.bestDate || departureDate}
-            t={t}
-          />
-
-          {/* Destination quick facts */}
-          <DestQuickFacts destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination currency converter */}
-          <DestCurrencyConverter destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination visa hint */}
-          <DestVisaHint destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination safety rating */}
-          <DestSafetyRating destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination local transport */}
-          <DestLocalTransport destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination food culture */}
-          <DestFoodCulture destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* WiFi availability hint */}
-          <WifiAvailabilityHint destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination language phrase */}
-          <DestLanguagePhrase destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Destination event hint */}
-          <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
-
-          {/* Multi-city badge */}
-          <MultiCityBadge destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Seasonal demand indicator */}
-          <SeasonalDemandIndicator departureDate={bestDestination.bestDate || departureDate} destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Timezone compare */}
-          <DestTimezoneCompare origins={cleanOrigins} destCode={normalizeCode(bestDestination.destination)} t={t} />
-
-          {/* Flight class badge */}
-          <FlightClassBadge bestDest={bestDestination} t={t} />
-
-          {/* Price alert hint */}
-          <div className="fm-alert-hint view-enter">
-            <span className="fm-alert-hint-icon">🔔</span>
-            <span className="fm-alert-hint-text">{t("results.alertHint")}</span>
-            <span className="fm-alert-hint-badge">{t("results.comingSoon")}</span>
-          </div>
-
-          {/* Trip type insight */}
-          <TripTypeInsight tripType={tripType} bestDest={bestDestination} departureDate={departureDate} t={t} />
-
-          {/* Price per day calculator */}
-          <PricePerDayCalc bestDest={bestDestination} departureDate={bestDestination.bestDate || departureDate} returnDate={returnDate} tripType={tripType} currency={currency} t={t} />
-
-          {/* Alternative dates hint */}
-          <AlternativeDatesHint departureDate={bestDestination.bestDate || departureDate} t={t} />
-
-          {/* CO2 estimate */}
-          <CO2EstimateBadge bestDest={bestDestination} origins={cleanOrigins} t={t} />
-
-          {/* Destination popularity */}
-          <DestPopularityMeter flights={flights} bestDest={bestDestination} t={t} />
-
-          {/* Total group distance */}
-          {(() => {
-            const destCode = normalizeCode(bestDestination.destination);
-            let totalKm = 0;
-            let count = 0;
-            cleanOrigins.forEach(o => {
-              const km = approxDistKm(o, destCode);
-              if (km) { totalKm += km; count++; }
-            });
-            if (!count) return null;
-            return (
-              <div className="fm-distance-summary view-enter">
-                <span className="fm-distance-icon">🌍</span>
-                <span>{t("results.totalDistance", { km: Math.round(totalKm).toLocaleString() })}</span>
-                <span className="fm-distance-avg">{t("results.avgDistance", { km: Math.round(totalKm / count).toLocaleString() })}</span>
-              </div>
-            );
-          })()}
-
-          {/* Origin summary chips */}
-          <OriginSummaryChips origins={cleanOrigins} bestDestination={bestDestination} currency={currency} />
-
-          {/* Price sparkline across destinations */}
-          {flights.length >= 3 && (
-            <div className="fm-sparkline-wrap view-enter">
-              <span className="fm-sparkline-label">{t("results.priceTrend")}</span>
-              <PriceSparkline flights={flights} />
-              <span className="fm-sparkline-range">
-                {formatEur(Math.min(...flights.map(f => f.averageCostPerTraveler || Infinity)), 0)}
-                {" – "}
-                {formatEur(Math.max(...flights.map(f => f.averageCostPerTraveler || 0)), 0)}
-              </span>
-            </div>
-          )}
-
-          {/* Top 3 destinations podium */}
+          {/* ── CORE: Top 3 destinations podium ── */}
           <TopDestinationsPodium flights={flights} currency={currency} onSelect={(dest) => {
-            // Switch to that destination in criteria view
             const idx = flights.findIndex(f => f.destination === dest.destination);
             if (idx >= 0) {
               setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
             }
           }} />
 
-          {/* Price distribution donut */}
-          {bestDestination?.flights?.length >= 2 && (
-            <PriceDonut breakdown={bestDestination.flights} currency={currency} />
-          )}
-
-          {/* Destination radar chart */}
-          <DestRadarChart flights={flights} bestDest={bestDestination} t={t} />
-
-          {/* Flight timeline (visual per-origin) */}
-          <FlightTimeline bestDest={bestDestination} origins={cleanOrigins} t={t} />
-
-          {/* Flight duration comparison */}
-          <FlightDurationComparison bestDest={bestDestination} t={t} />
-
-          {/* Stopover info */}
-          <StopoverInfo bestDest={bestDestination} t={t} />
-
-          {/* Return flight preview (roundtrip only) */}
-          <ReturnFlightPreview bestDest={bestDestination} tripType={tripType} t={t} />
-
-          {/* Flight connection warning (tight layovers) */}
-          <FlightConnectionWarning bestDest={bestDestination} t={t} />
-
-          {/* Flight operator note (codeshare) */}
-          <FlightOperatorNote bestDest={bestDestination} t={t} />
-
-          {/* Early morning departure warning */}
-          <EarlyMorningWarning bestDest={bestDestination} t={t} />
-
-          {/* Group arrival sync indicator */}
-          <GroupArrivalSync bestDest={bestDestination} t={t} />
-
-          {/* Origin ranking table */}
-          <OriginRankingTable bestDest={bestDestination} currency={currency} t={t} />
-
-          {/* Baggage reminder for budget airlines */}
-          <BaggageReminder bestDest={bestDestination} t={t} />
-
-          {/* Price breakdown accordion */}
-          <PriceBreakdownAccordion bestDest={bestDestination} currency={currency} t={t} />
-
-          {/* Cost split calculator */}
-          <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
-
-          {/* Per-origin savings breakdown */}
-          <OriginSavingsCard bestDest={bestDestination} allFlights={flights} origins={cleanOrigins} currency={currency} t={t} />
-
-          {/* Price per km ranking */}
-          <PricePerKmRanking flights={flights} origins={cleanOrigins} currency={currency} t={t} />
-
-          {/* Nearby airports hint */}
-          <NearbyAirportsHint origins={cleanOrigins} t={t} />
-
-          {/* Origin distance map */}
-          <OriginDistanceMap bestDest={bestDestination} origins={cleanOrigins} t={t} />
-
-          {/* Results summary card (compact printable overview) */}
-          <ResultsSummaryCard
-            bestDest={bestDestination}
-            origins={cleanOrigins}
-            flights={flights}
-            currency={currency}
-            departureDate={departureDate}
-            returnDate={returnDate}
-            tripType={tripType}
-            t={t}
-          />
-
-          {/* Destinations analyzed counter */}
+          {/* ── CORE: Stats bar ── */}
           <div className="fm-stats-bar view-enter">
             <span className="fm-stats-item">
               <AnimatedStat value={flights.length} /> {t("results.destsAnalyzed")}
@@ -6047,24 +5814,7 @@ export default function App() {
             />
           </div>
 
-          {/* Search duration badge */}
-          <SearchDurationBadge duration={searchDuration} t={t} />
-
-          {/* Trip summary export */}
-          <TripSummaryExport
-            bestDest={bestDestination}
-            origins={cleanOrigins}
-            departureDate={departureDate}
-            returnDate={returnDate}
-            tripType={tripType}
-            currency={currency}
-            t={t}
-          />
-
-          {/* Quick bookmark button */}
-          <QuickBookmarkBtn bestDest={bestDestination} departureDate={departureDate} t={t} />
-
-          {/* Price compare on external sites */}
+          {/* ── CORE: Price compare on external sites ── */}
           <PriceCompareExternal
             bestDest={bestDestination}
             origins={cleanOrigins}
@@ -6073,6 +5823,132 @@ export default function App() {
             tripType={tripType}
             t={t}
           />
+
+          {/* ── MORE DETAILS toggle ── */}
+          <button
+            type="button"
+            className="fm-more-toggle"
+            onClick={() => setShowMoreDetails(v => !v)}
+          >
+            {showMoreDetails ? t("results.hideDetails") : t("results.showDetails")}
+            <span className={`fm-more-arrow${showMoreDetails ? " fm-more-arrow--open" : ""}`}>▾</span>
+          </button>
+
+          {showMoreDetails && (
+            <div className="fm-more-section view-enter">
+              <AirlineLogos bestDest={bestDestination} t={t} />
+              <GroupSizeIndicator origins={cleanOrigins} bestDest={bestDestination} currency={currency} t={t} />
+              <DepartureCountdown24h bestDest={bestDestination} t={t} />
+              <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
+              <BookingWindowTip departureDate={bestDestination.bestDate || departureDate} t={t} />
+              <PriceHistoryHint departureDate={bestDestination.bestDate || departureDate} bestDest={bestDestination} t={t} />
+
+              {flights.length >= 2 && (() => {
+                const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
+                const saved = maxTotal - bestDestination.totalCostEUR;
+                if (saved > 10) return (
+                  <div className="fm-group-savings view-enter">
+                    <span className="fm-group-savings-icon">💰</span>
+                    <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
+                  </div>
+                );
+                return null;
+              })()}
+
+              <GroupBudgetGauge bestDest={bestDestination} origins={cleanOrigins} budgetEnabled={budgetEnabled} maxBudget={maxBudget} currency={currency} t={t} />
+              <PriceSavingsVsSolo bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
+
+              {bestDestination.averageCostPerTraveler < 50 && (
+                <div className="fm-celebrate view-enter">
+                  <span className="fm-celebrate-confetti">🎉</span>
+                  <div>
+                    <strong>{t("results.celebrate")}</strong>
+                    <span className="fm-celebrate-sub">{t("results.celebrateSub")}</span>
+                  </div>
+                </div>
+              )}
+
+              <DestWeatherBadge destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
+              <DestQuickFacts destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestCurrencyConverter destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestVisaHint destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestSafetyRating destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestLocalTransport destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestFoodCulture destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <WifiAvailabilityHint destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestLanguagePhrase destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
+              <MultiCityBadge destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <SeasonalDemandIndicator departureDate={bestDestination.bestDate || departureDate} destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <DestTimezoneCompare origins={cleanOrigins} destCode={normalizeCode(bestDestination.destination)} t={t} />
+              <FlightClassBadge bestDest={bestDestination} t={t} />
+              <TripTypeInsight tripType={tripType} bestDest={bestDestination} departureDate={departureDate} t={t} />
+              <PricePerDayCalc bestDest={bestDestination} departureDate={bestDestination.bestDate || departureDate} returnDate={returnDate} tripType={tripType} currency={currency} t={t} />
+              <AlternativeDatesHint departureDate={bestDestination.bestDate || departureDate} t={t} />
+              <CO2EstimateBadge bestDest={bestDestination} origins={cleanOrigins} t={t} />
+              <DestPopularityMeter flights={flights} bestDest={bestDestination} t={t} />
+
+              {(() => {
+                const destCode = normalizeCode(bestDestination.destination);
+                let totalKm = 0;
+                let count = 0;
+                cleanOrigins.forEach(o => {
+                  const km = approxDistKm(o, destCode);
+                  if (km) { totalKm += km; count++; }
+                });
+                if (!count) return null;
+                return (
+                  <div className="fm-distance-summary view-enter">
+                    <span className="fm-distance-icon">🌍</span>
+                    <span>{t("results.totalDistance", { km: Math.round(totalKm).toLocaleString() })}</span>
+                    <span className="fm-distance-avg">{t("results.avgDistance", { km: Math.round(totalKm / count).toLocaleString() })}</span>
+                  </div>
+                );
+              })()}
+
+              <OriginSummaryChips origins={cleanOrigins} bestDestination={bestDestination} currency={currency} />
+
+              {flights.length >= 3 && (
+                <div className="fm-sparkline-wrap view-enter">
+                  <span className="fm-sparkline-label">{t("results.priceTrend")}</span>
+                  <PriceSparkline flights={flights} />
+                  <span className="fm-sparkline-range">
+                    {formatEur(Math.min(...flights.map(f => f.averageCostPerTraveler || Infinity)), 0)}
+                    {" – "}
+                    {formatEur(Math.max(...flights.map(f => f.averageCostPerTraveler || 0)), 0)}
+                  </span>
+                </div>
+              )}
+
+              {bestDestination?.flights?.length >= 2 && (
+                <PriceDonut breakdown={bestDestination.flights} currency={currency} />
+              )}
+              <DestRadarChart flights={flights} bestDest={bestDestination} t={t} />
+              <FlightTimeline bestDest={bestDestination} origins={cleanOrigins} t={t} />
+              <FlightDurationComparison bestDest={bestDestination} t={t} />
+              <StopoverInfo bestDest={bestDestination} t={t} />
+              <ReturnFlightPreview bestDest={bestDestination} tripType={tripType} t={t} />
+              <FlightConnectionWarning bestDest={bestDestination} t={t} />
+              <FlightOperatorNote bestDest={bestDestination} t={t} />
+              <EarlyMorningWarning bestDest={bestDestination} t={t} />
+              <GroupArrivalSync bestDest={bestDestination} t={t} />
+              <BaggageReminder bestDest={bestDestination} t={t} />
+              <PriceBreakdownAccordion bestDest={bestDestination} currency={currency} t={t} />
+              <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
+              <OriginSavingsCard bestDest={bestDestination} allFlights={flights} origins={cleanOrigins} currency={currency} t={t} />
+              <PricePerKmRanking flights={flights} origins={cleanOrigins} currency={currency} t={t} />
+              <NearbyAirportsHint origins={cleanOrigins} t={t} />
+              <OriginDistanceMap bestDest={bestDestination} origins={cleanOrigins} t={t} />
+              <ResultsSummaryCard bestDest={bestDestination} origins={cleanOrigins} flights={flights} currency={currency} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
+              <SearchDurationBadge duration={searchDuration} t={t} />
+              <TripSummaryExport bestDest={bestDestination} origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} currency={currency} t={t} />
+              <QuickBookmarkBtn bestDest={bestDestination} departureDate={departureDate} t={t} />
+              <GroupChatLink bestDest={bestDestination} origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} currency={currency} t={t} />
+              <ResultsShareLink origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
+              <TravelChecklist destCode={normalizeCode(bestDestination.destination)} tripType={tripType} t={t} />
+              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+            </div>
+          )}
 
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -6171,41 +6047,6 @@ export default function App() {
           {showAlt === "vs" && flights.length >= 2 && (
             <VsCompare flights={flights} bestDestination={bestDestination} currency={currency} />
           )}
-
-          {/* Group chat link generator */}
-          <GroupChatLink
-            bestDest={bestDestination}
-            origins={cleanOrigins}
-            departureDate={departureDate}
-            returnDate={returnDate}
-            tripType={tripType}
-            currency={currency}
-            t={t}
-          />
-
-          {/* Results share link */}
-          <ResultsShareLink
-            origins={cleanOrigins}
-            departureDate={departureDate}
-            returnDate={returnDate}
-            tripType={tripType}
-            t={t}
-          />
-
-          {/* Travel checklist */}
-          <TravelChecklist
-            destCode={normalizeCode(bestDestination.destination)}
-            tripType={tripType}
-            t={t}
-          />
-
-          {/* Plan your trip CTA */}
-          <PlanYourTripCTA
-            destCode={normalizeCode(bestDestination.destination)}
-            departureDate={bestDestination.bestDate || departureDate}
-            returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")}
-            t={t}
-          />
 
           {/* Quick re-search: try nearby dates */}
           <div className="fm-quick-research view-enter">
