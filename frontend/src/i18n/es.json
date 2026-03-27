@@ -564,5 +564,30 @@
   },
   "extCompare": {
     "label": "Verifica precios en:"
+  },
+  "safety": {
+    "title": "Seguridad del destino",
+    "veryHigh": "Muy alta",
+    "high": "Alta",
+    "moderate": "Moderada"
+  },
+  "connWarn": {
+    "title": "Aviso de conexión ajustada",
+    "min": " min de escala",
+    "at": "en"
+  },
+  "season": {
+    "title": "Demanda estacional",
+    "peakSummer": "Temporada alta de verano — espera precios más altos y aglomeraciones",
+    "peakWinter": "Temporada alta de invierno/festiva — época popular, reserva pronto",
+    "shoulder": "Temporada media — buen equilibrio entre precios y clima",
+    "offSeason": "Temporada baja — precios más bajos y menos turistas"
+  },
+  "distMap": {
+    "title": "Distancia desde cada origen"
+  },
+  "bookmark": {
+    "save": "Guardar este resultado",
+    "saved": "¡Guardado!"
   }
 }

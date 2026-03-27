@@ -564,5 +564,30 @@
   },
   "extCompare": {
     "label": "Verify prices on:"
+  },
+  "safety": {
+    "title": "Travel safety",
+    "veryHigh": "Very high",
+    "high": "High",
+    "moderate": "Moderate"
+  },
+  "connWarn": {
+    "title": "Tight connection warning",
+    "min": " min layover",
+    "at": "at"
+  },
+  "season": {
+    "title": "Seasonal demand",
+    "peakSummer": "Peak summer season — expect higher prices and crowds",
+    "peakWinter": "Peak winter/holiday season — popular time, book early",
+    "shoulder": "Shoulder season — good balance of prices and weather",
+    "offSeason": "Off-season — lower prices and fewer tourists"
+  },
+  "distMap": {
+    "title": "Distance from each origin"
+  },
+  "bookmark": {
+    "save": "Bookmark this result",
+    "saved": "Bookmarked!"
   }
 }

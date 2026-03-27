@@ -2083,6 +2083,196 @@ function PriceCompareExternal({ bestDest, origins, departureDate, returnDate, tr
   );
 }
 
+// ─── Destination Safety Rating (Round 33) ─────────────────────────────────
+
+const SAFETY_RATINGS = {
+  ES: 4, FR: 4, DE: 5, IT: 4, NL: 5, BE: 4, AT: 5, CH: 5, PT: 4,
+  CZ: 5, PL: 4, SE: 5, DK: 5, NO: 5, FI: 5, IE: 5, IS: 5,
+  GR: 4, HR: 4, HU: 4, SI: 5, SK: 4, EE: 5, LV: 4, LT: 4,
+  GB: 4, MT: 4, CY: 4, LU: 5, BG: 3, RO: 3, TR: 3, MA: 3,
+};
+
+function DestSafetyRating({ destCode, t }) {
+  const info = destQuickInfo(destCode);
+  const cc = info?.country;
+  if (!cc || !SAFETY_RATINGS[cc]) return null;
+  const score = SAFETY_RATINGS[cc];
+
+  let label, color;
+  if (score >= 5) { label = t("safety.veryHigh"); color = "#22c55e"; }
+  else if (score >= 4) { label = t("safety.high"); color = "#84cc16"; }
+  else { label = t("safety.moderate"); color = "#f59e0b"; }
+
+  return (
+    <div className="fm-safety view-enter">
+      <span className="fm-safety-icon">🛡️</span>
+      <div className="fm-safety-body">
+        <span className="fm-safety-title">{t("safety.title")}</span>
+        <div className="fm-safety-bar-wrap">
+          <div className="fm-safety-bar" style={{ width: `${score * 20}%`, background: color }} />
+        </div>
+        <span className="fm-safety-label" style={{ color }}>{label} ({score}/5)</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Flight Connection Warning (Round 33) ─────────────────────────────────
+
+function FlightConnectionWarning({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const tightConnections = [];
+
+  Object.entries(bestDest.flights).forEach(([origin, data]) => {
+    const offer = data?.offer || data;
+    (offer?.itineraries || []).forEach(itin => {
+      const segs = itin?.segments || [];
+      for (let i = 0; i < segs.length - 1; i++) {
+        const arr = new Date(segs[i].arrival?.at);
+        const dep = new Date(segs[i + 1].departure?.at);
+        const layoverMin = Math.round((dep - arr) / 60000);
+        if (layoverMin > 0 && layoverMin < 90) {
+          tightConnections.push({
+            origin: normalizeCode(origin),
+            airport: segs[i].arrival?.iataCode || "?",
+            minutes: layoverMin,
+          });
+        }
+      }
+    });
+  });
+
+  if (!tightConnections.length) return null;
+
+  return (
+    <div className="fm-connwarn view-enter">
+      <span className="fm-connwarn-icon">⏰</span>
+      <div className="fm-connwarn-body">
+        <span className="fm-connwarn-title">{t("connWarn.title")}</span>
+        {tightConnections.map((c, i) => (
+          <span key={i} className="fm-connwarn-text">
+            {countryFlag(c.origin)} {c.origin} — {c.minutes}{t("connWarn.min")} {t("connWarn.at")} {c.airport}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Seasonal Demand Indicator (Round 33) ─────────────────────────────────
+
+function SeasonalDemandIndicator({ departureDate, destCode, t }) {
+  if (!departureDate) return null;
+  const month = new Date(departureDate + "T00:00:00").getMonth() + 1;
+  const info = destQuickInfo(destCode);
+  const cc = info?.country;
+
+  // Mediterranean destinations: peak Jun-Aug, shoulder Apr-May/Sep-Oct, off Nov-Mar
+  const MED = new Set(["ES", "IT", "GR", "HR", "PT", "MT", "CY", "TR", "MA"]);
+  // Nordic destinations: peak Jun-Aug (summer), Dec (Christmas), shoulder rest
+  const NORDIC = new Set(["NO", "SE", "DK", "FI", "IS"]);
+
+  let level, msgKey;
+  if (MED.has(cc)) {
+    if ([6, 7, 8].includes(month)) { level = "peak"; msgKey = "season.peakSummer"; }
+    else if ([4, 5, 9, 10].includes(month)) { level = "shoulder"; msgKey = "season.shoulder"; }
+    else { level = "off"; msgKey = "season.offSeason"; }
+  } else if (NORDIC.has(cc)) {
+    if ([6, 7, 8].includes(month)) { level = "peak"; msgKey = "season.peakSummer"; }
+    else if (month === 12) { level = "peak"; msgKey = "season.peakWinter"; }
+    else { level = "shoulder"; msgKey = "season.shoulder"; }
+  } else {
+    // Central/Western Europe: peak Jun-Aug, Dec, shoulder rest
+    if ([6, 7, 8].includes(month)) { level = "peak"; msgKey = "season.peakSummer"; }
+    else if (month === 12) { level = "peak"; msgKey = "season.peakWinter"; }
+    else if ([4, 5, 9, 10].includes(month)) { level = "shoulder"; msgKey = "season.shoulder"; }
+    else { level = "off"; msgKey = "season.offSeason"; }
+  }
+
+  const icons = { peak: "🔥", shoulder: "🌤️", off: "❄️" };
+
+  return (
+    <div className={`fm-season fm-season--${level} view-enter`}>
+      <span className="fm-season-icon">{icons[level]}</span>
+      <div className="fm-season-body">
+        <span className="fm-season-title">{t("season.title")}</span>
+        <span className="fm-season-text">{t(msgKey)}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Origin Distance Map (Round 33) ──────────────────────────────────────
+
+function OriginDistanceMap({ bestDest, origins, t }) {
+  if (!bestDest || !origins?.length) return null;
+  const destCode = normalizeCode(bestDest.destination);
+
+  const distances = origins.map(o => {
+    const code = normalizeCode(o);
+    const km = typeof approxDistKm === "function" ? approxDistKm(code, destCode) : 0;
+    return { origin: code, km };
+  }).filter(d => d.km > 0);
+
+  if (!distances.length) return null;
+  const maxKm = Math.max(...distances.map(d => d.km));
+
+  return (
+    <div className="fm-distmap view-enter">
+      <h4 className="fm-distmap-title">📏 {t("distMap.title")}</h4>
+      <div className="fm-distmap-bars">
+        {distances.sort((a, b) => a.km - b.km).map(d => {
+          const pct = maxKm > 0 ? (d.km / maxKm) * 100 : 0;
+          return (
+            <div key={d.origin} className="fm-distmap-row">
+              <span className="fm-distmap-origin">{countryFlag(d.origin)} {d.origin}</span>
+              <div className="fm-distmap-barwrap">
+                <div className="fm-distmap-bar" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="fm-distmap-label">{d.km.toLocaleString()} km</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Quick Bookmark Button (Round 33) ─────────────────────────────────────
+
+function QuickBookmarkBtn({ bestDest, departureDate, t }) {
+  const [saved, setSaved] = useState(false);
+  if (!bestDest) return null;
+
+  const handleBookmark = useCallback(() => {
+    try {
+      const bookmarks = JSON.parse(localStorage.getItem("flyndme_bookmarks") || "[]");
+      const entry = {
+        destination: bestDest.destination,
+        city: cityOf(normalizeCode(bestDest.destination)) || bestDest.destination,
+        price: bestDest.averageCostPerTraveler,
+        total: bestDest.totalCostEUR,
+        date: departureDate,
+        savedAt: new Date().toISOString(),
+      };
+      // Avoid duplicates
+      const exists = bookmarks.some(b => b.destination === entry.destination && b.date === entry.date);
+      if (!exists) {
+        bookmarks.unshift(entry);
+        localStorage.setItem("flyndme_bookmarks", JSON.stringify(bookmarks.slice(0, 20)));
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch { /* localStorage unavailable */ }
+  }, [bestDest, departureDate]);
+
+  return (
+    <button type="button" className={`fm-bookmark-btn view-enter${saved ? " fm-bookmark-btn--saved" : ""}`} onClick={handleBookmark}>
+      {saved ? "★ " + t("bookmark.saved") : "☆ " + t("bookmark.save")}
+    </button>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -5307,8 +5497,14 @@ export default function App() {
           {/* Destination visa hint */}
           <DestVisaHint destCode={normalizeCode(bestDestination.destination)} t={t} />
 
+          {/* Destination safety rating */}
+          <DestSafetyRating destCode={normalizeCode(bestDestination.destination)} t={t} />
+
           {/* Destination event hint */}
           <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
+
+          {/* Seasonal demand indicator */}
+          <SeasonalDemandIndicator departureDate={bestDestination.bestDate || departureDate} destCode={normalizeCode(bestDestination.destination)} t={t} />
 
           {/* Timezone compare */}
           <DestTimezoneCompare origins={cleanOrigins} destCode={normalizeCode(bestDestination.destination)} t={t} />
@@ -5399,6 +5595,9 @@ export default function App() {
           {/* Return flight preview (roundtrip only) */}
           <ReturnFlightPreview bestDest={bestDestination} tripType={tripType} t={t} />
 
+          {/* Flight connection warning (tight layovers) */}
+          <FlightConnectionWarning bestDest={bestDestination} t={t} />
+
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />
 
@@ -5422,6 +5621,9 @@ export default function App() {
 
           {/* Nearby airports hint */}
           <NearbyAirportsHint origins={cleanOrigins} t={t} />
+
+          {/* Origin distance map */}
+          <OriginDistanceMap bestDest={bestDestination} origins={cleanOrigins} t={t} />
 
           {/* Results summary card (compact printable overview) */}
           <ResultsSummaryCard
@@ -5481,6 +5683,9 @@ export default function App() {
             currency={currency}
             t={t}
           />
+
+          {/* Quick bookmark button */}
+          <QuickBookmarkBtn bestDest={bestDestination} departureDate={departureDate} t={t} />
 
           {/* Price compare on external sites */}
           <PriceCompareExternal

@@ -8238,7 +8238,149 @@ html {
   .fm-tripexport-btn { padding: 8px 16px; font-size: 12px; }
 }
 
-/* ── Print Styles (Round 32 updated) ──────────────────────── */
+/* ── Destination Safety Rating (Round 33) ─────────────────── */
+
+.fm-safety {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.fm-safety-icon { font-size: 20px; flex-shrink: 0; }
+.fm-safety-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.fm-safety-title { font-weight: 700; font-size: 13px; color: #1e293b; }
+.fm-safety-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fm-safety-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.fm-safety-label { font-size: 12px; font-weight: 700; }
+[data-theme="dark"] .fm-safety { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-safety-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-safety-bar-wrap { background: #334155; }
+
+/* ── Flight Connection Warning (Round 33) ─────────────────── */
+
+.fm-connwarn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-connwarn-icon { font-size: 20px; flex-shrink: 0; }
+.fm-connwarn-body { display: flex; flex-direction: column; gap: 4px; }
+.fm-connwarn-title { font-weight: 700; font-size: 13px; color: #991b1b; }
+.fm-connwarn-text { font-size: 13px; color: #7f1d1d; line-height: 1.4; }
+[data-theme="dark"] .fm-connwarn { background: #450a0a; border-color: #991b1b; }
+[data-theme="dark"] .fm-connwarn-title { color: #fca5a5; }
+[data-theme="dark"] .fm-connwarn-text { color: #fecaca; }
+
+/* ── Seasonal Demand Indicator (Round 33) ─────────────────── */
+
+.fm-season {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.fm-season--peak { background: #fef2f2; border-color: #fca5a5; }
+.fm-season--shoulder { background: #fffbeb; border-color: #fcd34d; }
+.fm-season--off { background: #eff6ff; border-color: #93c5fd; }
+.fm-season-icon { font-size: 20px; flex-shrink: 0; }
+.fm-season-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-season-title { font-weight: 700; font-size: 13px; color: #334155; }
+.fm-season-text { font-size: 13px; color: #475569; line-height: 1.4; }
+[data-theme="dark"] .fm-season--peak { background: #450a0a; border-color: #991b1b; }
+[data-theme="dark"] .fm-season--shoulder { background: #451a03; border-color: #b45309; }
+[data-theme="dark"] .fm-season--off { background: #1e3a5f; border-color: #1d4ed8; }
+[data-theme="dark"] .fm-season-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-season-text { color: #cbd5e1; }
+
+/* ── Origin Distance Map (Round 33) ──────────────────────── */
+
+.fm-distmap {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-distmap-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 14px;
+}
+.fm-distmap-bars { display: flex; flex-direction: column; gap: 10px; }
+.fm-distmap-row { display: flex; align-items: center; gap: 10px; }
+.fm-distmap-origin { font-size: 13px; font-weight: 600; color: #475569; min-width: 65px; text-align: right; }
+.fm-distmap-barwrap {
+  flex: 1;
+  height: 14px;
+  background: #f1f5f9;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.fm-distmap-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #0891b2);
+  border-radius: 7px;
+  min-width: 4px;
+}
+.fm-distmap-label { font-size: 12px; font-weight: 600; color: #64748b; min-width: 70px; }
+[data-theme="dark"] .fm-distmap { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-distmap-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-distmap-origin { color: #94a3b8; }
+[data-theme="dark"] .fm-distmap-barwrap { background: #334155; }
+[data-theme="dark"] .fm-distmap-label { color: #94a3b8; }
+
+/* ── Quick Bookmark Button (Round 33) ─────────────────────── */
+
+.fm-bookmark-btn {
+  display: block;
+  margin: 0 auto 14px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all .2s;
+}
+.fm-bookmark-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.fm-bookmark-btn--saved { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
+[data-theme="dark"] .fm-bookmark-btn { background: #334155; border-color: #475569; color: #e2e8f0; }
+[data-theme="dark"] .fm-bookmark-btn:hover { border-color: #fbbf24; color: #fbbf24; }
+[data-theme="dark"] .fm-bookmark-btn--saved { border-color: #fbbf24; color: #fbbf24; background: #451a03; }
+
+@media (max-width: 600px) {
+  .fm-safety { padding: 10px 14px; }
+  .fm-connwarn { padding: 10px 14px; }
+  .fm-season { padding: 10px 14px; }
+  .fm-distmap { padding: 14px 14px; }
+  .fm-distmap-origin { min-width: 50px; font-size: 12px; }
+  .fm-bookmark-btn { padding: 8px 18px; font-size: 13px; }
+}
+
+/* ── Print Styles (Round 33 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -8250,7 +8392,8 @@ html {
   .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
   .fm-pricehint, .fm-visa, .fm-airlines, .fm-destevent,
   .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
-  .fm-extcompare, .fm-flightclass,
+  .fm-extcompare, .fm-flightclass, .fm-connwarn, .fm-season,
+  .fm-bookmark-btn,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -8259,7 +8402,7 @@ html {
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
   .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
-  .fm-returnflight, .fm-pricebd, .fm-timezone {
+  .fm-returnflight, .fm-pricebd, .fm-timezone, .fm-safety, .fm-distmap {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
