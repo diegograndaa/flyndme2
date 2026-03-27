@@ -589,5 +589,23 @@
   "bookmark": {
     "save": "Bookmark this result",
     "saved": "Bookmarked!"
+  },
+  "dep24": {
+    "text": "First departure in {{hours}}h {{mins}}m — don't forget to check in!"
+  },
+  "soloSave": {
+    "title": "Group search advantage",
+    "text": "By comparing together, your group saves an estimated {{amount}} vs searching individually"
+  },
+  "transport": {
+    "title": "Local transport",
+    "tip": "Tip"
+  },
+  "multiCity": {
+    "title": "Also explore nearby"
+  },
+  "codeshare": {
+    "title": "Codeshare flights detected",
+    "operatedBy": "operated by"
   }
 }

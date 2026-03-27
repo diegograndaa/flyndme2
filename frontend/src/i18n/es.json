@@ -589,5 +589,23 @@
   "bookmark": {
     "save": "Guardar este resultado",
     "saved": "¡Guardado!"
+  },
+  "dep24": {
+    "text": "Primera salida en {{hours}}h {{mins}}m — ¡no olvides hacer el check-in!"
+  },
+  "soloSave": {
+    "title": "Ventaja de búsqueda grupal",
+    "text": "Al comparar juntos, tu grupo ahorra aproximadamente {{amount}} frente a buscar por separado"
+  },
+  "transport": {
+    "title": "Transporte local",
+    "tip": "Consejo"
+  },
+  "multiCity": {
+    "title": "También puedes explorar"
+  },
+  "codeshare": {
+    "title": "Vuelos en código compartido detectados",
+    "operatedBy": "operado por"
   }
 }

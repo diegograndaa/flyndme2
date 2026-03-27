@@ -2273,6 +2273,185 @@ function QuickBookmarkBtn({ bestDest, departureDate, t }) {
   );
 }
 
+// ─── Departure Countdown 24h (Round 34) ───────────────────────────────────
+
+function DepartureCountdown24h({ bestDest, t }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!bestDest?.flights) return null;
+  // Find earliest departure across all origins
+  let earliest = Infinity;
+  Object.values(bestDest.flights).forEach(data => {
+    const offer = data?.offer || data;
+    const seg = offer?.itineraries?.[0]?.segments?.[0];
+    if (seg?.departure?.at) {
+      const t = new Date(seg.departure.at).getTime();
+      if (t < earliest) earliest = t;
+    }
+  });
+  if (earliest === Infinity) return null;
+
+  const diff = earliest - now;
+  if (diff < 0 || diff > 86400000) return null; // Only show within 24h
+
+  const hrs = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+
+  return (
+    <div className="fm-dep24 view-enter">
+      <span className="fm-dep24-icon">🚨</span>
+      <span className="fm-dep24-text">
+        {t("dep24.text").replace("{{hours}}", hrs).replace("{{mins}}", mins)}
+      </span>
+    </div>
+  );
+}
+
+// ─── Price Savings vs Solo (Round 34) ─────────────────────────────────────
+
+function PriceSavingsVsSolo({ bestDest, origins, currency, t }) {
+  if (!bestDest || !origins?.length || origins.length < 2) return null;
+  // Estimate: searching individually typically costs ~12-18% more due to
+  // not being able to compare across destinations simultaneously
+  const total = bestDest.totalCostEUR || 0;
+  const soloMarkup = 1.15; // 15% average individual search overhead
+  const soloEstimate = total * soloMarkup;
+  const saved = soloEstimate - total;
+
+  if (saved < 5) return null;
+
+  return (
+    <div className="fm-solosave view-enter">
+      <span className="fm-solosave-icon">🤝</span>
+      <div className="fm-solosave-body">
+        <span className="fm-solosave-title">{t("soloSave.title")}</span>
+        <span className="fm-solosave-text">
+          {t("soloSave.text").replace("{{amount}}", convertPrice(saved, currency))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Local Transport (Round 34) ───────────────────────────────
+
+const LOCAL_TRANSPORT = {
+  BCN: { metro: true, bus: true, tram: true, tip: "T-Casual 10-trip card" },
+  MAD: { metro: true, bus: true, tram: false, tip: "Multi card (tourist pass)" },
+  CDG: { metro: true, bus: true, tram: true, tip: "Navigo Easy card" },
+  FCO: { metro: true, bus: true, tram: true, tip: "Roma 48/72h pass" },
+  LIS: { metro: true, bus: true, tram: true, tip: "Viva Viagem card" },
+  AMS: { metro: true, bus: true, tram: true, tip: "OV-chipkaart" },
+  BER: { metro: true, bus: true, tram: true, tip: "Berlin Welcome Card" },
+  MXP: { metro: true, bus: true, tram: true, tip: "ATM daily ticket" },
+  PRG: { metro: true, bus: true, tram: true, tip: "Lítačka 72h pass" },
+  ATH: { metro: true, bus: true, tram: true, tip: "Ath.ena card" },
+  VIE: { metro: true, bus: true, tram: true, tip: "Vienna Card" },
+  BUD: { metro: true, bus: true, tram: true, tip: "Budapest Card" },
+  CPH: { metro: true, bus: false, tram: false, tip: "Rejsekort" },
+  DUB: { metro: false, bus: true, tram: true, tip: "Leap Card" },
+  LHR: { metro: true, bus: true, tram: false, tip: "Oyster / contactless" },
+  LGW: { metro: true, bus: true, tram: false, tip: "Oyster / contactless" },
+};
+
+function DestLocalTransport({ destCode, t }) {
+  const info = LOCAL_TRANSPORT[destCode];
+  if (!info) return null;
+
+  return (
+    <div className="fm-transport view-enter">
+      <h4 className="fm-transport-title">🚇 {t("transport.title")}</h4>
+      <div className="fm-transport-modes">
+        {info.metro && <span className="fm-transport-mode">🚇 Metro</span>}
+        {info.bus && <span className="fm-transport-mode">🚌 Bus</span>}
+        {info.tram && <span className="fm-transport-mode">🚊 Tram</span>}
+      </div>
+      {info.tip && (
+        <span className="fm-transport-tip">💡 {t("transport.tip")}: {info.tip}</span>
+      )}
+    </div>
+  );
+}
+
+// ─── Multi-City Badge (Round 34) ──────────────────────────────────────────
+
+const MULTI_CITY_AIRPORTS = {
+  MXP: "Milan, Lake Como, Bergamo",
+  LIN: "Milan city center",
+  BGY: "Bergamo, Milan",
+  BCN: "Barcelona, Costa Brava",
+  FCO: "Rome, Vatican City",
+  CDG: "Paris, Disneyland, Versailles",
+  AMS: "Amsterdam, Haarlem, Utrecht",
+  ATH: "Athens, Piraeus, Glyfada",
+  LIS: "Lisbon, Sintra, Cascais",
+  VIE: "Vienna, Bratislava (1h away)",
+  PRG: "Prague, Kutná Hora",
+  BUD: "Budapest, Szentendre",
+  CPH: "Copenhagen, Malmö (20 min)",
+};
+
+function MultiCityBadge({ destCode, t }) {
+  const cities = MULTI_CITY_AIRPORTS[destCode];
+  if (!cities) return null;
+
+  return (
+    <div className="fm-multicity view-enter">
+      <span className="fm-multicity-icon">🏙️</span>
+      <div className="fm-multicity-body">
+        <span className="fm-multicity-title">{t("multiCity.title")}</span>
+        <span className="fm-multicity-text">{cities}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Flight Operator Note (Round 34) ──────────────────────────────────────
+
+function FlightOperatorNote({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const codeshares = [];
+
+  Object.entries(bestDest.flights).forEach(([origin, data]) => {
+    const offer = data?.offer || data;
+    const segs = offer?.itineraries?.[0]?.segments || [];
+    segs.forEach(seg => {
+      const marketing = seg.carrierCode;
+      const operating = seg.operating?.carrierCode;
+      if (marketing && operating && marketing !== operating) {
+        codeshares.push({
+          origin: normalizeCode(origin),
+          marketing,
+          operating,
+        });
+      }
+    });
+  });
+
+  if (!codeshares.length) return null;
+
+  // Deduplicate
+  const unique = [...new Map(codeshares.map(c => [`${c.marketing}-${c.operating}`, c])).values()];
+
+  return (
+    <div className="fm-codeshare view-enter">
+      <span className="fm-codeshare-icon">🔄</span>
+      <div className="fm-codeshare-body">
+        <span className="fm-codeshare-title">{t("codeshare.title")}</span>
+        {unique.map((c, i) => (
+          <span key={i} className="fm-codeshare-text">
+            {c.marketing} → {t("codeshare.operatedBy")} {c.operating}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -5427,6 +5606,9 @@ export default function App() {
           {/* Group size indicator */}
           <GroupSizeIndicator origins={cleanOrigins} bestDest={bestDestination} currency={currency} t={t} />
 
+          {/* Departure countdown 24h */}
+          <DepartureCountdown24h bestDest={bestDestination} t={t} />
+
           {/* Trip countdown */}
           <TripCountdown departureDate={bestDestination.bestDate || departureDate} t={t} />
 
@@ -5451,6 +5633,9 @@ export default function App() {
 
           {/* Group budget gauge */}
           <GroupBudgetGauge bestDest={bestDestination} origins={cleanOrigins} budgetEnabled={budgetEnabled} maxBudget={maxBudget} currency={currency} t={t} />
+
+          {/* Price savings vs solo search */}
+          <PriceSavingsVsSolo bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* Celebrate badge for cheap flights (avg < €50/pp) */}
           {bestDestination.averageCostPerTraveler < 50 && (
@@ -5500,8 +5685,14 @@ export default function App() {
           {/* Destination safety rating */}
           <DestSafetyRating destCode={normalizeCode(bestDestination.destination)} t={t} />
 
+          {/* Destination local transport */}
+          <DestLocalTransport destCode={normalizeCode(bestDestination.destination)} t={t} />
+
           {/* Destination event hint */}
           <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
+
+          {/* Multi-city badge */}
+          <MultiCityBadge destCode={normalizeCode(bestDestination.destination)} t={t} />
 
           {/* Seasonal demand indicator */}
           <SeasonalDemandIndicator departureDate={bestDestination.bestDate || departureDate} destCode={normalizeCode(bestDestination.destination)} t={t} />
@@ -5597,6 +5788,9 @@ export default function App() {
 
           {/* Flight connection warning (tight layovers) */}
           <FlightConnectionWarning bestDest={bestDestination} t={t} />
+
+          {/* Flight operator note (codeshare) */}
+          <FlightOperatorNote bestDest={bestDestination} t={t} />
 
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />

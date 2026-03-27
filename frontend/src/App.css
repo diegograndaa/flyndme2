@@ -8380,7 +8380,124 @@ html {
   .fm-bookmark-btn { padding: 8px 18px; font-size: 13px; }
 }
 
-/* ── Print Styles (Round 33 updated) ──────────────────────── */
+/* ── Departure Countdown 24h (Round 34) ───────────────────── */
+
+.fm-dep24 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  animation: fm-dep24-pulse 2s infinite;
+}
+@keyframes fm-dep24-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.3); }
+  50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+.fm-dep24-icon { font-size: 22px; }
+.fm-dep24-text { font-size: 14px; font-weight: 700; color: #991b1b; }
+[data-theme="dark"] .fm-dep24 { background: linear-gradient(135deg, #450a0a, #7f1d1d); border-color: #dc2626; }
+[data-theme="dark"] .fm-dep24-text { color: #fca5a5; }
+
+/* ── Price Savings vs Solo (Round 34) ─────────────────────── */
+
+.fm-solosave {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #34d399;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-solosave-icon { font-size: 22px; flex-shrink: 0; }
+.fm-solosave-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-solosave-title { font-weight: 700; font-size: 13px; color: #065f46; }
+.fm-solosave-text { font-size: 13px; color: #047857; line-height: 1.4; }
+[data-theme="dark"] .fm-solosave { background: linear-gradient(135deg, #052e16, #065f4630); border-color: #059669; }
+[data-theme="dark"] .fm-solosave-title { color: #6ee7b7; }
+[data-theme="dark"] .fm-solosave-text { color: #a7f3d0; }
+
+/* ── Destination Local Transport (Round 34) ───────────────── */
+
+.fm-transport {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 1px solid #e5e7eb;
+}
+.fm-transport-title { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 10px; }
+.fm-transport-modes { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.fm-transport-mode {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 20px;
+  color: #0369a1;
+}
+.fm-transport-tip { font-size: 12px; color: #64748b; display: block; }
+[data-theme="dark"] .fm-transport { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-transport-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-transport-mode { background: #0c4a6e; border-color: #0369a1; color: #7dd3fc; }
+[data-theme="dark"] .fm-transport-tip { color: #94a3b8; }
+
+/* ── Multi-City Badge (Round 34) ──────────────────────────── */
+
+.fm-multicity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border: 1px solid #c084fc;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-multicity-icon { font-size: 20px; flex-shrink: 0; }
+.fm-multicity-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-multicity-title { font-weight: 700; font-size: 13px; color: #6b21a8; }
+.fm-multicity-text { font-size: 13px; color: #7e22ce; line-height: 1.4; }
+[data-theme="dark"] .fm-multicity { background: linear-gradient(135deg, #3b0764, #6b21a830); border-color: #9333ea; }
+[data-theme="dark"] .fm-multicity-title { color: #d8b4fe; }
+[data-theme="dark"] .fm-multicity-text { color: #e9d5ff; }
+
+/* ── Flight Operator Note (Round 34) ──────────────────────── */
+
+.fm-codeshare {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-codeshare-icon { font-size: 20px; flex-shrink: 0; }
+.fm-codeshare-body { display: flex; flex-direction: column; gap: 4px; }
+.fm-codeshare-title { font-weight: 700; font-size: 13px; color: #92400e; }
+.fm-codeshare-text { font-size: 13px; color: #78350f; }
+[data-theme="dark"] .fm-codeshare { background: #451a03; border-color: #b45309; }
+[data-theme="dark"] .fm-codeshare-title { color: #fcd34d; }
+[data-theme="dark"] .fm-codeshare-text { color: #fde68a; }
+
+@media (max-width: 600px) {
+  .fm-dep24 { padding: 10px 14px; }
+  .fm-solosave { padding: 10px 14px; }
+  .fm-transport { padding: 14px 14px; }
+  .fm-multicity { padding: 10px 14px; }
+  .fm-codeshare { padding: 10px 14px; }
+}
+
+/* ── Print Styles (Round 34 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -8393,7 +8510,8 @@ html {
   .fm-pricehint, .fm-visa, .fm-airlines, .fm-destevent,
   .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
   .fm-extcompare, .fm-flightclass, .fm-connwarn, .fm-season,
-  .fm-bookmark-btn,
+  .fm-bookmark-btn, .fm-dep24, .fm-solosave, .fm-multicity,
+  .fm-codeshare,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -8402,7 +8520,8 @@ html {
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
   .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
-  .fm-returnflight, .fm-pricebd, .fm-timezone, .fm-safety, .fm-distmap {
+  .fm-returnflight, .fm-pricebd, .fm-timezone, .fm-safety, .fm-distmap,
+  .fm-transport {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
