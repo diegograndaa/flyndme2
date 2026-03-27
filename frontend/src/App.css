@@ -8108,7 +8108,137 @@ html {
   .fm-groupsize-toggle { padding: 5px 10px; font-size: 12px; }
 }
 
-/* ── Print Styles (Round 31 updated) ──────────────────────── */
+/* ── Nearby Airports Hint (Round 32) ──────────────────────── */
+
+.fm-nearby {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #6ee7b7;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.fm-nearby-icon { font-size: 20px; flex-shrink: 0; }
+.fm-nearby-body { display: flex; flex-direction: column; gap: 4px; }
+.fm-nearby-title { font-weight: 700; font-size: 13px; color: #065f46; }
+.fm-nearby-text { font-size: 13px; color: #047857; line-height: 1.4; }
+[data-theme="dark"] .fm-nearby {
+  background: linear-gradient(135deg, #052e16, #065f4630);
+  border-color: #059669;
+}
+[data-theme="dark"] .fm-nearby-title { color: #6ee7b7; }
+[data-theme="dark"] .fm-nearby-text { color: #a7f3d0; }
+
+/* ── Destination Timezone Compare (Round 32) ──────────────── */
+
+.fm-timezone {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.fm-timezone-icon { font-size: 20px; flex-shrink: 0; }
+.fm-timezone-body { display: flex; flex-direction: column; gap: 4px; }
+.fm-timezone-title { font-weight: 700; font-size: 13px; color: #1e293b; }
+.fm-timezone-list { display: flex; gap: 12px; flex-wrap: wrap; }
+.fm-timezone-item { font-size: 13px; color: #475569; font-weight: 600; }
+[data-theme="dark"] .fm-timezone { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-timezone-title { color: #e2e8f0; }
+[data-theme="dark"] .fm-timezone-item { color: #94a3b8; }
+
+/* ── Flight Class Badge (Round 32) ────────────────────────── */
+
+.fm-flightclass {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.fm-flightclass-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: white;
+  border: 2px solid;
+  color: #334155;
+}
+[data-theme="dark"] .fm-flightclass-badge { background: #1e293b; color: #e2e8f0; }
+
+/* ── Trip Summary Export (Round 32) ───────────────────────── */
+
+.fm-tripexport {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.fm-tripexport-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all .2s;
+}
+.fm-tripexport-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+[data-theme="dark"] .fm-tripexport-btn {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .fm-tripexport-btn:hover { background: #475569; }
+
+/* ── Price Compare External (Round 32) ────────────────────── */
+
+.fm-extcompare {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  flex-wrap: wrap;
+}
+.fm-extcompare-label { font-size: 13px; font-weight: 600; color: #475569; }
+.fm-extcompare-links { display: flex; gap: 8px; }
+.fm-extcompare-link {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.fm-extcompare-link:hover { opacity: .85; }
+.fm-extcompare-link--sky { background: #0770e3; color: white; }
+.fm-extcompare-link--gf { background: #4285f4; color: white; }
+[data-theme="dark"] .fm-extcompare { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .fm-extcompare-label { color: #94a3b8; }
+
+@media (max-width: 600px) {
+  .fm-nearby { padding: 10px 14px; }
+  .fm-timezone { padding: 10px 14px; }
+  .fm-extcompare { padding: 10px 14px; }
+  .fm-tripexport-btn { padding: 8px 16px; font-size: 12px; }
+}
+
+/* ── Print Styles (Round 32 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -8119,7 +8249,8 @@ html {
   .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
   .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
   .fm-pricehint, .fm-visa, .fm-airlines, .fm-destevent,
-  .fm-searchspeed, .fm-groupsize,
+  .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
+  .fm-extcompare, .fm-flightclass,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -8128,7 +8259,7 @@ html {
   .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
   .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
-  .fm-returnflight, .fm-pricebd {
+  .fm-returnflight, .fm-pricebd, .fm-timezone {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;

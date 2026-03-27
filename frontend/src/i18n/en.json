@@ -539,5 +539,30 @@
     "fast": "Lightning fast",
     "normal": "Normal speed",
     "slow": "Took a while"
+  },
+  "nearby": {
+    "title": "Nearby airports to check",
+    "also": "also try"
+  },
+  "timezone": {
+    "title": "Timezone difference at destination",
+    "same": "Same timezone"
+  },
+  "flightClass": {
+    "economy": "Economy",
+    "premEconomy": "Premium Economy",
+    "business": "Business",
+    "first": "First Class"
+  },
+  "tripExport": {
+    "header": "FlyndMe Trip Summary",
+    "dest": "Destination",
+    "origins": "Origins",
+    "via": "Found via",
+    "copy": "Copy trip summary",
+    "copied": "Copied!"
+  },
+  "extCompare": {
+    "label": "Verify prices on:"
   }
 }

@@ -1885,6 +1885,204 @@ function SearchDurationBadge({ duration, t }) {
   );
 }
 
+// ─── Nearby Airports Hint (Round 32) ──────────────────────────────────────
+
+const NEARBY_AIRPORTS = {
+  MAD: ["TOJ"], BCN: ["GRO", "REU"], LON: ["LHR", "LGW", "STN", "LTN", "SEN"],
+  LHR: ["LGW", "STN", "LTN"], LGW: ["LHR", "STN", "LTN"], STN: ["LHR", "LGW"],
+  BER: ["SXF"], MIL: ["MXP", "LIN", "BGY"], MXP: ["LIN", "BGY"], LIN: ["MXP", "BGY"],
+  PAR: ["CDG", "ORY", "BVA"], CDG: ["ORY", "BVA"], ORY: ["CDG", "BVA"],
+  ROM: ["FCO", "CIA"], FCO: ["CIA"], NYC: ["JFK", "EWR", "LGA"],
+  BRU: ["CRL"], OSL: ["TRF", "RYG"], STO: ["ARN", "NYO", "BMA"],
+};
+
+function NearbyAirportsHint({ origins, t }) {
+  if (!origins?.length) return null;
+  const hints = origins.map(o => {
+    const code = normalizeCode(o);
+    const nearby = NEARBY_AIRPORTS[code];
+    if (!nearby?.length) return null;
+    return { origin: code, nearby };
+  }).filter(Boolean);
+
+  if (!hints.length) return null;
+
+  return (
+    <div className="fm-nearby view-enter">
+      <span className="fm-nearby-icon">📍</span>
+      <div className="fm-nearby-body">
+        <span className="fm-nearby-title">{t("nearby.title")}</span>
+        {hints.map(h => (
+          <span key={h.origin} className="fm-nearby-text">
+            {countryFlag(h.origin)} {h.origin}: {t("nearby.also")} {h.nearby.join(", ")}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Timezone Compare (Round 32) ──────────────────────────────
+
+const TZ_OFFSETS = {
+  ES: 1, FR: 1, DE: 1, IT: 1, NL: 1, BE: 1, AT: 1, CH: 1, CZ: 1, PL: 1,
+  HU: 1, HR: 1, SK: 1, SI: 1, DK: 1, NO: 1, SE: 1, MT: 1,
+  GB: 0, IE: 0, PT: 0, IS: 0,
+  GR: 2, BG: 2, RO: 2, FI: 2, EE: 2, LV: 2, LT: 2, CY: 2,
+  TR: 3, MA: 1, US: -5,
+};
+
+function DestTimezoneCompare({ origins, destCode, t }) {
+  const destInfo = destQuickInfo(destCode);
+  const destCC = destInfo?.country;
+  if (!destCC || TZ_OFFSETS[destCC] === undefined) return null;
+  const destTZ = TZ_OFFSETS[destCC];
+
+  const diffs = origins.map(o => {
+    const info = destQuickInfo(normalizeCode(o));
+    const cc = info?.country;
+    if (!cc || TZ_OFFSETS[cc] === undefined) return null;
+    const diff = destTZ - TZ_OFFSETS[cc];
+    return { origin: normalizeCode(o), diff };
+  }).filter(Boolean);
+
+  if (!diffs.length || diffs.every(d => d.diff === 0)) return null;
+
+  return (
+    <div className="fm-timezone view-enter">
+      <span className="fm-timezone-icon">🕐</span>
+      <div className="fm-timezone-body">
+        <span className="fm-timezone-title">{t("timezone.title")}</span>
+        <div className="fm-timezone-list">
+          {diffs.map(d => (
+            <span key={d.origin} className="fm-timezone-item">
+              {countryFlag(d.origin)} {d.origin}: {d.diff === 0 ? t("timezone.same") : `${d.diff > 0 ? "+" : ""}${d.diff}h`}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Flight Class Badge (Round 32) ────────────────────────────────────────
+
+function FlightClassBadge({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const classes = new Set();
+  Object.values(bestDest.flights).forEach(data => {
+    const offer = data?.offer || data;
+    const travelerPricings = offer?.travelerPricings || [];
+    travelerPricings.forEach(tp => {
+      tp.fareDetailsBySegment?.forEach(fd => {
+        if (fd.cabin) classes.add(fd.cabin);
+      });
+    });
+    // Fallback: check segments
+    if (!classes.size) {
+      const segs = offer?.itineraries?.[0]?.segments || [];
+      segs.forEach(seg => {
+        if (seg.cabin) classes.add(seg.cabin);
+      });
+    }
+  });
+
+  if (!classes.size) {
+    // Default assumption
+    classes.add("ECONOMY");
+  }
+
+  const classLabels = {
+    ECONOMY: { label: t("flightClass.economy"), icon: "💺", color: "#3b82f6" },
+    PREMIUM_ECONOMY: { label: t("flightClass.premEconomy"), icon: "💺", color: "#8b5cf6" },
+    BUSINESS: { label: t("flightClass.business"), icon: "🪑", color: "#f59e0b" },
+    FIRST: { label: t("flightClass.first"), icon: "👑", color: "#ef4444" },
+  };
+
+  return (
+    <div className="fm-flightclass view-enter">
+      {[...classes].map(c => {
+        const info = classLabels[c] || classLabels.ECONOMY;
+        return (
+          <span key={c} className="fm-flightclass-badge" style={{ borderColor: info.color }}>
+            <span>{info.icon}</span> {info.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Trip Summary Export (Round 32) ───────────────────────────────────────
+
+function TripSummaryExport({ bestDest, origins, departureDate, returnDate, tripType, currency, t }) {
+  const [copied, setCopied] = useState(false);
+  if (!bestDest) return null;
+
+  const handleCopy = useCallback(() => {
+    const dest = cityOf(normalizeCode(bestDest.destination)) || bestDest.destination;
+    const lines = [
+      `✈️ ${t("tripExport.header")}`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `📍 ${t("tripExport.dest")}: ${dest} (${normalizeCode(bestDest.destination)})`,
+      `📅 ${departureDate}${returnDate ? ` → ${returnDate}` : ""}`,
+      `👥 ${origins.length} ${t("groupSize.travelers")}`,
+      `💰 ${t("groupSize.total")}: ${convertPrice(bestDest.totalCostEUR || 0, currency)}`,
+      `💰 ${t("groupSize.perPerson")}: ${convertPrice(bestDest.averageCostPerTraveler || 0, currency)}`,
+      ``,
+      `${t("tripExport.origins")}:`,
+      ...origins.map(o => `  ${countryFlag(o)} ${o}`),
+      ``,
+      `— ${t("tripExport.via")} FlyndMe`,
+    ];
+    const text = lines.join("\n");
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      });
+    }
+  }, [bestDest, origins, departureDate, returnDate, currency, t]);
+
+  return (
+    <div className="fm-tripexport view-enter">
+      <button type="button" className="fm-tripexport-btn" onClick={handleCopy}>
+        {copied ? "✓ " + t("tripExport.copied") : "📋 " + t("tripExport.copy")}
+      </button>
+    </div>
+  );
+}
+
+// ─── Price Compare External (Round 32) ────────────────────────────────────
+
+function PriceCompareExternal({ bestDest, origins, departureDate, returnDate, tripType, t }) {
+  if (!bestDest || !origins?.length) return null;
+  const destCode = normalizeCode(bestDest.destination);
+  const mainOrigin = normalizeCode(origins[0]);
+
+  const skyscannerUrl = buildSkyscannerUrl
+    ? buildSkyscannerUrl(mainOrigin, destCode, departureDate, tripType === "roundtrip" ? returnDate : "")
+    : `https://www.skyscanner.net/transport/flights/${mainOrigin.toLowerCase()}/${destCode.toLowerCase()}/${departureDate?.replace(/-/g, "").slice(2)}/`;
+
+  const googleUrl = buildGoogleFlightsUrl
+    ? buildGoogleFlightsUrl(mainOrigin, destCode, departureDate, tripType === "roundtrip" ? returnDate : "")
+    : `https://www.google.com/travel/flights?q=flights+from+${mainOrigin}+to+${destCode}`;
+
+  return (
+    <div className="fm-extcompare view-enter">
+      <span className="fm-extcompare-label">{t("extCompare.label")}</span>
+      <div className="fm-extcompare-links">
+        <a href={skyscannerUrl} target="_blank" rel="noopener noreferrer" className="fm-extcompare-link fm-extcompare-link--sky">
+          Skyscanner ↗
+        </a>
+        <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="fm-extcompare-link fm-extcompare-link--gf">
+          Google Flights ↗
+        </a>
+      </div>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -5112,6 +5310,12 @@ export default function App() {
           {/* Destination event hint */}
           <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
 
+          {/* Timezone compare */}
+          <DestTimezoneCompare origins={cleanOrigins} destCode={normalizeCode(bestDestination.destination)} t={t} />
+
+          {/* Flight class badge */}
+          <FlightClassBadge bestDest={bestDestination} t={t} />
+
           {/* Price alert hint */}
           <div className="fm-alert-hint view-enter">
             <span className="fm-alert-hint-icon">🔔</span>
@@ -5216,6 +5420,9 @@ export default function App() {
           {/* Price per km ranking */}
           <PricePerKmRanking flights={flights} origins={cleanOrigins} currency={currency} t={t} />
 
+          {/* Nearby airports hint */}
+          <NearbyAirportsHint origins={cleanOrigins} t={t} />
+
           {/* Results summary card (compact printable overview) */}
           <ResultsSummaryCard
             bestDest={bestDestination}
@@ -5263,6 +5470,27 @@ export default function App() {
 
           {/* Search duration badge */}
           <SearchDurationBadge duration={searchDuration} t={t} />
+
+          {/* Trip summary export */}
+          <TripSummaryExport
+            bestDest={bestDestination}
+            origins={cleanOrigins}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            currency={currency}
+            t={t}
+          />
+
+          {/* Price compare on external sites */}
+          <PriceCompareExternal
+            bestDest={bestDestination}
+            origins={cleanOrigins}
+            departureDate={departureDate}
+            returnDate={returnDate}
+            tripType={tripType}
+            t={t}
+          />
 
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

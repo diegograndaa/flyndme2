@@ -539,5 +539,30 @@
     "fast": "Ultrarrápido",
     "normal": "Velocidad normal",
     "slow": "Tardó un poco"
+  },
+  "nearby": {
+    "title": "Aeropuertos cercanos a considerar",
+    "also": "prueba también"
+  },
+  "timezone": {
+    "title": "Diferencia horaria en destino",
+    "same": "Misma zona horaria"
+  },
+  "flightClass": {
+    "economy": "Turista",
+    "premEconomy": "Turista Premium",
+    "business": "Business",
+    "first": "Primera Clase"
+  },
+  "tripExport": {
+    "header": "Resumen de viaje FlyndMe",
+    "dest": "Destino",
+    "origins": "Orígenes",
+    "via": "Encontrado en",
+    "copy": "Copiar resumen del viaje",
+    "copied": "¡Copiado!"
+  },
+  "extCompare": {
+    "label": "Verifica precios en:"
   }
 }
