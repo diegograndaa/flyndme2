@@ -607,5 +607,30 @@
   "codeshare": {
     "title": "Vuelos en código compartido detectados",
     "operatedBy": "operado por"
+  },
+  "food": {
+    "title": "Plato local imprescindible",
+    "tryIt": "No te pierdas"
+  },
+  "wifi": {
+    "title": "WiFi y conectividad",
+    "excellent": "Cobertura excelente",
+    "good": "Buena cobertura",
+    "average": "Cobertura media",
+    "limited": "Cobertura limitada",
+    "poor": "Cobertura deficiente"
+  },
+  "perDay": {
+    "title": "Coste de vuelo por día",
+    "text": "En {{days}} días de viaje, los vuelos cuestan ~{{amount}} por persona al día"
+  },
+  "earlyAm": {
+    "title": "Alerta de salida temprana",
+    "text": "{{origins}} tienen salidas antes de las 7:00 AM — planifica el transporte al aeropuerto la noche anterior"
+  },
+  "phrase": {
+    "title": "Frases locales útiles",
+    "hello": "Hola",
+    "thanks": "Gracias"
   }
 }

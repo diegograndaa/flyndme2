@@ -2452,6 +2452,174 @@ function FlightOperatorNote({ bestDest, t }) {
   );
 }
 
+// ─── Destination Food Culture (Round 35) ──────────────────────────────────
+
+const DEST_FOOD = {
+  BCN: { dish: "Pa amb tomàquet, Paella", emoji: "🥘" },
+  MAD: { dish: "Cocido madrileño, Churros", emoji: "🫕" },
+  FCO: { dish: "Carbonara, Supplì", emoji: "🍝" },
+  CDG: { dish: "Croissant, Croque-monsieur", emoji: "🥐" },
+  LIS: { dish: "Pastel de nata, Bacalhau", emoji: "🍮" },
+  AMS: { dish: "Stroopwafel, Bitterballen", emoji: "🧇" },
+  BER: { dish: "Currywurst, Döner Kebab", emoji: "🌭" },
+  MXP: { dish: "Risotto alla milanese, Cotoletta", emoji: "🍚" },
+  PRG: { dish: "Trdelník, Svíčková", emoji: "🥨" },
+  ATH: { dish: "Souvlaki, Moussaka", emoji: "🥙" },
+  VIE: { dish: "Wiener Schnitzel, Sachertorte", emoji: "🍰" },
+  BUD: { dish: "Goulash, Lángos", emoji: "🍲" },
+  CPH: { dish: "Smørrebrød, Danish pastry", emoji: "🥪" },
+  DUB: { dish: "Irish stew, Soda bread", emoji: "🍀" },
+  LHR: { dish: "Fish & chips, Sunday roast", emoji: "🐟" },
+  LGW: { dish: "Fish & chips, Sunday roast", emoji: "🐟" },
+};
+
+function DestFoodCulture({ destCode, t }) {
+  const food = DEST_FOOD[destCode];
+  if (!food) return null;
+  return (
+    <div className="fm-food view-enter">
+      <span className="fm-food-icon">{food.emoji}</span>
+      <div className="fm-food-body">
+        <span className="fm-food-title">{t("food.title")}</span>
+        <span className="fm-food-text">{food.dish}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Wifi Availability Hint (Round 35) ────────────────────────────────────
+
+const WIFI_RATINGS = {
+  ES: 4, FR: 4, DE: 5, IT: 3, NL: 5, BE: 4, AT: 5, CH: 5, PT: 4,
+  CZ: 4, PL: 4, SE: 5, DK: 5, NO: 5, FI: 5, IE: 4, IS: 4,
+  GR: 3, HR: 3, HU: 4, SI: 4, SK: 4, EE: 5, LV: 4, LT: 4,
+  GB: 4, MT: 3, CY: 3, LU: 5, BG: 3, RO: 4, TR: 3, MA: 2,
+};
+
+function WifiAvailabilityHint({ destCode, t }) {
+  const info = destQuickInfo(destCode);
+  const cc = info?.country;
+  if (!cc || !WIFI_RATINGS[cc]) return null;
+  const score = WIFI_RATINGS[cc];
+
+  let label, icon;
+  if (score >= 5) { label = t("wifi.excellent"); icon = "📶"; }
+  else if (score >= 4) { label = t("wifi.good"); icon = "📶"; }
+  else if (score >= 3) { label = t("wifi.decent"); icon = "📡"; }
+  else { label = t("wifi.limited"); icon = "📡"; }
+
+  return (
+    <div className="fm-wifi view-enter">
+      <span className="fm-wifi-icon">{icon}</span>
+      <span className="fm-wifi-text">{t("wifi.title")}: {label}</span>
+    </div>
+  );
+}
+
+// ─── Price Per Day Calculator (Round 35) ──────────────────────────────────
+
+function PricePerDayCalc({ bestDest, departureDate, returnDate, tripType, currency, t }) {
+  if (tripType !== "roundtrip" || !departureDate || !returnDate || !bestDest) return null;
+  const dep = new Date(departureDate + "T00:00:00");
+  const ret = new Date(returnDate + "T00:00:00");
+  const days = Math.max(1, Math.round((ret - dep) / 86400000));
+  const totalPP = bestDest.averageCostPerTraveler || 0;
+  const perDay = totalPP / days;
+
+  return (
+    <div className="fm-perday view-enter">
+      <span className="fm-perday-icon">📊</span>
+      <div className="fm-perday-body">
+        <span className="fm-perday-title">{t("perDay.title")}</span>
+        <span className="fm-perday-amount">{convertPrice(perDay, currency)}{t("perDay.perDay")}</span>
+        <span className="fm-perday-sub">{days} {t("perDay.days")} · {convertPrice(totalPP, currency)} {t("perDay.total")}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Early Morning Warning (Round 35) ─────────────────────────────────────
+
+function EarlyMorningWarning({ bestDest, t }) {
+  if (!bestDest?.flights) return null;
+  const earlyFlights = [];
+
+  Object.entries(bestDest.flights).forEach(([origin, data]) => {
+    const offer = data?.offer || data;
+    const seg = offer?.itineraries?.[0]?.segments?.[0];
+    if (seg?.departure?.at) {
+      const hour = new Date(seg.departure.at).getHours();
+      if (hour < 7) {
+        earlyFlights.push({
+          origin: normalizeCode(origin),
+          time: new Date(seg.departure.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        });
+      }
+    }
+  });
+
+  if (!earlyFlights.length) return null;
+
+  return (
+    <div className="fm-earlyam view-enter">
+      <span className="fm-earlyam-icon">🌅</span>
+      <div className="fm-earlyam-body">
+        <span className="fm-earlyam-title">{t("earlyAm.title")}</span>
+        {earlyFlights.map(f => (
+          <span key={f.origin} className="fm-earlyam-text">
+            {countryFlag(f.origin)} {f.origin}: {f.time}
+          </span>
+        ))}
+        <span className="fm-earlyam-tip">{t("earlyAm.tip")}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Destination Language Phrase (Round 35) ───────────────────────────────
+
+const DEST_PHRASES = {
+  ES: { hello: "¡Hola!", thanks: "Gracias", lang: "Spanish" },
+  FR: { hello: "Bonjour!", thanks: "Merci", lang: "French" },
+  DE: { hello: "Hallo!", thanks: "Danke", lang: "German" },
+  IT: { hello: "Ciao!", thanks: "Grazie", lang: "Italian" },
+  PT: { hello: "Olá!", thanks: "Obrigado/a", lang: "Portuguese" },
+  NL: { hello: "Hallo!", thanks: "Dank je", lang: "Dutch" },
+  CZ: { hello: "Ahoj!", thanks: "Děkuji", lang: "Czech" },
+  PL: { hello: "Cześć!", thanks: "Dziękuję", lang: "Polish" },
+  GR: { hello: "Γειά σου!", thanks: "Ευχαριστώ", lang: "Greek" },
+  HU: { hello: "Szia!", thanks: "Köszönöm", lang: "Hungarian" },
+  HR: { hello: "Bok!", thanks: "Hvala", lang: "Croatian" },
+  SE: { hello: "Hej!", thanks: "Tack", lang: "Swedish" },
+  DK: { hello: "Hej!", thanks: "Tak", lang: "Danish" },
+  NO: { hello: "Hei!", thanks: "Takk", lang: "Norwegian" },
+  FI: { hello: "Moi!", thanks: "Kiitos", lang: "Finnish" },
+  TR: { hello: "Merhaba!", thanks: "Teşekkürler", lang: "Turkish" },
+  RO: { hello: "Bună!", thanks: "Mulțumesc", lang: "Romanian" },
+  BG: { hello: "Здравей!", thanks: "Благодаря", lang: "Bulgarian" },
+};
+
+function DestLanguagePhrase({ destCode, t }) {
+  const info = destQuickInfo(destCode);
+  const cc = info?.country;
+  if (!cc) return null;
+  const phrase = DEST_PHRASES[cc];
+  if (!phrase) return null;
+
+  return (
+    <div className="fm-phrase view-enter">
+      <span className="fm-phrase-icon">🗣️</span>
+      <div className="fm-phrase-body">
+        <span className="fm-phrase-title">{t("phrase.title")} ({phrase.lang})</span>
+        <div className="fm-phrase-items">
+          <span className="fm-phrase-item">👋 {phrase.hello}</span>
+          <span className="fm-phrase-item">🙏 {phrase.thanks}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Price per km ranking ──────────────────────────────────────────────────
 
 function PricePerKmRanking({ flights, origins, currency, t }) {
@@ -5688,6 +5856,15 @@ export default function App() {
           {/* Destination local transport */}
           <DestLocalTransport destCode={normalizeCode(bestDestination.destination)} t={t} />
 
+          {/* Destination food culture */}
+          <DestFoodCulture destCode={normalizeCode(bestDestination.destination)} t={t} />
+
+          {/* WiFi availability hint */}
+          <WifiAvailabilityHint destCode={normalizeCode(bestDestination.destination)} t={t} />
+
+          {/* Destination language phrase */}
+          <DestLanguagePhrase destCode={normalizeCode(bestDestination.destination)} t={t} />
+
           {/* Destination event hint */}
           <DestEventHint destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} t={t} />
 
@@ -5712,6 +5889,9 @@ export default function App() {
 
           {/* Trip type insight */}
           <TripTypeInsight tripType={tripType} bestDest={bestDestination} departureDate={departureDate} t={t} />
+
+          {/* Price per day calculator */}
+          <PricePerDayCalc bestDest={bestDestination} departureDate={bestDestination.bestDate || departureDate} returnDate={returnDate} tripType={tripType} currency={currency} t={t} />
 
           {/* Alternative dates hint */}
           <AlternativeDatesHint departureDate={bestDestination.bestDate || departureDate} t={t} />
@@ -5791,6 +5971,9 @@ export default function App() {
 
           {/* Flight operator note (codeshare) */}
           <FlightOperatorNote bestDest={bestDestination} t={t} />
+
+          {/* Early morning departure warning */}
+          <EarlyMorningWarning bestDest={bestDestination} t={t} />
 
           {/* Group arrival sync indicator */}
           <GroupArrivalSync bestDest={bestDestination} t={t} />

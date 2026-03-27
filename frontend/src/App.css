@@ -8489,15 +8489,77 @@ html {
 [data-theme="dark"] .fm-codeshare-title { color: #fcd34d; }
 [data-theme="dark"] .fm-codeshare-text { color: #fde68a; }
 
+/* ── Round 35: Destination Food Culture ──────────────────── */
+.fm-food { display: flex; align-items: center; gap: 12px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
+.fm-food-emoji { font-size: 28px; flex-shrink: 0; }
+.fm-food-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-food-title { font-weight: 700; font-size: 13px; color: #92400e; }
+.fm-food-dish { font-size: 13px; color: #78350f; }
+[data-theme="dark"] .fm-food { background: #451a03; border-color: #d97706; }
+[data-theme="dark"] .fm-food-title { color: #fcd34d; }
+[data-theme="dark"] .fm-food-dish { color: #fde68a; }
+
+/* ── Round 35: WiFi Availability Hint ───────────────────── */
+.fm-wifi { display: flex; align-items: center; gap: 12px; background: #eff6ff; border: 1px solid #3b82f6; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
+.fm-wifi-icon { font-size: 24px; flex-shrink: 0; }
+.fm-wifi-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-wifi-title { font-weight: 700; font-size: 13px; color: #1e40af; }
+.fm-wifi-rating { font-size: 13px; color: #1e3a8a; }
+.fm-wifi-bar { height: 6px; border-radius: 3px; background: #dbeafe; overflow: hidden; margin-top: 4px; }
+.fm-wifi-bar-fill { height: 100%; border-radius: 3px; background: #3b82f6; transition: width .4s; }
+[data-theme="dark"] .fm-wifi { background: #1e293b; border-color: #60a5fa; }
+[data-theme="dark"] .fm-wifi-title { color: #93c5fd; }
+[data-theme="dark"] .fm-wifi-rating { color: #bfdbfe; }
+[data-theme="dark"] .fm-wifi-bar { background: #334155; }
+
+/* ── Round 35: Price Per Day Calculator ─────────────────── */
+.fm-perday { display: flex; align-items: center; gap: 12px; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
+.fm-perday-icon { font-size: 24px; flex-shrink: 0; }
+.fm-perday-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-perday-title { font-weight: 700; font-size: 13px; color: #166534; }
+.fm-perday-text { font-size: 13px; color: #15803d; }
+.fm-perday-amount { font-weight: 800; font-size: 18px; color: #16a34a; }
+[data-theme="dark"] .fm-perday { background: #052e16; border-color: #4ade80; }
+[data-theme="dark"] .fm-perday-title { color: #86efac; }
+[data-theme="dark"] .fm-perday-text { color: #bbf7d0; }
+[data-theme="dark"] .fm-perday-amount { color: #4ade80; }
+
+/* ── Round 35: Early Morning Warning ────────────────────── */
+.fm-earlyam { display: flex; align-items: center; gap: 12px; background: #fefce8; border: 1px solid #eab308; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
+.fm-earlyam-icon { font-size: 24px; flex-shrink: 0; }
+.fm-earlyam-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-earlyam-title { font-weight: 700; font-size: 13px; color: #854d0e; }
+.fm-earlyam-text { font-size: 13px; color: #713f12; }
+[data-theme="dark"] .fm-earlyam { background: #422006; border-color: #facc15; }
+[data-theme="dark"] .fm-earlyam-title { color: #fde047; }
+[data-theme="dark"] .fm-earlyam-text { color: #fef08a; }
+
+/* ── Round 35: Destination Language Phrase ───────────────── */
+.fm-phrase { display: flex; align-items: center; gap: 12px; background: #faf5ff; border: 1px solid #a855f7; border-radius: 14px; padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
+.fm-phrase-icon { font-size: 24px; flex-shrink: 0; }
+.fm-phrase-body { display: flex; flex-direction: column; gap: 2px; }
+.fm-phrase-title { font-weight: 700; font-size: 13px; color: #6b21a8; }
+.fm-phrase-word { font-size: 14px; color: #7c3aed; font-style: italic; }
+.fm-phrase-meaning { font-size: 12px; color: #6b21a8; opacity: .8; }
+[data-theme="dark"] .fm-phrase { background: #2e1065; border-color: #c084fc; }
+[data-theme="dark"] .fm-phrase-title { color: #d8b4fe; }
+[data-theme="dark"] .fm-phrase-word { color: #c4b5fd; }
+[data-theme="dark"] .fm-phrase-meaning { color: #ddd6fe; }
+
 @media (max-width: 600px) {
   .fm-dep24 { padding: 10px 14px; }
   .fm-solosave { padding: 10px 14px; }
   .fm-transport { padding: 14px 14px; }
   .fm-multicity { padding: 10px 14px; }
   .fm-codeshare { padding: 10px 14px; }
+  .fm-food { padding: 10px 14px; }
+  .fm-wifi { padding: 10px 14px; }
+  .fm-perday { padding: 10px 14px; }
+  .fm-earlyam { padding: 10px 14px; }
+  .fm-phrase { padding: 10px 14px; }
 }
 
-/* ── Print Styles (Round 34 updated) ──────────────────────── */
+/* ── Print Styles (Round 35 updated) ──────────────────────── */
 
 @media print {
   .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
@@ -8511,7 +8573,7 @@ html {
   .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
   .fm-extcompare, .fm-flightclass, .fm-connwarn, .fm-season,
   .fm-bookmark-btn, .fm-dep24, .fm-solosave, .fm-multicity,
-  .fm-codeshare,
+  .fm-codeshare, .fm-food, .fm-wifi, .fm-earlyam, .fm-phrase,
   .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
@@ -8521,7 +8583,7 @@ html {
   .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
   .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
   .fm-returnflight, .fm-pricebd, .fm-timezone, .fm-safety, .fm-distmap,
-  .fm-transport {
+  .fm-transport, .fm-perday {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;

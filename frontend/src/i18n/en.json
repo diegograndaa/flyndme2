@@ -607,5 +607,30 @@
   "codeshare": {
     "title": "Codeshare flights detected",
     "operatedBy": "operated by"
+  },
+  "food": {
+    "title": "Must-try local dish",
+    "tryIt": "Don't miss"
+  },
+  "wifi": {
+    "title": "WiFi & connectivity",
+    "excellent": "Excellent coverage",
+    "good": "Good coverage",
+    "average": "Average coverage",
+    "limited": "Limited coverage",
+    "poor": "Poor coverage"
+  },
+  "perDay": {
+    "title": "Flight cost per day",
+    "text": "Based on {{days}} trip days, flights cost ~{{amount}} per person per day"
+  },
+  "earlyAm": {
+    "title": "Early departure alert",
+    "text": "{{origins}} have departures before 7:00 AM — plan transport to the airport the night before"
+  },
+  "phrase": {
+    "title": "Useful local phrases",
+    "hello": "Hello",
+    "thanks": "Thanks"
   }
 }
