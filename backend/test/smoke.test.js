@@ -72,6 +72,23 @@ test("health endpoint reports mock mode", async () => {
   assert.equal(r.body.status, "healthy");
 });
 
+test("version endpoint exposes commit + env without secrets", async () => {
+  const r = await get("/api/version");
+  assert.equal(r.status, 200);
+  // commit may be null in environments without git or env hints; structure is
+  // what we care about
+  assert.ok(["string", "object"].includes(typeof r.body.commit));
+  assert.equal(typeof r.body.node, "string");
+  assert.equal(r.body.mock, true);
+  assert.equal(r.body.amadeus_env, process.env.AMADEUS_ENV || "test");
+  assert.equal(typeof r.body.uptime_s, "number");
+  // Sanity: no secret-looking fields leaked
+  for (const k of Object.keys(r.body)) {
+    assert.ok(!/key|secret|token|password/i.test(k),
+      `unexpected secret-looking field in /api/version: ${k}`);
+  }
+});
+
 test("search: multi-pax math is coherent", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON", "BER"],

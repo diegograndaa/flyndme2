@@ -18,6 +18,33 @@ const startTime = Date.now();
 const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 const USE_MOCK    = String(process.env.USE_MOCK || "").toLowerCase() === "true";
 
+// ─── Version info ──────────────────────────────────────────────────────────
+// Detect commit at boot. Render auto-injects RENDER_GIT_COMMIT / RENDER_GIT_BRANCH;
+// generic CIs use GIT_COMMIT; in dev we fall back to `git rev-parse` so a local
+// boot still reports the working SHA.
+function detectCommit() {
+  const fromEnv = process.env.RENDER_GIT_COMMIT
+    || process.env.GIT_COMMIT
+    || process.env.COMMIT_SHA;
+  if (fromEnv) return fromEnv.trim();
+  try {
+    return require("child_process")
+      .execSync("git rev-parse HEAD", { cwd: __dirname, stdio: ["ignore", "pipe", "ignore"] })
+      .toString().trim();
+  } catch {
+    return null;
+  }
+}
+
+const VERSION = {
+  commit:      detectCommit(),
+  commitShort: null, // filled below
+  branch:      process.env.RENDER_GIT_BRANCH || null,
+  node:        process.version,
+  startedAt:   new Date(startTime).toISOString(),
+};
+if (VERSION.commit) VERSION.commitShort = VERSION.commit.slice(0, 7);
+
 // ─── Startup config validation ────────────────────────────────────────────
 // In production, missing critical env vars are fatal unless explicitly
 // overridden with ALLOW_INSECURE_PROD=true. In dev, only warns.
@@ -151,6 +178,22 @@ app.get("/api/ping", (_req, res) => {
   res.json({ message: "pong", timestamp: Date.now() });
 });
 
+// Lightweight version + env fingerprint. Use to confirm a deploy reflects the
+// expected commit and runtime config; never exposes secrets.
+app.get("/api/version", (_req, res) => {
+  res.json({
+    commit:      VERSION.commit,
+    commitShort: VERSION.commitShort,
+    branch:      VERSION.branch,
+    node:        VERSION.node,
+    node_env:    process.env.NODE_ENV || "development",
+    amadeus_env: AMADEUS_ENV,
+    mock:        USE_MOCK,
+    startedAt:   VERSION.startedAt,
+    uptime_s:    Math.floor((Date.now() - startTime) / 1000),
+  });
+});
+
 // Health endpoint with more detailed info
 app.get("/api/health", (_req, res) => {
   const uptime = Math.floor((Date.now() - startTime) / 1000);
@@ -168,6 +211,7 @@ app.get("/api/health", (_req, res) => {
     },
     amadeus_env: AMADEUS_ENV,
     mock: USE_MOCK,
+    commit: VERSION.commitShort,
     timestamp: Date.now(),
   });
 });
