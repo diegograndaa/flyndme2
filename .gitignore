@@ -1,2 +1,22 @@
-node_modules/ 
-dist/ 
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

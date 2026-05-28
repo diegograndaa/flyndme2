@@ -103,7 +103,14 @@ router.get("/:id/og", (req, res) => {
   const destCity = cityName(best?.destination || "???");
   const total = best ? fmtEur(best.totalCostEUR) : "";
   const avg = best ? fmtEur(best.averageCostPerTraveler) : "";
-  const numTravelers = (params.origins || []).length;
+  // Prefer the pax-aware count from the backend payload; fall back to summing
+  // searchParams.passengers; fall back to origins count for legacy shares.
+  const numTravelers =
+    best?.totalPassengers ||
+    (Array.isArray(params.passengers)
+      ? params.passengers.reduce((s, n) => s + (Number(n) || 1), 0)
+      : 0) ||
+    (params.origins || []).length;
   const originCities = (params.origins || []).map(cityName).join(", ");
 
   const ogTitle = `FlyndMe: ${originCities} → ${destCity}`;

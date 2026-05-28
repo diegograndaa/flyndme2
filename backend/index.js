@@ -1,4 +1,6 @@
-require("dotenv").config();
+// Load .env relative to this file, not process.cwd(), so the server boots
+// correctly regardless of where `node index.js` is invoked from.
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -14,6 +16,52 @@ const isDev = process.env.NODE_ENV !== "production";
 const startTime = Date.now();
 
 const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
+const USE_MOCK    = String(process.env.USE_MOCK || "").toLowerCase() === "true";
+
+// ─── Startup config validation ────────────────────────────────────────────
+// In production, missing critical env vars are fatal unless explicitly
+// overridden with ALLOW_INSECURE_PROD=true. In dev, only warns.
+function validateConfig() {
+  const errors = [];
+  const warnings = [];
+
+  if (!USE_MOCK) {
+    if (!process.env.AMADEUS_API_KEY)    errors.push("AMADEUS_API_KEY no está definida.");
+    if (!process.env.AMADEUS_API_SECRET) errors.push("AMADEUS_API_SECRET no está definida.");
+    if (AMADEUS_ENV !== "test" && AMADEUS_ENV !== "production") {
+      warnings.push(`AMADEUS_ENV="${AMADEUS_ENV}" no es "test" ni "production".`);
+    }
+  }
+
+  if (!isDev) {
+    if (USE_MOCK) {
+      warnings.push("USE_MOCK=true en producción: el backend NO llamará a Amadeus.");
+    }
+    if (!process.env.ALLOWED_ORIGINS) {
+      warnings.push("ALLOWED_ORIGINS no está definida — usando fallback hardcoded (flyndme.vercel.app + flyndme2.vercel.app). Define la variable para tu dominio real.");
+    }
+    if (!process.env.FRONTEND_URL) {
+      warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme.vercel.app.");
+    }
+    if (!USE_MOCK && AMADEUS_ENV === "test") {
+      warnings.push("AMADEUS_ENV=test en producción: el sandbox tiene inventario limitado y precios no reales.");
+    }
+  }
+
+  for (const w of warnings) console.warn(`⚠  CONFIG: ${w}`);
+  for (const e of errors)   console.error(`✗  CONFIG: ${e}`);
+
+  if (errors.length > 0 && !isDev) {
+    const allowOverride = String(process.env.ALLOW_INSECURE_PROD || "").toLowerCase() === "true";
+    if (!allowOverride) {
+      console.error("\nArranque abortado. Corrige las variables o usa ALLOW_INSECURE_PROD=true para forzar (no recomendado).");
+      process.exit(1);
+    }
+    console.warn("⚠  ALLOW_INSECURE_PROD=true: arrancando con configuración insegura.");
+  }
+}
+
+validateConfig();
 
 // ─── Middleware: Gzip compression ─────────────────────────────────────────
 app.use(compression());
@@ -94,6 +142,7 @@ app.get("/", (_req, res) => {
     status: "ok",
     service: "FlyndMe API",
     env: AMADEUS_ENV,
+    mock: USE_MOCK,
     features: ["flexDates", "shareLinks", "affiliateReady"],
   });
 });
@@ -118,6 +167,7 @@ app.get("/api/health", (_req, res) => {
       rss: Math.round(memUsage.rss / 1024 / 1024),
     },
     amadeus_env: AMADEUS_ENV,
+    mock: USE_MOCK,
     timestamp: Date.now(),
   });
 });
@@ -168,6 +218,9 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 server = app.listen(PORT, () => {
   console.log(
-    `✈  FlyndMe API → http://localhost:${PORT}  [${isDev ? "dev" : "prod"} · amadeus:${AMADEUS_ENV}]`
+    `✈  FlyndMe API → http://localhost:${PORT}  [${isDev ? "dev" : "prod"} · amadeus:${USE_MOCK ? "MOCK" : AMADEUS_ENV}]`
   );
+  if (USE_MOCK) {
+    console.log("⚠  USE_MOCK=true — serving deterministic fixtures, NOT calling Amadeus.");
+  }
 });

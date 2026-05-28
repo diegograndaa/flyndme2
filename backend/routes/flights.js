@@ -1,23 +1,39 @@
 const express = require("express");
 const router  = express.Router();
-const { getCheapestOffer } = require("../services/amadeusService");
+
+// Pick real Amadeus or the mock fixture-based service. USE_MOCK=true in .env
+// lets you develop end-to-end without consuming Amadeus quota.
+const USE_MOCK = String(process.env.USE_MOCK || "").toLowerCase() === "true";
+const flightService = USE_MOCK
+  ? require("../services/mockAmadeusService")
+  : require("../services/amadeusService");
+const { getCheapestOffer, priceFlightOffer } = flightService;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const DEFAULT_DESTINATIONS = [
-  // Tier 1: major hubs (high route coverage)
-  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "MAD", "BCN",
-  // Tier 2: popular destinations
-  "DUB", "VIE", "BRU", "PRG", "WAW", "ATH", "CPH", "HEL", "ZRH", "OSL", "BUD", "IST",
-  // Tier 3: budget-friendly & trending
-  "OPO", "NAP", "KRK", "BEG", "OTP", "SOF", "TIA", "RAK",
-  // Tier 4: Mediterranean & islands
-  "AGP", "PMI", "NCE", "DBV", "SPU", "MLA", "SKG",
+// Default destination set, structured as explicit tiers. The search loop
+// processes tier-by-tier and stops as soon as enriched.length >= TARGET_RESULTS,
+// so Tier 2/3 are only touched when Tier 1/2 don't yield enough results.
+// Trimmed from 35 → 24 destinations: keeps every major hub and the most
+// popular leisure spots, drops the long tail (Sofia, Tirana, Marrakech, etc.).
+const DEFAULT_DESTINATION_TIERS = [
+  // Tier 1: major European hubs — highest route coverage, hit first.
+  ["LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "MAD", "BCN"],
+  // Tier 2: secondary capitals — used when Tier 1 yields < TARGET_RESULTS.
+  ["DUB", "VIE", "PRG", "ATH", "BUD", "OPO", "CPH", "IST"],
+  // Tier 3: leisure & Mediterranean — fallback only.
+  ["AGP", "PMI", "NCE", "DBV", "MLA", "NAP", "ZRH"],
 ];
+
 const MAX_ORIGINS           = 8;
-const MAX_COMBINATIONS      = 1200; // supports 4 origins × 36 dests × 7 flex dates; early-stop caps actual API calls
+const MAX_PAX_PER_ORIGIN    = 9;
+const TOTAL_PAX_CAP         = 16;
+const MAX_COMBINATIONS      = 1200; // sanity cap; tier early-break does the real saving in practice
+const TARGET_RESULTS        = Number(process.env.SEARCH_TARGET_RESULTS || 9);
 const CACHE_TTL_MS          = 10 * 60 * 1000;
 const MAX_CACHE_SIZE        = 200;
+const VERIFY_TIMEOUT_MS         = 8000;
+const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
 
 // ─── In-memory response cache with size guard ─────────────────────────────
 
@@ -97,11 +113,27 @@ function computeFairness(prices) {
   return { total, avg, spread, fairness };
 }
 
+// Pax-aware aggregates. Fairness/spread are computed on per-person prices
+// (what each traveler pays out of pocket), NOT scaled by pax — otherwise an
+// origin sending 2 people would unfairly drag the fairness score down even
+// when everyone pays the same per-person fare.
+function computeAggregates(flightsWithPax) {
+  const perPerson = flightsWithPax.map((f) => f.price);
+  const { spread, fairness } = computeFairness(perPerson);
+  const totalCost = flightsWithPax.reduce((s, f) => s + f.price * (f.passengers || 1), 0);
+  const totalPax  = flightsWithPax.reduce((s, f) => s + (f.passengers || 1), 0);
+  const avgPerTraveler = totalPax > 0 ? totalCost / totalPax : 0;
+  return { totalCost, totalPax, avgPerTraveler, spread, fairness };
+}
+
 /**
  * Fetch all origins for a single (destination, date) combination in parallel.
  * Returns a result object or null if any origin has no valid offer.
+ * originPax[i] = number of travellers departing from originList[i].
+ * Note: searches still use adults=1 at Amadeus; we scale per-origin in code so
+ * the inner cache hits across searches with different pax configurations.
  */
-async function fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFlight) {
+async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight) {
   const options = { ...optionsBase };
   if (ret) options.returnDate = ret;
 
@@ -119,25 +151,145 @@ async function fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFli
     if (safeMaxFlight !== null && r.value.price > safeMaxFlight) {
       return null; // any leg exceeds per-flight budget → discard
     }
-    flights.push({ origin: originList[i], price: r.value.price, offer: r.value.offer ?? null });
+    const pax = originPax[i] || 1;
+    flights.push({
+      origin:         originList[i],
+      price:          r.value.price,         // per-person fare
+      passengers:     pax,
+      totalForOrigin: Number((r.value.price * pax).toFixed(2)),
+      offer:          r.value.offer ?? null,
+    });
   }
 
   if (flights.length !== originList.length) return null;
 
-  const prices = flights.map((f) => f.price);
-  const { total, avg, spread, fairness } = computeFairness(prices);
+  const { totalCost, totalPax, avgPerTraveler, spread, fairness } = computeAggregates(flights);
 
   return {
     destination:              dest,
     bestDate:                 dep,
     bestReturnDate:           ret,
     flights,
-    totalCostEUR:             total,
-    averageCostPerTraveler:   Number(avg.toFixed(2)),
+    totalCostEUR:             Number(totalCost.toFixed(2)),
+    totalPassengers:          totalPax,
+    averageCostPerTraveler:   Number(avgPerTraveler.toFixed(2)),
     priceSpread:              Number(spread.toFixed(2)),
     fairnessScore:            Number(fairness.toFixed(1)),
     verifiedAt:               null,
   };
+}
+
+// ─── Verification (re-price the winning destination) ─────────────────────────
+// Calls Flight Offers Price on each leg of the winning destination in parallel,
+// recomputes totals from confirmed prices, and tags the result with a
+// verificationStatus + priceChangePct so the UI can show a trust badge.
+// Never re-ranks: changing the podium after the user sees results is worse UX
+// than honestly showing "price changed since search".
+async function verifyDestination(result) {
+  if (!result || !Array.isArray(result.flights) || result.flights.length === 0) {
+    return result;
+  }
+
+  const everyHasOffer = result.flights.every((f) => f.offer);
+  if (!everyHasOffer) {
+    return { ...result, verificationStatus: "failed" };
+  }
+
+  const verifyPromise = Promise.allSettled(
+    result.flights.map((f) => priceFlightOffer(f.offer))
+  );
+  const timeoutPromise = new Promise((resolve) =>
+    setTimeout(() => resolve("__timeout__"), VERIFY_TIMEOUT_MS)
+  );
+
+  const settled = await Promise.race([verifyPromise, timeoutPromise]);
+
+  if (settled === "__timeout__") {
+    console.warn(`[verify] timeout on ${result.destination}`);
+    return { ...result, verificationStatus: "timeout" };
+  }
+
+  const verifiedFlights = result.flights.map((f, i) => {
+    const r = settled[i];
+    const v = r && r.status === "fulfilled" ? r.value : null;
+    const verifiedPrice = v?.price ?? null;
+    const effective = verifiedPrice ?? f.price;
+    const pax = f.passengers || 1;
+    return {
+      ...f,
+      verifiedPrice,
+      totalForOrigin: Number((effective * pax).toFixed(2)),
+    };
+  });
+
+  // Build pax-aware effective flights and re-aggregate using the same helper as search.
+  const effective = verifiedFlights.map((f) => ({
+    price: f.verifiedPrice ?? f.price,
+    passengers: f.passengers || 1,
+  }));
+  const { totalCost: total, avgPerTraveler: avg, spread, fairness } = computeAggregates(effective);
+
+  const verifiedCount = verifiedFlights.filter((f) => f.verifiedPrice !== null).length;
+  const noneVerified = verifiedCount === 0;
+  const allVerified  = verifiedCount === verifiedFlights.length;
+
+  const priceChangePct = result.totalCostEUR > 0
+    ? ((total - result.totalCostEUR) / result.totalCostEUR) * 100
+    : 0;
+
+  let verificationStatus;
+  if (noneVerified) verificationStatus = "failed";
+  else if (!allVerified) verificationStatus = "partial";
+  else if (Math.abs(priceChangePct) >= VERIFY_PRICE_DELTA_PCT) verificationStatus = "changed";
+  else verificationStatus = "verified";
+
+  return {
+    ...result,
+    flights: verifiedFlights,
+    verifiedAt: new Date().toISOString(),
+    verifiedTotalCostEUR:        Number(total.toFixed(2)),
+    verifiedAveragePerTraveler:  Number(avg.toFixed(2)),
+    verifiedPriceSpread:         Number(spread.toFixed(2)),
+    verifiedFairnessScore:       Number(fairness.toFixed(1)),
+    priceChangePct:              Number(priceChangePct.toFixed(1)),
+    verificationStatus,
+  };
+}
+
+// Build the list of destination tiers to search. User-supplied destinations
+// bypass the tiered fallback and are treated as a single tier — they asked
+// for them explicitly, so we don't apply early-break across the list.
+function buildSearchTiers(customDestinations, originList) {
+  const dropOrigins = (arr) => arr.filter((d) => !originList.includes(d));
+
+  if (Array.isArray(customDestinations) && customDestinations.length > 0) {
+    const list = customDestinations
+      .map((d) => String(d || "").trim().toUpperCase())
+      .filter(isValidIata);
+    const filtered = dropOrigins([...new Set(list)]);
+    return filtered.length ? [filtered] : [];
+  }
+
+  return DEFAULT_DESTINATION_TIERS
+    .map((tier) => dropOrigins(tier))
+    .filter((tier) => tier.length > 0);
+}
+
+// Build an "origin → pax count" map from the raw origins + passengers arrays.
+// Aggregates duplicates so that origins=[MAD,MAD,LON] passengers=[1,1,2] →
+// originList=[MAD,LON] originPax=[2,2].
+function buildOriginPax(rawOrigins, passengers, originList) {
+  const paxByOrigin = {};
+  const list = Array.isArray(rawOrigins) ? rawOrigins : [];
+  for (let i = 0; i < list.length; i++) {
+    const code = String(list[i] || "").trim().toUpperCase();
+    if (!isValidIata(code)) continue;
+    let p = passengers ? Math.floor(Number(passengers[i])) : 1;
+    if (!Number.isFinite(p) || p < 1) p = 1;
+    if (p > MAX_PAX_PER_ORIGIN) p = MAX_PAX_PER_ORIGIN;
+    paxByOrigin[code] = (paxByOrigin[code] || 0) + p;
+  }
+  return originList.map((o) => paxByOrigin[o] || 1);
 }
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -148,6 +300,7 @@ router.post("/multi-origin", async (req, res) => {
   try {
     let {
       origins,
+      passengers,
       destinations,
       departureDate,
       returnDate,
@@ -191,6 +344,22 @@ router.post("/multi-origin", async (req, res) => {
       });
     }
 
+    // ── Passengers (aligned with raw origins array) ───────────────────────────
+    if (passengers !== undefined && !Array.isArray(passengers)) {
+      return res.status(400).json({
+        code: "INVALID_PASSENGERS",
+        message: "passengers debe ser un array alineado con origins.",
+      });
+    }
+    const originPax = buildOriginPax(origins, passengers, originList);
+    const totalPaxRequested = originPax.reduce((a, b) => a + b, 0);
+    if (totalPaxRequested > TOTAL_PAX_CAP) {
+      return res.status(400).json({
+        code: "TOO_MANY_PASSENGERS",
+        message: `Máximo ${TOTAL_PAX_CAP} pasajeros en total (recibidos ${totalPaxRequested}).`,
+      });
+    }
+
     // ── Validate dates ────────────────────────────────────────────────────────
     if (!departureDate || !isValidISODate(departureDate)) {
       return res.status(400).json({
@@ -213,7 +382,7 @@ router.post("/multi-origin", async (req, res) => {
 
     // ── Cache ─────────────────────────────────────────────────────────────────
     const cacheKey = JSON.stringify({
-      originList, destinations, departureDate, returnDate,
+      originList, originPax, destinations, departureDate, returnDate,
       tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
     });
     const cached = getCached(cacheKey);
@@ -224,11 +393,9 @@ router.post("/multi-origin", async (req, res) => {
       return res.json(cached);
     }
 
-    // ── Destination list ──────────────────────────────────────────────────────
-    const destinationList =
-      Array.isArray(destinations) && destinations.length > 0
-        ? destinations.map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata)
-        : DEFAULT_DESTINATIONS.filter((d) => !originList.includes(d)); // skip origins that match
+    // ── Destination tiers ─────────────────────────────────────────────────────
+    const searchTiers = buildSearchTiers(destinations, originList);
+    const destinationList = searchTiers.flat(); // used only for combination guard + logging
 
     if (destinationList.length === 0) {
       return res.status(400).json({
@@ -268,59 +435,71 @@ router.post("/multi-origin", async (req, res) => {
     const optionsBase = { nonStop, max: 5 };
     if (travelClass) optionsBase.travelClass = travelClass;
     const enriched    = [];
+    const CHUNK_SIZE  = 3;
+    let destsTouched  = 0; // for logging savings vs worst case
 
-    console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas = ${combinations} llamadas`);
+    console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas (worst case ${combinations} llamadas, target ${TARGET_RESULTS} resultados)`);
     const t0 = Date.now();
 
-    // Process destinations in parallel chunks of 3 to respect rate limits
-    const CHUNK_SIZE = 3;
-    const validDestinations = destinationList.filter(d => !originList.includes(d));
+    // Tier-aware processing: tier N is only entered if previous tiers yielded
+    // fewer than TARGET_RESULTS. Within a tier, destinations are chunked for
+    // controlled parallelism while still respecting the global early-stop.
+    tierLoop:
+    for (let tierIdx = 0; tierIdx < searchTiers.length; tierIdx++) {
+      const tier = searchTiers[tierIdx];
+      console.log(`[search] tier ${tierIdx + 1}: ${tier.length} destinos`);
 
-    for (let chunkIdx = 0; chunkIdx < validDestinations.length && enriched.length < 9; chunkIdx += CHUNK_SIZE) {
-      const chunk = validDestinations.slice(chunkIdx, chunkIdx + CHUNK_SIZE);
+      for (let chunkIdx = 0; chunkIdx < tier.length && enriched.length < TARGET_RESULTS; chunkIdx += CHUNK_SIZE) {
+        const chunk = tier.slice(chunkIdx, chunkIdx + CHUNK_SIZE);
+        destsTouched += chunk.length;
 
-      // Search all destinations in this chunk in parallel
-      const chunkResults = await Promise.allSettled(
-        chunk.map(async (dest) => {
-          let bestForDest = null;
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (dest) => {
+            let bestForDest = null;
 
-          for (const dep of dateCandidates) {
-            const ret = tripType === "roundtrip"
-              ? toISODate(addDays(parseISODate(dep), tripLenDays))
-              : null;
+            for (const dep of dateCandidates) {
+              const ret = tripType === "roundtrip"
+                ? toISODate(addDays(parseISODate(dep), tripLenDays))
+                : null;
 
-            const result = await fetchDestDate(originList, dest, dep, ret, optionsBase, safeMaxFlight);
-            if (!result) continue;
+              const result = await fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight);
+              if (!result) continue;
 
-            // Apply per-traveler budget filter
-            if (safeMaxAvg !== null && result.averageCostPerTraveler > safeMaxAvg) continue;
+              if (safeMaxAvg !== null && result.averageCostPerTraveler > safeMaxAvg) continue;
 
-            // Keep the best date variant for this destination
-            if (
-              !bestForDest ||
-              (optimizeBy === "fairness"
-                ? result.fairnessScore > bestForDest.fairnessScore ||
-                  (result.fairnessScore === bestForDest.fairnessScore &&
-                   result.totalCostEUR < bestForDest.totalCostEUR)
-                : result.totalCostEUR < bestForDest.totalCostEUR)
-            ) {
-              bestForDest = result;
+              if (
+                !bestForDest ||
+                (optimizeBy === "fairness"
+                  ? result.fairnessScore > bestForDest.fairnessScore ||
+                    (result.fairnessScore === bestForDest.fairnessScore &&
+                     result.totalCostEUR < bestForDest.totalCostEUR)
+                  : result.totalCostEUR < bestForDest.totalCostEUR)
+              ) {
+                bestForDest = result;
+              }
             }
+
+            return bestForDest;
+          })
+        );
+
+        for (const result of chunkResults) {
+          if (result.status === "fulfilled" && result.value && enriched.length < TARGET_RESULTS) {
+            enriched.push(result.value);
           }
-
-          return bestForDest;
-        })
-      );
-
-      // Collect results from this chunk
-      for (const result of chunkResults) {
-        if (result.status === "fulfilled" && result.value && enriched.length < 9) {
-          enriched.push(result.value);
         }
+      }
+
+      if (enriched.length >= TARGET_RESULTS) {
+        const skipped = searchTiers.slice(tierIdx + 1).reduce((s, t) => s + t.length, 0);
+        if (skipped > 0) {
+          console.log(`[search] target ${TARGET_RESULTS} alcanzado en tier ${tierIdx + 1}, omitidos ${skipped} destinos de tiers posteriores`);
+        }
+        break tierLoop;
       }
     }
 
-    console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados`);
+    console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados, ${destsTouched}/${destinationList.length} destinos consultados`);
 
     if (!enriched.length) {
       const payload = { flights: [], bestDestination: null };
@@ -337,6 +516,23 @@ router.post("/multi-origin", async (req, res) => {
       }
       return a.totalCostEUR - b.totalCostEUR;
     });
+
+    // Verify the winner before responding (re-prices its N legs via Amadeus pricing).
+    // Only the winner is verified to keep quota usage bounded. Failures degrade
+    // gracefully: the original search price is shown with verificationStatus tag.
+    try {
+      const tVerify = Date.now();
+      const verifiedWinner = await verifyDestination(enriched[0]);
+      enriched[0] = verifiedWinner;
+      console.log(
+        `[verify] ${verifiedWinner.destination} → ${verifiedWinner.verificationStatus}` +
+        (verifiedWinner.priceChangePct !== undefined ? ` (Δ ${verifiedWinner.priceChangePct}%)` : "") +
+        ` in ${Date.now() - tVerify}ms`
+      );
+    } catch (verifyErr) {
+      console.warn("[verify] error:", verifyErr.message);
+      enriched[0] = { ...enriched[0], verificationStatus: "failed" };
+    }
 
     const payload = {
       flights:          enriched,

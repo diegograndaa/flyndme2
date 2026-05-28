@@ -269,6 +269,37 @@ async function getCheapestPrice(origin, destination, departureDate, options = {}
   }
 }
 
+// ─── Flight Offers Price (verification) ──────────────────────────────────
+// Re-prices a single offer to confirm availability and final price.
+// Use sparingly: it counts toward Amadeus quota and is slower than search.
+async function priceFlightOffer(offer) {
+  if (!offer) return null;
+  try {
+    const token = await getAccessToken();
+    const response = await requestWithRetry(
+      () =>
+        http.post(
+          `${BASE_URL}/v1/shopping/flight-offers/pricing`,
+          { data: { type: "flight-offers-pricing", flightOffers: [offer] } },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/vnd.amadeus+json",
+            },
+          }
+        ),
+      `pricing offer ${offer.id || "?"}`
+    );
+    const priced = response.data?.data?.flightOffers?.[0];
+    if (!priced) return null;
+    const newPrice = Number.parseFloat(priced.price?.grandTotal);
+    if (!Number.isFinite(newPrice)) return null;
+    return { price: newPrice, offer: priced };
+  } catch {
+    return null;
+  }
+}
+
 async function getCheapestOffer(origin, destination, departureDate, options = {}) {
   if (origin === destination) return null;
   try {
@@ -293,14 +324,23 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
 
     return {
       price: cheapestValue,
+      // Keep all fields required by Flight Offers Price. Trimming them out
+      // makes the pricing call return 32171 MANDATORY DATA MISSING and
+      // every verification ends in "failed".
       offer: {
-        id:                     cheapest.id,
-        price:                  cheapest.price,
-        itineraries:            cheapest.itineraries,
-        validatingAirlineCodes: cheapest.validatingAirlineCodes,
-        numberOfBookableSeats:  cheapest.numberOfBookableSeats,
-        lastTicketingDate:      cheapest.lastTicketingDate,
-        travelerPricings:       cheapest.travelerPricings,
+        type:                     cheapest.type,
+        source:                   cheapest.source,
+        id:                       cheapest.id,
+        instantTicketingRequired: cheapest.instantTicketingRequired,
+        nonHomogeneous:           cheapest.nonHomogeneous,
+        oneWay:                   cheapest.oneWay,
+        lastTicketingDate:        cheapest.lastTicketingDate,
+        numberOfBookableSeats:    cheapest.numberOfBookableSeats,
+        itineraries:              cheapest.itineraries,
+        price:                    cheapest.price,
+        pricingOptions:           cheapest.pricingOptions,
+        validatingAirlineCodes:   cheapest.validatingAirlineCodes,
+        travelerPricings:         cheapest.travelerPricings,
       },
     };
   } catch {
@@ -332,4 +372,4 @@ async function healthCheck() {
   }
 }
 
-module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, healthCheck };
+module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, priceFlightOffer, healthCheck };
