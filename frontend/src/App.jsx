@@ -5438,8 +5438,11 @@ export default function App() {
       }
 
       // Step 2: actual search (backend is now warm)
+      // Backend does all pax math (totals, fairness, share/OG) — see chore: backend hardening commit.
+      const paxForReq = cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1)));
       const body = {
         origins: cleanOrigins,
+        passengers: paxForReq,
         departureDate,
         tripType,
         optimizeBy,
@@ -5487,27 +5490,9 @@ export default function App() {
             return;
           }
 
-          // Adjust totals for passenger counts (>1 traveler per origin)
-          const paxMap = {};
-          cleanOrigins.forEach((o, i) => { paxMap[o] = passengers[i] || 1; });
-          const totalPax = cleanOrigins.reduce((s, o, i) => s + (passengers[i] || 1), 0);
-          const hasMultiPax = totalPax > cleanOrigins.length;
-
-          const adjusted = hasMultiPax ? arr.map((dest) => {
-            const adjFlights = (dest.flights || []).map((f) => ({
-              ...f,
-              passengers: paxMap[f.origin] || 1,
-              totalForOrigin: f.price * (paxMap[f.origin] || 1),
-            }));
-            const adjTotal = adjFlights.reduce((s, f) => s + f.totalForOrigin, 0);
-            return {
-              ...dest,
-              flights: adjFlights,
-              totalCostEUR: adjTotal,
-              averageCostPerTraveler: adjTotal / totalPax,
-              _totalPassengers: totalPax,
-            };
-          }) : arr;
+          // Backend now returns totals + per-flight passengers/totalForOrigin
+          // already scaled by pax — no frontend post-processing needed.
+          const adjusted = arr;
 
           setFlights(adjusted);
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
