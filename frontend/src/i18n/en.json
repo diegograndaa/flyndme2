@@ -249,6 +249,13 @@
     "arrivalSpread": "Everyone arrives within {{time}}",
     "shareStory": "Share as story"
   },
+  "verifyBadge": {
+    "confirmed": "Price confirmed",
+    "changed": "Price updated {{pct}}",
+    "indicative": "Indicative price",
+    "verifiedAt": "Verified at {{time}}",
+    "indicativeHint": "Live re-pricing was unavailable; showing original search price."
+  },
   "vs": {
     "title": "Compare destinations",
     "totalCost": "Total group cost",

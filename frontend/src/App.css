@@ -3326,6 +3326,45 @@ html {
   animation: fadeInUp .4s ease .35s both;
 }
 
+/* ── Verification badge (price re-priced via Amadeus pricing) ──── */
+.wc-verify-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: var(--radius-full);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  animation: fadeInUp .4s ease .25s both;
+  cursor: help;
+}
+.wc-verify-chip .wc-verify-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 11px;
+  line-height: 1;
+}
+.wc-verify-chip--verified {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 2px 8px rgba(22,163,74,.4);
+}
+.wc-verify-chip--changed {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  box-shadow: 0 2px 8px rgba(217,119,6,.4);
+}
+.wc-verify-chip--indicative {
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: rgba(255,255,255,.9);
+}
+
 /* ── CSV export button in stats bar ───────────────────────────── */
 
 .fm-stats-export {

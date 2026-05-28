@@ -14,6 +14,7 @@ import {
   airportName, MULTI_AIRPORT, countryFlag, destQuickInfo
 } from "./utils/helpers";
 import { getCityImage } from "./utils/cityImages";
+import VerificationBadge from "./components/VerificationBadge";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -4269,6 +4270,8 @@ const WinnerCard = React.memo(function WinnerCard({
         </button>
         {/* Savings + trip duration + countdown + vs last search chips */}
         <div className="wc-chips-overlay">
+          {/* Verification badge (first so it's the most visible trust signal) */}
+          <VerificationBadge dest={dest} />
           {/* Countdown to departure */}
           {(() => {
             const depD = dep || depDate;
