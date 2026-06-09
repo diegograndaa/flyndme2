@@ -25,8 +25,64 @@ const RATE_MIN_INTERVAL_MS = Number(process.env.AMADEUS_RATE_MIN_INTERVAL_MS || 
 const MAX_CONCURRENCY      = Number(process.env.AMADEUS_MAX_CONCURRENCY      || 3);
 const MAX_RETRIES          = Number(process.env.AMADEUS_MAX_RETRIES          || 3);
 const BASE_BACKOFF_MS      = Number(process.env.AMADEUS_BASE_BACKOFF_MS      || 600);
-const SEARCH_CACHE_TTL_MS  = Number(process.env.AMADEUS_SEARCH_CACHE_TTL_MS  || 15 * 60 * 1000);
+// 60 min TTL: prices barely move within an hour and a longer cache slashes
+// quota usage — critical while we live off the 2,000 free calls/month.
+const SEARCH_CACHE_TTL_MS  = Number(process.env.AMADEUS_SEARCH_CACHE_TTL_MS  || 60 * 60 * 1000);
 const MAX_CACHE_SIZE       = 500;
+
+// ─── Monthly API budget guard ────────────────────────────────────────────────
+// Hard cap on real Amadeus calls (search + pricing) per calendar month so we
+// never exceed the free production quota (2,000/month for Flight Offers
+// Search). Set AMADEUS_MONTHLY_BUDGET=0 to disable. Default leaves a safety
+// margin: the in-memory counter resets if the process restarts, and retries
+// can consume extra quota that we count only once.
+const MONTHLY_BUDGET = Number(process.env.AMADEUS_MONTHLY_BUDGET ?? 1800);
+
+let budgetMonth = currentMonth();
+let budgetUsed  = 0;
+
+function currentMonth() {
+  return new Date().toISOString().slice(0, 7); // "2026-06"
+}
+
+function rolloverIfNeeded() {
+  const m = currentMonth();
+  if (m !== budgetMonth) {
+    console.log(`[Budget] Nuevo mes ${m} — contador reiniciado (anterior: ${budgetUsed} llamadas en ${budgetMonth})`);
+    budgetMonth = m;
+    budgetUsed  = 0;
+  }
+}
+
+function consumeBudget() {
+  rolloverIfNeeded();
+  budgetUsed += 1;
+  if (MONTHLY_BUDGET > 0 && budgetUsed === Math.floor(MONTHLY_BUDGET * 0.8)) {
+    console.warn(`[Budget] ⚠ 80% del presupuesto mensual consumido (${budgetUsed}/${MONTHLY_BUDGET})`);
+  }
+}
+
+function hasBudget() {
+  rolloverIfNeeded();
+  return MONTHLY_BUDGET <= 0 || budgetUsed < MONTHLY_BUDGET;
+}
+
+function budgetStatus() {
+  rolloverIfNeeded();
+  return {
+    month:     budgetMonth,
+    used:      budgetUsed,
+    budget:    MONTHLY_BUDGET,
+    remaining: MONTHLY_BUDGET <= 0 ? Infinity : Math.max(0, MONTHLY_BUDGET - budgetUsed),
+    unlimited: MONTHLY_BUDGET <= 0,
+  };
+}
+
+function budgetExceededError() {
+  const err = new Error("Presupuesto mensual de llamadas a Amadeus agotado.");
+  err.code = "BUDGET_EXCEEDED";
+  return err;
+}
 
 // ─── Token cache ──────────────────────────────────────────────────────────────
 
@@ -205,8 +261,11 @@ async function searchFlightOffer(origin, destination, departureDate, options = {
   const cached   = fromCache(cacheKey);
   if (cached) return cached;
 
+  if (!hasBudget()) throw budgetExceededError();
+
   const token = await getAccessToken();
 
+  consumeBudget();
   const response = await requestWithRetry(
     () =>
       http.get(`${BASE_URL}/v2/shopping/flight-offers`, {
@@ -244,7 +303,9 @@ async function getCheapestPrice(origin, destination, departureDate, options = {}
 async function priceFlightOffer(offer) {
   if (!offer) return null;
   try {
+    if (!hasBudget()) return null; // skip verification rather than fail the search
     const token = await getAccessToken();
+    consumeBudget();
     const response = await requestWithRetry(
       () =>
         http.post(
@@ -341,7 +402,7 @@ async function healthCheck() {
   }
 }
 
-module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, priceFlightOffer, healthCheck };
+module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, priceFlightOffer, healthCheck, budgetStatus };
 
 // Internals expuestos SOLO para tests unitarios (no usar desde la app).
 module.exports.__test = { makeCacheKey };

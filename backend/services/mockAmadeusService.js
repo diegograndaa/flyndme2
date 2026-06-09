@@ -179,6 +179,11 @@ async function healthCheck() {
   };
 }
 
+// Mock has no real quota — report unlimited budget so the route gate never trips.
+function budgetStatus() {
+  return { month: new Date().toISOString().slice(0, 7), used: 0, budget: 0, remaining: Infinity, unlimited: true };
+}
+
 module.exports = {
   getAccessToken,
   searchFlightOffer,
@@ -186,4 +191,5 @@ module.exports = {
   getCheapestOffer,
   priceFlightOffer,
   healthCheck,
+  budgetStatus,
 };

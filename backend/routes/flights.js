@@ -7,7 +7,7 @@ const USE_MOCK = String(process.env.USE_MOCK || "").toLowerCase() === "true";
 const flightService = USE_MOCK
   ? require("../services/mockAmadeusService")
   : require("../services/amadeusService");
-const { getCheapestOffer, priceFlightOffer } = flightService;
+const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -29,7 +29,10 @@ const MAX_ORIGINS           = 8;
 const MAX_PAX_PER_ORIGIN    = 9;
 const TOTAL_PAX_CAP         = 16;
 const MAX_COMBINATIONS      = 1200; // sanity cap; tier early-break does the real saving in practice
-const TARGET_RESULTS        = Number(process.env.SEARCH_TARGET_RESULTS || 9);
+// 6 destinations is enough for the user to decide and saves ~33% of quota vs 9.
+const TARGET_RESULTS        = Number(process.env.SEARCH_TARGET_RESULTS || 6);
+// Don't spend quota on verification when the remaining budget is this low.
+const VERIFY_MIN_BUDGET     = 10;
 const CACHE_TTL_MS          = 10 * 60 * 1000;
 const MAX_CACHE_SIZE        = 200;
 const VERIFY_TIMEOUT_MS         = 8000;
@@ -267,7 +270,14 @@ function buildOriginPax(rawOrigins, passengers, originList) {
   return originList.map((o) => paxByOrigin[o] || 1);
 }
 
-// ─── Route ────────────────────────────────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+// Monthly Amadeus budget status — costs zero quota. Useful to monitor how much
+// of the free tier is left without opening the Amadeus dashboard.
+router.get("/budget", (_req, res) => {
+  const b = budgetStatus();
+  res.json({ ...b, remaining: b.unlimited ? null : b.remaining });
+});
 
 router.post("/multi-origin", async (req, res) => {
   const startTime = Date.now();
@@ -408,6 +418,18 @@ router.post("/multi-origin", async (req, res) => {
       return res.json(cached);
     }
 
+    // ── Monthly budget gate (free Amadeus quota protection) ──────────────────
+    // Tras el chequeo de cache: un hit de cache no consume quota y debe
+    // servirse aunque el presupuesto mensual este agotado.
+    const budget = budgetStatus();
+    if (budget.remaining <= 0) {
+      console.warn(`[Budget] Búsqueda rechazada — presupuesto mensual agotado (${budget.used}/${budget.budget})`);
+      return res.status(429).json({
+        code: "MONTHLY_BUDGET_EXCEEDED",
+        message: "Hemos alcanzado el límite mensual de búsquedas gratuitas. Vuelve a intentarlo el próximo mes.",
+      });
+    }
+
     // ── Date candidates ───────────────────────────────────────────────────────
     const depBase = parseISODate(departureDate);
     let tripLenDays = 0;
@@ -525,18 +547,24 @@ router.post("/multi-origin", async (req, res) => {
     // Verify the winner before responding (re-prices its N legs via Amadeus pricing).
     // Only the winner is verified to keep quota usage bounded. Failures degrade
     // gracefully: the original search price is shown with verificationStatus tag.
-    try {
-      const tVerify = Date.now();
-      const verifiedWinner = await verifyDestination(enriched[0]);
-      enriched[0] = verifiedWinner;
-      console.log(
-        `[verify] ${verifiedWinner.destination} → ${verifiedWinner.verificationStatus}` +
-        (verifiedWinner.priceChangePct !== undefined ? ` (Δ ${verifiedWinner.priceChangePct}%)` : "") +
-        ` in ${Date.now() - tVerify}ms`
-      );
-    } catch (verifyErr) {
-      console.warn("[verify] error:", verifyErr.message);
+    // Skipped entirely when the remaining monthly budget is too low.
+    if (budgetStatus().remaining < VERIFY_MIN_BUDGET) {
+      console.warn("[verify] omitida — presupuesto mensual casi agotado");
       enriched[0] = { ...enriched[0], verificationStatus: "failed" };
+    } else {
+      try {
+        const tVerify = Date.now();
+        const verifiedWinner = await verifyDestination(enriched[0]);
+        enriched[0] = verifiedWinner;
+        console.log(
+          `[verify] ${verifiedWinner.destination} → ${verifiedWinner.verificationStatus}` +
+          (verifiedWinner.priceChangePct !== undefined ? ` (Δ ${verifiedWinner.priceChangePct}%)` : "") +
+          ` in ${Date.now() - tVerify}ms`
+        );
+      } catch (verifyErr) {
+        console.warn("[verify] error:", verifyErr.message);
+        enriched[0] = { ...enriched[0], verificationStatus: "failed" };
+      }
     }
 
     const payload = {
