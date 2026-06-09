@@ -20,3 +20,6 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude local settings (per-machine)
+.claude/settings.local.json
