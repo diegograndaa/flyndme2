@@ -13,7 +13,7 @@ import {
   formatEur, formatDate, weekdayOf, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
   airportName, countryFlag, destQuickInfo
 } from "./utils/helpers";
-import { convertPrice, approxDistKm, pickBest, buildResultsCsv } from "./utils/resultsLogic";
+import { convertPrice, approxDistKm, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, FriendlyError, AnimatedStat } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
@@ -122,10 +122,6 @@ class ErrorBoundary extends React.Component {
 // ─── Keyboard shortcuts overlay ──────────────────────────────────────────────
 
 
-
-// ─── Animated typing placeholder ─────────────────────────────────────────────
-
-const TYPING_EXAMPLES = ["Madrid", "London", "Berlin", "Rome", "Paris", "Lisbon", "MAD", "LON", "BCN"];
 
 // ─── Approximate distances for price-per-km ─────────────────────────────────
 

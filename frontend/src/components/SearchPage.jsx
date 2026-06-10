@@ -9,6 +9,10 @@ import {
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 
+// Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
+// único consumidor es este componente).
+const TYPING_EXAMPLES = ["Madrid", "London", "Berlin", "Rome", "Paris", "Lisbon", "MAD", "LON", "BCN"];
+
 function useDateWarnings(departureDate, returnDate, tripType) {
   const { t } = useI18n();
   return useMemo(() => {
