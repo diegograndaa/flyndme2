@@ -301,3 +301,15 @@ backend 31/31 · JSX OK.
 
 **Pendiente**: aplicar el mismo tratamiento al flujo `?share=` (id ya se
 valida en backend).
+
+## Mejora 16 — Limpieza: scripts de verificación obsoletos retirados a scripts/legacy/
+
+**Qué**: `verify-simplify.js` y `verify35.js` (raíz del repo) validaban
+refactors de rondas antiguas y desde la poda de mayo fallan siempre (16/34 y
+29/39) porque comprueban componentes eliminados. Ejecutarlos sugería
+regresiones falsas. Movidos a `scripts/legacy/` con README explicando su
+estado y cuál es la verificación vigente (las dos suites npm test).
+
+**Verificación**: frontend 32/32 · backend 31/31.
+
+**Pendiente**: nada.
