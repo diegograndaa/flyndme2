@@ -111,3 +111,29 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("MAD"));
 });
+
+test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
+  const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
+  const noop = () => {};
+  const html = renderWithI18n(React.createElement(WinnerCard, {
+    dest: FIXTURE_DEST,
+    origins: ["MAD", "LON"],
+    cleanOrigins: ["MAD", "LON"],
+    departureDate: "2026-09-15",
+    returnDate: "",
+    tripType: "oneway",
+    currency: "EUR",
+    optimizeBy: "total",
+    uiCriterion: "total",
+    searchDuration: 3.2,
+    lastBestPrice: 0,
+    searchBadges: [],
+    shareStatus: "",
+    onViewAlternatives: noop, onShare: noop, onShareWhatsApp: noop,
+    onShareTelegram: noop, onShareEmail: noop, onShareNative: noop,
+    onCopySearchLink: noop, onChangeSearch: noop,
+    onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
+  assert.ok(html.includes("Rome") || html.includes("ROM"));
+});

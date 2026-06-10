@@ -383,3 +383,22 @@ Movimiento mecánico sin cambios de lógica. **App.jsx: 3.448 → 2.735 líneas*
 del módulo (sus hooks privados) — cero riesgo de closures rotos.
 
 **Pendiente**: WinnerCard (588 líneas) — siguiente extracción.
+
+## Mejora 21 — Troceo de App.jsx (IV): WinnerCard a su propio archivo
+
+**Qué**: WinnerCard (585 líneas — tarjeta del ganador con precios animados,
+verificación, desglose, CTAs y compartir) extraída a
+`components/WinnerCard.jsx` con sus helpers privados (`useFairnessLabel`,
+`airlineLogo`, `AnimatedPrice`, `destCategoryTags`). `useCountUp` y
+`AnimatedStat` (compartidos con App) viven ahora en UiBits.jsx.
+**App.jsx: 2.735 → 2.072 líneas** (3.587 al empezar la sesión: −42%).
+
+**Nota**: el harness de render demostró su valor — detectó 3 imports
+olvidados (useRef, fairnessColor, formatEur) que el parser daba por buenos y
+habrían sido pantallazos en blanco en producción.
+
+**Verificación**: render directo de WinnerCard con fixture + App completa.
+Frontend 40/40 · backend 32/32.
+
+**Pendiente**: App.jsx aún contiene Landing (206), CostSplitCard y varios
+paneles menores — extraíbles con el mismo método cuando toque.
