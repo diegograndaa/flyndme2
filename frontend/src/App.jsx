@@ -14,6 +14,7 @@ import {
   airportName, countryFlag, destQuickInfo
 } from "./utils/helpers";
 import { convertPrice, approxDistKm, pickBest, buildResultsCsv } from "./utils/resultsLogic";
+import { parseSearchLinkParams } from "./utils/urlParams";
 import { getCityImage } from "./utils/cityImages";
 import VerificationBadge from "./components/VerificationBadge";
 
@@ -2726,19 +2727,19 @@ export default function App() {
 
   // ── Load search params from URL (from copy-search-link) ────────────────
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("share")) return; // handled above
-    const urlOrigins = params.getAll("o").map(s => s.trim().toUpperCase()).filter(Boolean);
-    if (!urlOrigins.length) return;
-    setOrigins(urlOrigins);
-    setPassengers(urlOrigins.map(() => 1));
-    if (params.get("dep")) setDepartureDate(params.get("dep"));
-    if (params.get("ret")) setReturnDate(params.get("ret"));
-    if (params.get("trip")) setTripType(params.get("trip"));
-    if (params.get("opt")) setOptimizeBy(params.get("opt"));
-    if (params.get("direct") === "1") setDirectOnly(true);
-    if (params.get("cabin")) setCabinClass(params.get("cabin"));
-    if (params.get("cur")) setCurrency(params.get("cur"));
+    // Validación centralizada en utils/urlParams.js: una URL manipulada ya no
+    // puede inyectar estado inválido (cabina/fechas/divisa fuera de rango).
+    const parsed = parseSearchLinkParams(window.location.search);
+    if (!parsed) return; // sin orígenes válidos o es un share link
+    setOrigins(parsed.origins);
+    setPassengers(parsed.origins.map(() => 1));
+    if (parsed.departureDate) setDepartureDate(parsed.departureDate);
+    if (parsed.returnDate) setReturnDate(parsed.returnDate);
+    if (parsed.tripType) setTripType(parsed.tripType);
+    if (parsed.optimizeBy) setOptimizeBy(parsed.optimizeBy);
+    if (parsed.directOnly) setDirectOnly(true);
+    if (parsed.cabinClass) setCabinClass(parsed.cabinClass);
+    if (parsed.currency) setCurrency(parsed.currency);
     setView("search");
     window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps

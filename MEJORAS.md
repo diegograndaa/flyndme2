@@ -285,3 +285,19 @@ el baseline a0a5b27 (comprueban componentes eliminados en la poda de mayo) —
 no son regresión; candidatos a retirarse.
 
 **Pendiente**: retirar o actualizar verify-simplify.js / verify35.js.
+
+## Mejora 15 — Robustez: parámetros de URL validados (utils/urlParams.js)
+
+**Qué**: el efecto que carga búsquedas desde URL (`?o=MAD&dep=...`, función
+"copiar enlace de búsqueda") inyectaba los parámetros al estado sin validar:
+`?cabin=FOO` → 400 evitable del backend; `?cur=BTC`, fechas malformadas o
+`?trip=banana` entraban tal cual al estado de React. Extraído a
+`utils/urlParams.js` con validación estricta por parámetro (IATA, fechas ISO,
+enums de cabina/criterio/divisa); lo inválido se descarta sin romper lo
+válido. App.jsx se reduce y queda más declarativo.
+
+**Tests**: nuevo `tests/urlParams.test.mjs` (6 tests). Frontend 32/32 ·
+backend 31/31 · JSX OK.
+
+**Pendiente**: aplicar el mismo tratamiento al flujo `?share=` (id ya se
+valida en backend).
