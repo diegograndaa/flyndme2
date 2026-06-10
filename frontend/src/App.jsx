@@ -21,7 +21,7 @@ import SearchPage from "./components/SearchPage";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } from "./components/ChromeBits";
-import { CostSplitCard, PlanYourTripCTA, SearchHistoryPanel, DestImageBanner, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
+import { CostSplitCard, PlanYourTripCTA, DestImageBanner, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { getCityImage } from "./utils/cityImages";
 import VerificationBadge from "./components/VerificationBadge";
@@ -202,6 +202,16 @@ export default function App() {
   // Nota: el pushState vive FUERA del updater de React. Un updater debe ser
   // puro; con StrictMode (dev) se ejecuta dos veces y duplicaba entradas de
   // historial (el botón atrás necesitaba dos pulsaciones por vista).
+  // Landing y búsqueda fusionadas: "search" = home con scroll al formulario
+  useEffect(() => {
+    if (view === "search") {
+      const id = setTimeout(() => {
+        document.querySelector(".sf-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+      return () => clearTimeout(id);
+    }
+  }, [view]);
+
   const setView = useCallback((newView) => {
     if (viewRef.current !== newView && !skipHistoryPush.current) {
       window.history.pushState({ view: newView }, "", `#${newView}`);
@@ -872,10 +882,10 @@ export default function App() {
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
-            {view !== "landing" && (
+            {view === "results" && (
               <button type="button" className="btn btn-sm btn-outline-secondary"
                 onClick={() => { setView("search"); setShowAlt(false); }}>
-                {view === "results" ? t("header.newSearch") : t("header.home")}
+                {t("header.newSearch")}
               </button>
             )}
           </div>
@@ -924,52 +934,31 @@ export default function App() {
 
       {/* Views */}
       <div id="main-content">
-      {view === "landing" && (
-        <div className="view-enter" key="landing">
-          <Landing onStart={() => setView("search")} onStartWithRoute={(origins, dests) => {
-            setOrigins(origins);
-            setPassengers(origins.map(() => 1));
-            if (dests.length) setSelectedDests(dests);
-            setView("search");
-          }} />
-          {/* Search history panel on landing */}
-          <div className="container" style={{ maxWidth: 1080 }}>
-            <SearchHistoryPanel
-              searches={recentSearches}
-              onLoad={(entry) => { loadRecentSearch(entry); setView("search"); }}
-              onClear={clearRecentSearches}
-              t={t}
+      {(view === "landing" || view === "search") && (
+        <div className="view-enter" key="home">
+          <Landing searchForm={
+            <SearchPage
+              origins={origins}           setOrigins={setOrigins}
+              tripType={tripType}         setTripType={setTripType}
+              departureDate={departureDate} setDepartureDate={setDepartureDate}
+              returnDate={returnDate}     setReturnDate={setReturnDate}
+              optimizeBy={optimizeBy}     setOptimizeBy={setOptimizeBy}
+              budgetEnabled={budgetEnabled} setBudgetEnabled={setBudgetEnabled}
+              maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
+              flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
+              flexDays={flexDays}         setFlexDays={setFlexDays}
+              selectedDests={selectedDests} setSelectedDests={setSelectedDests}
+              passengers={passengers}     setPassengers={setPassengers}
+              directOnly={directOnly}     setDirectOnly={setDirectOnly}
+              cabinClass={cabinClass}     setCabinClass={setCabinClass}
+              currency={currency}         setCurrency={setCurrency}
+              loading={loading}           error={error}
+              onSubmit={handleSubmit}
+              recentSearches={recentSearches}
+              onLoadRecent={loadRecentSearch}
+              onClearRecent={clearRecentSearches}
             />
-          </div>
-        </div>
-      )}
-
-      {view === "search" && (
-        <div className="view-enter view-enter-search" key="search">
-        <div className="container" style={{ maxWidth: 960 }}>
-          <Breadcrumb current="search" onNavigate={(k) => { setView(k); if (k === "landing") setShowAlt(false); }} />
-        </div>
-        <SearchPage
-          origins={origins}           setOrigins={setOrigins}
-          tripType={tripType}         setTripType={setTripType}
-          departureDate={departureDate} setDepartureDate={setDepartureDate}
-          returnDate={returnDate}     setReturnDate={setReturnDate}
-          optimizeBy={optimizeBy}     setOptimizeBy={setOptimizeBy}
-          budgetEnabled={budgetEnabled} setBudgetEnabled={setBudgetEnabled}
-          maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
-          flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
-          flexDays={flexDays}         setFlexDays={setFlexDays}
-          selectedDests={selectedDests} setSelectedDests={setSelectedDests}
-          passengers={passengers}     setPassengers={setPassengers}
-          directOnly={directOnly}     setDirectOnly={setDirectOnly}
-          cabinClass={cabinClass}     setCabinClass={setCabinClass}
-          currency={currency}         setCurrency={setCurrency}
-          loading={loading}           error={error}
-          onSubmit={handleSubmit}
-          recentSearches={recentSearches}
-          onLoadRecent={loadRecentSearch}
-          onClearRecent={clearRecentSearches}
-        />
+          } />
         </div>
       )}
 

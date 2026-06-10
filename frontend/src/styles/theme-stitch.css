@@ -296,3 +296,16 @@
 .app-footer-brand.app-footer-brand { color: var(--primary); font-weight: 800; }
 .app-footer-link.app-footer-link { color: var(--slate-500); }
 .app-footer-link.app-footer-link:hover { color: var(--secondary); }
+
+/* ── Home fusionada (hero + buscador en una pantalla) ──────────── */
+.lp-hero--merged.lp-hero--merged {
+  padding: 56px 0 8px;
+  text-align: left;
+}
+.lp-hero--merged .lp-h1 { max-width: 720px; }
+.lp-hero--merged .lp-lead { max-width: 560px; margin-bottom: 0; }
+.lp-search-section { padding: 8px 0 16px; }
+.lp-how { padding: 32px 0 8px; }
+@media (max-width: 768px) {
+  .lp-hero--merged.lp-hero--merged { padding: 32px 0 4px; }
+}
