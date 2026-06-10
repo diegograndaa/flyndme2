@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense, startTransition } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+import "./styles/theme-stitch.css";
 import FlightResults from "./components/FlightResults";
 import { SearchProgress } from "./components/SearchUX";
 

@@ -1,0 +1,298 @@
+/* ─── theme-stitch.css ───────────────────────────────────────────────────────
+   Capa global del tema Stitch (fuera de la vista de resultados):
+   cabecera, footer, landing, formulario de búsqueda y paneles fm-*.
+   Se importa en App.jsx DESPUÉS de App.css; usa los tokens de :root,
+   por lo que el modo oscuro hereda sin reglas extra (salvo indicadas).
+   Selectores doblados para ganar especificidad sin !important.        */
+
+/* ── Cabecera ──────────────────────────────────────────────────── */
+.app-header.app-header {
+  background: var(--white);
+  border-bottom: none;
+  box-shadow: 0 1px 3px rgba(22,23,59,.08);
+}
+[data-theme="dark"] .app-header.app-header { background: var(--slate-100); }
+.app-logo-name.app-logo-name { color: var(--primary); font-weight: 800; }
+
+/* ── Botón primario (CTA coral del diseño) ─────────────────────── */
+.btn-fm-primary.btn-fm-primary {
+  background: var(--coral);
+  background-image: none;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(255,107,107,.35);
+  transition: transform .12s ease, box-shadow .2s ease, opacity .2s ease;
+}
+.btn-fm-primary.btn-fm-primary:hover { opacity: .92; box-shadow: 0 8px 22px rgba(255,107,107,.4); }
+.btn-fm-primary.btn-fm-primary:active { transform: scale(.97); }
+
+/* ── Landing / hero ────────────────────────────────────────────── */
+.lp-hero.lp-hero {
+  background: linear-gradient(135deg, var(--bg) 0%, var(--slate-100) 100%);
+}
+.lp-h1.lp-h1 {
+  color: var(--navy);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.lp-h1-accent { color: var(--primary); }
+.lp-eyebrow.lp-eyebrow { color: var(--primary); }
+.lp-lead.lp-lead { color: var(--slate-500); }
+.lp-card.lp-card,
+.lp-usecase-card.lp-usecase-card,
+.lp-faq-item.lp-faq-item,
+.lp-testimonial-card.lp-testimonial-card,
+.lp-route-card.lp-route-card {
+  background: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.lp-usecase-card.lp-usecase-card:hover,
+.lp-route-card.lp-route-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.lp-chip.lp-chip {
+  background: var(--slate-100);
+  color: var(--slate-700);
+  border: none;
+  border-radius: var(--radius-full);
+}
+.lp-step-num.lp-step-num { background: var(--primary-light); color: var(--primary-deep); }
+.lp-example-result.lp-example-result { border-radius: var(--radius-md); }
+
+/* ── Formulario de búsqueda ────────────────────────────────────── */
+.sf-form.sf-form,
+.sf-airports.sf-airports {
+  background: var(--white);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.sf-title.sf-title { color: var(--navy); font-weight: 800; letter-spacing: -0.01em; }
+.sf-label.sf-label {
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+/* Filas de viajero como tarjetas lavanda */
+.sf-origin-row.sf-origin-row {
+  background: var(--slate-50);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  transition: border-color .15s ease;
+}
+.sf-origin-row.sf-origin-row:hover { border-color: var(--slate-200); }
+.sf-badge.sf-badge {
+  background: transparent;
+  color: var(--primary);
+  font-weight: 700;
+  border: none;
+}
+.sf-input.sf-input {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-xs);
+}
+.sf-input.sf-input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--secondary-light);
+}
+
+/* Añadir viajero: botón punteado */
+.sf-add-btn.sf-add-btn {
+  border: 2px dashed var(--slate-300);
+  background: transparent;
+  color: var(--slate-500);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.sf-add-btn.sf-add-btn:hover {
+  border-color: var(--secondary);
+  color: var(--secondary);
+  background: var(--secondary-light);
+}
+
+/* Pills segmentadas (tipo de viaje, optimizar, cabina…) */
+.sf-pills.sf-pills {
+  background: var(--slate-100);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  display: inline-flex;
+  gap: 4px;
+}
+.sf-pill.sf-pill {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--slate-500);
+  font-weight: 600;
+}
+.sf-pill--active.sf-pill--active {
+  background: var(--white);
+  color: var(--secondary);
+  box-shadow: var(--shadow-xs);
+  border: none;
+}
+
+/* ── Paneles de resultados (fm-*) ──────────────────────────────── */
+.fm-card.fm-card,
+.fm-split-card.fm-split-card,
+.fm-sharelink.fm-sharelink,
+.fm-history.fm-history {
+  background: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Podio → "Top alternativas" con miniaturas */
+.fm-podium.fm-podium {
+  background: var(--slate-100);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.fm-podium .fm-podium-title { color: var(--navy); font-weight: 800; font-size: 1.15rem; text-align: left; }
+.fm-podium .fm-podium-cards { align-items: stretch; }
+.fm-podium .fm-podium-card.fm-podium-card {
+  background: var(--white);
+  background-image: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 10px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.fm-podium .fm-podium-card.fm-podium-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.fm-podium .fm-podium-card--pos1.fm-podium-card--pos1 { border: 1px solid var(--primary-light); }
+.fm-podium .fm-podium-medal { display: none; }
+.fm-podium-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+  background: var(--slate-100);
+  flex: 0 0 auto;
+}
+.fm-podium-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.fm-podium .fm-podium-city  { color: var(--navy); font-weight: 700; }
+.fm-podium .fm-podium-code  { color: var(--slate-500); }
+.fm-podium .fm-podium-price { color: var(--navy); font-weight: 800; }
+.fm-podium .fm-podium-pp    { color: var(--slate-500); font-weight: 400; }
+
+/* Ahorro del grupo: tinte coral suave */
+.fm-group-savings.fm-group-savings {
+  background: var(--primary-50);
+  border: 1px solid var(--primary-light);
+  color: var(--navy);
+  border-radius: var(--radius-md);
+}
+
+/* Reparto de costes: avatar por viajero */
+.fm-split-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary-deep);
+  font-weight: 800;
+  font-size: .7rem;
+  flex: 0 0 auto;
+}
+.fm-split-row.fm-split-row { align-items: center; }
+.fm-split-pill--active.fm-split-pill--active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* Planifica tu viaje */
+.fm-plan-trip.fm-plan-trip {
+  background: var(--slate-100);
+  background-image: none;
+  border: none;
+  border-radius: var(--radius-md);
+}
+.fm-plan-trip .fm-plan-trip-link {
+  background: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  color: var(--navy);
+}
+
+/* Barra fija y stats */
+.fm-sticky-bar.fm-sticky-bar {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: none;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+}
+[data-theme="dark"] .fm-sticky-bar.fm-sticky-bar { background: rgba(27,28,64,.85); }
+.fm-stats-bar.fm-stats-bar {
+  background: var(--slate-100);
+  border: none;
+  border-radius: var(--radius-full);
+}
+
+/* Banner de destino */
+.fm-dest-banner.fm-dest-banner { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+
+/* Pestañas mapa/comparar/lista */
+.rv-tab.rv-tab {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-full);
+  color: var(--slate-500);
+  font-weight: 600;
+}
+.rv-tab--active.rv-tab--active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-deep);
+}
+
+/* Búsqueda rápida fechas vecinas */
+.fm-quick-research.fm-quick-research {
+  background: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.fm-quick-research-btn.fm-quick-research-btn {
+  background: var(--slate-100);
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--slate-700);
+  font-weight: 600;
+}
+.fm-quick-research-btn.fm-quick-research-btn:hover { background: var(--secondary-light); color: var(--secondary); }
+
+/* ── Footer ────────────────────────────────────────────────────── */
+.app-footer.app-footer {
+  background: var(--slate-100);
+  border-top: none;
+  color: var(--slate-500);
+}
+.app-footer-brand.app-footer-brand { color: var(--primary); font-weight: 800; }
+.app-footer-link.app-footer-link { color: var(--slate-500); }
+.app-footer-link.app-footer-link:hover { color: var(--secondary); }

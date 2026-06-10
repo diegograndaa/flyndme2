@@ -1,252 +1,253 @@
 /* ─── results-simple.css ─────────────────────────────────────────────────────
-   Rediseño sobrio de la vista de resultados (estilo Skyscanner): superficie
-   blanca, bordes grises, tipografía oscura y UN solo acento (--rs-accent).
-   Importado desde WinnerCard.jsx y FlightResults.jsx; sobreescribe los
-   estilos llamativos de App.css (selectores doblados para ganar
-   especificidad sin !important).
-   Paleta: blanco #FFF · fondo suave #F8FAFC · borde #E2E8F0 · texto #0F172A
-   · texto secundario #64748B · acento #0062E3 · navy resumen #05203C       */
-
-:root {
-  --rs-accent:  #0062E3;
-  --rs-navy:    #05203C;
-  --rs-text:    #0F172A;
-  --rs-muted:   #64748B;
-  --rs-border:  #E2E8F0;
-  --rs-bg:      #F8FAFC;
-}
+   Tema Stitch de la vista de resultados: tarjetas blancas sobre fondo
+   lavanda, primario granate (--primary), CTA coral (--coral), azul
+   secundario (--secondary) y verde (--accent) para scores de equidad.
+   Importado desde WinnerCard.jsx y FlightResults.jsx; sobreescribe
+   App.css con selectores doblados (sin !important). Usa los tokens de
+   :root, así que el modo oscuro hereda automáticamente.               */
 
 /* ─── WinnerCard ─────────────────────────────────────────────────────────── */
 
 .wc-card.wc-card {
-  background: #fff;
+  background: var(--white);
   background-image: none;
-  border: 1px solid var(--rs-border);
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
-  color: var(--rs-text);
+  border: none;
+  border-radius: 24px;
+  box-shadow: var(--shadow-md);
+  color: var(--navy);
+  overflow: hidden;
+  transition: box-shadow .25s ease, transform .25s ease;
 }
+.wc-card.wc-card:hover { box-shadow: var(--shadow-lg); }
 
-.wc-card.wc-card .wc-image-wrap { max-height: 240px; }
+/* Foto protagonista, estilo hero del diseño */
+.wc-card.wc-card .wc-image-wrap { max-height: 420px; min-height: 240px; }
+.wc-card .wc-image-overlay.wc-image-overlay {
+  background: linear-gradient(to top, rgba(22,23,59,.82) 0%, rgba(22,23,59,.25) 45%, transparent 75%);
+}
 
 .wc-card .wc-badge-winner.wc-badge-winner {
-  background: var(--rs-accent);
+  background: var(--coral);
   color: #fff;
   border: none;
-  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  letter-spacing: .02em;
+  box-shadow: var(--shadow-sm);
+  text-transform: none;
 }
 
-/* Chips sobre la imagen: blanco translúcido, texto oscuro */
+/* Chips sobre la imagen */
 .wc-card .wc-savings-chip.wc-savings-chip,
 .wc-card .wc-trip-days-chip.wc-trip-days-chip {
-  background: rgba(255, 255, 255, .92);
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
-  box-shadow: none;
+  background: rgba(255,255,255,.92);
+  color: var(--navy);
+  border: none;
+  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-full);
 }
 
-/* Franja resumen: navy uniforme (sin degradado) */
-.wc-card .wc-summary.wc-summary {
-  background: var(--rs-navy);
-  background-image: none;
-}
+/* Franja resumen: navy del sistema (gradiente definido en App.css) */
+.wc-card .wc-summary.wc-summary { border-radius: 0; }
 
-/* Cuerpo en blanco (mata el degradado morado→turquesa) */
+/* Cuerpo en superficie */
 .wc-card .wc-body.wc-body {
-  background: #fff;
+  background: var(--white);
   background-image: none;
-  color: var(--rs-text);
+  color: var(--navy);
 }
 
 .wc-card .wc-body .wc-criterion-pill {
-  background: #fff;
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  background: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-full);
 }
 .wc-card .wc-body .wc-criterion-pill--active {
-  background: var(--rs-accent);
+  background: var(--primary);
   color: #fff;
-  border-color: var(--rs-accent);
+  border-color: var(--primary);
 }
-.wc-card .wc-body .wc-stats-mini { color: var(--rs-muted); }
+.wc-card .wc-body .wc-stats-mini { color: var(--slate-500); }
+
+/* Equidad: verde */
+.wc-card .wc-fairness-fill-full.wc-fairness-fill-full {
+  background: var(--accent);
+  background-image: none;
+}
 
 /* Sección de reserva y tarjetas por origen */
 .wc-card .wc-booking.wc-booking {
-  background: var(--rs-bg);
+  background: var(--slate-50);
   background-image: none;
-  border: 1px solid var(--rs-border);
-  border-radius: 12px;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
 }
-.wc-card .wc-booking-title { color: var(--rs-text); }
-.wc-card .wc-booking-sub   { color: var(--rs-muted); }
+.wc-card .wc-booking-title { color: var(--navy); }
+.wc-card .wc-booking-sub   { color: var(--slate-500); }
 
 .wc-card .wc-flight-card.wc-flight-card {
-  background: #fff;
-  border: 1px solid var(--rs-border);
-  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
   box-shadow: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.wc-card .wc-flight-card.wc-flight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 .wc-card .wc-flight-card--cheapest.wc-flight-card--cheapest {
-  border-color: var(--rs-accent);
+  border-color: var(--primary);
 }
 .wc-card .wc-cheapest-label.wc-cheapest-label {
-  background: var(--rs-accent);
+  background: var(--primary);
   color: #fff;
+  border-radius: var(--radius-full);
 }
-.wc-card .wc-flight-code  { color: var(--rs-text); }
-.wc-card .wc-flight-city  { color: var(--rs-muted); }
+.wc-card .wc-flight-code  { color: var(--navy); }
+.wc-card .wc-flight-city  { color: var(--slate-500); }
 .wc-card .wc-flight-price-tag.wc-flight-price-tag {
   background: transparent;
-  color: var(--rs-text);
+  color: var(--navy);
   font-weight: 800;
 }
 .wc-card .wc-flight-meta-item.wc-flight-meta-item {
-  background: var(--rs-bg);
-  color: var(--rs-muted);
-  border: 1px solid var(--rs-border);
+  background: var(--slate-100);
+  color: var(--slate-500);
+  border: none;
+  border-radius: var(--radius-full);
 }
-/* Estados semánticos: se conservan, pero en tono contenido */
-.wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #15803D; background: #F0FDF4; border-color: #BBF7D0; }
-.wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #92400E; background: #FFFBEB; border-color: #FDE68A; }
+/* Estados semánticos contenidos */
+.wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #006C48; background: #E6F7EF; border: none; }
+.wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #92400E; background: #FFF6E6; border: none; }
+[data-theme="dark"] .wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #52DEA2; background: rgba(82,222,162,.12); }
+[data-theme="dark"] .wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #FBBF24; background: rgba(251,191,36,.12); }
 
-/* CTAs de reserva: primario azul + secundarios neutros */
+/* CTAs de reserva: primario granate + secundarios neutros */
 .wc-card .wc-cta.wc-cta {
-  background: #fff;
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  background: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .wc-card .wc-cta--skyscanner.wc-cta--skyscanner {
-  background: var(--rs-accent);
+  background: var(--primary);
   color: #fff;
-  border-color: var(--rs-accent);
+  border-color: var(--primary);
 }
 
-/* Acciones: todo neutro salvo el primario */
+/* Acciones */
 .wc-card .wc-action-btn.wc-action-btn {
-  background: #fff;
+  background: var(--white);
   background-image: none;
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  color: var(--navy);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .wc-card .wc-action-btn--primary.wc-action-btn--primary {
-  background: var(--rs-accent);
+  background: var(--primary);
   color: #fff;
-  border-color: var(--rs-accent);
+  border-color: var(--primary);
 }
 .wc-card .wc-action-btn--whatsapp.wc-action-btn--whatsapp {
-  background: #fff;
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  background: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--slate-200);
 }
 
-.wc-card .wc-disclaimer { color: var(--rs-muted); }
+.wc-card .wc-disclaimer { color: var(--slate-500); }
 
-/* ─── Bloques de la página de resultados (App.jsx / ResultsPanels) ───────── */
-
-/* Podio top-3: tarjetas neutras, sin medallas ni dorados */
-.fm-podium .fm-podium-card.fm-podium-card {
-  background: #fff;
-  background-image: none;
-  border: 1px solid var(--rs-border);
-  box-shadow: none;
-}
-.fm-podium .fm-podium-card--pos1.fm-podium-card--pos1 { border-color: var(--rs-accent); }
-.fm-podium .fm-podium-medal { display: none; }
-.fm-podium .fm-podium-price { color: var(--rs-text); }
-.fm-podium .fm-podium-title { color: var(--rs-muted); }
-
-/* Banner de ahorro del grupo: tinte suave del acento, sin verde chillón */
-.fm-group-savings.fm-group-savings {
-  background: #F0F6FF;
-  border: 1px solid #D6E6FF;
-  color: var(--rs-text);
-}
-
-/* Comparte la búsqueda */
-.fm-sharelink.fm-sharelink {
-  background: var(--rs-bg);
-  border: 1px solid var(--rs-border);
-}
-
-/* Planifica tu viaje */
-.fm-plan-trip.fm-plan-trip {
-  background: var(--rs-bg);
-  background-image: none;
-  border: 1px solid var(--rs-border);
-}
-.fm-plan-trip .fm-plan-trip-link {
-  background: #fff;
-  border: 1px solid var(--rs-border);
-  color: var(--rs-text);
-}
-
-/* ─── Lista compacta de alternativas (altl-*) ────────────────────────────── */
+/* ─── Lista de alternativas (altl-*) ─────────────────────────────────────── */
 
 .altl-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .altl-row {
-  background: #fff;
-  border: 1px solid var(--rs-border);
-  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
-.altl-row:hover { border-color: #C7D2E0; box-shadow: 0 1px 4px rgba(15, 23, 42, .06); }
-.altl-row--open { border-color: var(--rs-accent); }
+.altl-row:hover {
+  border-color: var(--slate-300);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+.altl-row--open { border-color: var(--primary); transform: none; }
 
 .altl-main {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 16px 12px 12px;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
   font: inherit;
-  color: var(--rs-text);
+  color: var(--navy);
+}
+
+/* Miniatura de ciudad */
+.altl-thumb {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--slate-100);
+  display: block;
+}
+.altl-thumb--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--slate-400);
+  font-size: .8rem;
 }
 
 .altl-rank {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--rs-bg);
-  border: 1px solid var(--rs-border);
-  color: var(--rs-muted);
-  font-size: .8rem;
+  background: var(--slate-100);
+  border: none;
+  color: var(--slate-500);
+  font-size: .78rem;
   font-weight: 700;
 }
 
 .altl-dest { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.altl-city { font-weight: 700; font-size: .95rem; }
-.altl-sub  { color: var(--rs-muted); font-size: .78rem; }
+.altl-city { font-weight: 700; font-size: .98rem; }
+.altl-sub  { color: var(--slate-500); font-size: .78rem; }
 
-.altl-fair { flex: 0 0 auto; font-weight: 700; font-size: .85rem; }
-.altl-fair small { font-weight: 400; color: var(--rs-muted); }
+.altl-fair { flex: 0 0 auto; font-weight: 800; font-size: .88rem; color: var(--accent-dark); }
+.altl-fair small { font-weight: 400; color: var(--slate-500); }
 
 .altl-prices { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.altl-pp     { font-weight: 800; font-size: 1.05rem; color: var(--rs-text); }
-.altl-pp small { font-weight: 400; color: var(--rs-muted); font-size: .7rem; }
-.altl-total  { color: var(--rs-muted); font-size: .75rem; }
+.altl-pp     { font-weight: 800; font-size: 1.08rem; color: var(--navy); }
+.altl-pp small { font-weight: 400; color: var(--slate-500); font-size: .7rem; }
+.altl-total  { color: var(--slate-500); font-size: .75rem; }
 
-.altl-chevron { flex: 0 0 auto; color: var(--rs-muted); transition: transform .15s ease; }
+.altl-chevron { flex: 0 0 auto; color: var(--slate-500); transition: transform .15s ease; }
 .altl-row--open .altl-chevron { transform: rotate(180deg); }
 
 .altl-detail {
-  border-top: 1px solid var(--rs-border);
-  background: var(--rs-bg);
+  border-top: 1px solid var(--slate-200);
+  background: var(--slate-50);
   padding: 6px 16px;
 }
 
@@ -256,33 +257,34 @@
   gap: 12px;
   padding: 9px 0;
 }
-.altl-detail-row + .altl-detail-row { border-top: 1px solid var(--rs-border); }
+.altl-detail-row + .altl-detail-row { border-top: 1px solid var(--slate-200); }
 
 .altl-detail-origin { flex: 1 1 auto; font-weight: 600; font-size: .85rem; }
-.altl-detail-city   { color: var(--rs-muted); font-weight: 400; }
-.altl-date-note     { color: var(--rs-muted); font-size: .75rem; margin-left: 6px; }
+.altl-detail-city   { color: var(--slate-500); font-weight: 400; }
+.altl-date-note     { color: var(--slate-500); font-size: .75rem; margin-left: 6px; }
 .altl-detail-price  { flex: 0 0 auto; font-weight: 700; font-size: .9rem; }
 
 .altl-detail-links { flex: 0 0 auto; display: flex; gap: 6px; }
 .altl-link {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 8px;
-  background: var(--rs-accent);
+  border-radius: var(--radius-xs);
+  background: var(--primary);
   color: #fff;
   font-size: .75rem;
   font-weight: 600;
   text-decoration: none;
 }
 .altl-link--muted {
-  background: #fff;
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  background: var(--white);
+  color: var(--navy);
+  border: 1px solid var(--slate-200);
 }
 .altl-link:hover { opacity: .9; color: #fff; }
-.altl-link--muted:hover { color: var(--rs-text); }
+.altl-link--muted:hover { color: var(--navy); }
 
 @media (max-width: 560px) {
   .altl-fair { display: none; }
-  .altl-main { gap: 10px; padding: 12px; }
+  .altl-thumb { width: 48px; height: 48px; }
+  .altl-main { gap: 10px; padding: 10px 12px; }
 }
