@@ -313,3 +313,17 @@ estado y cuál es la verificación vigente (las dos suites npm test).
 **Verificación**: frontend 32/32 · backend 31/31.
 
 **Pendiente**: nada.
+
+## Mejora 17 — Troceo de App.jsx (II): componentes presentacionales a UiBits.jsx
+
+**Qué**: `ResultsSkeleton`, `ScrollProgressBar`, `KeyboardShortcutsOverlay`,
+`Breadcrumb` y `FriendlyError` extraídos tal cual (sin cambios de lógica) a
+`frontend/src/components/UiBits.jsx`. Son presentacionales puros sin estado
+de negocio. App.jsx: 3.538 → 3.448 líneas.
+
+**Verificación**: usos intactos en App.jsx (5 referencias), JSX OK,
+frontend 32/32, backend 31/31.
+
+**Pendiente**: siguientes candidatos del troceo — LandingMiniDemo (~250
+líneas), SearchHistoryPanel, CostSplitCard, y a medio plazo WinnerCard y
+SearchPage a archivos propios.
