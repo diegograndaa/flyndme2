@@ -440,3 +440,19 @@ repo a partir de ahora.
 
 **Verificación**: `git ls-files | grep node_modules` → solo
 backend/test/shims/modules/ (código del repo). Suite backend con shims 39/39.
+
+---
+
+# Sesión 3 (10 jun 2026, noche)
+
+## Mejora 24 — Higiene: shims fuera de test/ y @babel/core como devDependency
+
+**Qué**: (1) `node --test` ejecuta todo lo que cuelga de carpetas `test/`,
+así que los 7 archivos de los shims aparecían como "tests" triviales en la
+salida (ruido y ~0,5s de arranque). Movidos a `backend/dev-shims/` — la suite
+vuelve a reportar exactamente sus 32 tests. (2) `@babel/core` queda declarado
+como devDependency del frontend (^7.28.5): los tests de render lo usan
+directamente y dependían de que llegara como transitiva de
+@vitejs/plugin-react.
+
+**Verificación**: backend 32/32 · frontend 40/40.

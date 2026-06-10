@@ -52,7 +52,7 @@ npm test        # node --test (requiere npm install previo)
 31 tests: contrato de la API (smoke end-to-end en modo mock), matemática
 multi-pasajero, verificación de precios, validaciones, rate limits, cache y
 unidades de TtlCache/cache key. En entornos sin acceso a npm, ver
-`backend/test/shims/README.md`.
+`backend/dev-shims/README.md`.
 
 ## Variables de entorno
 
