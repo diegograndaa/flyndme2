@@ -384,6 +384,17 @@ router.post("/multi-origin", async (req, res) => {
         message: "La fecha de salida ya ha pasado.",
       });
     }
+    // Amadeus solo admite búsquedas hasta ~361 días vista; más allá devuelve
+    // error por llamada (quota quemada y "sin resultados" confuso).
+    const MAX_HORIZON_DAYS = 360;
+    const horizonStr = toISODate(addDays(new Date(), MAX_HORIZON_DAYS));
+    const lastDate = (tripType === "roundtrip" && returnDate > departureDate) ? returnDate : departureDate;
+    if (lastDate > horizonStr) {
+      return res.status(400).json({
+        code: "DATE_TOO_FAR",
+        message: `Solo se pueden buscar vuelos hasta ${MAX_HORIZON_DAYS} días vista.`,
+      });
+    }
 
     // ── Budget ────────────────────────────────────────────────────────────────
     const safeMaxAvg = Number.isFinite(Number(maxBudgetPerTraveler)) && Number(maxBudgetPerTraveler) > 0

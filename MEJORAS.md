@@ -327,3 +327,17 @@ frontend 32/32, backend 31/31.
 **Pendiente**: siguientes candidatos del troceo — LandingMiniDemo (~250
 líneas), SearchHistoryPanel, CostSplitCard, y a medio plazo WinnerCard y
 SearchPage a archivos propios.
+
+## Mejora 18 — Validación: horizonte máximo de fechas (360 días)
+
+**Qué**: Amadeus solo admite búsquedas hasta ~361 días vista. Una fecha más
+lejana (salida o vuelta) producía un error de Amadeus POR CADA llamada del
+abanico origen×destino×fecha — quota quemada para devolver un "sin
+resultados" confuso. Ahora: `400 DATE_TOO_FAR` inmediato sin tocar Amadeus,
+considerando también la fecha de vuelta.
+
+**Tests**: 1 nuevo con 3 casos (salida lejana, vuelta lejana, dentro del
+horizonte OK). Backend 32/32 · frontend 32/32.
+
+**Pendiente**: nada. (Con esto queda cerrada toda la cola de validación de
+fechas.)

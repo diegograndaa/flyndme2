@@ -412,3 +412,33 @@ test("cache: destinos equivalentes sin normalizar comparten entrada de cache", a
   // Mismo payload byte a byte = sirvio la misma entrada cacheada
   assert.deepEqual(r1.body, r2.body);
 });
+
+test("validacion: fechas mas alla del horizonte de Amadeus → 400 DATE_TOO_FAR", async () => {
+  const far = new Date(Date.now() + 400 * 86400000).toISOString().slice(0, 10);
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: far,
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, "DATE_TOO_FAR");
+
+  // La vuelta tambien cuenta para el horizonte
+  const dep = new Date(Date.now() + 350 * 86400000).toISOString().slice(0, 10);
+  const ret = new Date(Date.now() + 380 * 86400000).toISOString().slice(0, 10);
+  const r2 = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: dep,
+    returnDate: ret,
+    tripType: "roundtrip",
+  });
+  assert.equal(r2.status, 400);
+  assert.equal(r2.body.code, "DATE_TOO_FAR");
+
+  // Dentro del horizonte sigue funcionando
+  const okDep = new Date(Date.now() + 200 * 86400000).toISOString().slice(0, 10);
+  const r3 = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: okDep,
+  });
+  assert.equal(r3.status, 200);
+});
