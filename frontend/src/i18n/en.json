@@ -323,7 +323,10 @@
     "arrivalSync": "Group arrival sync",
     "arrivalSpread": "Everyone arrives within {{time}}",
     "shareStory": "Share as story",
-    "partialNotice": "Partial results: the search hit its time limit. Showing what was found — try again or narrow the search for full coverage."
+    "partialNotice": "Partial results: the search hit its time limit. Showing what was found — try again or narrow the search for full coverage.",
+    "dateFallbackBadge": "Nearby dates",
+    "dateFallbackChip": "Price for {{date}}",
+    "dateFallbackHint": "No cached price for your exact date — showing the closest date with data. The date shown is the real flight date."
   },
   "verifyBadge": {
     "confirmed": "Price confirmed",

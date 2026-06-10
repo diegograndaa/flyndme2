@@ -81,10 +81,12 @@ const WinnerCard = React.memo(function WinnerCard({
   // Build price map + itinerary info from breakdown
   const priceMap = {};
   const offerMap = {};
+  const flightInfoMap = {};
   breakdown.forEach((f) => {
     const k = String(f.origin).toUpperCase();
     priceMap[k] = f.price;
     offerMap[k] = f.offer || null;
+    flightInfoMap[k] = f;
   });
 
   // Price comparison vs last search
@@ -155,6 +157,12 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-chips-overlay">
           {/* Verification badge (first so it's the most visible trust signal) */}
           <VerificationBadge dest={dest} />
+          {/* Algún origen usa precio de una fecha vecina (sin dato exacto) */}
+          {dest.hasDateFallback && (
+            <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
+              📅 {t("results.dateFallbackBadge")}
+            </span>
+          )}
           {/* Countdown to departure */}
           {(() => {
             const depD = dep || depDate;
@@ -301,10 +309,15 @@ const WinnerCard = React.memo(function WinnerCard({
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];
                 const offer = offerMap[origin];
+                const finfo = flightInfoMap[origin] || {};
+                // Fecha real del precio (fallback de fecha vecina): los deep
+                // links deben apuntar a la fecha que tiene ese precio.
+                const effDep = finfo.flightDate || dep;
+                const effRet = tripType === "roundtrip" ? (finfo.flightReturnDate || ret) : ret;
                 const originCity = cityOf(origin);
                 const destCity = city || code;
-                const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
-                const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: dep, returnDate: ret, tripType });
+                const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: effDep, returnDate: effRet, tripType });
+                const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: effDep, returnDate: effRet, tripType });
 
                 // Extract itinerary details (outbound)
                 const itin = offer?.itineraries?.[0];
@@ -337,6 +350,13 @@ const WinnerCard = React.memo(function WinnerCard({
                   <div key={origin} className={`wc-flight-card${cleanOrigins.length > 1 && origin === cheapestOrigin ? " wc-flight-card--cheapest" : ""}`}>
                     {cleanOrigins.length > 1 && origin === cheapestOrigin && (
                       <div className="wc-cheapest-label">{t("results.cheapestOrigin")}</div>
+                    )}
+                    {finfo.dateFallback && (
+                      <div className="wc-flight-meta" title={t("results.dateFallbackHint")}>
+                        <span className="wc-flight-meta-item wc-flight-meta--stops">
+                          📅 {t("results.dateFallbackChip", { date: formatDate(effDep) })}{tripType === "roundtrip" && effRet ? ` → ${formatDate(effRet)}` : ""}
+                        </span>
+                      </div>
                     )}
                     <div className="wc-flight-route">
                       <div className="wc-flight-endpoint">

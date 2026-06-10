@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
-  getBaseUrl, normalizeCode, formatEur, fairnessColor,
+  getBaseUrl, normalizeCode, formatEur, formatDate, fairnessColor,
   buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf, countryFlag, destQuickInfo
 } from "../utils/helpers";
 import { getCityImage } from "../utils/cityImages";
@@ -134,12 +134,18 @@ const AltCard = React.memo(function AltCard({ dest, rank, origins, departureDate
                 <ul className="alt-card-detail">
                   {flights.map((f, i) => {
                     const originCode = String(f.origin || "").toUpperCase();
-                    const ssUrl = buildSkyscannerUrl({ origin: originCode, destination: code, departureDate: dep, returnDate: ret, tripType });
-                    const gfUrl = buildGoogleFlightsUrl({ origin: originCode, destination: code, departureDate: dep, returnDate: ret, tripType });
+                    // Fecha real del precio (fallback de fecha vecina)
+                    const effDep = f.flightDate || dep;
+                    const effRet = tripType === "roundtrip" ? (f.flightReturnDate || ret) : ret;
+                    const ssUrl = buildSkyscannerUrl({ origin: originCode, destination: code, departureDate: effDep, returnDate: effRet, tripType });
+                    const gfUrl = buildGoogleFlightsUrl({ origin: originCode, destination: code, departureDate: effDep, returnDate: effRet, tripType });
                     return (
                       <li key={i} className="alt-card-detail-row">
                         <span className="alt-card-detail-origin">
                           {originCode} <span className="alt-card-detail-city">{cityOf(originCode)}</span>
+                          {f.dateFallback && (
+                            <span className="alt-card-detail-city" title={t("results.dateFallbackHint")}> 📅 {formatDate(effDep)}</span>
+                          )}
                         </span>
                         <span className="alt-card-detail-price">
                           {typeof f.price === "number" ? formatEur(f.price, 0) : t("alt.noData")}

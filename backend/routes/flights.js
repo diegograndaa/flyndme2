@@ -153,23 +153,33 @@ async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase,
       return null; // any leg exceeds per-flight budget → discard
     }
     const pax = originPax[i] || 1;
-    flights.push({
+    const flight = {
       origin:         originList[i],
       price:          r.value.price,         // per-person fare
       passengers:     pax,
       totalForOrigin: Number((r.value.price * pax).toFixed(2)),
       offer:          r.value.offer ?? null,
-    });
+    };
+    // Precio de fecha vecina (proveedor de caché sin datos en la fecha
+    // exacta): el frontend muestra SIEMPRE la fecha real, nunca la pedida.
+    if (r.value.dateFallback) {
+      flight.dateFallback     = true;
+      flight.flightDate       = r.value.dateFallback.departureDate;
+      flight.flightReturnDate = r.value.dateFallback.returnDate;
+    }
+    flights.push(flight);
   }
 
   if (flights.length !== originList.length) return null;
 
   const { totalCost, totalPax, avgPerTraveler, spread, fairness } = computeAggregates(flights);
+  const hasDateFallback = flights.some((f) => f.dateFallback === true);
 
   return {
     destination:              dest,
     bestDate:                 dep,
     bestReturnDate:           ret,
+    ...(hasDateFallback ? { hasDateFallback: true } : {}),
     flights,
     totalCostEUR:             Number(totalCost.toFixed(2)),
     totalPassengers:          totalPax,

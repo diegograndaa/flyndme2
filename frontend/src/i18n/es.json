@@ -323,7 +323,10 @@
     "arrivalSync": "Sincronización de llegadas",
     "arrivalSpread": "Todos llegan en un rango de {{time}}",
     "shareStory": "Compartir como story",
-    "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa."
+    "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa.",
+    "dateFallbackBadge": "Fechas cercanas",
+    "dateFallbackChip": "Precio del {{date}}",
+    "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo."
   },
   "verifyBadge": {
     "confirmed": "Precio confirmado",

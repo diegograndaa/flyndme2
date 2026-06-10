@@ -48,6 +48,11 @@ const BASE_BACKOFF_MS      = Number(process.env.TP_BASE_BACKOFF_MS      || 500);
 // 60 min de caché local es seguro y recorta latencia y peticiones.
 const SEARCH_CACHE_TTL_MS  = Number(process.env.TP_SEARCH_CACHE_TTL_MS  || 60 * 60 * 1000);
 const MAX_CACHE_SIZE       = 500;
+// Fallback de fechas vecinas: la caché de Aviasales solo tiene precio en la
+// fecha exacta para ~73% de las rutas (sondeo jun-2026). Si no hay billete en
+// la fecha pedida, se busca la fecha con datos más cercana dentro de ±N días
+// y se devuelve ETIQUETADA con su fecha real (offer.dateFallback). 0 = off.
+const DATE_FLEX_DAYS       = Number(process.env.TP_DATE_FLEX_DAYS ?? 2);
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -68,6 +73,27 @@ function warnOnce(key, msg) {
   if (warnedOnce.has(key)) return;
   warnedOnce.add(key);
   console.warn(msg);
+}
+
+// ─── Date helpers (fallback de fechas vecinas) ───────────────────────────────
+
+function dayDiff(isoA, isoB) {
+  return Math.round((Date.parse(`${isoB}T00:00:00Z`) - Date.parse(`${isoA}T00:00:00Z`)) / 86_400_000);
+}
+
+function shiftDays(isoDate, days) {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// Meses (YYYY-MM) que cubre la ventana [date-flex, date+flex].
+function monthsInWindow(isoDate, flexDays) {
+  return [...new Set([
+    shiftDays(isoDate, -flexDays).slice(0, 7),
+    isoDate.slice(0, 7),
+    shiftDays(isoDate, flexDays).slice(0, 7),
+  ])];
 }
 
 // ─── Rate limiter (idéntico en diseño al de amadeusService) ──────────────────
@@ -163,7 +189,7 @@ function buildParams(origin, destination, departureDate, options = {}) {
     // one_way=true agrupa por fecha y devuelve 1 solo billete; para ida y
     // vuelta hay que pedir one_way=false para recibir varias combinaciones.
     one_way:  options.returnDate ? "false" : "true",
-    limit:    30,
+    limit:    options.limit || 30,
   };
   if (options.returnDate)      params.return_at = options.returnDate;
   if (options.nonStop === true) params.direct   = "true";
@@ -309,6 +335,65 @@ function pickCheapest(tickets, departureDate, returnDate) {
   return cheapest;
 }
 
+// ─── Fallback de fechas vecinas ──────────────────────────────────────────────
+// Elige el billete con la fecha más cercana a la pedida dentro de ±flexDays
+// (ida y, si aplica, vuelta). Empate de distancia → el más barato. Fechas ya
+// pasadas (caché obsoleta) se descartan.
+
+function pickNeighbor(tickets, departureDate, returnDate, flexDays) {
+  const today = new Date().toISOString().slice(0, 10);
+  let best = null;
+  let bestScore = Infinity;
+
+  for (const t of tickets) {
+    const v = Number(t?.price);
+    if (!Number.isFinite(v)) continue;
+
+    const dep = String(t?.departure_at || "").slice(0, 10);
+    if (!dep || dep < today) continue;
+    const depDiff = Math.abs(dayDiff(departureDate, dep));
+    if (depDiff > flexDays) continue;
+
+    let retDiff = 0;
+    if (returnDate) {
+      const ret = String(t?.return_at || "").slice(0, 10);
+      if (!ret) continue;
+      retDiff = Math.abs(dayDiff(returnDate, ret));
+      if (retDiff > flexDays) continue;
+    }
+
+    const score = depDiff + retDiff;
+    if (score < bestScore || (score === bestScore && v < Number(best.price))) {
+      best = t;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+// Consulta el mes a granularidad de día (la API agrupa por fecha) y devuelve
+// el billete vecino más cercano, o null. Las consultas de mes pasan por la
+// misma caché local que las de fecha exacta (clave = mes), así que el coste
+// extra por destino sin datos exactos es ~1 petición por origen.
+async function findNeighborTicket(origin, destination, departureDate, options) {
+  const depMonths = monthsInWindow(departureDate, DATE_FLEX_DAYS);
+  const retMonths = options.returnDate ? monthsInWindow(options.returnDate, DATE_FLEX_DAYS) : [null];
+
+  const tickets = [];
+  for (const dm of depMonths) {
+    for (const rm of retMonths) {
+      const opts = { ...options, limit: 100 };
+      if (rm) opts.returnDate = rm;
+      try {
+        tickets.push(...await fetchTickets(origin, destination, dm, opts));
+      } catch {
+        // un mes sin datos o con error no impide probar el resto
+      }
+    }
+  }
+  return pickNeighbor(tickets, departureDate, options.returnDate, DATE_FLEX_DAYS);
+}
+
 // ─── Public API (interfaz compartida con amadeusService / mock) ──────────────
 
 async function getAccessToken() {
@@ -343,17 +428,43 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
   try {
     const tickets  = await fetchTickets(origin, destination, departureDate, options);
     const cheapest = pickCheapest(tickets, departureDate, options.returnDate);
-    if (!cheapest) return null;
+    if (cheapest) {
+      const offer = mapTicketToOffer(cheapest, {
+        departureDate,
+        returnDate:   options.returnDate,
+        nonStop:      options.nonStop,
+        currencyCode: options.currencyCode,
+      });
+      if (!offer) return null;
 
-    const offer = mapTicketToOffer(cheapest, {
-      departureDate,
-      returnDate:   options.returnDate,
-      nonStop:      options.nonStop,
-      currencyCode: options.currencyCode,
+      return { price: Number(cheapest.price), offer };
+    }
+
+    // Sin precio en la fecha exacta → fecha vecina más cercana, SIEMPRE
+    // etiquetada con su fecha real. Convierte en resultado útil el ~27% de
+    // rutas que la caché no cubre en fecha exacta.
+    if (DATE_FLEX_DAYS <= 0) return null;
+    const neighbor = await findNeighborTicket(origin, destination, departureDate, options);
+    if (!neighbor) return null;
+
+    const actualDep = String(neighbor.departure_at).slice(0, 10);
+    const actualRet = options.returnDate ? String(neighbor.return_at).slice(0, 10) : undefined;
+    const offer = mapTicketToOffer(neighbor, {
+      departureDate: actualDep,
+      returnDate:    actualRet,
+      nonStop:       options.nonStop,
+      currencyCode:  options.currencyCode,
     });
     if (!offer) return null;
 
-    return { price: Number(cheapest.price), offer };
+    offer.dateFallback = {
+      requestedDepartureDate: departureDate,
+      requestedReturnDate:    options.returnDate || null,
+      departureDate:          actualDep,
+      returnDate:             actualRet || null,
+      offsetDays:             dayDiff(departureDate, actualDep),
+    };
+    return { price: Number(neighbor.price), offer, dateFallback: offer.dateFallback };
   } catch {
     // Mismo contrato que amadeusService: un fallo puntual en una ruta no
     // tumba la búsqueda multi-origen; el destino simplemente se descarta.
@@ -449,5 +560,9 @@ module.exports.__test = {
   mapTicketToOffer,
   makeCacheKey,
   pickCheapest,
+  pickNeighbor,
+  dayDiff,
+  shiftDays,
+  monthsInWindow,
   setTransport(fn) { transport = fn; },
 };
