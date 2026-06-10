@@ -2535,6 +2535,12 @@ export default function App() {
   const tabContentRef = useRef(null);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
+  // Los paneles se leen vía refs: el listener se registra una sola vez y un
+  // closure sobre el estado quedaría congelado en su valor inicial (bug: Escape
+  // nunca cerraba los paneles porque "veía" showShortcuts/showFavPanel = false).
+  const showShortcutsRef = useRef(false);
+  const showFavPanelRef  = useRef(false);
+
   useEffect(() => {
     const onKeyDown = (e) => {
       // Ignore if user is typing in an input
@@ -2543,8 +2549,8 @@ export default function App() {
 
       // Escape: close panels first, then go back
       if (e.key === "Escape") {
-        if (showShortcuts) { setShowShortcuts(false); return; }
-        if (showFavPanel) { setShowFavPanel(false); return; }
+        if (showShortcutsRef.current) { setShowShortcuts(false); return; }
+        if (showFavPanelRef.current) { setShowFavPanel(false); return; }
         const cur = viewRef.current;
         if (cur === "results") setView("search");
         else if (cur === "search") setView("landing");
@@ -2593,6 +2599,9 @@ export default function App() {
   const [toast,       setToast]       = useState(null); // { message, type }
   const [showFavPanel, setShowFavPanel] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
+  useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
+  useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
 
   // Last search best price (for comparison)
   const [lastBestPrice, setLastBestPrice] = useState(() => {

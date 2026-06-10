@@ -201,3 +201,26 @@ cd backend && npm install && npm test   # 31/31 con deps reales
 
 Los 10 parches solo tocan `backend/`, `README.md`, `MEJORAS.md` y
 `.gitignore`. No tocan App.jsx, App.css, i18n, Amadeus real ni el stack.
+
+---
+
+# Sesión 2 (10 jun 2026, tarde) — repo real clonado en sandbox
+
+## Mejora 11 — Bug UI: atajos de teclado con closures obsoletos
+
+**Qué**: el manejador global de teclado de `App.jsx` se registra una sola vez
+(`useEffect` con deps `[]`) pero leía `showShortcuts`/`showFavPanel`
+directamente del closure → quedaban congelados en `false` para siempre.
+Consecuencia: con el panel de atajos (o el de favoritos) abierto, Escape no
+lo cerraba; en su lugar navegaba la vista hacia atrás con el panel encima.
+
+**Cómo**: los paneles se leen ahora vía refs (`showShortcutsRef`,
+`showFavPanelRef`) sincronizadas con su estado — mismo patrón que ya usaba
+`viewRef` en ese mismo manejador. Las sincronizaciones viven junto a las
+declaraciones de estado para evitar TDZ.
+
+**Verificación**: parser JSX (@babel) OK sobre App.jsx; suite backend 31/31
+sin regresiones. (El runtime de UI no es ejecutable en este sandbox — cambio
+mínimo y del mismo patrón ya probado en el archivo.)
+
+**Pendiente**: nada.
