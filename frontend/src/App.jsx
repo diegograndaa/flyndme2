@@ -21,7 +21,7 @@ import VerificationBadge from "./components/VerificationBadge";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "")
+const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "")
   || "https://flyndme-backend.onrender.com";
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;

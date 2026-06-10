@@ -341,3 +341,29 @@ horizonte OK). Backend 32/32 · frontend 32/32.
 
 **Pendiente**: nada. (Con esto queda cerrada toda la cola de validación de
 fechas.)
+
+## Mejora 19 — Tests de render (SSR) para el frontend: la red de seguridad que faltaba
+
+**Qué**: hasta ahora solo se podía parsear el JSX, no ejecutarlo (el sandbox
+no puede instalar esbuild/vitest). Nuevo harness de render que NO añade
+dependencias — reutiliza lo que ya hay en node_modules:
+- `tests/_loader.mjs`: loader ESM de Node que transforma JSX→createElement al
+  vuelo con un mini-plugin propio sobre @babel/core (dependencia existente de
+  @vitejs/plugin-react), resuelve imports sin extensión estilo Vite, y stubea
+  CSS/JSON.
+- `tests/_domStubs.mjs`: stubs mínimos de browser (localStorage, matchMedia,
+  document, history…).
+- `tests/render.test.mjs`: 6 smoke tests con `react-dom/server`:
+  **la App completa renderiza** (vista landing), FlightResults con fixtures y
+  vacío, VerificationBadge en sus 5 estados, UiBits, CompareChart y
+  DestinationMap. Detectan ReferenceError/TypeError reales en el cuerpo de los
+  componentes — exactamente lo que un parser no ve.
+
+**Bug encontrado por el propio harness**: `API_BASE` usaba
+`import.meta.env.VITE_API_BASE_URL` sin optional chaining → TypeError fuera
+de Vite (tests/SSR). Corregido.
+
+**Verificación**: frontend 38/38 (incl. 6 de render) · backend 32/32.
+
+**Pendiente**: con esta red ya es seguro extraer SearchPage y WinnerCard de
+App.jsx (siguiente ciclo).
