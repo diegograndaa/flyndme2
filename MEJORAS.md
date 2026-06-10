@@ -1,0 +1,41 @@
+# MEJORAS.md — Registro de mejoras (sesión Cowork, 10 jun 2026)
+
+## Contexto del entorno de trabajo (importante)
+
+Esta sesión se ejecutó en un sandbox **sin acceso a npm/pip/CDNs** (red
+bloqueada por allowlist) y sin acceso a la carpeta local del repo (la carpeta
+seleccionada `Fyndme/` no contiene el código). El repo se reconstruyó archivo
+a archivo desde la API de GitHub (`main @ 1b4b2ab`), verificando cada archivo
+por su SHA de blob git (byte-exacto).
+
+**Archivos NO incluidos en esta copia** (no afectan a las mejoras; todos los
+archivos modificados son byte-exactos respecto a tu `main`):
+- `frontend/src/App.jsx` y `frontend/src/App.css` (superan el límite de
+  descarga del entorno; por eso NO se han tocado — no se edita a ciegas un
+  archivo de 3.588 líneas que no se puede compilar ni testear aquí)
+- `frontend/src/i18n/en.json` / `es.json`
+- `backend/package-lock.json`, `frontend/package-lock.json`
+- imágenes binarias (`frontend/public/destinations/*`, `og-preview.png`)
+- `CLAUDE.md` contiene un placeholder (no tocar/commitear desde aquí)
+
+**Cómo aplicar estos cambios a tu repo local**: usa los parches en
+`cambios/*.patch` (git format-patch) — se aplican con
+`git am cambios/*.patch` desde la raíz de tu repo. Cada parche = una mejora.
+
+---
+
+## Mejora 1 — Tests ejecutables sin npm (shims de test)
+
+**Qué**: `backend/test/shims/` con implementaciones mínimas de express, cors,
+helmet, express-rate-limit, compression, dotenv y axios, usadas SOLO vía
+`NODE_PATH` cuando no existe `node_modules/` (en tu máquina nunca se activan).
+
+**Por qué**: la prioridad nº 2 del ciclo de trabajo son los tests como red de
+seguridad. El sandbox no puede hacer `npm install`, así que sin esto ninguna
+mejora posterior sería verificable. Con los shims, la suite existente
+(`smoke.test.js`, 13 tests) corre y pasa 13/13.
+
+**Verificación**: `NODE_PATH="$PWD/test/shims/node_modules" node --test`
+→ 13 pass / 0 fail.
+
+**Pendiente**: nada. En local sigue usándose `npm test` con deps reales.
