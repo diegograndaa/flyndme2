@@ -117,10 +117,8 @@ async function requestWithRetry(requestFn, label = "Amadeus request") {
 
 // ─── Search cache with size guard and cache hit tracking ─────────────────
 
-const searchCache = new Map();
-let cacheHits = 0;
-let cacheMisses = 0;
-let cacheRequests = 0;
+const { TtlCache } = require("../utils/ttlCache");
+const searchCache = new TtlCache({ ttlMs: SEARCH_CACHE_TTL_MS, maxSize: MAX_CACHE_SIZE });
 
 function makeCacheKey(origin, destination, departureDate, options) {
   const o = options || {};
@@ -138,54 +136,18 @@ function makeCacheKey(origin, destination, departureDate, options) {
   ].join("|");
 }
 
-function fromCache(key) {
-  const entry = searchCache.get(key);
-  cacheRequests++;
-  if (!entry) {
-    cacheMisses++;
-    return null;
-  }
-  if (Date.now() > entry.expiresAt) {
-    searchCache.delete(key);
-    cacheMisses++;
-    return null;
-  }
-  cacheHits++;
-  return entry.value;
-}
+const fromCache = (key) => searchCache.get(key);
+const toCache = (key, value) => searchCache.set(key, value);
 
-function toCache(key, value) {
-  searchCache.set(key, { value, expiresAt: Date.now() + SEARCH_CACHE_TTL_MS });
-
-  // Guard: prevent memory leak by evicting oldest entries if cache exceeds MAX_CACHE_SIZE
-  if (searchCache.size > MAX_CACHE_SIZE) {
-    const entries = Array.from(searchCache.entries());
-    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-    const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
-    for (const [k] of toDelete) {
-      searchCache.delete(k);
-    }
-  }
-}
-
-// Periodically evict stale entries and log cache hit rate
+// Log periodico de hit-rate (cada TTL, si hubo trafico suficiente)
 setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of searchCache.entries()) {
-    if (now > v.expiresAt) searchCache.delete(k);
+  const { hits, requests } = searchCache.stats;
+  if (requests >= 50) {
+    const hitRate = ((hits / requests) * 100).toFixed(1);
+    console.log(`[Amadeus Cache] Hits: ${hits}/${requests} (${hitRate}%) | Size: ${searchCache.size}/${MAX_CACHE_SIZE}`);
+    searchCache.resetStats();
   }
-
-  // Log cache hit rate every 50 requests
-  if (cacheRequests >= 50) {
-    const hitRate = ((cacheHits / cacheRequests) * 100).toFixed(1);
-    console.log(`[Amadeus Cache] Hits: ${cacheHits}/${cacheRequests} (${hitRate}%) | Size: ${searchCache.size}/${MAX_CACHE_SIZE}`);
-    cacheHits = 0;
-    cacheMisses = 0;
-    cacheRequests = 0;
-  }
-}, SEARCH_CACHE_TTL_MS).unref();
-// .unref(): el timer de limpieza no debe mantener vivo el proceso (permite
-// que `node --test` y el cierre elegante terminen sin esperar al intervalo).
+}, SEARCH_CACHE_TTL_MS).unref(); // nunca mantener vivo el proceso por el log
 
 // ─── Token ────────────────────────────────────────────────────────────────────
 

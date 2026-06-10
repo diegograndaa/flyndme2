@@ -37,35 +37,10 @@ const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
 
 // ─── In-memory response cache with size guard ─────────────────────────────
 
-const responseCache = new Map();
-
-function getCached(key) {
-  const hit = responseCache.get(key);
-  if (!hit) return null;
-  if (Date.now() > hit.expiresAt) { responseCache.delete(key); return null; }
-  return hit.value;
-}
-
-function setCached(key, value) {
-  responseCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
-
-  // Guard: prevent memory leak by evicting oldest entries if cache exceeds MAX_CACHE_SIZE
-  if (responseCache.size > MAX_CACHE_SIZE) {
-    const entries = Array.from(responseCache.entries());
-    entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-    const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
-    for (const [k] of toDelete) {
-      responseCache.delete(k);
-    }
-  }
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, e] of responseCache.entries()) {
-    if (now > e.expiresAt) responseCache.delete(k);
-  }
-}, CACHE_TTL_MS).unref(); // no mantener vivo el proceso solo por la limpieza
+const { TtlCache } = require("../utils/ttlCache");
+const responseCache = new TtlCache({ ttlMs: CACHE_TTL_MS, maxSize: MAX_CACHE_SIZE });
+const getCached = (key) => responseCache.get(key);
+const setCached = (key, value) => responseCache.set(key, value);
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 

@@ -123,3 +123,18 @@ ocupan cache.
 Suite: 26/26 pass.
 
 **Pendiente**: nada.
+
+## Mejora 7 — Calidad: TtlCache compartida (deduplicación)
+
+**Qué**: la lógica Map+TTL+evicción+sweep estaba duplicada (con variaciones
+sutiles) en `routes/flights.js` y `services/amadeusService.js`. Extraída a
+`backend/utils/ttlCache.js` (clase `TtlCache` con stats integradas y sweeper
+con `.unref()`). Ambos consumidores quedan en 2-4 líneas; el log de hit-rate
+de Amadeus se conserva usando `cache.stats`. ~60 líneas duplicadas menos.
+
+**Tests**: nuevo `test/ttlCache.test.js` (5 tests: TTL, maxSize, sweep,
+stats, validación). Suite completa: 31/31 pass.
+
+**Pendiente**: share.js mantiene su Map propio porque su semántica es
+distinta (TTL por entrada fijo de 48h + evicción por lotes); unificarlo
+aportaría poco.
