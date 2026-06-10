@@ -138,3 +138,11 @@ stats, validación). Suite completa: 31/31 pass.
 **Pendiente**: share.js mantiene su Map propio porque su semántica es
 distinta (TTL por entrada fijo de 48h + evicción por lotes); unificarlo
 aportaría poco.
+
+## Mejora 8 — Docs: README.md
+
+**Qué**: el repo no tenía README. Añadido con arquitectura, setup local
+(incl. modo mock), cómo correr los tests y dónde están las variables de
+entorno. Reduce la fricción de retomar el proyecto o de enseñárselo a alguien.
+
+**Pendiente**: capturas de pantalla cuando la UI esté estabilizada.
