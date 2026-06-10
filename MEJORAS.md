@@ -224,3 +224,25 @@ sin regresiones. (El runtime de UI no es ejecutable en este sandbox — cambio
 mínimo y del mismo patrón ya probado en el archivo.)
 
 **Pendiente**: nada.
+
+## Mejora 12 — Tests de frontend (primera suite): helpers puros + paridad i18n
+
+**Qué**: el frontend no tenía ni un test. Nueva suite con `node --test` (cero
+dependencias, no necesita navegador):
+- `frontend/tests/helpers.test.mjs` (13 tests): aeropuertos sin duplicados,
+  normalizeCode, formateo de moneda/fechas, URLs de Skyscanner/Google Flights
+  (estructura, fechas, casos vacíos), fairnessColor, banderas, quick-info.
+- `frontend/tests/i18n.test.mjs` (4 tests): paridad total de claves EN↔ES
+  (451/451), tipos consistentes y las interpolaciones `{{var}}` idénticas en
+  ambos idiomas — una traducción olvidada ya no puede llegar a la UI sin que
+  un test falle.
+
+**Cambios de soporte**: `"type": "module"` y script `"test": "node --test"`
+en `frontend/package.json` (estándar en proyectos Vite; no afecta al build);
+`getBaseUrl()` usa `import.meta.env?.BASE_URL` — fuera de Vite lanzaba
+TypeError, ahora es seguro y testeable.
+
+**Verificación**: frontend 17/17 · backend 31/31 · parser JSX OK.
+
+**Pendiente**: extraer más lógica pura de App.jsx (pickBest, convertPrice,
+approxDistKm…) a utils testeables — es el primer paso del troceo de App.jsx.

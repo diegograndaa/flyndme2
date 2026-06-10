@@ -89,7 +89,9 @@ export const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 export function getBaseUrl() {
-  return import.meta.env.BASE_URL || "/";
+  // Optional chaining: fuera de Vite (tests con node, SSR) import.meta.env
+  // no existe y el acceso directo lanzaba TypeError.
+  return import.meta.env?.BASE_URL || "/";
 }
 
 export function normalizeCode(v) {
