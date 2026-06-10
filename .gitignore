@@ -1,5 +1,10 @@
 # Dependencies
 node_modules/
+# Sin barra final: también ignora node_modules si es un SYMLINK (un symlink
+# no es un directorio y el patrón con barra no lo cubre — así se colaron al
+# repo los enlaces de desarrollo del sandbox en jun 2026)
+backend/node_modules
+frontend/node_modules
 
 # Build output
 dist/

@@ -422,3 +422,21 @@ antes del incidente (la vista del sandbox sobre node_modules quedó inestable
 después; en tu máquina `npm test` funciona igual).
 
 **Pendiente**: nada.
+
+## Mejora 23 — URGENTE: eliminar symlinks node_modules committeados por error
+
+**Qué**: durante el lote 2, los symlinks de desarrollo del sandbox
+(`backend/node_modules` y `frontend/node_modules`, apuntando a rutas
+absolutas del entorno de trabajo) entraron en los commits: el patrón
+`node_modules/` de .gitignore solo ignora DIRECTORIOS, no symlinks. Llegaron
+a GitHub main y podían romper los deploys (Vercel/Render checkoutean un
+symlink colgante donde npm espera poder instalar) y bloqueaban `git pull` en
+copias locales con node_modules reales.
+
+**Cómo**: `git rm --cached` de ambos (backend salió ya con el rename de la
+Mejora 22; este commit quita el de frontend). Lección incorporada: en los
+entornos de trabajo, los symlinks de desarrollo se crean FUERA del árbol del
+repo a partir de ahora.
+
+**Verificación**: `git ls-files | grep node_modules` → solo
+backend/test/shims/modules/ (código del repo). Suite backend con shims 39/39.
