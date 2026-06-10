@@ -146,3 +146,19 @@ aportaría poco.
 entorno. Reduce la fricción de retomar el proyecto o de enseñárselo a alguien.
 
 **Pendiente**: capturas de pantalla cuando la UI esté estabilizada.
+
+## Mejora 9 — Robustez en producción: uncaughtException + keep-alive para Render
+
+**Qué** (en `backend/index.js`):
+- Handler de `uncaughtException`: registra y sale con código 1 (Render
+  reinicia el servicio); antes una excepción síncrona no capturada dejaba el
+  proceso en estado indefinido.
+- `server.keepAliveTimeout = 65s` y `headersTimeout = 66s`: el default de
+  Node (5s) es menor que el idle timeout del proxy de Render y causa 502
+  intermitentes cuando el proxy reutiliza una conexión que el backend acaba
+  de cerrar. Causa clásica de errores esporádicos difíciles de reproducir.
+
+**Tests**: suite completa sin regresiones (31/31 pass).
+
+**Pendiente**: si los 502 persistieran en Render, revisar también el
+cold-start del plan free (keep-alive externo ya planificado en otra fase).

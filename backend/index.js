@@ -249,6 +249,13 @@ process.on("unhandledRejection", (reason) => {
   console.error("[UnhandledRejection]", reason);
 });
 
+// Una excepción síncrona no capturada deja el proceso en estado indefinido:
+// registrar y salir (Render reinicia el servicio automáticamente).
+process.on("uncaughtException", (err) => {
+  console.error("[UncaughtException]", err);
+  process.exit(1);
+});
+
 // ─── Graceful shutdown ────────────────────────────────────────────────────
 
 let server;
@@ -283,3 +290,9 @@ server = app.listen(PORT, () => {
     console.log("⚠  USE_MOCK=true — serving deterministic fixtures, NOT calling Amadeus.");
   }
 });
+
+// Detrás del proxy de Render, el keepAliveTimeout por defecto de Node (5s)
+// provoca 502 intermitentes cuando el proxy reutiliza una conexión que el
+// backend acaba de cerrar. Debe ser mayor que el idle timeout del proxy.
+server.keepAliveTimeout = 65_000;
+server.headersTimeout   = 66_000; // siempre > keepAliveTimeout
