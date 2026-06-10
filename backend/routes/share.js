@@ -16,7 +16,7 @@ setInterval(() => {
   for (const [id, entry] of shareStore.entries()) {
     if (now > entry.expiresAt) shareStore.delete(id);
   }
-}, 30 * 60 * 1000);
+}, 30 * 60 * 1000).unref(); // no mantener vivo el proceso solo por la limpieza
 
 function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe

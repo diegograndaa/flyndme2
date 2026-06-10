@@ -39,3 +39,24 @@ mejora posterior sería verificable. Con los shims, la suite existente
 → 13 pass / 0 fail.
 
 **Pendiente**: nada. En local sigue usándose `npm test` con deps reales.
+
+## Mejora 2 — Bug: travelClass/currencyCode fuera de la clave de cache de Amadeus
+
+**Qué**: `makeCacheKey()` en `backend/services/amadeusService.js` no incluía
+`travelClass` ni `currencyCode`. Una búsqueda en BUSINESS podía recibir el
+precio ECONOMY cacheado de la misma ruta/fecha (y viceversa) durante 15 min.
+Precio incorrecto mostrado al usuario = violación directa del principio
+"reliability over fake precision".
+
+**Cómo**: ambos campos añadidos a la clave (con `currencyCode` defaulting a
+"EUR" para no invalidar la cache existente del caso común). Se exponen
+internals vía `module.exports.__test` para poder testearlo sin red.
+
+**Además**: los 3 `setInterval` de limpieza (amadeusService, flights, share)
+ahora llevan `.unref()` — mantenían vivo el proceso Node, lo que colgaba
+`node --test` al requerir los servicios y retrasaba el cierre elegante.
+
+**Tests**: nuevo `backend/test/cacheKey.test.js` (5 tests de regresión).
+Suite completa: 18/18 pass.
+
+**Pendiente**: nada.

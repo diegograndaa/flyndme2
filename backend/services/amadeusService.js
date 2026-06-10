@@ -130,6 +130,11 @@ function makeCacheKey(origin, destination, departureDate, options) {
     o.adults     || 1,
     o.nonStop !== undefined ? String(o.nonStop) : "",
     o.max        || 5,
+    // travelClass y currencyCode afectan al precio devuelto por Amadeus:
+    // si no forman parte de la clave, una búsqueda BUSINESS puede devolver
+    // un precio ECONOMY cacheado (y viceversa).
+    o.travelClass  || "",
+    o.currencyCode || "EUR",
   ].join("|");
 }
 
@@ -178,7 +183,9 @@ setInterval(() => {
     cacheMisses = 0;
     cacheRequests = 0;
   }
-}, SEARCH_CACHE_TTL_MS);
+}, SEARCH_CACHE_TTL_MS).unref();
+// .unref(): el timer de limpieza no debe mantener vivo el proceso (permite
+// que `node --test` y el cierre elegante terminen sin esperar al intervalo).
 
 // ─── Token ────────────────────────────────────────────────────────────────────
 
@@ -373,3 +380,6 @@ async function healthCheck() {
 }
 
 module.exports = { getAccessToken, searchFlightOffer, getCheapestPrice, getCheapestOffer, priceFlightOffer, healthCheck };
+
+// Internals expuestos SOLO para tests unitarios (no usar desde la app).
+module.exports.__test = { makeCacheKey };

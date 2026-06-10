@@ -65,7 +65,7 @@ setInterval(() => {
   for (const [k, e] of responseCache.entries()) {
     if (now > e.expiresAt) responseCache.delete(k);
   }
-}, CACHE_TTL_MS);
+}, CACHE_TTL_MS).unref(); // no mantener vivo el proceso solo por la limpieza
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
