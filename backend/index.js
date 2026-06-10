@@ -226,6 +226,21 @@ app.use((_req, res) => {
 
 // Global error handler
 app.use((err, _req, res, _next) => {
+  // Body JSON malformado (error de body-parser): es un error del cliente,
+  // no del servidor → 400 con código claro en lugar de un 500 genérico.
+  if (err.type === "entity.parse.failed" || (err instanceof SyntaxError && err.status === 400)) {
+    return res.status(400).json({
+      code: "INVALID_JSON",
+      message: "El cuerpo de la petición no es JSON válido.",
+    });
+  }
+  // Payload por encima del límite de express.json (128kb)
+  if (err.type === "entity.too.large" || err.status === 413) {
+    return res.status(413).json({
+      code: "PAYLOAD_TOO_LARGE",
+      message: "El cuerpo de la petición es demasiado grande.",
+    });
+  }
   console.error("[Error]", err.message || err);
   res.status(500).json({ message: "Error interno del servidor." });
 });

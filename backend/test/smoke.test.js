@@ -312,3 +312,14 @@ test("tiering: custom destinations bypass tier fallback", async () => {
       `unexpected destination ${d} in custom-list search`);
   }
 });
+
+test("robustez: JSON malformado devuelve 400 INVALID_JSON, no 500", async () => {
+  const r = await fetch(`${BASE}/api/flights/multi-origin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{ esto no es json",
+  });
+  assert.equal(r.status, 400);
+  const body = await r.json();
+  assert.equal(body.code, "INVALID_JSON");
+});

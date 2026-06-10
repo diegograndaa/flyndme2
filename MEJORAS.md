@@ -60,3 +60,16 @@ ahora llevan `.unref()` — mantenían vivo el proceso Node, lo que colgaba
 Suite completa: 18/18 pass.
 
 **Pendiente**: nada.
+
+## Mejora 3 — Robustez: JSON malformado → 400 INVALID_JSON (antes 500)
+
+**Qué**: un body JSON inválido en cualquier POST acababa en el error handler
+global y devolvía `500 Error interno del servidor.` Es un error del cliente:
+ahora devuelve `400 {code: "INVALID_JSON"}` y `413 {code: "PAYLOAD_TOO_LARGE"}`
+si supera el límite de 128kb de express.json. Mantiene el contrato de errores
+con `code` legible que ya usaba el resto de la API.
+
+**Tests**: nuevo test en smoke.test.js. Suite: 19/19 pass.
+
+**Pendiente**: el frontend podría mapear INVALID_JSON a un mensaje i18n, pero
+en la práctica nunca envía JSON malformado (baja prioridad).
