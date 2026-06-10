@@ -367,3 +367,19 @@ de Vite (tests/SSR). Corregido.
 
 **Pendiente**: con esta red ya es seguro extraer SearchPage y WinnerCard de
 App.jsx (siguiente ciclo).
+
+## Mejora 20 — Troceo de App.jsx (III): SearchPage a su propio archivo
+
+**Qué**: el componente más grande de App.jsx — el formulario de búsqueda
+completo (orígenes, pasajeros, fechas con avisos, destinos, opciones
+avanzadas) — extraído a `components/SearchPage.jsx` junto con sus dos hooks
+privados (`useDateWarnings`, `useTypingPlaceholder`, solo usados por él).
+Movimiento mecánico sin cambios de lógica. **App.jsx: 3.448 → 2.735 líneas**
+(desde el inicio de la sesión: 3.587 → 2.735, −24%).
+
+**Verificación**: render SSR directo de SearchPage con props completas
+(nuevo test) + render de App completa + suites: frontend 39/39 · backend
+32/32. El análisis previo confirmó que SearchPage solo dependía de 2 símbolos
+del módulo (sus hooks privados) — cero riesgo de closures rotos.
+
+**Pendiente**: WinnerCard (588 líneas) — siguiente extracción.

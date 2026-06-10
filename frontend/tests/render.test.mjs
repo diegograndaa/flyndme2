@@ -85,3 +85,29 @@ test("render: CompareChart y DestinationMap con fixtures", async () => {
   assert.ok(renderWithI18n(React.createElement(CompareChart, { flights, bestDestination: FIXTURE_DEST })).includes("svg"));
   assert.ok(renderWithI18n(React.createElement(DestinationMap, { flights, bestDestination: FIXTURE_DEST, origins: ["MAD", "LON"] })).includes("svg"));
 });
+
+test("render: SearchPage extraída renderiza con props completas", async () => {
+  const { default: SearchPage } = await import("../src/components/SearchPage.jsx");
+  const noop = () => {};
+  const html = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD", ""], setOrigins: noop,
+    tripType: "roundtrip", setTripType: noop,
+    departureDate: "2026-09-15", setDepartureDate: noop,
+    returnDate: "2026-09-20", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: true, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: true, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: ["ROM"], setSelectedDests: noop,
+    passengers: [2, 1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
+  assert.ok(html.includes("MAD"));
+});
