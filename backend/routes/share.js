@@ -1,5 +1,6 @@
 const express = require("express");
 const crypto  = require("crypto");
+const rateLimit = require("express-rate-limit");
 const router  = express.Router();
 
 // ─── In-memory share store (TTL: 48 hours) ──────────────────────────────────
@@ -22,9 +23,23 @@ function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe
 }
 
+// Limite especifico de creacion de shares: sin el, un bucle trivial podia
+// llenar el store en memoria (MAX_SHARES x MAX_PAYLOAD_KB) y expulsar los
+// links legitimos de otros usuarios. La lectura (GET) no se limita aqui.
+const createShareLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: Number(process.env.SHARE_CREATE_LIMIT || 20),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: "RATE_LIMITED", message: "Demasiados enlaces creados. Espera unos minutos." },
+});
+
+// Formato de los ids generados por generateId(): base64url de 6 bytes.
+const SHARE_ID_RE = /^[A-Za-z0-9_-]{4,24}$/;
+
 // ─── POST /api/share — save results and return share ID ─────────────────────
 
-router.post("/", (req, res) => {
+router.post("/", createShareLimiter, (req, res) => {
   try {
     const { results, searchParams } = req.body;
 
@@ -92,6 +107,7 @@ function escapeHtml(s) {
 
 router.get("/:id/og", (req, res) => {
   const { id } = req.params;
+  if (!SHARE_ID_RE.test(id)) return res.redirect(302, FRONTEND_URL);
   const entry = shareStore.get(id);
 
   if (!entry || Date.now() > entry.expiresAt) {
@@ -145,6 +161,9 @@ router.get("/:id/og", (req, res) => {
 
 router.get("/:id", (req, res) => {
   const { id } = req.params;
+  if (!SHARE_ID_RE.test(id)) {
+    return res.status(404).json({ code: "NOT_FOUND", message: "Share link not found or expired." });
+  }
 
   const entry = shareStore.get(id);
   if (!entry) {

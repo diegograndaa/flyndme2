@@ -73,3 +73,19 @@ con `code` legible que ya usaba el resto de la API.
 
 **Pendiente**: el frontend podría mapear INVALID_JSON a un mensaje i18n, pero
 en la práctica nunca envía JSON malformado (baja prioridad).
+
+## Mejora 4 — Seguridad: rate limit en creación de share links + validación de id
+
+**Qué**: `POST /api/share` no tenía ningún límite: un bucle trivial podía
+crear 500 entradas de 64KB (32MB) y, peor, expulsar del store los enlaces
+legítimos de otros usuarios (la evicción borra los más antiguos). Ahora:
+- `POST /api/share` limitado a 20 creaciones / 10 min / IP (configurable con
+  `SHARE_CREATE_LIMIT`), respuesta `429 {code: "RATE_LIMITED"}`.
+- `GET /api/share/:id` y `/og` validan el formato del id (base64url 4-24
+  chars) antes de tocar el store; ids basura → 404/redirect inmediato.
+
+**Tests**: 2 nuevos en smoke.test.js. Suite: 21/21 pass.
+
+**Pendiente**: persistencia del shareStore (Redis o similar) si algún día hay
+varios procesos — hoy es un único proceso en Render y el store en memoria es
+una decisión consciente del MVP.

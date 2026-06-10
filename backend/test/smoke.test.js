@@ -323,3 +323,29 @@ test("robustez: JSON malformado devuelve 400 INVALID_JSON, no 500", async () => 
   const body = await r.json();
   assert.equal(body.code, "INVALID_JSON");
 });
+
+test("share: id con formato invalido → 404 sin tocar el store", async () => {
+  const r = await get("/api/share/../../etc/passwd");
+  // Puede resolver como 404 de ruta o 404 del validador; nunca 200/500.
+  assert.ok([400, 404].includes(r.status), `unexpected status ${r.status}`);
+  const r2 = await get("/api/share/%21%21%21%21");
+  assert.equal(r2.status, 404);
+  assert.equal(r2.body.code, "NOT_FOUND");
+});
+
+test("share: la creacion esta rate-limited (RATE_LIMITED tras el limite)", async () => {
+  const payload = {
+    results: { flights: [] },
+    searchParams: { origins: ["MAD"], departureDate: "2026-12-01" },
+  };
+  let limited = null;
+  // El limite por defecto es 20/10min/IP y los tests anteriores ya crearon
+  // algunos shares, asi que 25 intentos garantizan cruzarlo.
+  for (let i = 0; i < 25; i++) {
+    const r = await post("/api/share", payload);
+    if (r.status === 429) { limited = r; break; }
+    assert.equal(r.status, 200, `create #${i} failed: ${JSON.stringify(r.body)}`);
+  }
+  assert.ok(limited, "expected a 429 after exceeding the create limit");
+  assert.equal(limited.body.code, "RATE_LIMITED");
+});
