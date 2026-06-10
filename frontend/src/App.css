@@ -1298,7 +1298,9 @@ body {
   align-items: center;
   gap: 0;
   background: linear-gradient(135deg, #16173B 0%, #2C2D52 100%);
-  color: var(--white);
+  /* Fondo navy fijo en ambos temas: el texto debe ser blanco literal
+     (var(--white) se invierte en dark y dejaba el total ilegible) */
+  color: #fff;
   overflow-x: auto;
 }
 .wc-summary-item {
