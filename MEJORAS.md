@@ -107,3 +107,19 @@ una decisión consciente del MVP.
 
 **Pendiente**: validar también returnDate > ~360 días (límite de Amadeus);
 poco frecuente, baja prioridad.
+
+## Mejora 6 — Rendimiento: cache key de respuesta normalizada
+
+**Qué**: la clave de la cache de respuestas de `/multi-origin` incluía el
+array `destinations` crudo del body. `["rom ", "lis", "ROM"]` y
+`["ROM","LIS"]` son la misma búsqueda pero generaban entradas distintas →
+misses innecesarios y trabajo duplicado contra Amadeus. Ahora la clave se
+construye con `destinationList` ya normalizada (mayúsculas, sin duplicados,
+sin orígenes), moviendo el cálculo de tiers antes del chequeo de cache (es
+barato, no toca red). Bonus: las peticiones con destinos 100% inválidos ya no
+ocupan cache.
+
+**Tests**: 1 nuevo (payloads idénticos para variantes equivalentes).
+Suite: 26/26 pass.
+
+**Pendiente**: nada.

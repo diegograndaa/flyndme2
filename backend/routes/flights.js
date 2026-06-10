@@ -406,19 +406,6 @@ router.post("/multi-origin", async (req, res) => {
     const safeMaxFlight = Number.isFinite(Number(maxBudgetPerFlight)) && Number(maxBudgetPerFlight) > 0
       ? Number(maxBudgetPerFlight) : null;
 
-    // ── Cache ─────────────────────────────────────────────────────────────────
-    const cacheKey = JSON.stringify({
-      originList, originPax, destinations, departureDate, returnDate,
-      tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
-    });
-    const cached = getCached(cacheKey);
-    if (cached) {
-      const duration = Date.now() - startTime;
-      res.set("X-Response-Time", `${duration}ms`);
-      console.log("[cache] HIT");
-      return res.json(cached);
-    }
-
     // ── Destination tiers ─────────────────────────────────────────────────────
     const searchTiers = buildSearchTiers(destinations, originList);
     const destinationList = searchTiers.flat(); // used only for combination guard + logging
@@ -428,6 +415,22 @@ router.post("/multi-origin", async (req, res) => {
         code: "NO_VALID_DESTINATIONS",
         message: "Sin destinos válidos para buscar.",
       });
+    }
+
+    // ── Cache ─────────────────────────────────────────────────────────────────
+    // La clave usa las listas YA normalizadas (originList ordenable estable,
+    // destinationList en mayúsculas y sin duplicados) en lugar del body crudo:
+    // ["rom", "ROM "] y ["ROM"] son la misma búsqueda y deben compartir entrada.
+    const cacheKey = JSON.stringify({
+      originList, originPax, destinationList, departureDate, returnDate,
+      tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
+    });
+    const cached = getCached(cacheKey);
+    if (cached) {
+      const duration = Date.now() - startTime;
+      res.set("X-Response-Time", `${duration}ms`);
+      console.log("[cache] HIT");
+      return res.json(cached);
     }
 
     // ── Date candidates ───────────────────────────────────────────────────────

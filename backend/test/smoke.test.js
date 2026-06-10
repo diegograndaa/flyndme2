@@ -398,3 +398,17 @@ test("validacion: rango flex no genera fechas pasadas (salida hoy + flex)", asyn
     assert.ok(f.bestDate >= iso, `bestDate ${f.bestDate} es anterior a hoy ${iso}`);
   }
 });
+
+test("cache: destinos equivalentes sin normalizar comparten entrada de cache", async () => {
+  const base = {
+    origins: ["MAD", "LON"],
+    departureDate: "2026-10-25",
+    tripType: "oneway",
+  };
+  const r1 = await post("/api/flights/multi-origin", { ...base, destinations: ["ROM", "LIS"] });
+  const r2 = await post("/api/flights/multi-origin", { ...base, destinations: ["rom ", "lis", "ROM"] });
+  assert.equal(r1.status, 200);
+  assert.equal(r2.status, 200);
+  // Mismo payload byte a byte = sirvio la misma entrada cacheada
+  assert.deepEqual(r1.body, r2.body);
+});
