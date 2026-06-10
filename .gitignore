@@ -1,7 +1,5 @@
 # Dependencies
 node_modules/
-# Excepción: los shims de test NO son dependencias instaladas, son código del repo
-!backend/test/shims/node_modules/
 
 # Build output
 dist/

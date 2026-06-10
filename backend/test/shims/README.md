@@ -12,7 +12,7 @@ Uso (solo cuando no puedes hacer `npm install`):
 
 ```bash
 cd backend
-NODE_PATH="$PWD/test/shims/node_modules" node --test
+NODE_PATH="$PWD/test/shims/modules" node --test
 ```
 
 En desarrollo normal usa siempre las dependencias reales:

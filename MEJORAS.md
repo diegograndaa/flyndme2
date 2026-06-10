@@ -402,3 +402,23 @@ Frontend 40/40 · backend 32/32.
 
 **Pendiente**: App.jsx aún contiene Landing (206), CostSplitCard y varios
 paneles menores — extraíbles con el mismo método cuando toque.
+
+## Mejora 22 — Hotfix: shims renombrados para eliminar la excepción de .gitignore
+
+**Qué**: la excepción `!backend/test/shims/node_modules/` añadida en la
+Mejora 10 desactiva la optimización con la que git se salta los directorios
+`node_modules/` ignorados: git pasó a escanearlos enteros (lento en Windows)
+y, combinado con un symlink accidental, provocó el error
+"Filename too long" al hacer pull. Los shims viven ahora en
+`backend/test/shims/modules/` (NODE_PATH no exige que el directorio se llame
+node_modules) y la excepción desaparece — git vuelve a saltarse todos los
+node_modules sin mirar dentro.
+
+**Uso actualizado**: `NODE_PATH="$PWD/test/shims/modules" node --test`
+(documentado en backend/test/shims/README.md y README.md).
+
+**Verificación**: suite backend con shims 39/39 · con deps reales verificada
+antes del incidente (la vista del sandbox sobre node_modules quedó inestable
+después; en tu máquina `npm test` funciona igual).
+
+**Pendiente**: nada.
