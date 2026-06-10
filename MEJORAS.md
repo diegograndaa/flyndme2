@@ -162,3 +162,42 @@ entorno. Reduce la fricción de retomar el proyecto o de enseñárselo a alguien
 
 **Pendiente**: si los 502 persistieran en Render, revisar también el
 cold-start del plan free (keep-alive externo ya planificado en otra fase).
+
+## Mejora 10 — Fix del propio proceso: los shims no estaban en git
+
+**Qué**: `.gitignore` tiene `node_modules/`, que excluía silenciosamente
+`backend/test/shims/node_modules/`. Los parches generados no contenían los
+shims y la suite no corría en un clon limpio. Detectado al simular `git am`
+sobre una copia limpia del baseline. Añadida excepción explícita en
+`.gitignore` y verificado: baseline limpio + 10 parches → 31/31 tests.
+
+---
+
+# Cola de próximas mejoras (orden sugerido)
+
+1. **App.jsx (3.588 líneas)**: trocear en módulos (`SearchForm`, `WinnerCard`,
+   `ResultsView`...) — era el siguiente paso ya planificado. No se hizo en
+   esta sesión: el entorno no podía descargar el archivo completo ni
+   compilar JSX, y editarlo a ciegas viola la regla de no romper lo que
+   funciona.
+2. **Tests de frontend**: extraer la lógica pura de `helpers.js` que usa
+   `import.meta` a funciones inyectables y testearlas con node:test o
+   Vitest.
+3. **Timeout global de búsqueda**: con API real y muchas combinaciones, la
+   búsqueda puede exceder el timeout del proxy de Render; devolver
+   resultados parciales tras ~25s.
+4. **returnDate > ~360 días** → 400 (límite de Amadeus).
+5. Conectar Amadeus producción + keep-alive de Render (fase ya planificada,
+   fuera del alcance de esta sesión por instrucción explícita).
+
+# Cómo aplicar estos cambios en tu repo local
+
+```bash
+cd C:\Users\diego\flyndme2        # tu clon real
+git checkout -b mejoras-backend
+git am "C:\Users\diego\flyndme2\Fyndme\flyndme2\cambios\*.patch"
+cd backend && npm install && npm test   # 31/31 con deps reales
+```
+
+Los 10 parches solo tocan `backend/`, `README.md`, `MEJORAS.md` y
+`.gitignore`. No tocan App.jsx, App.css, i18n, Amadeus real ni el stack.
