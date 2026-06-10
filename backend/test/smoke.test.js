@@ -349,3 +349,52 @@ test("share: la creacion esta rate-limited (RATE_LIMITED tras el limite)", async
   assert.ok(limited, "expected a 429 after exceeding the create limit");
   assert.equal(limited.body.code, "RATE_LIMITED");
 });
+
+test("validacion: travelClass invalida → 400 INVALID_TRAVEL_CLASS", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: "2026-09-15",
+    travelClass: "LUXURY",
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, "INVALID_TRAVEL_CLASS");
+});
+
+test("validacion: travelClass valida en minusculas se acepta", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: "2026-09-16",
+    travelClass: "business",
+  });
+  assert.equal(r.status, 200);
+});
+
+test("validacion: fecha de salida en el pasado → 400 DEPARTURE_DATE_IN_PAST", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: "2020-01-01",
+  });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, "DEPARTURE_DATE_IN_PAST");
+});
+
+test("validacion: rango flex no genera fechas pasadas (salida hoy + flex)", async () => {
+  const today = new Date();
+  const iso = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: iso,
+    dateMode: "flex",
+    flexDays: 3,
+    tripType: "oneway",
+  });
+  assert.equal(r.status, 200);
+  // Ningun resultado puede tener bestDate anterior a hoy
+  for (const f of r.body.flights) {
+    assert.ok(f.bestDate >= iso, `bestDate ${f.bestDate} es anterior a hoy ${iso}`);
+  }
+});

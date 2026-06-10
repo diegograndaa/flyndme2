@@ -318,6 +318,23 @@ router.post("/multi-origin", async (req, res) => {
     tripType = tripType === "roundtrip" ? "roundtrip" : "oneway";
     dateMode = dateMode === "flex"      ? "flex"      : "exact";
     flexDays = typeof flexDays === "number" && flexDays >= 0 ? Math.min(flexDays, 5) : 0;
+    // nonStop: solo true explicito (boolean o "true"); cualquier otra cosa → sin filtro
+    nonStop  = nonStop === true || nonStop === "true" ? true : undefined;
+
+    // travelClass: enum cerrado de Amadeus; un valor arbitrario provocaria un
+    // 400 silencioso en cada llamada y una respuesta vacia confusa.
+    const VALID_TRAVEL_CLASSES = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
+    if (travelClass !== undefined && travelClass !== null && travelClass !== "") {
+      travelClass = String(travelClass).trim().toUpperCase();
+      if (!VALID_TRAVEL_CLASSES.includes(travelClass)) {
+        return res.status(400).json({
+          code: "INVALID_TRAVEL_CLASS",
+          message: `travelClass debe ser una de: ${VALID_TRAVEL_CLASSES.join(", ")}.`,
+        });
+      }
+    } else {
+      travelClass = undefined;
+    }
 
     // ── Validate origins ──────────────────────────────────────────────────────
     if (!Array.isArray(origins) || origins.length === 0) {
@@ -373,6 +390,15 @@ router.post("/multi-origin", async (req, res) => {
         message: "Fecha de vuelta inválida. Usa YYYY-MM-DD.",
       });
     }
+    // Fechas en el pasado: Amadeus las rechaza llamada a llamada y el usuario
+    // recibiria un "sin resultados" confuso. Mejor un 400 claro aqui.
+    const todayStr = toISODate(new Date());
+    if (departureDate < todayStr) {
+      return res.status(400).json({
+        code: "DEPARTURE_DATE_IN_PAST",
+        message: "La fecha de salida ya ha pasado.",
+      });
+    }
 
     // ── Budget ────────────────────────────────────────────────────────────────
     const safeMaxAvg = Number.isFinite(Number(maxBudgetPerTraveler)) && Number(maxBudgetPerTraveler) > 0
@@ -418,9 +444,10 @@ router.post("/multi-origin", async (req, res) => {
       }
     }
 
-    const dateCandidates = dateMode === "flex" && flexDays > 0
+    const dateCandidates = (dateMode === "flex" && flexDays > 0
       ? Array.from({ length: 2 * flexDays + 1 }, (_, i) => toISODate(addDays(depBase, i - flexDays)))
-      : [departureDate];
+      : [departureDate]
+    ).filter((d) => d >= todayStr); // el rango flex no debe pisar fechas pasadas
 
     // ── Combination guard ─────────────────────────────────────────────────────
     const combinations = originList.length * destinationList.length * dateCandidates.length;

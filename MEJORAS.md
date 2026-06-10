@@ -89,3 +89,21 @@ legítimos de otros usuarios (la evicción borra los más antiguos). Ahora:
 **Pendiente**: persistencia del shareStore (Redis o similar) si algún día hay
 varios procesos — hoy es un único proceso en Render y el store en memoria es
 una decisión consciente del MVP.
+
+## Mejora 5 — Validación: travelClass, nonStop y fechas pasadas
+
+**Qué** (en `POST /api/flights/multi-origin`):
+- `travelClass` ahora se valida contra el enum real de Amadeus (ECONOMY,
+  PREMIUM_ECONOMY, BUSINESS, FIRST), aceptando minúsculas. Antes, un valor
+  arbitrario provocaba un 400 silencioso de Amadeus en CADA llamada → quota
+  gastada y "sin resultados" inexplicable para el usuario.
+- `nonStop` se normaliza a boolean (true/"true"); cualquier otro valor → sin
+  filtro, en vez de mandar basura como query param.
+- Fecha de salida en el pasado → `400 DEPARTURE_DATE_IN_PAST` (antes: N
+  llamadas fallidas a Amadeus y respuesta vacía).
+- El rango flex ya no genera candidatos anteriores a hoy (se recortan).
+
+**Tests**: 4 nuevos. Suite: 25/25 pass.
+
+**Pendiente**: validar también returnDate > ~360 días (límite de Amadeus);
+poco frecuente, baja prioridad.
