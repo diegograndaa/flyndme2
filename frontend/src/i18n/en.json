@@ -24,7 +24,7 @@
       "FlyndMe compares flights with flexible dates and finds the cheapest destination.",
       "Share results with your group and book on Skyscanner or Google Flights."
     ],
-    "metaSource": "Real data · Amadeus",
+    "metaSource": "Real flight data",
     "metaTime": "Results in ~5 s",
     "statDestinations": "destinations",
     "statOrigins": "max origins",
@@ -45,7 +45,7 @@
       },
       {
         "q": "Are the prices exact?",
-        "a": "They're real prices from Amadeus, but may vary slightly at the time of booking."
+        "a": "They're real flight prices, but may vary slightly at the time of booking."
       }
     ],
     "testimonialsTitle": "What travelers say",
@@ -88,7 +88,7 @@
       },
       {
         "icon": "✈️",
-        "text": "Real Amadeus data"
+        "text": "Real flight data"
       },
       {
         "icon": "⚡",
@@ -185,7 +185,7 @@
     "submit": "Find destination",
     "searching": "Searching…",
     "footnoteTime": "Results in ~5 s",
-    "footnotePrices": "Prices via Amadeus",
+    "footnotePrices": "Real flight prices",
     "flexLabel": "Flexible dates",
     "flexHintOn": "±{{days}} days around your date",
     "flexHintOff": "Search on exact date only",
@@ -261,7 +261,7 @@
     "stops": "{{n}} stop(s)",
     "outbound": "Outbound",
     "returnLeg": "Return",
-    "disclaimer": "Estimated prices via Amadeus. May vary at time of booking.",
+    "disclaimer": "Estimated prices from live flight data. May vary at time of booking.",
     "otherOptions": "Other options",
     "hide": "Hide",
     "showMap": "Map",

@@ -24,7 +24,7 @@
       "FlyndMe compara vuelos con fechas flexibles y encuentra el destino más barato.",
       "Comparte el resultado con tu grupo y reserva en Skyscanner o Google Flights."
     ],
-    "metaSource": "Datos reales · Amadeus",
+    "metaSource": "Datos reales de vuelos",
     "metaTime": "Resultado en ~5 s",
     "statDestinations": "destinos",
     "statOrigins": "orígenes máx.",
@@ -45,7 +45,7 @@
       },
       {
         "q": "¿Los precios son exactos?",
-        "a": "Son precios reales de Amadeus, pero pueden variar ligeramente en el momento de reservar."
+        "a": "Son precios reales de vuelos, pero pueden variar ligeramente en el momento de reservar."
       }
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",
@@ -88,7 +88,7 @@
       },
       {
         "icon": "✈️",
-        "text": "Datos reales de Amadeus"
+        "text": "Datos reales de vuelos"
       },
       {
         "icon": "⚡",
@@ -185,7 +185,7 @@
     "submit": "Buscar destino",
     "searching": "Buscando…",
     "footnoteTime": "Resultado en ~5 s",
-    "footnotePrices": "Precios vía Amadeus",
+    "footnotePrices": "Precios reales de vuelos",
     "flexLabel": "Fechas flexibles",
     "flexHintOn": "±{{days}} días alrededor de tu fecha",
     "flexHintOff": "Buscar solo en la fecha exacta",
@@ -261,7 +261,7 @@
     "stops": "{{n}} escala(s)",
     "outbound": "Ida",
     "returnLeg": "Vuelta",
-    "disclaimer": "Precios estimados vía Amadeus. Pueden variar al momento de reservar.",
+    "disclaimer": "Precios estimados con datos reales de vuelos. Pueden variar al momento de reservar.",
     "otherOptions": "Otras opciones",
     "hide": "Ocultar",
     "showMap": "Mapa",

@@ -21,7 +21,7 @@ import SearchPage from "./components/SearchPage";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } from "./components/ChromeBits";
-import { CostSplitCard, PlanYourTripCTA, DestImageBanner, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
+import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { getCityImage } from "./utils/cityImages";
 import VerificationBadge from "./components/VerificationBadge";
@@ -206,7 +206,8 @@ export default function App() {
   useEffect(() => {
     if (view === "search") {
       const id = setTimeout(() => {
-        document.querySelector(".sf-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        document.querySelector(".sf-form")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
       }, 80);
       return () => clearTimeout(id);
     }
@@ -391,7 +392,8 @@ export default function App() {
 
   // ── PWA: Register service worker ────────────────────────────────────────
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
+    // Solo en producción: en dev el SW cacheaba módulos de Vite y rompía la app
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
   }, []);
@@ -1020,9 +1022,6 @@ export default function App() {
               <button type="button" className="fm-sticky-btn" onClick={() => setView("search")}>{t("results.changeSearch")}</button>
             </div>
           </div>
-
-          {/* Destination image banner */}
-          <DestImageBanner destCode={normalizeCode(bestDestination.destination)} />
 
           <WinnerCard
             dest={bestDestination}

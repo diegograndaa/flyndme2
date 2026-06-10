@@ -70,12 +70,6 @@
 }
 .wc-card .wc-body .wc-stats-mini { color: var(--slate-500); }
 
-/* Equidad: verde */
-.wc-card .wc-fairness-fill-full.wc-fairness-fill-full {
-  background: var(--accent);
-  background-image: none;
-}
-
 /* Sección de reserva y tarjetas por origen */
 .wc-card .wc-booking.wc-booking {
   background: var(--slate-50);
@@ -152,12 +146,6 @@
   color: #fff;
   border-color: var(--primary);
 }
-.wc-card .wc-action-btn--whatsapp.wc-action-btn--whatsapp {
-  background: var(--white);
-  color: var(--navy);
-  border: 1px solid var(--slate-200);
-}
-
 .wc-card .wc-disclaimer { color: var(--slate-500); }
 
 /* ─── Lista de alternativas (altl-*) ─────────────────────────────────────── */

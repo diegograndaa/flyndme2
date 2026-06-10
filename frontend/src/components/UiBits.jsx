@@ -69,9 +69,9 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
 // Miga de pan de navegación entre vistas
 export function Breadcrumb({ current, onNavigate }) {
   const { t } = useI18n();
+  // Dos pantallas (rediseño jun-2026): Inicio › Resultados
   const crumbs = [
     { key: "landing", label: t("breadcrumb.home") },
-    { key: "search", label: t("breadcrumb.search") },
     ...(current === "results" ? [{ key: "results", label: t("breadcrumb.results") }] : []),
   ];
   return (
