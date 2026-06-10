@@ -6,9 +6,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
-  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, destQuickInfo, airportName, fairnessColor,
+  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName, fairnessColor,
 } from "../utils/helpers";
-import { convertPrice, approxDistKm } from "../utils/resultsLogic";
+import { convertPrice } from "../utils/resultsLogic";
+import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
@@ -29,20 +30,6 @@ function airlineLogo(iata) {
 function AnimatedPrice({ value, decimals = 2, className = "" }) {
   const formatted = useCountUp(value, 800, decimals);
   return <div className={`${className} price-animate`}>{formatted}</div>;
-}
-
-const DEST_CATEGORIES = {
-  beach:   new Set(["AGP","PMI","TFS","NCE","MLA","DBV","SPU","RHO","TLV"]),
-  budget:  new Set(["OPO","NAP","KRK","BEG","OTP","SOF","TIA","RAK","TLL","RIX","VNO","SKG"]),
-  capital: new Set(["LON","PAR","ROM","BER","MAD","LIS","VIE","PRG","ATH","CPH","BUD","DUB","BRU","WAW","OSL","HEL","STO"]),
-};
-
-function destCategoryTags(code, t) {
-  const tags = [];
-  if (DEST_CATEGORIES.beach.has(code))   tags.push({ key: "beach",   label: t("search.destCatBeach") });
-  if (DEST_CATEGORIES.budget.has(code))  tags.push({ key: "budget",  label: t("search.destCatBudget") });
-  if (DEST_CATEGORIES.capital.has(code)) tags.push({ key: "capital", label: t("search.destCatCapital") });
-  return tags;
 }
 
 const WinnerCard = React.memo(function WinnerCard({
@@ -89,15 +76,6 @@ const WinnerCard = React.memo(function WinnerCard({
     flightInfoMap[k] = f;
   });
 
-  // Price comparison vs last search
-  const priceVsLast = useMemo(() => {
-    if (!lastBestPrice || !dest?.averageCostPerTraveler || lastBestPrice === dest.averageCostPerTraveler) return null;
-    const diff = dest.averageCostPerTraveler - lastBestPrice;
-    const pct = Math.round((Math.abs(diff) / lastBestPrice) * 100);
-    if (pct < 2) return null; // ignore tiny differences
-    return { cheaper: diff < 0, pct, diff: Math.abs(diff) };
-  }, [lastBestPrice, dest]);
-
   // Cheapest origin (for highlighting in booking cards)
   const cheapestOrigin = useMemo(() => {
     if (!breakdown.length) return "";
@@ -112,24 +90,8 @@ const WinnerCard = React.memo(function WinnerCard({
     return Math.round(((avgAll - dest.averageCostPerTraveler) / avgAll) * 100);
   }, [allFlights, dest]);
 
-  // Trip duration in days (roundtrip only)
-  const tripDays = useMemo(() => {
-    if (tripType !== "roundtrip") return 0;
-    const d = dep || depDate;
-    const r = ret;
-    if (!d || !r) return 0;
-    const diff = (new Date(r + "T00:00:00") - new Date(d + "T00:00:00")) / 86400000;
-    return diff > 0 ? Math.round(diff) : 0;
-  }, [tripType, dep, ret, depDate]);
-
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
-      {/* Confetti burst on entrance */}
-      {entered && (
-        <div className="wc-confetti" aria-hidden="true">
-          {[...Array(12)].map((_, i) => <span key={i} className="wc-confetti-piece" style={{ "--ci": i }} />)}
-        </div>
-      )}
       {/* Hero image */}
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
@@ -139,16 +101,6 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>
           <span className="wc-dest-code">{city || code}</span>
           {city && <span className="wc-dest-city">{code}</span>}
-          {/* Destination category tags */}
-          {(() => {
-            const cats = destCategoryTags(code, t);
-            if (!cats.length) return null;
-            return (
-              <div className="wc-dest-categories">
-                {cats.map(c => <span key={c.key} className={`wc-dest-cat wc-dest-cat--${c.key}`}>{c.label}</span>)}
-              </div>
-            );
-          })()}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
@@ -163,51 +115,13 @@ const WinnerCard = React.memo(function WinnerCard({
               📅 {t("results.dateFallbackBadge")}
             </span>
           )}
-          {/* Countdown to departure */}
-          {(() => {
-            const depD = dep || depDate;
-            if (!depD) return null;
-            const days = Math.ceil((new Date(depD + "T00:00:00") - new Date()) / 86400000);
-            if (days < 0 || days > 365) return null;
-            const urgency = days <= 3 ? "urgent" : days <= 14 ? "soon" : "normal";
-            return (
-              <span className={`wc-countdown-chip wc-countdown-chip--${urgency}`}>
-                {days === 0 ? t("results.countdownToday") : days === 1 ? t("results.countdownTomorrow") : t("results.countdownDays", { n: days })}
-              </span>
-            );
-          })()}
           {savingsPct > 5 && (
             <span className="wc-savings-chip">
               {t("results.savingsPct", { pct: savingsPct })}
             </span>
           )}
-          {tripDays > 0 && (
-            <span className="wc-trip-days-chip">
-              {t("results.tripDays", { n: tripDays })}
-            </span>
-          )}
-          {priceVsLast && (
-            <span className={`wc-vs-last-chip${priceVsLast.cheaper ? " wc-vs-last-chip--cheaper" : " wc-vs-last-chip--pricier"}`}>
-              {priceVsLast.cheaper
-                ? t("results.vsLastCheaper", { pct: priceVsLast.pct })
-                : t("results.vsLastPricier", { pct: priceVsLast.pct })}
-            </span>
-          )}
         </div>
       </div>
-
-      {/* Destination quick info (timezone, language, currency) */}
-      {(() => {
-        const qi = destQuickInfo(code);
-        if (!qi) return null;
-        return (
-          <div className="wc-quick-info">
-            {qi?.tz && <span className="wc-quick-info-item">🕐 UTC{qi.tz}</span>}
-            {qi?.lang && <span className="wc-quick-info-item">🗣️ {qi.lang}</span>}
-            {qi?.currency && <span className="wc-quick-info-item">💱 {qi.currency}</span>}
-          </div>
-        );
-      })()}
 
       {/* Summary strip */}
       <div className="wc-summary">
@@ -377,12 +291,6 @@ const WinnerCard = React.memo(function WinnerCard({
                         {(offer?.passengers || 0) > 1 && (
                           <span className="wc-flight-pax-badge">×{offer.passengers}</span>
                         )}
-                        {typeof price === "number" && (() => {
-                          const km = approxDistKm(origin, code);
-                          if (!km || km < 50) return null;
-                          const ppkm = (price / km).toFixed(2);
-                          return <span className="wc-km-badge">€{ppkm}/km</span>;
-                        })()}
                       </div>
                     </div>
                     {/* Outbound itinerary */}
@@ -420,24 +328,6 @@ const WinnerCard = React.memo(function WinnerCard({
                         )}
                       </div>
                     )}
-                    {/* Duration comparison bar */}
-                    {durationText && (() => {
-                      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-                      if (!match) return null;
-                      const mins = (parseInt(match[1] || 0) * 60) + parseInt(match[2] || 0);
-                      if (!mins) return null;
-                      const maxMins = 12 * 60; // 12h reference
-                      const pct = Math.min(100, (mins / maxMins) * 100);
-                      const color = mins <= 120 ? "#22C55E" : mins <= 300 ? "var(--primary)" : "#F59E0B";
-                      return (
-                        <div className="wc-duration-bar-wrap">
-                          <div className="wc-duration-bar">
-                            <div className="wc-duration-bar-fill" style={{ width: `${pct}%`, background: color }} />
-                          </div>
-                          <span className="wc-duration-bar-label">{durationText}</span>
-                        </div>
-                      );
-                    })()}
                     <div className="wc-flight-ctas">
                       {ssUrl && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--skyscanner">
@@ -463,82 +353,7 @@ const WinnerCard = React.memo(function WinnerCard({
               })}
             </div>
 
-              {/* Flight time comparison mini-table */}
-              {cleanOrigins.length > 1 && breakdown.length > 1 && (() => {
-                const durations = breakdown.map((f) => {
-                  const itin = f.offer?.itineraries?.[0];
-                  const dur = itin?.duration || "";
-                  const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-                  const mins = match ? (parseInt(match[1] || 0) * 60) + parseInt(match[2] || 0) : 0;
-                  const durText = dur ? dur.replace("PT", "").replace("H", "h ").replace("M", "m").trim() : "";
-                  return { origin: String(f.origin).toUpperCase(), mins, durText, price: f.price };
-                }).filter(d => d.mins > 0);
-                if (durations.length < 2) return null;
-                const maxMins = Math.max(...durations.map(d => d.mins));
-                return (
-                  <div className="wc-flight-compare-section">
-                    <div className="wc-flight-compare-title">{t("results.flightComparison")}</div>
-                    {durations.map((d) => {
-                      const pct = maxMins > 0 ? (d.mins / maxMins) * 100 : 0;
-                      const color = d.mins <= 120 ? "#22C55E" : d.mins <= 300 ? "var(--primary)" : "#F59E0B";
-                      return (
-                        <div key={d.origin} className="wc-flight-compare-row">
-                          <span className="wc-flight-compare-origin">{d.origin}</span>
-                          <div className="wc-flight-compare-bar-wrap">
-                            <div className="wc-flight-compare-bar-fill" style={{ width: `${pct}%`, background: color }} />
-                          </div>
-                          <span className="wc-flight-compare-dur">{d.durText}</span>
-                          <span className="wc-flight-compare-price">{currency === "EUR" ? formatEur(d.price, 0) : convertPrice(d.price, currency)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-
             </div>{/* /wc-booking-collapse */}
-          </div>
-        )}
-
-        {/* Trip summary compact card */}
-        {cleanOrigins.length > 0 && (
-          <div className="wc-trip-summary">
-            <div className="wc-trip-summary-item">
-              <span className="wc-trip-summary-value">{cleanOrigins.length}</span>
-              <span className="wc-trip-summary-label">{t("results.originsUsed")}</span>
-            </div>
-            <div className="wc-trip-summary-sep" />
-            <div className="wc-trip-summary-item">
-              <span className="wc-trip-summary-value">{currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}</span>
-              <span className="wc-trip-summary-label">{t("results.avgPerPerson")}</span>
-            </div>
-            <div className="wc-trip-summary-sep" />
-            <div className="wc-trip-summary-item">
-              <span className="wc-trip-summary-value">{(dest.fairnessScore ?? 0).toFixed(0)}</span>
-              <span className="wc-trip-summary-label">{t("results.fairnessLabel")}</span>
-            </div>
-            {tripDays > 0 && (
-              <>
-                <div className="wc-trip-summary-sep" />
-                <div className="wc-trip-summary-item">
-                  <span className="wc-trip-summary-value">{tripDays}</span>
-                  <span className="wc-trip-summary-label">{t("results.tripSummaryDays")}</span>
-                </div>
-              </>
-            )}
-            {(() => {
-              const km = approxDistKm(cleanOrigins[0], code);
-              if (!km) return null;
-              return (
-                <>
-                  <div className="wc-trip-summary-sep" />
-                  <div className="wc-trip-summary-item">
-                    <span className="wc-trip-summary-value">{Math.round(km).toLocaleString()}</span>
-                    <span className="wc-trip-summary-label">km</span>
-                  </div>
-                </>
-              );
-            })()}
           </div>
         )}
 
@@ -564,73 +379,11 @@ const WinnerCard = React.memo(function WinnerCard({
           <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
             <span className="wc-wa-icon">💬</span> WhatsApp
           </button>
-          <button type="button" className="wc-action-btn wc-action-btn--telegram" onClick={onShareTelegram}>
-            ✈ Telegram
-          </button>
-          <button type="button" className="wc-action-btn wc-action-btn--summary" onClick={() => {
-            const lines = [
-              `✈ ${city || code}`,
-              `${t("results.groupTotal")}: ${currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}`,
-              `${t("results.avgPerPerson")}: ${currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}`,
-              `${t("results.fairnessLabel")}: ${(dest.fairnessScore ?? 0).toFixed(0)}/100`,
-              "",
-              ...breakdown.map((f) => `  ${f.origin}: ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`),
-            ];
-            copyText(lines.join("\n"));
-          }}>
-            📋 {t("results.copySummary")}
-          </button>
-          <button type="button" className="wc-action-btn wc-action-btn--email" onClick={onShareEmail}>
-            ✉ Email
-          </button>
-          {typeof navigator !== "undefined" && navigator.share && (
-            <button type="button" className="wc-action-btn wc-action-btn--native" onClick={onShareNative}>
-              📤 {t("results.shareNative")}
-            </button>
-          )}
           {onCopySearchLink && (
             <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink}>
               🔗 {t("results.copySearchLink")}
             </button>
           )}
-          <button type="button" className="wc-share-img-btn" onClick={() => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 600; canvas.height = 340;
-            const ctx = canvas.getContext("2d");
-            // Background gradient
-            const bg = ctx.createLinearGradient(0, 0, 600, 340);
-            bg.addColorStop(0, "#0062E3"); bg.addColorStop(1, "#7C3AED");
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, 600, 340);
-            // Text
-            ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-            ctx.font = "bold 14px system-ui"; ctx.fillText("FlyndMe", 300, 35);
-            ctx.font = "bold 32px system-ui"; ctx.fillText(city || code, 300, 80);
-            ctx.font = "18px system-ui";
-            ctx.fillText(`${t("results.groupTotal")}: ${currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}`, 300, 120);
-            ctx.fillText(`${t("results.avgPerPerson")}: ${currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}`, 300, 150);
-            ctx.fillText(`${t("results.fairnessLabel")}: ${(dest.fairnessScore ?? 0).toFixed(0)}/100`, 300, 180);
-            // Per-origin breakdown
-            ctx.font = "14px system-ui"; ctx.fillStyle = "rgba(255,255,255,.85)";
-            breakdown.forEach((f, i) => {
-              const km = approxDistKm(String(f.origin).toUpperCase(), code);
-              const kmStr = km ? ` · ${Math.round(km)} km` : "";
-              ctx.fillText(`${f.origin}: ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}${kmStr}`, 300, 220 + i * 24);
-            });
-            ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.font = "11px system-ui";
-            ctx.fillText("flyndme.com", 300, 330);
-            canvas.toBlob((blob) => {
-              if (!blob) return;
-              try {
-                const item = new ClipboardItem({ "image/png": blob });
-                navigator.clipboard.write([item]);
-              } catch { /* fallback: download */ }
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a"); a.href = url; a.download = `flyndme-${code}.png`;
-              a.click(); URL.revokeObjectURL(url);
-            });
-          }}>
-            🖼️ Share as image
-          </button>
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
             {t("results.changeSearch")}
           </button>
