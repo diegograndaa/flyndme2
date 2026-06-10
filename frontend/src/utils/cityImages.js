@@ -3,6 +3,8 @@
 // Format: https://images.unsplash.com/photo-{ID}?w={width}&h={height}&fit=crop&q=80
 //
 // This replaces the low-quality local JPGs and covers ALL destination cities.
+// Photo IDs audited & fixed (jun-2026): 20 dead IDs and 7 wrong-city photos
+// replaced with verified landmark shots (checked visually via Unsplash).
 
 const UNSPLASH_BASE = "https://images.unsplash.com";
 
@@ -10,55 +12,55 @@ const CITY_PHOTO_IDS = {
   // ── Original 21 ──
   MAD: "1539037116277-4db20889f2d4",   // Madrid Royal Palace
   BCN: "1583422409516-2895a77efded",   // Barcelona Sagrada Familia
-  LON: "1513635269975-59663e0ac1ad",   // London skyline
+  LON: "1681407979872-0a4cbde28391",   // London Westminster & Big Ben
   PAR: "1502602898657-3e91760cbb34",   // Paris Eiffel Tower
   ROM: "1552832230-c0197dd311b5",      // Rome Colosseum
-  MIL: "1520440229-6469add29b1e",      // Milan Duomo
+  MIL: "1610016302534-6f67f1c968d8",      // Milan Duomo at sunset
   BER: "1560969184-10fe8719e047",      // Berlin Brandenburg Gate
   AMS: "1534351590666-13e3e96b5017",   // Amsterdam canals
   LIS: "1536663815808-535e2280d2c2",   // Lisbon tram
-  DUB: "1549918864-48ac978761a4",      // Dublin Ha'penny Bridge
+  DUB: "1663509851482-56ffbd1cf076",      // Dublin Ha'penny Bridge
   VIE: "1516550893923-42d28e5677af",   // Vienna palace
   BRU: "1559113202-c916b8e44373",      // Brussels Grand Place
   PRG: "1519677100203-a0e668c92439",   // Prague Charles Bridge
-  WAW: "1519197924294-4ba991a11128",   // Warsaw old town
+  WAW: "1577133192629-5140c5371590",   // Warsaw old town & Royal Castle
   ATH: "1555993539-1732b0258235",      // Athens Acropolis
   CPH: "1513622470522-26c3c8a854bc",   // Copenhagen Nyhavn
   HEL: "1538332576228-eb5b4c4de6f5",   // Helsinki cathedral
   ZRH: "1515488764276-beab7607c1e6",   // Zurich lake
-  OSL: "1531366936337-7c912a4589a7",   // Oslo opera house
-  BUD: "1551867633-194f125bddfa",      // Budapest parliament
+  OSL: "1751635234283-7e3e64cb32fe",   // Oslo Opera House
+  BUD: "1616432902940-b7a1acbc60b3",      // Budapest Parliament
   IST: "1524231757912-21f4fe3a7200",   // Istanbul mosques
   // ── New destinations ──
   OPO: "1555881400-74d7acaacd8b",      // Porto riverside
-  AGP: "1562883676-8b21862f5cf4",      // Malaga coast
-  PMI: "1578912996078-305d92249a5e",   // Palma cathedral
-  TFS: "1500233828083-a3d03e64bde6",   // Tenerife volcanic landscape
-  NAP: "1516483638261-f4dbaf036963",   // Naples Vesuvius view
-  MRS: "1524231757912-21f4fe3a7200",   // Marseille port
-  NCE: "1533104816931-20fa691ff6ca",   // Nice Promenade
-  GVA: "1530122037265-a5f1f91d3b99",   // Geneva jet d'eau
+  AGP: "1641667710644-fb8a6abf2a06",      // Malaga cathedral & rooftops
+  PMI: "1629537744044-04a035cbf675",   // Palma La Seu cathedral
+  TFS: "1605182054023-17d71f44aa11",   // Tenerife coast
+  NAP: "1567202170721-bd01fbdea30a",   // Naples bay & Vesuvius
+  MRS: "1566838217578-1903568a76d9",   // Marseille Vieux-Port & Notre-Dame de la Garde
+  NCE: "1643914729809-4aa59fdc4c17",   // Nice Promenade des Anglais aerial
+  GVA: "1633022326182-1b36700bc49a",   // Geneva Jet d'Eau
   EDI: "1506377585622-bedcbb027afc",   // Edinburgh castle
-  KRK: "1558618666-fcd25c85f68e",      // Krakow old town
-  BEG: "1590070759801-16a01b2e69d0",   // Belgrade fortress
+  KRK: "1719343641931-c21c489d56ce",      // Krakow Main Square at night
+  BEG: "1568234942177-2b37de78f6da",   // Belgrade Kalemegdan fortress
   OTP: "1584646098378-0874589d76b1",   // Bucharest palace
-  SOF: "1520250497591-112f2f40a3f4",   // Sofia cathedral
-  ZAG: "1558350657-33d3f5804a6f",      // Zagreb cathedral
-  DBV: "1555990793-47d53fc3e52c",      // Dubrovnik walls
-  SPU: "1555990538-f0e90d4b9d6e",      // Split Diocletian palace
-  TIA: "1600436516950-03b40ff40c3b",   // Tirana colorful buildings
-  SKG: "1558710147-5ac54de24b0a",      // Thessaloniki waterfront
-  RAK: "1489749798305-4fea3ae63d43",   // Marrakech Jemaa el-Fna
-  TLL: "1560154169-9d0bfb23a33c",      // Tallinn old town
-  RIX: "1558618666-fcd25c85f68e",      // Riga old town
-  VNO: "1565013403-6cb8fb31e0cf",      // Vilnius old town
-  STO: "1509356843151-3e7643f1e14e",   // Stockholm old town
-  MLA: "1558018113-bd5765d1e6e9",      // Malta Valletta harbor
-  RHO: "1563790089-2f1bc3bea8c0",      // Rhodes old town
-  TLV: "1544982503-9f984c68de3e",      // Tel Aviv beach
-  CMN: "1569383746-8b32c52da149",      // Casablanca mosque
-  MUC: "1577462317287-62c53b73e78e",   // Munich Marienplatz
-  FRA: "1534430480872-3498386e7856",   // Frankfurt skyline
+  SOF: "1738071406138-1e0221a761b1",   // Sofia Alexander Nevsky Cathedral
+  ZAG: "1663086480502-47e1156bb594",      // Zagreb St Mark's Church
+  DBV: "1555990793-da11153b2473",      // Dubrovnik old town & walls
+  SPU: "1628502301579-bf8b22d3c685",      // Split Riva waterfront
+  TIA: "1742500481926-f61a4be9abfe",   // Tirana Skanderbeg Square
+  SKG: "1613538384222-cd71e8488d7a",      // Thessaloniki White Tower
+  RAK: "1677837488142-a85ffbffe408",   // Marrakech Jemaa el-Fna
+  TLL: "1724235425392-fe352694d4c8",      // Tallinn old town spires
+  RIX: "1567669721460-221b82865ee0",      // Riga old town skyline
+  VNO: "1660562278746-72e961bb9644",      // Vilnius old town rooftops
+  STO: "1600290601473-3b73e4c531c9",   // Stockholm Stortorget
+  MLA: "1756641157225-4a6517e48973",      // Valletta Grand Harbour
+  RHO: "1595942820590-f855c6b8ba88",      // Rhodes old town
+  TLV: "1500990702037-7620ccb6a60a",      // Tel Aviv beach & skyline
+  CMN: "1538230575309-59dfc388ae36",      // Casablanca Hassan II Mosque
+  MUC: "1705075833771-1f5e5b99ddeb",   // Munich Marienplatz town hall
+  FRA: "1607879344639-d5f8dec22a60",   // Frankfurt skyline at dusk
 };
 
 /**
