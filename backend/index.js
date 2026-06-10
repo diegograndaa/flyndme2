@@ -17,6 +17,11 @@ const startTime = Date.now();
 
 const AMADEUS_ENV = process.env.AMADEUS_ENV || "test";
 const USE_MOCK    = String(process.env.USE_MOCK || "").toLowerCase() === "true";
+// Debe coincidir con la lógica de routes/flights.js (misma derivación de env).
+const FLIGHT_PROVIDER = USE_MOCK
+  ? "mock"
+  : String(process.env.FLIGHT_PROVIDER || "amadeus").trim().toLowerCase();
+const KNOWN_PROVIDERS = ["amadeus", "travelpayouts", "mock"];
 
 // ─── Version info ──────────────────────────────────────────────────────────
 // Detect commit at boot. Render auto-injects RENDER_GIT_COMMIT / RENDER_GIT_BRANCH;
@@ -53,10 +58,22 @@ function validateConfig() {
   const warnings = [];
 
   if (!USE_MOCK) {
-    if (!process.env.AMADEUS_API_KEY)    errors.push("AMADEUS_API_KEY no está definida.");
-    if (!process.env.AMADEUS_API_SECRET) errors.push("AMADEUS_API_SECRET no está definida.");
-    if (AMADEUS_ENV !== "test" && AMADEUS_ENV !== "production") {
-      warnings.push(`AMADEUS_ENV="${AMADEUS_ENV}" no es "test" ni "production".`);
+    if (!KNOWN_PROVIDERS.includes(FLIGHT_PROVIDER)) {
+      errors.push(`FLIGHT_PROVIDER="${FLIGHT_PROVIDER}" no es válido ("amadeus" | "travelpayouts").`);
+    }
+    if (FLIGHT_PROVIDER === "travelpayouts") {
+      if (!process.env.TRAVELPAYOUTS_TOKEN) {
+        errors.push("TRAVELPAYOUTS_TOKEN no está definida (requerida con FLIGHT_PROVIDER=travelpayouts).");
+      }
+    } else {
+      if (!process.env.AMADEUS_API_KEY)    errors.push("AMADEUS_API_KEY no está definida.");
+      if (!process.env.AMADEUS_API_SECRET) errors.push("AMADEUS_API_SECRET no está definida.");
+      if (AMADEUS_ENV !== "test" && AMADEUS_ENV !== "production") {
+        warnings.push(`AMADEUS_ENV="${AMADEUS_ENV}" no es "test" ni "production".`);
+      }
+      // Sunset: el portal self-service de Amadeus cierra el 17-07-2026 y las
+      // keys dejarán de funcionar. Aviso permanente hasta completar la migración.
+      warnings.push("Amadeus self-service cierra el 17-jul-2026 — migra a FLIGHT_PROVIDER=travelpayouts antes de esa fecha.");
     }
   }
 
@@ -70,7 +87,7 @@ function validateConfig() {
     if (!process.env.FRONTEND_URL) {
       warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme.vercel.app.");
     }
-    if (!USE_MOCK && AMADEUS_ENV === "test") {
+    if (!USE_MOCK && FLIGHT_PROVIDER === "amadeus" && AMADEUS_ENV === "test") {
       warnings.push("AMADEUS_ENV=test en producción: el sandbox tiene inventario limitado y precios no reales.");
     }
   }
@@ -168,6 +185,7 @@ app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "FlyndMe API",
+    provider: FLIGHT_PROVIDER,
     env: AMADEUS_ENV,
     mock: USE_MOCK,
     features: ["flexDates", "shareLinks", "affiliateReady"],
@@ -187,6 +205,7 @@ app.get("/api/version", (_req, res) => {
     branch:      VERSION.branch,
     node:        VERSION.node,
     node_env:    process.env.NODE_ENV || "development",
+    provider:    FLIGHT_PROVIDER,
     amadeus_env: AMADEUS_ENV,
     mock:        USE_MOCK,
     startedAt:   VERSION.startedAt,
@@ -209,6 +228,7 @@ app.get("/api/health", (_req, res) => {
       external: Math.round(memUsage.external / 1024 / 1024),
       rss: Math.round(memUsage.rss / 1024 / 1024),
     },
+    provider: FLIGHT_PROVIDER,
     amadeus_env: AMADEUS_ENV,
     mock: USE_MOCK,
     commit: VERSION.commitShort,
@@ -284,10 +304,10 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 server = app.listen(PORT, () => {
   console.log(
-    `✈  FlyndMe API → http://localhost:${PORT}  [${isDev ? "dev" : "prod"} · amadeus:${USE_MOCK ? "MOCK" : AMADEUS_ENV}]`
+    `✈  FlyndMe API → http://localhost:${PORT}  [${isDev ? "dev" : "prod"} · provider:${FLIGHT_PROVIDER}${FLIGHT_PROVIDER === "amadeus" ? `(${AMADEUS_ENV})` : ""}]`
   );
   if (USE_MOCK) {
-    console.log("⚠  USE_MOCK=true — serving deterministic fixtures, NOT calling Amadeus.");
+    console.log("⚠  USE_MOCK=true — serving deterministic fixtures, NOT calling any provider.");
   }
 });
 

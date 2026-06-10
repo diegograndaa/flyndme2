@@ -1,13 +1,32 @@
 const express = require("express");
 const router  = express.Router();
 
-// Pick real Amadeus or the mock fixture-based service. USE_MOCK=true in .env
-// lets you develop end-to-end without consuming Amadeus quota.
+// Proveedor de datos de vuelos. FLIGHT_PROVIDER selecciona la implementación
+// ("amadeus" | "travelpayouts"); USE_MOCK=true fuerza el mock determinista e
+// ignora FLIGHT_PROVIDER (desarrollo sin red y suite de tests).
+// Migración jul-2026: Amadeus cierra su portal self-service el 17-07-2026 →
+// travelpayouts (Aviasales Data API, caché 48h gratuita) pasa a ser el primario.
 const USE_MOCK = String(process.env.USE_MOCK || "").toLowerCase() === "true";
-const flightService = USE_MOCK
-  ? require("../services/mockAmadeusService")
-  : require("../services/amadeusService");
+const FLIGHT_PROVIDER = USE_MOCK
+  ? "mock"
+  : String(process.env.FLIGHT_PROVIDER || "amadeus").trim().toLowerCase();
+
+const PROVIDER_MODULES = {
+  mock:          "../services/mockAmadeusService",
+  amadeus:       "../services/amadeusService",
+  travelpayouts: "../services/travelpayoutsService",
+};
+if (!PROVIDER_MODULES[FLIGHT_PROVIDER]) {
+  // index.js validateConfig() ya avisa (y aborta en prod); aquí degradamos.
+  console.warn(`[flights] FLIGHT_PROVIDER="${FLIGHT_PROVIDER}" desconocido — usando amadeus.`);
+}
+const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.amadeus);
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
+
+// Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
+// oferta concreta: la verificación del ganador se omite ("skipped") y el
+// frontend muestra el badge de "precios orientativos".
+const CAN_VERIFY = flightService.capabilities?.verification !== false;
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -552,7 +571,7 @@ router.post("/multi-origin", async (req, res) => {
     console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados, ${destsTouched}/${destinationList.length} destinos consultados`);
 
     if (!enriched.length) {
-      const payload = { flights: [], bestDestination: null, partial };
+      const payload = { flights: [], bestDestination: null, partial, provider: FLIGHT_PROVIDER };
       setCached(cacheKey, payload);
       const duration = Date.now() - startTime;
       res.set("X-Response-Time", `${duration}ms`);
@@ -574,6 +593,9 @@ router.post("/multi-origin", async (req, res) => {
     if (partial) {
       // En respuestas parciales se omite la verificación: vamos justos de
       // tiempo y el frontend ya muestra el aviso de resultados parciales.
+      enriched[0] = { ...enriched[0], verificationStatus: "skipped" };
+    } else if (!CAN_VERIFY) {
+      // Proveedor sin re-tarificación (precios de caché) → no fingir verificación.
       enriched[0] = { ...enriched[0], verificationStatus: "skipped" };
     } else if (budgetStatus().remaining < VERIFY_MIN_BUDGET) {
       console.warn("[verify] omitida — presupuesto mensual casi agotado");
@@ -598,6 +620,7 @@ router.post("/multi-origin", async (req, res) => {
       flights:          enriched,
       bestDestination:  enriched[0],
       partial,
+      provider:         FLIGHT_PROVIDER,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
     };

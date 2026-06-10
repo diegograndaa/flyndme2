@@ -137,7 +137,18 @@ Architecture:
 
 CURRENT API
 
-We are currently using the Amadeus API, especially Flight Offers Search.
+The flight data provider is selected with the FLIGHT_PROVIDER env var
+(backend/routes/flights.js):
+
+- travelpayouts — Aviasales Data API (/v3/prices_for_dates): cached prices
+  from real user searches (48h window), free, with affiliate deep links.
+  Primary provider going forward. No real verification (capabilities.verification=false).
+- amadeus — Flight Offers Search. DEPRECATED: the Amadeus self-service portal
+  shuts down on 2026-07-17 and the API keys stop working that day.
+- USE_MOCK=true overrides everything with deterministic fixtures.
+
+All providers implement the same interface: getCheapestOffer /
+priceFlightOffer / budgetStatus / healthCheck (see backend/services/).
 
 The backend includes:
 - caching
