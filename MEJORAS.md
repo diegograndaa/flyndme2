@@ -510,3 +510,18 @@ el "cerebro" de la app, como debe ser.
 
 **Pendiente del troceo**: hooks (useTheme, useFavorites, useA11yPrefs,
 useBackendStatus) a un hooks/ — última pieza del plan original.
+
+## Mejora 28 — Troceo de App.jsx (VII, final del plan): hooks a hooks/useAppHooks.js
+
+**Qué**: `useTheme`, `useFavorites`, `useA11yPrefs` y `useBackendStatus`
+extraídos a `frontend/src/hooks/useAppHooks.js`. Con esto se completa el plan
+de troceo original: **App.jsx queda en 1.288 líneas (3.587 esta mañana,
+−64%)** y contiene solo estado, handlers y el layout de las tres vistas.
+Estructura final: components/ (12 archivos), hooks/, utils/ (4 módulos),
+i18n/ — cada pieza testeada por render SSR o unit tests.
+
+**Verificación**: frontend 42/42 · backend 34/34 (el render de App ejercita
+los 4 hooks: sus inicializadores corren en SSR).
+
+**Pendiente**: nada del plan de troceo. Siguientes frentes sugeridos:
+accesibilidad/responsive (prioridad 6) y npm audit fix.
