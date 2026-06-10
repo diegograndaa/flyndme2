@@ -246,3 +246,22 @@ TypeError, ahora es seguro y testeable.
 
 **Pendiente**: extraer más lógica pura de App.jsx (pickBest, convertPrice,
 approxDistKm…) a utils testeables — es el primer paso del troceo de App.jsx.
+
+## Mejora 13 — Calidad: lógica pura de App.jsx extraída a utils/resultsLogic.js
+
+**Qué**: primer paso real del troceo de App.jsx (3.596 → 3.538 líneas).
+Extraídos a `frontend/src/utils/resultsLogic.js` (sin React, sin DOM):
+`convertPrice` + tasas FX, `AIRPORT_COORDS` + `approxDistKm` (haversine),
+`pickBest` (criterio total/fairness con desempate) y `buildResultsCsv`
+(la parte pura del export CSV; la descarga sigue en App.jsx).
+
+**Bonus**: el CSV ahora escapa comillas dobles según RFC 4180 (antes una
+comilla en un dato rompía la fila).
+
+**Tests**: nuevo `tests/resultsLogic.test.mjs` (9 tests: conversión, distancias
+plausibles MAD-BCN/MAD-IST, coordenadas en rango, pickBest con empates, CSV
+con escapado y datos ausentes). Frontend 26/26 · backend 31/31 · JSX OK.
+
+**Pendiente**: seguir extrayendo (useDateWarnings, destCategoryTags, hooks) y
+eventualmente los componentes grandes (WinnerCard, SearchPage) a archivos
+propios.
