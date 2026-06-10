@@ -137,3 +137,11 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("Rome") || html.includes("ROM"));
 });
+
+test("render: Landing extraída renderiza con CTAs", async () => {
+  const { default: Landing } = await import("../src/components/Landing.jsx");
+  const html = renderWithI18n(React.createElement(Landing, {
+    onStart: () => {}, onStartWithRoute: () => {},
+  }));
+  assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
+});

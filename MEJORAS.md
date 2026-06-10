@@ -476,3 +476,18 @@ normal → partial=false). Backend 34/34 · frontend 40/40.
 
 **Pendiente**: el frontend podría ofrecer un botón "completar búsqueda" que
 reintente automáticamente — de momento el aviso sugiere reintentar.
+
+## Mejora 26 — Troceo de App.jsx (V): Landing a su propio archivo
+
+**Qué**: la página de inicio (hero, demo animada, stats, FAQ y CTAs) extraída
+a `components/Landing.jsx` con sus privados `FaqItem` y `LandingMiniDemo`
+(261 líneas, autocontenida — solo dependía de useI18n, countryFlag y
+AnimatedStat). **App.jsx: 2.081 → 1.818 líneas** (3.587 al inicio del día:
+**−49%**).
+
+**Verificación**: render SSR directo de Landing (test nuevo) + App completa.
+Frontend 41/41 · backend 34/34.
+
+**Pendiente del troceo**: quedan en App.jsx los paneles menores
+(CostSplitCard, SearchHistoryPanel, TopDestinationsPodium, etc.) y el shell
+de la app — extraíbles con el mismo patrón cuando toque.
