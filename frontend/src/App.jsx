@@ -1075,6 +1075,7 @@ export default function App() {
 
   // Results
   const [flights,         setFlights]         = useState([]);
+  const [partialResults,  setPartialResults]  = useState(false);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
@@ -1593,6 +1594,7 @@ export default function App() {
           const adjusted = arr;
 
           setFlights(adjusted);
+          setPartialResults(Boolean(data.partial));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
@@ -1784,6 +1786,13 @@ export default function App() {
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
+
+          {/* Aviso de resultados parciales (la búsqueda agotó su presupuesto de tiempo) */}
+          {partialResults && (
+            <div className="alert alert-warning py-2 mb-3" role="status">
+              ⏱ {t("results.partialNotice")}
+            </div>
+          )}
 
           {/* Search params summary (collapsible) */}
           <SearchParamsSummary

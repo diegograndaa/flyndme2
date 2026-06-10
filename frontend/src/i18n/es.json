@@ -11,7 +11,12 @@
     "title": "Encuentra el destino más barato para tu grupo",
     "lead": "Introduce la ciudad de cada viajero y descubre al instante dónde es más barato reunirse. Así de simple.",
     "cta": "Empezar búsqueda",
-    "chips": ["Multi-origen", "Mejor precio total", "Índice de equidad", "Presupuesto por persona"],
+    "chips": [
+      "Multi-origen",
+      "Mejor precio total",
+      "Índice de equidad",
+      "Presupuesto por persona"
+    ],
     "howTitle": "¿Cómo funciona?",
     "steps": [
       "Añade la ciudad de salida de cada viajero.",
@@ -44,9 +49,27 @@
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",
     "testimonials": [
-      { "text": "Antes pasábamos horas comparando vuelos desde 4 ciudades. FlyndMe encontró nuestro punto de encuentro en segundos.", "name": "Laura M.", "origin": "Madrid", "avatar": "👩‍💼", "stars": 5 },
-      { "text": "Perfecto para nuestra reunión Erasmus. Seis amigos, seis países, una búsqueda. Genial.", "name": "Jonas K.", "origin": "Berlín", "avatar": "🧑‍🎓", "stars": 5 },
-      { "text": "Mi pareja vive en Londres y yo en Lisboa. Esta herramienta nos ahorra mucho tiempo buscando fines de semana baratos.", "name": "Sofia R.", "origin": "Lisboa", "avatar": "👩‍🦰", "stars": 5 }
+      {
+        "text": "Antes pasábamos horas comparando vuelos desde 4 ciudades. FlyndMe encontró nuestro punto de encuentro en segundos.",
+        "name": "Laura M.",
+        "origin": "Madrid",
+        "avatar": "👩‍💼",
+        "stars": 5
+      },
+      {
+        "text": "Perfecto para nuestra reunión Erasmus. Seis amigos, seis países, una búsqueda. Genial.",
+        "name": "Jonas K.",
+        "origin": "Berlín",
+        "avatar": "🧑‍🎓",
+        "stars": 5
+      },
+      {
+        "text": "Mi pareja vive en Londres y yo en Lisboa. Esta herramienta nos ahorra mucho tiempo buscando fines de semana baratos.",
+        "name": "Sofia R.",
+        "origin": "Lisboa",
+        "avatar": "👩‍🦰",
+        "stars": 5
+      }
     ],
     "exampleTitle": "Mira cómo funciona",
     "exampleSub": "3 amigos en Madrid, Londres y Berlín quieren encontrarse. FlyndMe compara vuelos y encuentra el mejor punto de encuentro.",
@@ -54,28 +77,80 @@
     "exampleDest": "LIS · Lisboa",
     "exampleTotal": "total del grupo",
     "trustBadges": [
-      { "icon": "🆓", "text": "100% Gratis" },
-      { "icon": "🔒", "text": "Sin registro" },
-      { "icon": "✈️", "text": "Datos reales de Amadeus" },
-      { "icon": "⚡", "text": "Resultados en segundos" }
+      {
+        "icon": "🆓",
+        "text": "100% Gratis"
+      },
+      {
+        "icon": "🔒",
+        "text": "Sin registro"
+      },
+      {
+        "icon": "✈️",
+        "text": "Datos reales de Amadeus"
+      },
+      {
+        "icon": "⚡",
+        "text": "Resultados en segundos"
+      }
     ],
     "getStarted": "Empezar",
     "routesTitle": "Rutas populares de grupo",
     "routesSub": "Haz clic en una ruta para empezar a buscar",
     "routes": [
-      { "emoji": "🇪🇸", "name": "Escapada mediterránea", "cities": "MAD · LON · BER → BCN, LIS, ROM" },
-      { "emoji": "🎉", "name": "Despedida de soltero", "cities": "LON · DUB · AMS → BUD, PRG, BCN" },
-      { "emoji": "🏔️", "name": "Aventura alpina", "cities": "MUC · MIL · ZRH → VIE, INN, GVA" },
-      { "emoji": "☀️", "name": "Reunión en la playa", "cities": "PAR · BER · MAD → PMI, AGP, MLA" },
-      { "emoji": "🎄", "name": "Mercadillos navideños", "cities": "LON · MAD · ROM → VIE, PRG, BUD" },
-      { "emoji": "🎓", "name": "Reunión Erasmus", "cities": "MAD · PAR · BER → LIS, ROM, ATH" }
+      {
+        "emoji": "🇪🇸",
+        "name": "Escapada mediterránea",
+        "cities": "MAD · LON · BER → BCN, LIS, ROM"
+      },
+      {
+        "emoji": "🎉",
+        "name": "Despedida de soltero",
+        "cities": "LON · DUB · AMS → BUD, PRG, BCN"
+      },
+      {
+        "emoji": "🏔️",
+        "name": "Aventura alpina",
+        "cities": "MUC · MIL · ZRH → VIE, INN, GVA"
+      },
+      {
+        "emoji": "☀️",
+        "name": "Reunión en la playa",
+        "cities": "PAR · BER · MAD → PMI, AGP, MLA"
+      },
+      {
+        "emoji": "🎄",
+        "name": "Mercadillos navideños",
+        "cities": "LON · MAD · ROM → VIE, PRG, BUD"
+      },
+      {
+        "emoji": "🎓",
+        "name": "Reunión Erasmus",
+        "cities": "MAD · PAR · BER → LIS, ROM, ATH"
+      }
     ],
     "useCasesTitle": "¿Quién usa FlyndMe?",
     "useCases": [
-      { "icon": "🌍", "title": "Amigos en distintos países", "desc": "Deja de comparar vuelos ciudad por ciudad. FlyndMe lo hace en segundos." },
-      { "icon": "💑", "title": "Parejas a distancia", "desc": "Encuentra el lugar más barato para encontrarse a mitad de camino." },
-      { "icon": "🎓", "title": "Grupos Erasmus y estudiantes", "desc": "Viajes baratos por Europa. Perfecto para planificar quedadas y reuniones." },
-      { "icon": "💻", "title": "Nómadas digitales y equipos remotos", "desc": "Coordina viajes de grupo desde cualquier lugar al mejor precio." }
+      {
+        "icon": "🌍",
+        "title": "Amigos en distintos países",
+        "desc": "Deja de comparar vuelos ciudad por ciudad. FlyndMe lo hace en segundos."
+      },
+      {
+        "icon": "💑",
+        "title": "Parejas a distancia",
+        "desc": "Encuentra el lugar más barato para encontrarse a mitad de camino."
+      },
+      {
+        "icon": "🎓",
+        "title": "Grupos Erasmus y estudiantes",
+        "desc": "Viajes baratos por Europa. Perfecto para planificar quedadas y reuniones."
+      },
+      {
+        "icon": "💻",
+        "title": "Nómadas digitales y equipos remotos",
+        "desc": "Coordina viajes de grupo desde cualquier lugar al mejor precio."
+      }
     ]
   },
   "search": {
@@ -247,7 +322,8 @@
     "pricePerKmSub": "Menor coste por kilómetro = mejor relación calidad-precio",
     "arrivalSync": "Sincronización de llegadas",
     "arrivalSpread": "Todos llegan en un rango de {{time}}",
-    "shareStory": "Compartir como story"
+    "shareStory": "Compartir como story",
+    "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa."
   },
   "verifyBadge": {
     "confirmed": "Precio confirmado",
@@ -318,7 +394,11 @@
       "Casi listo…"
     ],
     "ariaLabel": "Buscando vuelos",
-    "steps": ["Buscando vuelos", "Comparando precios", "Preparando resultados"],
+    "steps": [
+      "Buscando vuelos",
+      "Comparando precios",
+      "Preparando resultados"
+    ],
     "skeletonHint": "Analizando {{n}} combinaciones de rutas…",
     "tips": [
       "Los vuelos de martes y miércoles suelen ser los más baratos",

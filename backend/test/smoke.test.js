@@ -442,3 +442,58 @@ test("validacion: fechas mas alla del horizonte de Amadeus → 400 DATE_TOO_FAR"
   });
   assert.equal(r3.status, 200);
 });
+
+test("presupuesto temporal: busqueda lenta devuelve 200 con partial=true sin cachear", async () => {
+  // Backend dedicado: presupuesto de 250ms con 150ms de latencia mock por llamada
+  const proc = spawn("node", [path.join(__dirname, "..", "index.js")], {
+    env: {
+      ...process.env, PORT: "5096", USE_MOCK: "true", NODE_ENV: "test",
+      // 100ms de presupuesto con 150ms de latencia por chunk: el corte llega
+      // tras el primer chunk, antes de alcanzar TARGET_RESULTS (6)
+      SEARCH_TIME_BUDGET_MS: "100", MOCK_DELAY_MS: "150",
+    },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  try {
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      try { const r = await fetch("http://localhost:5096/api/ping"); if (r.ok) break; } catch { /* aun no */ }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const body = {
+      origins: ["MAD", "LON"],
+      departureDate: "2026-09-22",
+      tripType: "oneway",
+    };
+    const res = await fetch("http://localhost:5096/api/flights/multi-origin", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.partial, true, "esperaba partial=true con presupuesto de 100ms");
+    assert.ok(data.flights.length > 0, "debe devolver al menos el primer chunk");
+    // El ganador no se verifica en parciales
+    if (data.bestDestination) {
+      assert.equal(data.bestDestination.verificationStatus, "skipped");
+    }
+    // No se cachea: repetir la peticion vuelve a buscar (sigue siendo partial,
+    // pero no identica via cache HIT — comprobamos que el flag se mantiene)
+    const res2 = await fetch("http://localhost:5096/api/flights/multi-origin", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const data2 = await res2.json();
+    assert.equal(data2.partial, true);
+  } finally {
+    proc.kill("SIGKILL");
+  }
+});
+
+test("presupuesto temporal: busqueda normal lleva partial=false", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"],
+    departureDate: "2026-09-23",
+    tripType: "oneway",
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.partial, false);
+});

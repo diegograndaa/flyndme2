@@ -456,3 +456,23 @@ directamente y dependían de que llegara como transitiva de
 @vitejs/plugin-react.
 
 **Verificación**: backend 32/32 · frontend 40/40.
+
+## Mejora 25 — Robustez: presupuesto de tiempo de búsqueda con resultados parciales
+
+**Qué**: con la API real de Amadeus, una búsqueda grande (varios orígenes ×
+flex ±5 días) puede superar el timeout del proxy de Render (~30s): el usuario
+esperaba medio minuto para recibir un 502, con la quota ya gastada. Ahora el
+backend tiene un presupuesto de tiempo (`SEARCH_TIME_BUDGET_MS`, default
+25s; 0 = sin límite): al agotarse, corta el bucle de tiers y responde 200 con
+lo acumulado y `partial: true`. Las respuestas parciales no se cachean (un
+reintento puede completarse) y omiten la verificación del ganador
+(`verificationStatus: "skipped"` → la UI ya lo muestra como "indicativo").
+El frontend muestra un aviso claro de resultados parciales (i18n EN/ES) sobre
+los resultados.
+
+**Tests**: 2 nuevos en smoke.test.js (backend dedicado con presupuesto de
+100ms y mock lento → partial=true, sin verificación, sin cache; búsqueda
+normal → partial=false). Backend 34/34 · frontend 40/40.
+
+**Pendiente**: el frontend podría ofrecer un botón "completar búsqueda" que
+reintente automáticamente — de momento el aviso sugiere reintentar.

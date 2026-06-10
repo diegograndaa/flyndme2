@@ -37,6 +37,10 @@ const CACHE_TTL_MS          = 10 * 60 * 1000;
 const MAX_CACHE_SIZE        = 200;
 const VERIFY_TIMEOUT_MS         = 8000;
 const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
+// Presupuesto de tiempo de la búsqueda completa. El proxy de Render corta en
+// ~30s: mejor devolver lo encontrado hasta ahora (partial: true) que un 502
+// tras quemar quota. 0 = sin límite.
+const SEARCH_TIME_BUDGET_MS     = Number(process.env.SEARCH_TIME_BUDGET_MS || 25000);
 
 // ─── In-memory response cache with size guard ─────────────────────────────
 
@@ -482,12 +486,20 @@ router.post("/multi-origin", async (req, res) => {
     // Tier-aware processing: tier N is only entered if previous tiers yielded
     // fewer than TARGET_RESULTS. Within a tier, destinations are chunked for
     // controlled parallelism while still respecting the global early-stop.
+    let partial = false;
+
     tierLoop:
     for (let tierIdx = 0; tierIdx < searchTiers.length; tierIdx++) {
       const tier = searchTiers[tierIdx];
       console.log(`[search] tier ${tierIdx + 1}: ${tier.length} destinos`);
 
       for (let chunkIdx = 0; chunkIdx < tier.length && enriched.length < TARGET_RESULTS; chunkIdx += CHUNK_SIZE) {
+        // Presupuesto agotado → cortar y devolver lo acumulado como parcial
+        if (SEARCH_TIME_BUDGET_MS > 0 && Date.now() - t0 > SEARCH_TIME_BUDGET_MS) {
+          partial = true;
+          console.warn(`[search] presupuesto de ${SEARCH_TIME_BUDGET_MS}ms agotado — devolviendo ${enriched.length} resultados parciales`);
+          break tierLoop;
+        }
         const chunk = tier.slice(chunkIdx, chunkIdx + CHUNK_SIZE);
         destsTouched += chunk.length;
 
@@ -540,7 +552,7 @@ router.post("/multi-origin", async (req, res) => {
     console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados, ${destsTouched}/${destinationList.length} destinos consultados`);
 
     if (!enriched.length) {
-      const payload = { flights: [], bestDestination: null };
+      const payload = { flights: [], bestDestination: null, partial };
       setCached(cacheKey, payload);
       const duration = Date.now() - startTime;
       res.set("X-Response-Time", `${duration}ms`);
@@ -559,7 +571,11 @@ router.post("/multi-origin", async (req, res) => {
     // Only the winner is verified to keep quota usage bounded. Failures degrade
     // gracefully: the original search price is shown with verificationStatus tag.
     // Skipped entirely when the remaining monthly budget is too low.
-    if (budgetStatus().remaining < VERIFY_MIN_BUDGET) {
+    if (partial) {
+      // En respuestas parciales se omite la verificación: vamos justos de
+      // tiempo y el frontend ya muestra el aviso de resultados parciales.
+      enriched[0] = { ...enriched[0], verificationStatus: "skipped" };
+    } else if (budgetStatus().remaining < VERIFY_MIN_BUDGET) {
       console.warn("[verify] omitida — presupuesto mensual casi agotado");
       enriched[0] = { ...enriched[0], verificationStatus: "failed" };
     } else {
@@ -581,11 +597,13 @@ router.post("/multi-origin", async (req, res) => {
     const payload = {
       flights:          enriched,
       bestDestination:  enriched[0],
+      partial,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
     };
 
-    setCached(cacheKey, payload);
+    // Las respuestas parciales no se cachean: un reintento puede completarse
+    if (!partial) setCached(cacheKey, payload);
 
     const duration = Date.now() - startTime;
     res.set("X-Response-Time", `${duration}ms`);

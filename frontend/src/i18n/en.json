@@ -11,7 +11,12 @@
     "title": "Find the cheapest place to meet your group",
     "lead": "Enter each traveler's city and instantly discover where it's cheapest to meet. That simple.",
     "cta": "Start searching",
-    "chips": ["Multi-origin", "Best total price", "Fairness score", "Budget per person"],
+    "chips": [
+      "Multi-origin",
+      "Best total price",
+      "Fairness score",
+      "Budget per person"
+    ],
     "howTitle": "How does it work?",
     "steps": [
       "Add the departure city of each traveler.",
@@ -44,9 +49,27 @@
     ],
     "testimonialsTitle": "What travelers say",
     "testimonials": [
-      { "text": "We used to spend hours comparing flights from 4 cities. FlyndMe found our meeting point in seconds.", "name": "Laura M.", "origin": "Madrid", "avatar": "👩‍💼", "stars": 5 },
-      { "text": "Perfect for our Erasmus reunion! Six friends, six countries, one search. Genius.", "name": "Jonas K.", "origin": "Berlin", "avatar": "🧑‍🎓", "stars": 5 },
-      { "text": "My partner lives in London and I'm in Lisbon. This tool saves us so much time finding cheap weekends.", "name": "Sofia R.", "origin": "Lisbon", "avatar": "👩‍🦰", "stars": 5 }
+      {
+        "text": "We used to spend hours comparing flights from 4 cities. FlyndMe found our meeting point in seconds.",
+        "name": "Laura M.",
+        "origin": "Madrid",
+        "avatar": "👩‍💼",
+        "stars": 5
+      },
+      {
+        "text": "Perfect for our Erasmus reunion! Six friends, six countries, one search. Genius.",
+        "name": "Jonas K.",
+        "origin": "Berlin",
+        "avatar": "🧑‍🎓",
+        "stars": 5
+      },
+      {
+        "text": "My partner lives in London and I'm in Lisbon. This tool saves us so much time finding cheap weekends.",
+        "name": "Sofia R.",
+        "origin": "Lisbon",
+        "avatar": "👩‍🦰",
+        "stars": 5
+      }
     ],
     "exampleTitle": "See how it works",
     "exampleSub": "3 friends in Madrid, London and Berlin want to meet up. FlyndMe compares flights and finds the best meeting point.",
@@ -54,28 +77,80 @@
     "exampleDest": "LIS · Lisbon",
     "exampleTotal": "group total",
     "trustBadges": [
-      { "icon": "🆓", "text": "100% Free" },
-      { "icon": "🔒", "text": "No login required" },
-      { "icon": "✈️", "text": "Real Amadeus data" },
-      { "icon": "⚡", "text": "Results in seconds" }
+      {
+        "icon": "🆓",
+        "text": "100% Free"
+      },
+      {
+        "icon": "🔒",
+        "text": "No login required"
+      },
+      {
+        "icon": "✈️",
+        "text": "Real Amadeus data"
+      },
+      {
+        "icon": "⚡",
+        "text": "Results in seconds"
+      }
     ],
     "getStarted": "Get started",
     "routesTitle": "Popular group routes",
     "routesSub": "Click a route to get started with a search",
     "routes": [
-      { "emoji": "🇪🇸", "name": "Mediterranean getaway", "cities": "MAD · LON · BER → BCN, LIS, ROM" },
-      { "emoji": "🎉", "name": "Stag do classics", "cities": "LON · DUB · AMS → BUD, PRG, BCN" },
-      { "emoji": "🏔️", "name": "Alpine adventure", "cities": "MUC · MIL · ZRH → VIE, INN, GVA" },
-      { "emoji": "☀️", "name": "Beach reunion", "cities": "PAR · BER · MAD → PMI, AGP, MLA" },
-      { "emoji": "🎄", "name": "Christmas markets", "cities": "LON · MAD · ROM → VIE, PRG, BUD" },
-      { "emoji": "🎓", "name": "Erasmus reunion", "cities": "MAD · PAR · BER → LIS, ROM, ATH" }
+      {
+        "emoji": "🇪🇸",
+        "name": "Mediterranean getaway",
+        "cities": "MAD · LON · BER → BCN, LIS, ROM"
+      },
+      {
+        "emoji": "🎉",
+        "name": "Stag do classics",
+        "cities": "LON · DUB · AMS → BUD, PRG, BCN"
+      },
+      {
+        "emoji": "🏔️",
+        "name": "Alpine adventure",
+        "cities": "MUC · MIL · ZRH → VIE, INN, GVA"
+      },
+      {
+        "emoji": "☀️",
+        "name": "Beach reunion",
+        "cities": "PAR · BER · MAD → PMI, AGP, MLA"
+      },
+      {
+        "emoji": "🎄",
+        "name": "Christmas markets",
+        "cities": "LON · MAD · ROM → VIE, PRG, BUD"
+      },
+      {
+        "emoji": "🎓",
+        "name": "Erasmus reunion",
+        "cities": "MAD · PAR · BER → LIS, ROM, ATH"
+      }
     ],
     "useCasesTitle": "Who uses FlyndMe?",
     "useCases": [
-      { "icon": "🌍", "title": "Friends in different countries", "desc": "Stop spending hours comparing flights from multiple cities. FlyndMe does it in seconds." },
-      { "icon": "💑", "title": "Long-distance couples", "desc": "Find the most affordable place to meet halfway — no more guesswork." },
-      { "icon": "🎓", "title": "Erasmus & student groups", "desc": "Budget-friendly meetups across Europe. Perfect for planning reunions or trips." },
-      { "icon": "💻", "title": "Digital nomads & remote teams", "desc": "Coordinate group travel from anywhere. Find where the team can meet at the best price." }
+      {
+        "icon": "🌍",
+        "title": "Friends in different countries",
+        "desc": "Stop spending hours comparing flights from multiple cities. FlyndMe does it in seconds."
+      },
+      {
+        "icon": "💑",
+        "title": "Long-distance couples",
+        "desc": "Find the most affordable place to meet halfway — no more guesswork."
+      },
+      {
+        "icon": "🎓",
+        "title": "Erasmus & student groups",
+        "desc": "Budget-friendly meetups across Europe. Perfect for planning reunions or trips."
+      },
+      {
+        "icon": "💻",
+        "title": "Digital nomads & remote teams",
+        "desc": "Coordinate group travel from anywhere. Find where the team can meet at the best price."
+      }
     ]
   },
   "search": {
@@ -247,7 +322,8 @@
     "pricePerKmSub": "Lower cost per kilometer = better value for money",
     "arrivalSync": "Group arrival sync",
     "arrivalSpread": "Everyone arrives within {{time}}",
-    "shareStory": "Share as story"
+    "shareStory": "Share as story",
+    "partialNotice": "Partial results: the search hit its time limit. Showing what was found — try again or narrow the search for full coverage."
   },
   "verifyBadge": {
     "confirmed": "Price confirmed",
@@ -318,7 +394,11 @@
       "Almost there…"
     ],
     "ariaLabel": "Searching flights",
-    "steps": ["Searching flights", "Comparing prices", "Preparing results"],
+    "steps": [
+      "Searching flights",
+      "Comparing prices",
+      "Preparing results"
+    ],
     "skeletonHint": "Analyzing {{n}} route combinations…",
     "tips": [
       "Tuesday and Wednesday flights are often the cheapest",
