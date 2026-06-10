@@ -491,3 +491,22 @@ Frontend 41/41 · backend 34/34.
 **Pendiente del troceo**: quedan en App.jsx los paneles menores
 (CostSplitCard, SearchHistoryPanel, TopDestinationsPodium, etc.) y el shell
 de la app — extraíbles con el mismo patrón cuando toque.
+
+## Mejora 27 — Troceo de App.jsx (VI): shell y paneles de resultados
+
+**Qué**: 12 componentes más fuera de App.jsx, en dos archivos coherentes:
+- `components/ChromeBits.jsx`: ThemeToggle, ScrollToTopBtn, LangSelector,
+  Toast, LoadingTips y SearchSkeleton (shell de la app y carga).
+- `components/ResultsPanels.jsx`: CostSplitCard, PlanYourTripCTA,
+  SearchHistoryPanel, DestImageBanner, ResultsShareLink y
+  TopDestinationsPodium (paneles de la vista de resultados).
+
+**App.jsx: 1.818 → 1.391 líneas** (3.587 al inicio del día: **−61%**). Lo que
+queda es esencialmente el estado, los handlers y el layout de las vistas —
+el "cerebro" de la app, como debe ser.
+
+**Verificación**: test de render que ejercita los 12 componentes con fixtures
++ render de App completa. Frontend 42/42 · backend 34/34.
+
+**Pendiente del troceo**: hooks (useTheme, useFavorites, useA11yPrefs,
+useBackendStatus) a un hooks/ — última pieza del plan original.

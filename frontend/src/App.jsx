@@ -19,6 +19,8 @@ import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrum
 import SearchPage from "./components/SearchPage";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
+import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } from "./components/ChromeBits";
+import { CostSplitCard, PlanYourTripCTA, SearchHistoryPanel, DestImageBanner, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
 import { getCityImage } from "./utils/cityImages";
 import VerificationBadge from "./components/VerificationBadge";
 
@@ -70,103 +72,11 @@ function useTheme() {
   return { theme, resolved, setTheme, toggle };
 }
 
-const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
-  const { t } = useI18n();
-  return (
-    <button
-      type="button"
-      className="theme-toggle"
-      onClick={toggle}
-      aria-label={resolved === "dark" ? t("theme.light") : t("theme.dark")}
-      title={resolved === "dark" ? t("theme.light") : t("theme.dark")}
-    >
-      {resolved === "dark" ? "☀️" : "🌙"}
-    </button>
-  );
-});
-
 // ─── Scroll to top button ──────────────────────────────────────────────────
-
-const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
-  const { t } = useI18n();
-  const [visible, setVisible] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setVisible(window.scrollY > 400);
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docH > 0 ? Math.min(1, window.scrollY / docH) : 0);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  if (!visible) return null;
-
-  const r = 18, c = 2 * Math.PI * r;
-  const offset = c * (1 - progress);
-
-  return (
-    <button
-      type="button"
-      className={`scroll-top-btn${visible ? " visible" : ""}`}
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      aria-label={t("a11y.scrollToTop")}
-      title={t("a11y.scrollToTop")}
-    >
-      <svg className="scroll-top-ring" viewBox="0 0 44 44" width="44" height="44">
-        <circle cx="22" cy="22" r={r} fill="none" stroke="rgba(0,0,0,.08)" strokeWidth="3" />
-        <circle cx="22" cy="22" r={r} fill="none" stroke="var(--primary)" strokeWidth="3"
-          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
-          style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset .1s" }} />
-      </svg>
-      <span className="scroll-top-arrow">↑</span>
-    </button>
-  );
-});
 
 // ─── Language selector ───────────────────────────────────────────────────────
 
-const LangSelector = React.memo(function LangSelector() {
-  const { lang, setLang } = useI18n();
-  return (
-    <div className="btn-group btn-group-sm" role="group" aria-label="Language">
-      {[["en", "EN"], ["es", "ES"]].map(([code, label]) => (
-        <button
-          key={code}
-          type="button"
-          className={`btn ${lang === code ? "btn-light fw-bold" : "btn-outline-secondary"}`}
-          style={{ minWidth: 38, fontSize: 13 }}
-          onClick={() => setLang(code)}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-});
-
 // ─── Toast notification ──────────────────────────────────────────────────────
-
-const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
-  const [exiting, setExiting] = useState(false);
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setExiting(true), 2200);
-    const t2 = setTimeout(() => onDone?.(), 2500);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onDone]);
-
-  return (
-    <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`}>
-      <span className="fm-toast-icon">
-        {type === "success" ? "✓" : type === "error" ? "✗" : "ℹ"}
-      </span>
-      {message}
-    </div>
-  );
-});
 
 // ─── Favorites (localStorage) ───────────────────────────────────────────────
 
@@ -213,123 +123,7 @@ function exportResultsCSV(flights, origins, currency) {
 
 // ─── Loading tips carousel ──────────────────────────────────────────────────
 
-const LoadingTips = React.memo(function LoadingTips() {
-  const { t } = useI18n();
-  const tips = t("loading.tips") || [];
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * Math.max(tips.length, 1)));
-  const [fade, setFade] = useState(true);
-
-  useEffect(() => {
-    if (tips.length <= 1) return;
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setIdx((i) => (i + 1) % tips.length);
-        setFade(true);
-      }, 300);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [tips.length]);
-
-  if (!tips.length) return null;
-
-  return (
-    <div className={`loading-tip${fade ? " loading-tip--visible" : ""}`}>
-      <span className="loading-tip-icon">💡</span>
-      <span className="loading-tip-text">{tips[idx % tips.length]}</span>
-    </div>
-  );
-});
-
 // ─── Search skeleton (loading state) ────────────────────────────────────────
-
-const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
-  const { t } = useI18n();
-  const steps = t("loading.steps") || ["Searching", "Comparing", "Preparing"];
-  const [activeStep, setActiveStep] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setActiveStep(1), 6000),
-      setTimeout(() => setActiveStep(2), 14000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  // Countdown timer
-  useEffect(() => {
-    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const numCombinations = Math.max(origins.length, 1) * 36;
-  const estimatedTotal = Math.max(15, Math.ceil(numCombinations / 5));
-  const progressPct = Math.min(95, (elapsed / estimatedTotal) * 100);
-
-  return (
-    <div className="container py-4" style={{ maxWidth: 1080 }}>
-      {/* Progress stepper */}
-      <div className="sk-stepper">
-        {steps.map((label, i) => (
-          <div key={i} className={`sk-step${i <= activeStep ? " sk-step--active" : ""}${i < activeStep ? " sk-step--done" : ""}`}>
-            <div className="sk-step-dot">
-              {i < activeStep ? "✓" : i + 1}
-            </div>
-            <span className="sk-step-label">{label}</span>
-            {i < steps.length - 1 && <div className="sk-step-line" />}
-          </div>
-        ))}
-      </div>
-
-      {/* Timer + progress bar */}
-      <div className="sk-timer-wrap">
-        <div className="sk-timer-bar">
-          <div className="sk-timer-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-        <div className="sk-timer-text">
-          <span>{t("loading.skeletonHint", { n: numCombinations })}</span>
-          <span className="sk-timer-clock">{elapsed}s</span>
-        </div>
-      </div>
-
-      {/* Travel tips carousel */}
-      <LoadingTips />
-
-      {/* Skeleton winner card */}
-      <div className="sk-card">
-        <div className="sk-card-img fm-skeleton" />
-        <div className="sk-card-body">
-          <div className="fm-skeleton" style={{ width: "40%", height: 24, borderRadius: 8, marginBottom: 12 }} />
-          <div className="fm-skeleton" style={{ width: "65%", height: 16, borderRadius: 6, marginBottom: 20 }} />
-          <div style={{ display: "flex", gap: 16 }}>
-            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
-            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
-            <div className="fm-skeleton" style={{ flex: 1, height: 60, borderRadius: 10 }} />
-          </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-            {origins.filter(Boolean).map((o, i) => (
-              <div key={i} className="fm-skeleton" style={{ width: 100, height: 40, borderRadius: 8 }} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Skeleton alternative cards */}
-      <div className="sk-alts">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="sk-alt">
-            <div className="fm-skeleton" style={{ width: "100%", height: 100, borderRadius: "10px 10px 0 0" }} />
-            <div style={{ padding: 14 }}>
-              <div className="fm-skeleton" style={{ width: "50%", height: 16, borderRadius: 6, marginBottom: 8 }} />
-              <div className="fm-skeleton" style={{ width: "70%", height: 14, borderRadius: 6 }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
 
 // ─── Animated price counter ─────────────────────────────────────────────────
 
@@ -340,134 +134,11 @@ const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
 
 // ─── Airline logo helper ──────────────────────────────────────────────────────
 
-const AIRLINE_LOGOS = {};
 // ─── Cost split calculator ────────────────────────────────────────────────────
-
-function CostSplitCard({ bestDest, origins, currency, t }) {
-  const [splitMode, setSplitMode] = useState("equal"); // equal | actual
-  if (!bestDest?.flights?.length || origins.length < 2) return null;
-
-  const breakdown = bestDest.flights;
-  const totalCost = bestDest.totalCostEUR || 0;
-  const equalShare = totalCost / origins.length;
-
-  // In "actual" mode, each pays their own flight
-  // In "equal" mode, everyone pays the same (equal share)
-  // Show who owes whom
-  const diffs = breakdown.map(f => {
-    const origin = String(f.origin).toUpperCase();
-    const actual = f.price || 0;
-    const diff = actual - equalShare; // positive = overpaid, negative = underpaid
-    return { origin, actual, equalShare, diff };
-  });
-
-  return (
-    <div className="fm-split-card view-enter">
-      <div className="fm-split-header">
-        <span className="fm-split-title">{t("results.splitTitle")}</span>
-        <div className="fm-split-toggle">
-          {[["equal", t("results.splitEqual")], ["actual", t("results.splitActual")]].map(([v, l]) => (
-            <button key={v} type="button"
-              className={`fm-split-pill${splitMode === v ? " fm-split-pill--active" : ""}`}
-              onClick={() => setSplitMode(v)}>{l}</button>
-          ))}
-        </div>
-      </div>
-      <div className="fm-split-grid">
-        {diffs.map(d => (
-          <div key={d.origin} className="fm-split-row">
-            <span className="fm-split-origin">{countryFlag(d.origin)} {d.origin}</span>
-            <span className="fm-split-pays">
-              {splitMode === "equal"
-                ? (currency === "EUR" ? formatEur(equalShare, 0) : convertPrice(equalShare, currency))
-                : (currency === "EUR" ? formatEur(d.actual, 0) : convertPrice(d.actual, currency))
-              }
-            </span>
-            {splitMode === "equal" && (
-              <span className={`fm-split-diff${d.diff > 2 ? " fm-split-diff--overpaid" : d.diff < -2 ? " fm-split-diff--underpaid" : ""}`}>
-                {Math.abs(d.diff) < 2 ? "=" :
-                  d.diff > 0
-                    ? `${t("results.splitGets")} ${currency === "EUR" ? formatEur(d.diff, 0) : convertPrice(d.diff, currency)}`
-                    : `${t("results.splitOwes")} ${currency === "EUR" ? formatEur(Math.abs(d.diff), 0) : convertPrice(Math.abs(d.diff), currency)}`
-                }
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-      {splitMode === "equal" && (
-        <div className="fm-split-note">{t("results.splitNote")}</div>
-      )}
-    </div>
-  );
-}
 
 // ─── Plan Your Trip CTA ──────────────────────────────────────────────────────
 
-function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
-  if (!destCode) return null;
-  const city = cityOf(destCode) || destCode;
-  const checkin = departureDate || "";
-  const checkout = returnDate || "";
-
-  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&checkin=${checkin}&checkout=${checkout}`;
-  const activitiesUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(city)}`;
-  const mapsUrl = `https://www.google.com/maps/place/${encodeURIComponent(city)}`;
-
-  return (
-    <div className="fm-plan-trip view-enter">
-      <div className="fm-plan-trip-title">{t("results.planTripTitle")}</div>
-      <div className="fm-plan-trip-subtitle">{t("results.planTripSub", { city })}</div>
-      <div className="fm-plan-trip-links">
-        <a href={bookingUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🏨</span>
-          <span>{t("results.planHotels")}</span>
-        </a>
-        <a href={activitiesUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🎯</span>
-          <span>{t("results.planActivities")}</span>
-        </a>
-        <a href={mapsUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🗺️</span>
-          <span>{t("results.planMap")}</span>
-        </a>
-      </div>
-    </div>
-  );
-}
-
 // ─── Search History Panel ─────────────────────────────────────────────────
-
-function SearchHistoryPanel({ searches, onLoad, onClear, t }) {
-  const [expanded, setExpanded] = useState(false);
-  if (!searches || !searches.length) return null;
-
-  return (
-    <div className="fm-history view-enter">
-      <button type="button" className="fm-history-toggle" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
-        <span className="fm-history-toggle-left">
-          <span className="fm-history-icon">🕘</span>
-          <span className="fm-history-title">{t("history.title")}</span>
-          <span className="fm-history-count">{searches.length}</span>
-        </span>
-        <span className={`fm-history-chevron${expanded ? " fm-history-chevron--open" : ""}`}>▾</span>
-      </button>
-      {expanded && (
-        <div className="fm-history-body">
-          {searches.slice(0, 10).map((s, i) => (
-            <button key={i} type="button" className="fm-history-item" onClick={() => { onLoad(s); setExpanded(false); }}>
-              <span className="fm-history-item-origins">{(s.origins || []).join(" · ")}</span>
-              <span className="fm-history-item-date">{s.departureDate || "—"}</span>
-              {s.bestDest && <span className="fm-history-item-dest">→ {s.bestDest}</span>}
-              {s.bestPrice != null && <span className="fm-history-item-price">{formatEur(s.bestPrice, 0)}</span>}
-            </button>
-          ))}
-          <button type="button" className="fm-history-clear" onClick={onClear}>{t("history.clear")}</button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── Reduced Motion + High Contrast accessibility hook ────────────────────
 
@@ -499,108 +170,10 @@ function useA11yPrefs() {
 
 // ─── Destination Image Banner ─────────────────────────────────────────────
 
-function DestImageBanner({ destCode }) {
-  const imgUrl = getCityImage(destCode, getBaseUrl(), { w: 1200, h: 300 });
-  const city = cityOf(destCode) || destCode;
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-
-  if (error || !imgUrl) return null;
-
-  return (
-    <div className={`fm-dest-banner${loaded ? " fm-dest-banner--loaded" : ""}`}>
-      <img
-        src={imgUrl}
-        alt={city}
-        className="fm-dest-banner-img"
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        loading="lazy"
-      />
-      <div className="fm-dest-banner-overlay">
-        <span className="fm-dest-banner-city">{city}</span>
-        <span className="fm-dest-banner-code">{destCode}</span>
-      </div>
-    </div>
-  );
-}
-
 // ─── Results Share Link (Round 29) ────────────────────────────────────────
-
-function ResultsShareLink({ origins, departureDate, returnDate, tripType, t }) {
-  const [copied, setCopied] = useState(false);
-
-  const buildLink = useCallback(() => {
-    const params = new URLSearchParams();
-    if (origins?.length) params.set("origins", origins.join(","));
-    if (departureDate) params.set("dep", departureDate);
-    if (returnDate) params.set("ret", returnDate);
-    if (tripType) params.set("trip", tripType);
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-  }, [origins, departureDate, returnDate, tripType]);
-
-  const handleCopy = useCallback(() => {
-    const link = buildLink();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(link).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-  }, [buildLink]);
-
-  return (
-    <div className="fm-sharelink view-enter">
-      <span className="fm-sharelink-icon">🔗</span>
-      <span className="fm-sharelink-text">{t("shareLink.label")}</span>
-      <button type="button" className="fm-sharelink-btn" onClick={handleCopy}>
-        {copied ? "✓ " + t("shareLink.copied") : t("shareLink.copy")}
-      </button>
-    </div>
-  );
-}
 
 // ─── Scroll Progress Bar ──────────────────────────────────────────────────
 
-
-function TopDestinationsPodium({ flights, currency, onSelect }) {
-  const { t } = useI18n();
-  if (!flights || flights.length < 3) return null;
-
-  const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR).slice(0, 3);
-  const medals = ["🥇", "🥈", "🥉"];
-  const positions = [1, 0, 2]; // visual order: 2nd, 1st, 3rd for podium effect
-
-  return (
-    <div className="fm-podium view-enter">
-      <div className="fm-podium-title">{t("results.topDestinations")}</div>
-      <div className="fm-podium-cards">
-        {positions.map((pos) => {
-          const dest = sorted[pos];
-          if (!dest) return null;
-          const code = normalizeCode(dest.destination);
-          const city = cityOf(code);
-          return (
-            <button key={code} type="button"
-              className={`fm-podium-card fm-podium-card--pos${pos + 1}`}
-              onClick={() => onSelect?.(dest)}>
-              <span className="fm-podium-medal">{medals[pos]}</span>
-              <span className="fm-podium-city">{city || code}</span>
-              <span className="fm-podium-code">{code}</span>
-              <span className="fm-podium-price">
-                {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
-                <span className="fm-podium-pp">/pp</span>
-              </span>
-              <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
-                {(dest.fairnessScore ?? 0).toFixed(0)}/100
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ─── Backend connection status ─────────────────────────────────────────────────
 

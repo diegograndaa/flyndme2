@@ -145,3 +145,26 @@ test("render: Landing extraída renderiza con CTAs", async () => {
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
 });
+
+test("render: ChromeBits y ResultsPanels extraídos", async () => {
+  const { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } = await import("../src/components/ChromeBits.jsx");
+  const { CostSplitCard, PlanYourTripCTA, SearchHistoryPanel, DestImageBanner, ResultsShareLink, TopDestinationsPodium } = await import("../src/components/ResultsPanels.jsx");
+  const t = (k) => k;
+  const noop = () => {};
+  // Shell
+  assert.ok(renderWithI18n(React.createElement(ThemeToggle, { resolved: "light", toggle: noop })).length > 10);
+  assert.equal(renderWithI18n(React.createElement(ScrollToTopBtn)), ""); // oculto sin scroll
+  assert.ok(renderWithI18n(React.createElement(LangSelector)).length > 10);
+  assert.ok(renderWithI18n(React.createElement(Toast, { message: "hola", onDone: noop })).includes("hola"));
+  assert.ok(renderWithI18n(React.createElement(LoadingTips)).length > 10);
+  assert.ok(renderWithI18n(React.createElement(SearchSkeleton, { origins: ["MAD"] })).length > 100);
+  // Paneles de resultados
+  assert.ok(renderWithI18n(React.createElement(CostSplitCard, { bestDest: FIXTURE_DEST, origins: ["MAD", "LON"], currency: "EUR", t })).length > 100);
+  assert.ok(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "", t })).length > 50);
+  assert.ok(renderWithI18n(React.createElement(SearchHistoryPanel, { searches: [{ origins: ["MAD"], departureDate: "2026-09-15", tripType: "oneway", ts: Date.now() }], onLoad: noop, onClear: noop, t })).length > 50);
+  assert.ok(renderWithI18n(React.createElement(DestImageBanner, { destCode: "ROM" })).length > 50);
+  assert.ok(renderWithI18n(React.createElement(ResultsShareLink, { origins: ["MAD"], departureDate: "2026-09-15", returnDate: "", tripType: "oneway", t })).length > 50);
+  // El podio necesita al menos 3 destinos
+  const podium = [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS" }, { ...FIXTURE_DEST, destination: "PAR" }];
+  assert.ok(renderWithI18n(React.createElement(TopDestinationsPodium, { flights: podium, currency: "EUR", onSelect: noop })).length > 50);
+});
