@@ -103,7 +103,7 @@ export default function CompareChart({ flights, bestDestination }) {
                 style={{ cursor: "pointer" }}>
                 <circle cx={cx} cy={cy}
                   r={p.isBest ? 14 : isHov ? 11 : 8}
-                  fill={p.isBest ? "#0062E3" : "#64748B"}
+                  fill={p.isBest ? "#AE2F34" : "#6B6C91"}
                   stroke="white" strokeWidth="2"
                   opacity={hovered && !isHov ? 0.35 : 0.85}
                   style={{ transition: "all 0.2s" }}

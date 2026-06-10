@@ -304,7 +304,7 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
               <line key={`line-${o.code}`}
                 x1={o.pos[0]} y1={o.pos[1]}
                 x2={destPos[0]} y2={destPos[1]}
-                stroke="#0062E3" strokeWidth="1.8" strokeDasharray="6 4" opacity="0.35"
+                stroke="#AE2F34" strokeWidth="1.8" strokeDasharray="6 4" opacity="0.35"
               />
             );
           })}
@@ -324,8 +324,8 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
                   style={{ transition: "r 0.2s" }} />
                 <circle cx={d.pos[0]} cy={d.pos[1]}
                   r={r}
-                  fill={d.isBest ? "#0062E3" : priceColor(d.avg)}
-                  stroke={d.isBest ? "#003D8F" : "white"}
+                  fill={d.isBest ? "#AE2F34" : priceColor(d.avg)}
+                  stroke={d.isBest ? "#6D0010" : "white"}
                   strokeWidth={d.isBest ? 3 : 2}
                   opacity={hovered && !isHov ? 0.4 : 0.92}
                   style={{ transition: "all 0.2s ease" }}
@@ -356,11 +356,11 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
           {originPoints.map((o) => (
             <g key={`origin-${o.code}`}>
               <circle cx={o.pos[0]} cy={o.pos[1]} r="8"
-                fill="#05C3A8" stroke="white" strokeWidth="2.5" />
+                fill="#0059B8" stroke="white" strokeWidth="2.5" />
               <circle cx={o.pos[0]} cy={o.pos[1]} r="3"
                 fill="white" />
               <rect x={o.pos[0] - 16} y={o.pos[1] - 22} width="32" height="14" rx="4"
-                fill="#05C3A8" opacity="0.9" />
+                fill="#0059B8" opacity="0.9" />
               <text x={o.pos[0]} y={o.pos[1] - 13}
                 textAnchor="middle" fill="white" fontSize="9" fontWeight="700">
                 {o.code}
@@ -374,7 +374,7 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
             return (
               <g>
                 <rect x={pos[0] - 24} y={pos[1] + 20} width="48" height="16" rx="8"
-                  fill="#0062E3" />
+                  fill="#AE2F34" />
                 <text x={pos[0]} y={pos[1] + 30}
                   textAnchor="middle" fill="white" fontSize="9" fontWeight="700">
                   ★ {t("map.best")}
