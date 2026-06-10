@@ -265,3 +265,23 @@ con escapado y datos ausentes). Frontend 26/26 · backend 31/31 · JSX OK.
 **Pendiente**: seguir extrayendo (useDateWarnings, destCategoryTags, hooks) y
 eventualmente los componentes grandes (WinnerCard, SearchPage) a archivos
 propios.
+
+## Mejora 14 — Bug React: pushState dentro del updater de estado
+
+**Qué**: `setView` hacía `window.history.pushState(...)` DENTRO del updater
+de `setViewRaw`. Los updaters deben ser puros: con `<React.StrictMode>`
+(activo en main.jsx) React los ejecuta dos veces en desarrollo → cada cambio
+de vista creaba DOS entradas de historial y el botón atrás necesitaba dos
+pulsaciones. En producción funcionaba de rebote, pero es una violación de las
+reglas de React que puede romperse con cualquier upgrade.
+
+**Cómo**: el push se decide fuera del updater usando `viewRef` (que ya
+existía para el manejador de teclado) como "vista anterior". `viewRef` se
+declara ahora junto al estado `view` (antes quedaba por debajo de `setView`).
+
+**Verificación**: frontend 26/26 · backend 31/31 · JSX OK. Comprobado además
+que los scripts legacy `verify-simplify.js`/`verify35.js` fallaban IGUAL en
+el baseline a0a5b27 (comprueban componentes eliminados en la poda de mayo) —
+no son regresión; candidatos a retirarse.
+
+**Pendiente**: retirar o actualizar verify-simplify.js / verify35.js.

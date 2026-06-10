@@ -2455,17 +2455,23 @@ export default function App() {
   // View: 'landing' | 'search' | 'results'
   const [view, setViewRaw] = useState("landing");
 
+  // Ref con la vista actual: la usan setView (prev sin updater) y el manejador
+  // de teclado (closure registrado una sola vez).
+  const viewRef = useRef(view);
+  useEffect(() => { viewRef.current = view; }, [view]);
+
   // ── Browser history support (back/forward buttons) ──────────────────────
   const skipHistoryPush = useRef(false);
 
+  // Nota: el pushState vive FUERA del updater de React. Un updater debe ser
+  // puro; con StrictMode (dev) se ejecuta dos veces y duplicaba entradas de
+  // historial (el botón atrás necesitaba dos pulsaciones por vista).
   const setView = useCallback((newView) => {
-    setViewRaw((prev) => {
-      if (prev !== newView && !skipHistoryPush.current) {
-        window.history.pushState({ view: newView }, "", `#${newView}`);
-      }
-      skipHistoryPush.current = false;
-      return newView;
-    });
+    if (viewRef.current !== newView && !skipHistoryPush.current) {
+      window.history.pushState({ view: newView }, "", `#${newView}`);
+    }
+    skipHistoryPush.current = false;
+    setViewRaw(newView);
   }, []);
 
   useEffect(() => {
@@ -2481,10 +2487,6 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Keep a ref of current view for keyboard handler (avoids stale closure)
-  const viewRef = useRef(view);
-  useEffect(() => { viewRef.current = view; }, [view]);
 
   const tabContentRef = useRef(null);
 
