@@ -521,7 +521,7 @@ const SearchPage = React.memo(function SearchPage({
                     <div className="sf-budget-box mt-3">
                       <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
                         value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
-                      <div className="d-flex justify-content-between small" style={{ color: "#64748B" }}>
+                      <div className="d-flex justify-content-between small" style={{ color: "var(--slate-500)" }}>
                         <span>{formatEur(BUDGET_MIN)}</span>
                         <strong>{formatEur(maxBudget)}</strong>
                         <span>{formatEur(BUDGET_MAX)}</span>
@@ -719,7 +719,7 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               );
             })}
-            {!filtered.length && <div className="text-center small" style={{ color: "#94A3B8", padding: "16px 0" }}>{t("search.noMatches")}</div>}
+            {!filtered.length && <div className="text-center small" style={{ color: "var(--slate-400)", padding: "16px 0" }}>{t("search.noMatches")}</div>}
           </div>
         </aside>
       </div>

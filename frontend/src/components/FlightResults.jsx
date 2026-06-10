@@ -5,10 +5,23 @@
 import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
-  normalizeCode, formatEur, formatDate, fairnessColor,
+  normalizeCode, formatEur, formatDate, fairnessColor, getBaseUrl,
   buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf, countryFlag
 } from "../utils/helpers";
+import { getCityImage } from "../utils/cityImages";
 import "../styles/results-simple.css";
+
+function AltThumb({ code, city }) {
+  const [error, setError] = useState(false);
+  const url = getCityImage(code, getBaseUrl(), { w: 160, h: 160 });
+  if (error || !url) {
+    return <span className="altl-thumb altl-thumb--placeholder" aria-hidden="true">{code}</span>;
+  }
+  return (
+    <img className="altl-thumb" src={url} alt={city || code} loading="lazy"
+      onError={() => setError(true)} />
+  );
+}
 
 const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDate, tripType, open, onToggle }) {
   const { t } = useI18n();
@@ -24,6 +37,7 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
     <div className={`altl-row${open ? " altl-row--open" : ""}`}>
       <button type="button" className="altl-main" onClick={onToggle}
         aria-expanded={open} title={open ? t("alt.hideBreakdown") : t("alt.viewBreakdown")}>
+        <AltThumb code={code} city={city} />
         <span className="altl-rank">{rank}</span>
         <span className="altl-dest">
           <span className="altl-city">{countryFlag(code)} {city}</span>
@@ -125,7 +139,7 @@ export default function FlightResults({
       {/* Sort control */}
       {alternatives.length > 1 && (
         <div className="d-flex align-items-center gap-2 mb-3">
-          <label className="form-label small mb-0 fw-semibold" htmlFor="altSort" style={{ color: "#475569", whiteSpace: "nowrap" }}>
+          <label className="form-label small mb-0 fw-semibold" htmlFor="altSort" style={{ color: "var(--slate-700)", whiteSpace: "nowrap" }}>
             {t("alt.sortLabel")}
           </label>
           <select id="altSort" className="form-select form-select-sm" style={{ maxWidth: 260 }}

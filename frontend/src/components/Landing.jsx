@@ -96,7 +96,17 @@ const Landing = React.memo(function Landing({ onStart, onStartWithRoute }) {
           <div className="row g-5 align-items-center">
             <div className="col-lg-6">
               <span className="lp-eyebrow">{t("landing.eyebrow")}</span>
-              <h1 className="lp-h1">{t("landing.title")}</h1>
+              <h1 className="lp-h1">{(() => {
+                const title = t("landing.title");
+                const accent = t("landing.titleAccent");
+                const i = typeof accent === "string" && accent && typeof title === "string" ? title.indexOf(accent) : -1;
+                if (i < 0) return title;
+                return (<>
+                  {title.slice(0, i)}
+                  <span className="lp-h1-accent">{accent}</span>
+                  {title.slice(i + accent.length)}
+                </>);
+              })()}</h1>
               <p className="lp-lead">{t("landing.lead")}</p>
               <button className="btn-fm-primary btn-lg-fm" onClick={onStart} type="button">
                 {t("landing.cta")}

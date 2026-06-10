@@ -9,6 +9,7 @@
   "landing": {
     "eyebrow": "✈ FlyndMe",
     "title": "Find the cheapest place to meet your group",
+    "titleAccent": "your group",
     "lead": "Enter each traveler's city and instantly discover where it's cheapest to meet. That simple.",
     "cta": "Start searching",
     "chips": [

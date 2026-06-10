@@ -40,6 +40,7 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
       <div className="fm-split-grid">
         {diffs.map(d => (
           <div key={d.origin} className="fm-split-row">
+            <span className="fm-split-avatar" aria-hidden="true">{d.origin}</span>
             <span className="fm-split-origin">{countryFlag(d.origin)} {d.origin}</span>
             <span className="fm-split-pays">
               {splitMode === "equal"
@@ -193,31 +194,35 @@ export function TopDestinationsPodium({ flights, currency, onSelect }) {
   if (!flights || flights.length < 3) return null;
 
   const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR).slice(0, 3);
-  const medals = ["🥇", "🥈", "🥉"];
-  const positions = [1, 0, 2]; // visual order: 2nd, 1st, 3rd for podium effect
 
   return (
     <div className="fm-podium view-enter">
       <div className="fm-podium-title">{t("results.topDestinations")}</div>
       <div className="fm-podium-cards">
-        {positions.map((pos) => {
-          const dest = sorted[pos];
-          if (!dest) return null;
+        {sorted.map((dest, pos) => {
           const code = normalizeCode(dest.destination);
           const city = cityOf(code);
+          const imgUrl = getCityImage(code, getBaseUrl(), { w: 160, h: 160 });
           return (
             <button key={code} type="button"
               className={`fm-podium-card fm-podium-card--pos${pos + 1}`}
               onClick={() => onSelect?.(dest)}>
-              <span className="fm-podium-medal">{medals[pos]}</span>
-              <span className="fm-podium-city">{city || code}</span>
-              <span className="fm-podium-code">{code}</span>
-              <span className="fm-podium-price">
-                {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
-                <span className="fm-podium-pp">/pp</span>
+              {imgUrl && (
+                <img className="fm-podium-thumb" src={imgUrl} alt={city || code} loading="lazy"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              )}
+              <span className="fm-podium-info">
+                <span className="fm-podium-city">{city || code}</span>
+                <span className="fm-podium-code">{code}</span>
               </span>
-              <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
-                {(dest.fairnessScore ?? 0).toFixed(0)}/100
+              <span className="fm-podium-info" style={{ alignItems: "flex-end", flex: "0 0 auto" }}>
+                <span className="fm-podium-price">
+                  {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
+                  <span className="fm-podium-pp">/pp</span>
+                </span>
+                <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
+                  {(dest.fairnessScore ?? 0).toFixed(0)}/100
+                </span>
               </span>
             </button>
           );

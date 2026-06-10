@@ -1180,9 +1180,9 @@ export default function App() {
           {showAlt === "list" && flights.length > 1 && (
             <div className="mt-4">
               <div className="d-flex align-items-center justify-content-between mb-3">
-                <h3 className="h5 fw-bold mb-0" style={{ color: "#111827" }}>{t("results.otherOptions")}</h3>
+                <h3 className="h5 fw-bold mb-0" style={{ color: "var(--navy)" }}>{t("results.otherOptions")}</h3>
                 <div className="d-flex align-items-center gap-2">
-                  <span className="small" style={{ color: "#64748B" }}>{t("results.sortBy")}:</span>
+                  <span className="small" style={{ color: "var(--slate-500)" }}>{t("results.sortBy")}:</span>
                   <div className="sf-pills">
                     {[["default", "—"], ["price", t("results.sortPrice")], ["fairness", t("results.sortFairness")]].map(([v, l]) => (
                       <button key={v} type="button"
