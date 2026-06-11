@@ -83,11 +83,13 @@ test("buildGoogleFlightsUrl: estructura básica", () => {
   assert.equal(buildGoogleFlightsUrl({ origin: "", destination: "ROM", departureDate: "x" }), "");
 });
 
-test("fairnessColor: umbrales coherentes (verde alto, rojo bajo)", () => {
-  assert.equal(fairnessColor(90), "#15803D");
-  assert.equal(fairnessColor(70), "#0059B8");
-  assert.equal(fairnessColor(50), "#B45309");
-  assert.equal(fairnessColor(10), "#DC2626");
+test("fairnessColor: umbrales coherentes vía tokens (verde alto, rojo bajo)", () => {
+  // Devuelve var(--fair-*) con fallback del tema claro: el modo oscuro
+  // redefine los tokens en App.css sin tocar esta lógica.
+  assert.equal(fairnessColor(90), "var(--fair-high, #15803D)");
+  assert.equal(fairnessColor(70), "var(--fair-mid, #0059B8)");
+  assert.equal(fairnessColor(50), "var(--fair-low, #B45309)");
+  assert.equal(fairnessColor(10), "var(--fair-bad, #DC2626)");
 });
 
 test("countryFlag / destQuickInfo / airportName", () => {

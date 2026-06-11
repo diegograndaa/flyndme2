@@ -190,13 +190,14 @@ export function scrollBehavior() {
   } catch { return "auto"; }
 }
 
-// Tonos oscurecidos para cumplir contraste AA (≥4.5:1) como texto pequeño
-// sobre fondos claros (blanco/lavanda). El azul es el --secondary de la marca.
+// Tonos con contraste AA (≥4.5:1) como texto pequeño. Devuelve variables CSS
+// (--fair-* en App.css) para que el modo oscuro aclare los tonos sin tocar JS;
+// el fallback hex es el valor del tema claro.
 export function fairnessColor(s) {
-  if (s >= 85) return "#15803D";
-  if (s >= 65) return "#0059B8";
-  if (s >= 45) return "#B45309";
-  return "#DC2626";
+  if (s >= 85) return "var(--fair-high, #15803D)";
+  if (s >= 65) return "var(--fair-mid, #0059B8)";
+  if (s >= 45) return "var(--fair-low, #B45309)";
+  return "var(--fair-bad, #DC2626)";
 }
 
 // Country → flag emoji (ISO 3166-1 alpha-2 code → regional indicators)

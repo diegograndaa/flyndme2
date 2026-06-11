@@ -49,33 +49,34 @@ export default function CompareChart({ flights, bestDestination }) {
 
       <div className="cc-container">
         <svg viewBox={`0 0 ${W} ${H}`} className="cc-svg">
-          {/* Quadrant backgrounds */}
-          <rect x={PAD.left} y={PAD.top} width={midX - PAD.left} height={midY - PAD.top}
+          {/* Quadrant backgrounds (los atributos fill/opacity son el tema
+              claro; el oscuro los pisa vía CSS .cc-quad-* en App.css) */}
+          <rect className="cc-quad-rect" x={PAD.left} y={PAD.top} width={midX - PAD.left} height={midY - PAD.top}
             fill="#E8F5E9" opacity="0.4" />
-          <rect x={midX} y={PAD.top} width={W - PAD.right - midX} height={midY - PAD.top}
+          <rect className="cc-quad-rect" x={midX} y={PAD.top} width={W - PAD.right - midX} height={midY - PAD.top}
             fill="#FFF3E0" opacity="0.4" />
-          <rect x={PAD.left} y={midY} width={midX - PAD.left} height={H - PAD.bottom - midY}
+          <rect className="cc-quad-rect" x={PAD.left} y={midY} width={midX - PAD.left} height={H - PAD.bottom - midY}
             fill="#FFF8E1" opacity="0.4" />
-          <rect x={midX} y={midY} width={W - PAD.right - midX} height={H - PAD.bottom - midY}
+          <rect className="cc-quad-rect" x={midX} y={midY} width={W - PAD.right - midX} height={H - PAD.bottom - midY}
             fill="#FFEBEE" opacity="0.4" />
 
           {/* Quadrant labels */}
-          <text x={PAD.left + 6} y={PAD.top + 16} fontSize="9" fill="#2E7D32" opacity="0.6">{t("compare.cheapFair")}</text>
-          <text x={W - PAD.right - 4} y={PAD.top + 16} fontSize="9" fill="#E65100" opacity="0.6" textAnchor="end">{t("compare.expFair")}</text>
-          <text x={PAD.left + 6} y={H - PAD.bottom - 6} fontSize="9" fill="#F57F17" opacity="0.6">{t("compare.cheapUnfair")}</text>
-          <text x={W - PAD.right - 4} y={H - PAD.bottom - 6} fontSize="9" fill="#C62828" opacity="0.6" textAnchor="end">{t("compare.expUnfair")}</text>
+          <text className="cc-quad-label cc-quad-label--good" x={PAD.left + 6} y={PAD.top + 16} fontSize="9" fill="#2E7D32" opacity="0.6">{t("compare.cheapFair")}</text>
+          <text className="cc-quad-label cc-quad-label--exp" x={W - PAD.right - 4} y={PAD.top + 16} fontSize="9" fill="#E65100" opacity="0.6" textAnchor="end">{t("compare.expFair")}</text>
+          <text className="cc-quad-label cc-quad-label--cheap" x={PAD.left + 6} y={H - PAD.bottom - 6} fontSize="9" fill="#F57F17" opacity="0.6">{t("compare.cheapUnfair")}</text>
+          <text className="cc-quad-label cc-quad-label--bad" x={W - PAD.right - 4} y={H - PAD.bottom - 6} fontSize="9" fill="#C62828" opacity="0.6" textAnchor="end">{t("compare.expUnfair")}</text>
 
           {/* Axes */}
-          <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom}
+          <line className="cc-axis" x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom}
             stroke="#CBD5E1" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom}
+          <line className="cc-axis" x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom}
             stroke="#CBD5E1" strokeWidth="1" />
 
           {/* X axis label */}
-          <text x={(PAD.left + W - PAD.right) / 2} y={H - 6}
+          <text className="cc-axis-label" x={(PAD.left + W - PAD.right) / 2} y={H - 6}
             textAnchor="middle" fontSize="10" fill="#64748B">{t("compare.priceAxis")}</text>
           {/* Y axis label */}
-          <text x={14} y={(PAD.top + H - PAD.bottom) / 2}
+          <text className="cc-axis-label" x={14} y={(PAD.top + H - PAD.bottom) / 2}
             textAnchor="middle" fontSize="10" fill="#64748B"
             transform={`rotate(-90, 14, ${(PAD.top + H - PAD.bottom) / 2})`}>
             {t("compare.fairnessAxis")}
@@ -84,9 +85,9 @@ export default function CompareChart({ flights, bestDestination }) {
           {/* Grid lines */}
           {[25, 50, 75].map((v) => (
             <g key={`grid-${v}`}>
-              <line x1={PAD.left} y1={scaleY(v)} x2={W - PAD.right} y2={scaleY(v)}
+              <line className="cc-grid-line" x1={PAD.left} y1={scaleY(v)} x2={W - PAD.right} y2={scaleY(v)}
                 stroke="#E2E8F0" strokeWidth="0.5" strokeDasharray="3 3" />
-              <text x={PAD.left - 6} y={scaleY(v) + 3}
+              <text className="cc-grid-num" x={PAD.left - 6} y={scaleY(v) + 3}
                 textAnchor="end" fontSize="9" fill="#94A3B8">{v}</text>
             </g>
           ))}
@@ -114,7 +115,7 @@ export default function CompareChart({ flights, bestDestination }) {
                   {p.code}
                 </text>
                 {(p.isBest || isHov) && (
-                  <text x={cx} y={cy - (p.isBest ? 20 : 16)}
+                  <text className="cc-point-name" x={cx} y={cy - (p.isBest ? 20 : 16)}
                     textAnchor="middle" fill="#111827" fontSize="10" fontWeight="700"
                     style={{ pointerEvents: "none" }}>
                     {p.city} · {formatEur(p.avg, 0)}

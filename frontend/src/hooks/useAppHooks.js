@@ -2,6 +2,9 @@
 // Extraídos de App.jsx (Mejora 28): tema, favoritos, preferencias de
 // accesibilidad y estado del backend.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// useFavorites los usaba sin importar: el toggle de favoritos lanzaba
+// "normalizeCode is not defined" en runtime (los tests SSR no lo cazaban).
+import { normalizeCode, cityOf } from "../utils/helpers";
 
 export function useTheme() {
   const [theme, setThemeState] = useState(() => {

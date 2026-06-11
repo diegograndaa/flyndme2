@@ -168,3 +168,30 @@ test("render: ChromeBits y ResultsPanels extraídos", async () => {
   const podium = [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS" }, { ...FIXTURE_DEST, destination: "PAR" }];
   assert.ok(renderWithI18n(React.createElement(TopDestinationsPodium, { flights: podium, currency: "EUR", onSelect: noop })).length > 50);
 });
+
+test("render: ThemeToggle expone aria-pressed según el tema resuelto", async () => {
+  const { ThemeToggle } = await import("../src/components/ChromeBits.jsx");
+  const noop = () => {};
+  const light = renderWithI18n(React.createElement(ThemeToggle, { resolved: "light", toggle: noop }));
+  const dark = renderWithI18n(React.createElement(ThemeToggle, { resolved: "dark", toggle: noop }));
+  assert.ok(light.includes('aria-pressed="false"'), "claro: aria-pressed=false");
+  assert.ok(dark.includes('aria-pressed="true"'), "oscuro: aria-pressed=true");
+});
+
+test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión import roto)", async () => {
+  // Con favoritos en localStorage, isFav ejecuta normalizeCode durante el
+  // render; sin el import en useAppHooks.js lanzaba ReferenceError (solo se
+  // manifestaba en runtime al tocar favoritos, no en el render sin favoritos).
+  localStorage.setItem("flyndme_favorites", JSON.stringify([{ code: "MAD", city: "Madrid", price: 100, ts: Date.now() }]));
+  try {
+    const { useFavorites } = await import("../src/hooks/useAppHooks.js");
+    function Probe() {
+      const { isFav } = useFavorites();
+      return React.createElement("span", null, isFav("mad") ? "fav" : "no-fav");
+    }
+    const html = renderToString(React.createElement(Probe));
+    assert.ok(html.includes("fav"), `isFav debería ser true: ${html}`);
+  } finally {
+    localStorage.removeItem("flyndme_favorites");
+  }
+});

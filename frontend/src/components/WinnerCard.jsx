@@ -157,10 +157,12 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-summary-fairness">
             <svg className="wc-fairness-ring" viewBox="0 0 40 40" width="44" height="44">
               <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
-              <circle cx="20" cy="20" r="16" fill="none" stroke={fairness.color} strokeWidth="3"
+              {/* stroke vía style: fairness.color es var(--fair-*) y los
+                  atributos de presentación SVG no soportan var() */}
+              <circle cx="20" cy="20" r="16" fill="none" strokeWidth="3"
                 strokeDasharray={`${((dest.fairnessScore ?? 0) / 100) * 100.53} 100.53`}
                 strokeLinecap="round" transform="rotate(-90 20 20)"
-                style={{ transition: "stroke-dasharray .8s ease" }} />
+                style={{ stroke: fairness.color, transition: "stroke-dasharray .8s ease" }} />
               {/* Número en blanco: los tonos AA para fondo claro no contrastan
                   sobre la franja navy; el color semántico queda en el anillo */}
               <text x="20" y="22" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="800">

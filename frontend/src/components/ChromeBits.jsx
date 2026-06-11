@@ -7,15 +7,19 @@ import { scrollBehavior } from "../utils/helpers";
 
 export const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
   const { t } = useI18n();
+  // Patrón toggle button: nombre accesible constante ("Modo oscuro") +
+  // aria-pressed según el estado; el icono es decorativo.
+  const isDark = resolved === "dark";
   return (
     <button
       type="button"
       className="theme-toggle"
       onClick={toggle}
-      aria-label={resolved === "dark" ? t("theme.light") : t("theme.dark")}
-      title={resolved === "dark" ? t("theme.light") : t("theme.dark")}
+      aria-pressed={isDark}
+      aria-label={t("theme.dark")}
+      title={isDark ? t("theme.light") : t("theme.dark")}
     >
-      {resolved === "dark" ? "☀️" : "🌙"}
+      <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
     </button>
   );
 });

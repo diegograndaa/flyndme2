@@ -227,6 +227,8 @@
 }
 .fm-split-row.fm-split-row { align-items: center; }
 .fm-split-pill--active.fm-split-pill--active { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* En oscuro --primary es rosa claro: tinta encima (ver nota AA en App.css) */
+[data-theme="dark"] .fm-split-pill--active.fm-split-pill--active { color: #16173B; }
 
 /* Planifica tu viaje */
 .fm-plan-trip.fm-plan-trip {

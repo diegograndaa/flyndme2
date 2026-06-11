@@ -25,8 +25,8 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 - Interfaz de servicio común: `getCheapestOffer / priceFlightOffer / budgetStatus` (los providers son drop-in, el frontend no cambia).
 
 ## Comandos
-- Tests backend: `cd backend && npm test` (~86 tests, sin red, con mocks).
-- Tests frontend: `cd frontend && npm test` (~49 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
+- Tests backend: `cd backend && npm test` (~91 tests, sin red, con mocks).
+- Tests frontend: `cd frontend && npm test` (~57 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
 - Dev frontend: `cd frontend && npm run dev` · Build: `npm run build`.
 
 ## Estructura clave
@@ -34,7 +34,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 - `frontend/src/`: App.jsx (~2.000 líneas, sigue grande), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
 
 ## Diseño vigente (tema Stitch)
-Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179, Plus Jakarta Sans. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos.
+Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179, Plus Jakarta Sans. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos. **Modo oscuro completo** (familia navy/lavanda #131434/#1B1C40/#2C2D52, granate aclarado #FFB3B0 con texto tinta #16173B): toggle en header + `prefers-color-scheme`, anti-flash inline en index.html, localStorage `flyndme_theme`. Contraste AA en ambos temas (medido); un solo control de ordenación ("Más barato | Más equitativo" en WinnerCard).
 
 ## Reglas duras
 1. **Nunca inventar precios ni fingir verificación.** Sin datos → sin resultados. No fabricar aeropuertos de escala.
@@ -51,11 +51,10 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buildAffiliateLink()` (con tests) + CTA "Reservar" desplegados, `TRAVELPAYOUTS_MARKER=738121` activo en Render y cuenta Travelpayouts activada. Verificado en prod con búsqueda real: todos los deep links llevan `&marker=738121`. Pendiente solo esperar las primeras reservas (comisión ~1,1-1,3%) — vigilar el dashboard de Travelpayouts. Nota API: la respuesta de /multi-origin anida los offers en `flights[].flights[].offer.link`.
 
 ## Backlog (ordenado según el objetivo "producto redondo")
-1. UX (en curso): accesibilidad, responsive y unificar doble control de ordenación en "Otras opciones" (tanda 1); modo oscuro del tema Stitch (tanda 2, enseñar a Diego antes de mergear).
-2. Vigilancia continua capa 2: `[serpapi-verify]` en logs de Render (desviación date-fallback) y cupo en serpapi.com.
-3. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
+1. Vigilancia continua capa 2: `[serpapi-verify]` en logs de Render (desviación date-fallback) y cupo en serpapi.com.
+2. Resto: favicons ausentes en frontend/public (404 en index.html, solo hay logo-flyndme.svg); npm audit fix; capturas README; extraer Landing/CostSplitCard de App.jsx; micro-a11y pendiente (separadores decorativos `.fm-stats-sep`/`.fm-breadcrumb-sep`, `.rv-tab-badge` 4.33:1 en oscuro, focus-trap en paneles).
 
-Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada, desplegada y VERIFICADA en prod (badge ✓ confirmado por Diego con búsqueda real; fix aeropuertos reales porque Google Flights no acepta códigos de ciudad).
+Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada, desplegada y VERIFICADA en prod (badge ✓ confirmado por Diego con búsqueda real; fix aeropuertos reales porque Google Flights no acepta códigos de ciudad); UX tanda 1 (control de ordenación único, a11y AA, responsive 360px) y tanda 2 (modo oscuro Stitch completo, lista abierta al cambiar criterio, fix crash de favoritos) aprobadas por Diego.
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.

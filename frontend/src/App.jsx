@@ -521,9 +521,10 @@ export default function App() {
 
   // ── Handle criterion toggle ─────────────────────────────────────────────────
 
+  // No cierra el panel "Otras opciones": la lista sigue al criterio único y
+  // se reordena en vivo (antes setShowAlt(false) lo plegaba al cambiar).
   const handleCriterion = (mode) => {
     setUiCriterion(mode);
-    setShowAlt(false);
   };
 
   // ── Share (generates a shareable link) ──────────────────────────────────────
@@ -1125,7 +1126,7 @@ export default function App() {
             searchBadges={[
               cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
               directOnly && t("search.directOnly"),
-              flexEnabled && `± ${flexDays} ${t("search.flexDaysLabel") || "days"}`,
+              flexEnabled && `± ${flexDays} ${t("search.flexDaysUnit")}`,
               tripType === "roundtrip" && t("search.roundtrip"),
             ].filter(Boolean)}
             isFav={isFav(bestDestination.destination)}

@@ -37,11 +37,12 @@
   text-transform: none;
 }
 
-/* Chips sobre la imagen */
+/* Chips sobre la imagen: colores literales, el fondo es la foto en ambos
+   temas (var(--navy) se invierte en dark y quedaba claro sobre claro) */
 .wc-card .wc-savings-chip.wc-savings-chip,
 .wc-card .wc-trip-days-chip.wc-trip-days-chip {
   background: rgba(255,255,255,.92);
-  color: var(--navy);
+  color: #16173B;
   border: none;
   box-shadow: var(--shadow-xs);
   border-radius: var(--radius-full);
@@ -270,6 +271,19 @@
 }
 .altl-link:hover { opacity: .9; color: #fff; }
 .altl-link--muted:hover { color: var(--navy); }
+
+/* ─── Modo oscuro: tinta sobre --primary ─────────────────────────────────────
+   En oscuro --primary pasa a rosa claro (#FFB3B0): el texto blanco de los
+   botones primarios deja de contrastar. Mismo tratamiento que el coral del
+   CTA: tinta #16173B encima. */
+[data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
+[data-theme="dark"] .wc-card .wc-cheapest-label.wc-cheapest-label,
+[data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
+[data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary,
+[data-theme="dark"] .altl-link {
+  color: #16173B;
+}
+[data-theme="dark"] .altl-link:hover { color: #16173B; }
 
 @media (max-width: 560px) {
   .altl-fair { display: none; }

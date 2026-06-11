@@ -5,7 +5,21 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google" content="notranslate" />
-    <meta name="theme-color" content="#AE2F34" />
+    <meta name="theme-color" content="#AE2F34" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131434" media="(prefers-color-scheme: dark)" />
+
+    <!-- Anti-flash de tema: fija data-theme ANTES de pintar nada (React lo
+         re-sincroniza al montar vía useTheme; misma clave de localStorage). -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("flyndme_theme");
+          var dark = stored === "dark" || ((stored === null || stored === "system")
+            && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch (e) { /* sin localStorage: se queda el tema claro por defecto */ }
+      })();
+    </script>
 
     <!-- SEO Meta -->
     <title>FlyndMe — Find the cheapest place to meet your group</title>

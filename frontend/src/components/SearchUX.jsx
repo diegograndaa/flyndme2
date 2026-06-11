@@ -71,8 +71,8 @@ export function SearchProgress({ loading }) {
             bottom:     24,
             left:       "50%",
             transform:  "translateX(-50%)",
-            background: "#111827",
-            color:      "#F8FAFC",
+            background: "#16173B", /* tinta Stitch, no gris genérico */
+            color:      "#E1E0FF",
             borderRadius: 999,
             padding:    "10px 20px",
             display:    "flex",
