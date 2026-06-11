@@ -90,6 +90,11 @@ test("validación: payloads inválidos → 400 con código, sin tocar la red", a
     [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, departureDate: "no" }] },         "INVALID_LEG"],
     // vuelta anterior a la ida
     [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, returnDate: futureDate(50) }] },  "INVALID_LEG"],
+    // aeropuertos opcionales: si vienen, deben ser IATA válidos
+    [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, originAirport: "MADRID" }] },      "INVALID_LEG"],
+    [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, originAirport: 7 }] },             "INVALID_LEG"],
+    [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, destinationAirport: "F1" }] },     "INVALID_LEG"],
+    [{ destination: "ROM", totalCostEUR: 100, legs: [{ ...leg, destinationAirport: "FIUMICINO" }] }, "INVALID_LEG"],
   ];
   for (const [payload, code] of cases) {
     const r = await postVerify(payload);
@@ -202,6 +207,77 @@ test("flujo failed: ningún tramo verificable", async () => {
   assert.equal(r.body.verificationStatus, "failed");
   assert.equal(r.body.priceChangePct, 0);
   assert.equal(r.body.verifiedTotalCostEUR, 100);
+});
+
+// ─── Aeropuerto real del billete (ciudades multi-aeropuerto) ─────────────────
+// Google Flights no acepta códigos de ciudad (ROM, LON…) como arrival_id /
+// departure_id: la consulta debe ir contra el aeropuerto REAL del billete.
+
+test("usa originAirport/destinationAirport en la consulta a Google cuando vienen", async () => {
+  const seen = [];
+  serpapi.__test.setTransport(async (url, config) => {
+    if (url.includes("/account")) return { data: { plan_searches_left: 200 } };
+    seen.push(config.params);
+    return { data: { best_flights: [{ price: 101 }], other_flights: [] } };
+  });
+  const r = await postVerify({
+    destination: "ROM",
+    totalCostEUR: 100,
+    legs: [{
+      origin: "MAD", originAirport: "MAD", destinationAirport: "FCO",
+      price: 100, passengers: 1, departureDate: DEP,
+    }],
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.verificationStatus, "verified");
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].departure_id, "MAD");
+  assert.equal(seen[0].arrival_id, "FCO", "debe consultar el aeropuerto real, no el código de ciudad");
+  // La respuesta sigue hablando del destino pedido (el frontend casa por él).
+  assert.equal(r.body.destination, "ROM");
+  assert.equal(r.body.flights[0].origin, "MAD");
+});
+
+test("las cachés distinguen por aeropuerto: otro destinationAirport → nueva búsqueda", async () => {
+  const seen = [];
+  serpapi.__test.setTransport(async (url, config) => {
+    if (url.includes("/account")) return { data: { plan_searches_left: 200 } };
+    seen.push(config.params);
+    return { data: { best_flights: [{ price: 101 }], other_flights: [] } };
+  });
+  const legBase = { origin: "MAD", price: 100, passengers: 1, departureDate: DEP };
+
+  const r1 = await postVerify({
+    destination: "MIL", totalCostEUR: 100,
+    legs: [{ ...legBase, destinationAirport: "MXP" }],
+  });
+  const r2 = await postVerify({
+    destination: "MIL", totalCostEUR: 100,
+    legs: [{ ...legBase, destinationAirport: "BGY" }],
+  });
+  assert.equal(r1.status, 200);
+  assert.equal(r2.status, 200);
+  assert.equal(seen.length, 2, "payloads con distinto destinationAirport no deben compartir caché");
+  assert.deepEqual(seen.map((p) => p.arrival_id).sort(), ["BGY", "MXP"]);
+});
+
+test("sin originAirport/destinationAirport → fallback al origin del leg y destination global", async () => {
+  const seen = [];
+  serpapi.__test.setTransport(async (url, config) => {
+    if (url.includes("/account")) return { data: { plan_searches_left: 200 } };
+    seen.push(config.params);
+    return { data: { best_flights: [{ price: 99 }], other_flights: [] } };
+  });
+  const r = await postVerify({
+    destination: "NAP",
+    totalCostEUR: 100,
+    legs: [{ origin: "MAD", price: 100, passengers: 1, departureDate: DEP }],
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.verificationStatus, "verified");
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].departure_id, "MAD");
+  assert.equal(seen[0].arrival_id, "NAP");
 });
 
 // ─── Timeout global ──────────────────────────────────────────────────────────

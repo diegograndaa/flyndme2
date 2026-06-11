@@ -68,6 +68,45 @@ test("buildVerifyPayload: date-fallback manda la fecha REAL del vuelo", () => {
   assert.equal(p.legs[1].dateFallback, true);
 });
 
+test("buildVerifyPayload: aeropuertos reales de tp se incluyen en el leg", () => {
+  const dest = makeDest({
+    flights: [
+      {
+        origin: "MAD", price: 100, passengers: 1,
+        offer: { tp: { originAirport: "MAD", destinationAirport: "FCO" } },
+      },
+      {
+        origin: "LON", price: 80,
+        offer: { tp: { originAirport: "LGW", destinationAirport: "CIA" } },
+      },
+    ],
+  });
+  const p = buildVerifyPayload(dest, SEARCH_RT);
+  assert.equal(p.legs[0].originAirport, "MAD");
+  assert.equal(p.legs[0].destinationAirport, "FCO");
+  assert.equal(p.legs[1].originAirport, "LGW");
+  assert.equal(p.legs[1].destinationAirport, "CIA");
+});
+
+test("buildVerifyPayload: sin aeropuertos en tp las claves NO aparecen", () => {
+  // Offers antiguos: tp vacío, tp solo con uno de los dos campos, o sin offer
+  const dest = makeDest({
+    flights: [
+      { origin: "MAD", price: 100, offer: { tp: {} } },
+      { origin: "LON", price: 80, offer: { tp: { originAirport: "LGW" } } },
+      { origin: "BCN", price: 60 },
+    ],
+  });
+  const p = buildVerifyPayload(dest, SEARCH_RT);
+  assert.equal("originAirport" in p.legs[0], false);
+  assert.equal("destinationAirport" in p.legs[0], false);
+  // Solo se incluye la clave presente; la ausente se omite
+  assert.equal(p.legs[1].originAirport, "LGW");
+  assert.equal("destinationAirport" in p.legs[1], false);
+  assert.equal("originAirport" in p.legs[2], false);
+  assert.equal("destinationAirport" in p.legs[2], false);
+});
+
 test("buildVerifyPayload: roundtrip usa returnDate de la búsqueda; oneway → null", () => {
   const rt = buildVerifyPayload(makeDest(), SEARCH_RT);
   assert.equal(rt.legs[0].returnDate, "2026-07-14");

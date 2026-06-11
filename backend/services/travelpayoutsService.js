@@ -289,13 +289,19 @@ function mapTicketToOffer(ticket, { departureDate, returnDate, nonStop, currency
     // Deep link de Aviasales con marker de afiliado (TRAVELPAYOUTS_MARKER).
     link: buildAffiliateLink(ticket.link),
     // Datos para re-consultar esta misma búsqueda (priceFlightOffer).
+    // originAirport/destinationAirport: aeropuertos REALES del billete (con
+    // fallback al código de ciudad). La capa 2 (SerpAPI Google Flights) los
+    // necesita porque Google no acepta códigos de ciudad multi-aeropuerto
+    // (ROM, LON…) como departure_id/arrival_id.
     tp: {
-      origin:        ticket.origin,
-      destination:   ticket.destination,
+      origin:             ticket.origin,
+      destination:        ticket.destination,
+      originAirport:      originAirport,
+      destinationAirport: destAirport,
       departureDate,
-      returnDate:    returnDate || null,
-      nonStop:       nonStop === true,
-      currencyCode:  cur,
+      returnDate:         returnDate || null,
+      nonStop:            nonStop === true,
+      currencyCode:       cur,
     },
   };
 }

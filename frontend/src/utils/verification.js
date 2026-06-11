@@ -22,20 +22,31 @@ export function shouldVerify(dest, { partial = false } = {}) {
 // y de las fechas de la búsqueda. IMPORTANTE: cuando hubo date-fallback (fecha
 // vecina), se manda la fecha REAL del vuelo — de ahí el orden de preferencia
 // offer.tp.* → flightDate/flightReturnDate → fecha de la búsqueda.
+// Si Travelpayouts expone los aeropuertos REALES del billete (offer.tp.
+// originAirport/destinationAirport), se añaden al leg: Google Flights no acepta
+// códigos de ciudad multi-aeropuerto (ROM, LON, PAR…). Si faltan, se OMITEN las
+// claves y el backend hace fallback (tolera offers antiguos sin esos campos).
 export function buildVerifyPayload(dest, { departureDate, returnDate, tripType } = {}) {
   const searchReturn = tripType === "roundtrip" ? (returnDate || null) : null;
   return {
     destination: dest.destination,
     totalCostEUR: dest.totalCostEUR,
-    legs: (dest.flights || []).map((f) => ({
-      origin: f.origin,
-      price: f.price,
-      passengers: f.passengers || 1,
-      departureDate: f.offer?.tp?.departureDate ?? f.flightDate ?? departureDate,
-      returnDate: f.offer?.tp?.returnDate ?? f.flightReturnDate ?? searchReturn,
-      nonStop: f.offer?.tp?.nonStop ?? false,
-      dateFallback: f.dateFallback === true,
-    })),
+    legs: (dest.flights || []).map((f) => {
+      const leg = {
+        origin: f.origin,
+        price: f.price,
+        passengers: f.passengers || 1,
+        departureDate: f.offer?.tp?.departureDate ?? f.flightDate ?? departureDate,
+        returnDate: f.offer?.tp?.returnDate ?? f.flightReturnDate ?? searchReturn,
+        nonStop: f.offer?.tp?.nonStop ?? false,
+        dateFallback: f.dateFallback === true,
+      };
+      const originAirport = f.offer?.tp?.originAirport ?? null;
+      const destinationAirport = f.offer?.tp?.destinationAirport ?? null;
+      if (originAirport != null) leg.originAirport = originAirport;
+      if (destinationAirport != null) leg.destinationAirport = destinationAirport;
+      return leg;
+    }),
   };
 }
 

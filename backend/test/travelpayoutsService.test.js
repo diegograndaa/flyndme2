@@ -132,6 +132,29 @@ test("mapTicketToOffer: precio no numérico → null", () => {
   assert.equal(mapTicketToOffer(ticket({ price: "n/a" }), { departureDate: "2026-08-10" }), null);
 });
 
+test("mapTicketToOffer: tp incluye los aeropuertos reales del billete", () => {
+  // Destino ciudad multi-aeropuerto: tp conserva el código de ciudad (para
+  // re-consultas a la Data API) Y el aeropuerto real (para la capa 2 SerpAPI,
+  // que no acepta ROM/LON como arrival_id).
+  const offer = mapTicketToOffer(
+    ticket({ destination: "ROM", destination_airport: "FCO" }),
+    { departureDate: "2026-08-10" }
+  );
+  assert.equal(offer.tp.origin, "MAD");
+  assert.equal(offer.tp.destination, "ROM");
+  assert.equal(offer.tp.originAirport, "MAD");
+  assert.equal(offer.tp.destinationAirport, "FCO");
+});
+
+test("mapTicketToOffer: sin *_airport en el ticket → fallback a origin/destination", () => {
+  const offer = mapTicketToOffer(
+    ticket({ origin_airport: undefined, destination_airport: undefined }),
+    { departureDate: "2026-08-10" }
+  );
+  assert.equal(offer.tp.originAirport, "MAD");
+  assert.equal(offer.tp.destinationAirport, "LIS");
+});
+
 // ─── pickCheapest ────────────────────────────────────────────────────────────
 
 test("pickCheapest: el más barato con fecha exacta", () => {

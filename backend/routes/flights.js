@@ -722,6 +722,22 @@ router.post("/verify", async (req, res) => {
       const origin = String(leg.origin || "").trim().toUpperCase();
       if (!isValidIata(origin)) return bad("origin debe ser un código IATA válido.");
 
+      // Aeropuertos REALES del billete (opcionales). Google Flights no acepta
+      // códigos de ciudad multi-aeropuerto (ROM, LON…) como departure_id /
+      // arrival_id: si el frontend manda el aeropuerto concreto del billete
+      // (offer.tp.originAirport/destinationAirport), se verifica contra él.
+      // Sin ellos → fallback al origin del leg / destination global.
+      let originAirport = null;
+      if (leg.originAirport !== undefined && leg.originAirport !== null && leg.originAirport !== "") {
+        originAirport = String(leg.originAirport).trim().toUpperCase();
+        if (!isValidIata(originAirport)) return bad("originAirport debe ser un código IATA válido.");
+      }
+      let destinationAirport = null;
+      if (leg.destinationAirport !== undefined && leg.destinationAirport !== null && leg.destinationAirport !== "") {
+        destinationAirport = String(leg.destinationAirport).trim().toUpperCase();
+        if (!isValidIata(destinationAirport)) return bad("destinationAirport debe ser un código IATA válido.");
+      }
+
       const price = Number(leg.price);
       if (!Number.isFinite(price) || price <= 0) return bad("price debe ser un número mayor que 0.");
 
@@ -742,6 +758,8 @@ router.post("/verify", async (req, res) => {
 
       normLegs.push({
         origin,
+        originAirport,      // null si no vino — entra en la clave de la caché
+        destinationAirport, // null si no vino — entra en la clave de la caché
         price,
         passengers,
         departureDate: leg.departureDate,
@@ -774,11 +792,18 @@ router.post("/verify", async (req, res) => {
     // ── Verificación por tramo en paralelo con timeout global ───────────────
     // IMPORTANTE: se verifica con las fechas que vienen en cada leg — cuando
     // hubo date-fallback el frontend ya manda la fecha REAL del vuelo.
+    // Y contra el aeropuerto REAL del billete si vino (Google Flights no
+    // acepta códigos de ciudad multi-aeropuerto como ROM o LON). La caché
+    // por tramo de serpapiService ya distingue por estos códigos (la clave
+    // es origin|destination|fechas).
+    const legRoute = (leg) => ({
+      origin:      leg.originAirport || leg.origin,
+      destination: leg.destinationAirport || dest,
+    });
     const verifyPromise = Promise.allSettled(
       normLegs.map((leg) =>
         serpapi.verifyLeg({
-          origin:        leg.origin,
-          destination:   dest,
+          ...legRoute(leg),
           departureDate: leg.departureDate,
           returnDate:    leg.returnDate || undefined,
           nonStop:       leg.nonStop || undefined,
@@ -803,10 +828,12 @@ router.post("/verify", async (req, res) => {
       const verifiedPrice = v?.price ?? null;
       if (verifiedPrice !== null) {
         // Vigilancia de desviación (sobre todo de los date-fallback):
-        // grep "[serpapi-verify]" en los logs de Render.
+        // grep "[serpapi-verify]" en los logs de Render. La ruta es la
+        // realmente consultada en Google (p.ej. MAD→FCO aunque dest=ROM).
+        const route = legRoute(leg);
         const deltaPct = ((verifiedPrice - leg.price) / leg.price) * 100;
         console.log(
-          `[serpapi-verify] ${leg.origin}→${dest} cached=${leg.price.toFixed(2)} ` +
+          `[serpapi-verify] ${route.origin}→${route.destination} cached=${leg.price.toFixed(2)} ` +
           `google=${verifiedPrice.toFixed(2)} Δ=${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}% ` +
           `dateFallback=${leg.dateFallback}`
         );
