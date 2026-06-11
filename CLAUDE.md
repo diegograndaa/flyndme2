@@ -20,7 +20,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 
 ## Proveedor de datos de vuelos
 - **Travelpayouts/Aviasales Data API en producción** (`FLIGHT_PROVIDER=travelpayouts`). Precios = caché de búsquedas reales, NO ofertas verificables → `verificationStatus: "skipped"` y badge "precio orientativo". Fallback fechas vecinas: `TP_DATE_FLEX_DAYS=2`, mostrando siempre la fecha real.
-- **Amadeus**: código eliminado del repo (jun-2026, su portal self-service cierra el 17-jul-2026). Pendiente solo: borrar las variables `AMADEUS_*` de Render.
+- **Amadeus**: eliminado por completo el 11-jun-2026 (código del repo y variables de Render). No queda nada pendiente de la migración.
 - Capa 2 pendiente: verificación de finalistas con SerpAPI Google Flights (250 gratis/mes).
 - Interfaz de servicio común: `getCheapestOffer / priceFlightOffer / budgetStatus` (los providers son drop-in, el frontend no cambia).
 
@@ -48,15 +48,14 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 9. `.claude/` está en .gitignore (los agentes son locales; copia maestra en `Fyndme\claude-agents\`).
 
 ## Monetización (estado 11-jun-2026)
-Afiliación Travelpayouts/Aviasales, marker **738121**. `buildAffiliateLink()` (con tests) + CTA "Reservar" commiteados y desplegados. Falta SOLO acción de Diego: `TRAVELPAYOUTS_MARKER=738121` en Render (sin ella los links salen sin marker, comportamiento degradado avisado en boot) y activar cuenta Travelpayouts. Hoy ingresos = 0 €.
+Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buildAffiliateLink()` (con tests) + CTA "Reservar" desplegados, `TRAVELPAYOUTS_MARKER=738121` activo en Render y cuenta Travelpayouts activada. Verificado en prod con búsqueda real: todos los deep links llevan `&marker=738121`. Pendiente solo esperar las primeras reservas (comisión ~1,1-1,3%) — vigilar el dashboard de Travelpayouts. Nota API: la respuesta de /multi-origin anida los offers en `flights[].flights[].offer.link`.
 
 ## Backlog (ordenado según el objetivo "producto redondo")
 1. Fiabilidad de precios: capa 2 verificación SerpAPI + vigilar desviación de los date-fallback.
 2. UX: accesibilidad, responsive, modo oscuro del tema Stitch, unificar doble control de ordenación en "Otras opciones".
-3. Acciones manuales de Diego: `TRAVELPAYOUTS_MARKER=738121` en Render + activar cuenta Travelpayouts; borrar variables `AMADEUS_*` de Render (antes del 17-jul).
-4. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
+3. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
 
-Hecho (jun-2026): rediseño Stitch mergeado a main y rama borrada; limpieza de código Amadeus; circuito de monetización en código (buildAffiliateLink + CTA, 6 tests).
+Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests).
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.
