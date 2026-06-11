@@ -1,6 +1,5 @@
 // Travelpayouts (Aviasales Data API) — proveedor primario de datos de vuelos.
-// Sustituye a amadeusService antes del cierre del portal self-service de
-// Amadeus (17-jul-2026). Drop-in: expone la misma interfaz pública
+// Interfaz pública compartida con mockFlightService:
 // (getCheapestOffer / priceFlightOffer / budgetStatus / healthCheck).
 //
 // Naturaleza de los datos: precios CACHEADOS de búsquedas reales de usuarios
@@ -17,9 +16,8 @@
 // El campo `link` de cada ticket es un deep link de Aviasales (programa de
 // afiliados ~1,1-1,3% por reserva) — primera vía de monetización real.
 //
-// Nota: el rate limiter y el retry duplican deliberadamente la lógica de
-// amadeusService en lugar de extraerla a un util compartido: amadeusService
-// se elimina tras la migración y no merece la pena acoplar ambos antes.
+// Nota: el rate limiter y el retry viven aquí (no en un util compartido)
+// porque este es el único proveedor real; extraerlos sería sobreingeniería.
 
 const axios = require("axios");
 const https = require("https");
@@ -32,6 +30,12 @@ const http = axios.create({ httpsAgent, timeout: 15000 });
 
 const TOKEN    = process.env.TRAVELPAYOUTS_TOKEN;
 const BASE_URL = process.env.TRAVELPAYOUTS_BASE_URL || "https://api.travelpayouts.com";
+
+// Marker de afiliado de Travelpayouts (Partner ID, ej. "738121"). Si está
+// definido se añade a cada deep link de Aviasales — sin él, las reservas no
+// se atribuyen y la comisión (~1,1-1,3%) se pierde. Admite sufijo SubID con
+// punto ("738121.app") para segmentar en los informes de Travelpayouts.
+const MARKER_AFF = (process.env.TRAVELPAYOUTS_MARKER || "").trim();
 
 // Market de la caché. Vacío (default) → Aviasales lo deduce del origen de
 // cada petición, lo natural para búsquedas multi-origen europeas. Fijarlo
@@ -96,7 +100,7 @@ function monthsInWindow(isoDate, flexDays) {
   ])];
 }
 
-// ─── Rate limiter (idéntico en diseño al de amadeusService) ──────────────────
+// ─── Rate limiter ─────────────────────────────────────────────────────────────
 
 let active      = 0;
 const queue     = [];
@@ -235,6 +239,17 @@ function buildSegments(fromAirport, toAirport, departAt, airline, flightNumber, 
   }];
 }
 
+// Deep link de Aviasales con el marker de afiliado. ticket.link viene
+// relativo y normalmente ya trae query string → respetar ? / & existentes.
+function buildAffiliateLink(relativeLink) {
+  if (!relativeLink) return null;
+  let link = `https://www.aviasales.com${relativeLink}`;
+  if (MARKER_AFF && !/[?&]marker=/.test(link)) {
+    link += `${link.includes("?") ? "&" : "?"}marker=${encodeURIComponent(MARKER_AFF)}`;
+  }
+  return link;
+}
+
 function mapTicketToOffer(ticket, { departureDate, returnDate, nonStop, currencyCode } = {}) {
   const price = Number(ticket.price);
   if (!Number.isFinite(price)) return null;
@@ -271,8 +286,8 @@ function mapTicketToOffer(ticket, { departureDate, returnDate, nonStop, currency
     validatingAirlineCodes: ticket.airline ? [ticket.airline] : [],
     transfers:       ticket.transfers ?? null,
     returnTransfers: ticket.return_transfers ?? null,
-    // Deep link de Aviasales (afiliable). Relativo en la API → absoluto aquí.
-    link: ticket.link ? `https://www.aviasales.com${ticket.link}` : null,
+    // Deep link de Aviasales con marker de afiliado (TRAVELPAYOUTS_MARKER).
+    link: buildAffiliateLink(ticket.link),
     // Datos para re-consultar esta misma búsqueda (priceFlightOffer).
     tp: {
       origin:        ticket.origin,
@@ -394,7 +409,7 @@ async function findNeighborTicket(origin, destination, departureDate, options) {
   return pickNeighbor(tickets, departureDate, options.returnDate, DATE_FLEX_DAYS);
 }
 
-// ─── Public API (interfaz compartida con amadeusService / mock) ──────────────
+// ─── Public API (interfaz compartida con mockFlightService) ──────────────────
 
 async function getAccessToken() {
   if (!TOKEN) throw new Error("Falta TRAVELPAYOUTS_TOKEN en las variables de entorno.");
@@ -466,7 +481,7 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
     };
     return { price: Number(neighbor.price), offer, dateFallback: offer.dateFallback };
   } catch {
-    // Mismo contrato que amadeusService: un fallo puntual en una ruta no
+    // Contrato del proveedor: un fallo puntual en una ruta no
     // tumba la búsqueda multi-origen; el destino simplemente se descarta.
     return null;
   }
@@ -555,6 +570,7 @@ module.exports = {
 // Internals expuestos SOLO para tests unitarios (no usar desde la app).
 module.exports.__test = {
   buildParams,
+  buildAffiliateLink,
   matchesDates,
   isoDuration,
   mapTicketToOffer,

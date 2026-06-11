@@ -7,9 +7,12 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 process.env.TRAVELPAYOUTS_TOKEN = process.env.TRAVELPAYOUTS_TOKEN || "test-token";
+// MARKER_AFF se captura al hacer require del módulo → fijarlo AQUÍ, antes del
+// require. Valor fijo (no "||") para que las aserciones sean deterministas.
+process.env.TRAVELPAYOUTS_MARKER = "738121.app";
 
 const tp = require("../services/travelpayoutsService");
-const { buildParams, matchesDates, isoDuration, mapTicketToOffer, makeCacheKey, pickCheapest, setTransport } = tp.__test;
+const { buildParams, buildAffiliateLink, matchesDates, isoDuration, mapTicketToOffer, makeCacheKey, pickCheapest, setTransport } = tp.__test;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -197,7 +200,7 @@ test("priceFlightOffer: re-consulta saltando la caché local", async () => {
 });
 
 test("priceFlightOffer: oferta ajena (sin tp) → null", async () => {
-  assert.equal(await tp.priceFlightOffer({ id: "amadeus-1" }), null);
+  assert.equal(await tp.priceFlightOffer({ id: "foreign-1" }), null);
   assert.equal(await tp.priceFlightOffer(null), null);
 });
 
@@ -302,4 +305,69 @@ test("monthsInWindow: cruza el límite de mes solo cuando toca", () => {
   assert.deepEqual(monthsInWindow("2026-08-01", 2).sort(), ["2026-07", "2026-08"]);
   assert.deepEqual(monthsInWindow("2026-08-30", 2).sort(), ["2026-08", "2026-09"]);
   assert.deepEqual(monthsInWindow("2026-08-15", 2), ["2026-08"]);
+});
+
+// ─── buildAffiliateLink (monetización por afiliados) ─────────────────────────
+// TRAVELPAYOUTS_MARKER="738121.app" fijado arriba, antes del require.
+
+test("buildAffiliateLink: link falsy → null", () => {
+  assert.equal(buildAffiliateLink(null), null);
+  assert.equal(buildAffiliateLink(undefined), null);
+  assert.equal(buildAffiliateLink(""), null);
+});
+
+test("buildAffiliateLink: link sin query → añade ?marker=", () => {
+  assert.equal(
+    buildAffiliateLink("/search/MAD1008LIS1"),
+    "https://www.aviasales.com/search/MAD1008LIS1?marker=738121.app"
+  );
+});
+
+test("buildAffiliateLink: link con query existente → añade &marker=", () => {
+  assert.equal(
+    buildAffiliateLink("/search/MAD1008LIS1?t=abc"),
+    "https://www.aviasales.com/search/MAD1008LIS1?t=abc&marker=738121.app"
+  );
+});
+
+test("buildAffiliateLink: marker ya presente en la query → no se duplica", () => {
+  const first = buildAffiliateLink("/search/MAD1008LIS1?marker=otro");
+  assert.equal(first, "https://www.aviasales.com/search/MAD1008LIS1?marker=otro");
+
+  const mid = buildAffiliateLink("/search/MAD1008LIS1?t=abc&marker=otro");
+  assert.equal(mid, "https://www.aviasales.com/search/MAD1008LIS1?t=abc&marker=otro");
+  assert.equal((mid.match(/marker=/g) || []).length, 1);
+});
+
+test("buildAffiliateLink: marker con SubID ('738121.app') va bien encodeado", () => {
+  // encodeURIComponent no escapa el punto → el SubID llega literal a la URL,
+  // que es lo que esperan los informes de Travelpayouts.
+  const link = buildAffiliateLink("/search/MAD1008LIS1");
+  assert.ok(link.endsWith("?marker=738121.app"));
+  assert.equal(decodeURIComponent(link.split("marker=")[1]), "738121.app");
+});
+
+test("buildAffiliateLink: sin TRAVELPAYOUTS_MARKER → link absoluto sin marker", () => {
+  // MARKER_AFF se fija en tiempo de carga → re-require limpio sin la variable.
+  // El TtlCache interno usa unref() y el módulo no tiene más efectos de carga,
+  // así que la instancia extra es inocua. Se restaura todo en finally.
+  const servicePath = require.resolve("../services/travelpayoutsService");
+  const savedMarker = process.env.TRAVELPAYOUTS_MARKER;
+  const savedModule = require.cache[servicePath];
+  delete process.env.TRAVELPAYOUTS_MARKER;
+  delete require.cache[servicePath];
+  try {
+    const fresh = require("../services/travelpayoutsService");
+    assert.equal(
+      fresh.__test.buildAffiliateLink("/search/MAD1008LIS1?t=abc"),
+      "https://www.aviasales.com/search/MAD1008LIS1?t=abc"
+    );
+    assert.equal(
+      fresh.__test.buildAffiliateLink("/search/MAD1008LIS1"),
+      "https://www.aviasales.com/search/MAD1008LIS1"
+    );
+  } finally {
+    process.env.TRAVELPAYOUTS_MARKER = savedMarker;
+    require.cache[servicePath] = savedModule; // el resto del fichero sigue con la instancia original
+  }
 });

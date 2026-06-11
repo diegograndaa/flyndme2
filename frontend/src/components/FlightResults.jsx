@@ -76,7 +76,9 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
                   {typeof f.price === "number" ? formatEur(f.price, 0) : t("alt.noData")}
                 </span>
                 <span className="altl-detail-links">
-                  {ssUrl && <a href={ssUrl} target="_blank" rel="noreferrer" className="altl-link">Skyscanner</a>}
+                  {/* Primario: deep link de Aviasales con marker de afiliado */}
+                  {f.offer?.link && <a href={f.offer.link} target="_blank" rel="noreferrer" className="altl-link">{t("results.bookCta")}</a>}
+                  {ssUrl && <a href={ssUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted">Skyscanner</a>}
                   {gfUrl && <a href={gfUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted">Google Flights</a>}
                 </span>
               </div>

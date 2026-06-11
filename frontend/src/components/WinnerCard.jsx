@@ -329,8 +329,17 @@ const WinnerCard = React.memo(function WinnerCard({
                       </div>
                     )}
                     <div className="wc-flight-ctas">
+                      {/* CTA principal: deep link de Aviasales con marker de
+                          afiliado (única vía de monetización). Lleva la búsqueda
+                          exacta de este precio ya hecha. */}
+                      {offer?.link && (
+                        <a href={offer.link} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book">
+                          <span className="wc-cta-icon">🎟️</span>
+                          {t("results.bookCta")}
+                        </a>
+                      )}
                       {ssUrl && (
-                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--skyscanner">
+                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta">
                           <span className="wc-cta-icon">🔍</span>
                           Skyscanner
                         </a>
