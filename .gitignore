@@ -26,8 +26,11 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Claude local settings (per-machine)
-.claude/settings.local.json
+# Claude local (agentes y settings por máquina — copia maestra en Fyndme\claude-agents\)
+.claude/
+.agents/
+skills-lock.json
+CLAUDE.md.bak
 
 # Carpeta de trabajo de sesiones Cowork (no es codigo del proyecto)
 Fyndme/
