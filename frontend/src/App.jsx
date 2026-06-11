@@ -16,6 +16,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, approxDistKm, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { parseSearchLinkParams } from "./utils/urlParams";
+import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, FriendlyError, AnimatedStat } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import WinnerCard from "./components/WinnerCard";
@@ -315,6 +316,11 @@ export default function App() {
   // Search duration (seconds)
   const [searchDuration, setSearchDuration] = useState(0);
   const searchStartRef = useRef(0);
+
+  // Capa 2 de verificación (POST /api/flights/verify): generación de búsqueda
+  // para descartar respuestas tardías + AbortController de la petición en vuelo.
+  const searchGenRef = useRef(0);
+  const verifyAbortRef = useRef(null);
 
   // ── Recent searches (localStorage) ────────────────────────────────────────
   const RECENT_KEY = "flyndme_recent";
@@ -723,6 +729,43 @@ export default function App() {
     return false;                    // gave up
   }
 
+  // ── Verificación de precio del ganador (capa 2, en segundo plano) ──────────
+  // Tras pintar resultados, re-tarifica el destino ganador contra
+  // POST /api/flights/verify (SerpAPI, 5-20 s). Sin spinners ni UI nueva: el
+  // único cambio visual es que VerificationBadge pasa de "orientativo" a ✓/↑/↓.
+  // Fallo SIEMPRE silencioso: si la petición falla o responde "skipped", el
+  // badge "precio orientativo" se queda como está.
+
+  const applyVerification = (destCode, verification) => {
+    const code = normalizeCode(destCode);
+    const upd = (d) =>
+      d && normalizeCode(d.destination) === code ? mergeVerification(d, verification) : d;
+    // Mismo destino en la lista y en bestByCriterion: solo se añaden campos
+    // verified*; ni se re-ordena ni cambian los precios mostrados.
+    setFlights((prev) => prev.map(upd));
+    setBestByCriterion((prev) => ({ ...prev, total: upd(prev.total), fairness: upd(prev.fairness) }));
+  };
+
+  const verifyWinnerPrice = (winner, gen, searchCtx) => {
+    if (!shouldVerify(winner, { partial: searchCtx.partial })) return;
+    const payload = buildVerifyPayload(winner, searchCtx);
+    const controller = new AbortController();
+    verifyAbortRef.current = controller;
+    fetch(`${API_BASE}/api/flights/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || searchGenRef.current !== gen) return; // búsqueda nueva: descartar
+        if (!data.verificationStatus || data.verificationStatus === "skipped") return;
+        applyVerification(winner.destination, data);
+      })
+      .catch(() => { /* silencioso: el badge "orientativo" ya cubre este estado */ });
+  };
+
   // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
   const handleSubmit = async (e) => {
@@ -742,6 +785,10 @@ export default function App() {
     setLoading(true);
     setSearchDuration(0);
     searchStartRef.current = Date.now();
+    // Nueva búsqueda: invalida cualquier verificación en vuelo de la anterior
+    searchGenRef.current += 1;
+    verifyAbortRef.current?.abort();
+    verifyAbortRef.current = null;
     clearDraft();
 
     try {
@@ -839,6 +886,15 @@ export default function App() {
             flexEnabled,
             tripType,
             winner: arr[0]?.destination,
+          });
+          // Capa 2: verificación asíncrona del ganador mostrado (una sola vez
+          // por búsqueda; la generación descarta respuestas tardías).
+          const winner = optimizeBy === "fairness" ? pickBest(adjusted, "fairness") : bestTotal;
+          verifyWinnerPrice(winner, searchGenRef.current, {
+            departureDate,
+            returnDate,
+            tripType,
+            partial: Boolean(data.partial),
           });
           return;
         } catch (err) {

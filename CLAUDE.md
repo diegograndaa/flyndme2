@@ -21,17 +21,17 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 ## Proveedor de datos de vuelos
 - **Travelpayouts/Aviasales Data API en producción** (`FLIGHT_PROVIDER=travelpayouts`). Precios = caché de búsquedas reales, NO ofertas verificables → `verificationStatus: "skipped"` y badge "precio orientativo". Fallback fechas vecinas: `TP_DATE_FLEX_DAYS=2`, mostrando siempre la fecha real.
 - **Amadeus**: eliminado por completo el 11-jun-2026 (código del repo y variables de Render). No queda nada pendiente de la migración.
-- Capa 2 pendiente: verificación de finalistas con SerpAPI Google Flights (250 gratis/mes).
+- **Capa 2 (SerpAPI Google Flights, 250 búsquedas gratis/mes)**: endpoint `POST /api/flights/verify` (backend/services/serpapiService.js) — el frontend verifica el GANADOR en segundo plano tras pintar resultados y el badge pasa de "orientativo" a ✓/↑↓. Sin `SERPAPI_KEY` en Render responde `skipped` y todo queda como antes. Va aparte de /multi-origin a propósito: SerpAPI tarda 10-20s y el proxy de Render corta a ~30s. Quota guard doble (contador local + GET /account cacheado 10 min, margen 10), caché por tramo 60 min y por payload 30 min. Logs `[serpapi-verify]` registran la desviación cached vs Google por tramo, con `dateFallback=true/false`.
 - Interfaz de servicio común: `getCheapestOffer / priceFlightOffer / budgetStatus` (los providers son drop-in, el frontend no cambia).
 
 ## Comandos
-- Tests backend: `cd backend && npm test` (~62 tests, sin red, con mocks).
-- Tests frontend: `cd frontend && npm test` (~42 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
+- Tests backend: `cd backend && npm test` (~86 tests, sin red, con mocks).
+- Tests frontend: `cd frontend && npm test` (~49 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
 - Dev frontend: `cd frontend && npm run dev` · Build: `npm run build`.
 
 ## Estructura clave
-- `backend/services/`: travelpayoutsService.js (activo), mockFlightService.js (USE_MOCK=true). TtlCache, quota guard mensual, rate limiting.
-- `frontend/src/`: App.jsx (~2.000 líneas, sigue grande), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, utils/ (resultsLogic, urlParams), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
+- `backend/services/`: travelpayoutsService.js (activo), serpapiService.js (verificación capa 2), mockFlightService.js (USE_MOCK=true). TtlCache, quota guard mensual, rate limiting.
+- `frontend/src/`: App.jsx (~2.000 líneas, sigue grande), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
 
 ## Diseño vigente (tema Stitch)
 Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179, Plus Jakarta Sans. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos.
@@ -51,11 +51,11 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buildAffiliateLink()` (con tests) + CTA "Reservar" desplegados, `TRAVELPAYOUTS_MARKER=738121` activo en Render y cuenta Travelpayouts activada. Verificado en prod con búsqueda real: todos los deep links llevan `&marker=738121`. Pendiente solo esperar las primeras reservas (comisión ~1,1-1,3%) — vigilar el dashboard de Travelpayouts. Nota API: la respuesta de /multi-origin anida los offers en `flights[].flights[].offer.link`.
 
 ## Backlog (ordenado según el objetivo "producto redondo")
-1. Fiabilidad de precios: capa 2 verificación SerpAPI + vigilar desviación de los date-fallback.
+1. Activar capa 2 en prod: `SERPAPI_KEY` en Render (Diego, ya dado de alta en serpapi.com) → comprobar badge ✓ con búsqueda real → vigilar `[serpapi-verify]` en logs de Render (desviación date-fallback).
 2. UX: accesibilidad, responsive, modo oscuro del tema Stitch, unificar doble control de ordenación en "Otras opciones".
 3. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
 
-Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests).
+Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada y validada por QA (endpoint /verify + verificación async en frontend, 31 tests nuevos, contrato E2E 19/19).
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.

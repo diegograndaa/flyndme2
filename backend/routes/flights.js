@@ -25,6 +25,11 @@ const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 // frontend muestra el badge de "precios orientativos".
 const CAN_VERIFY = flightService.capabilities?.verification !== false;
 
+// Capa 2: verificación del destino ganador contra Google Flights vía SerpAPI
+// (endpoint dedicado POST /verify, ver abajo). Sin SERPAPI_KEY queda
+// deshabilitada y el endpoint responde "skipped" — nada cambia para el front.
+const serpapi = require("../services/serpapiService");
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 // Default destination set, structured as explicit tiers. The search loop
@@ -57,6 +62,12 @@ const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
 // ~30s: mejor devolver lo encontrado hasta ahora (partial: true) que un 502
 // tras quemar quota. 0 = sin límite.
 const SEARCH_TIME_BUDGET_MS     = Number(process.env.SEARCH_TIME_BUDGET_MS || 25000);
+// Timeout global del endpoint POST /verify (capa 2, SerpAPI). Generoso a
+// propósito: es un endpoint dedicado con casi toda la ventana de ~30s del
+// proxy de Render para él solo, y una búsqueda de Google Flights puede tardar
+// 10-20s. No confundir con VERIFY_TIMEOUT_MS (verificación inline del proveedor).
+const SERPAPI_VERIFY_TIMEOUT_MS = Number(process.env.SERPAPI_VERIFY_TIMEOUT_MS || 20000);
+const VERIFY_MAX_LEGS           = MAX_ORIGINS; // mismo tope que la búsqueda
 
 // ─── In-memory response cache with size guard ─────────────────────────────
 
@@ -64,6 +75,10 @@ const { TtlCache } = require("../utils/ttlCache");
 const responseCache = new TtlCache({ ttlMs: CACHE_TTL_MS, maxSize: MAX_CACHE_SIZE });
 const getCached = (key) => responseCache.get(key);
 const setCached = (key, value) => responseCache.set(key, value);
+
+// Caché de respuestas de POST /verify por payload normalizado: repetir la
+// misma verificación (p.ej. recargar resultados) no quema cupo de SerpAPI.
+const verifyResponseCache = new TtlCache({ ttlMs: 30 * 60 * 1000, maxSize: 100 });
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -646,6 +661,200 @@ router.post("/multi-origin", async (req, res) => {
     return res.status(500).json({
       code: "INTERNAL_ERROR",
       message: "Error interno al buscar vuelos.",
+    });
+  }
+});
+
+// ─── POST /verify — capa 2: verificar el ganador contra Google Flights ───────
+// El proveedor primario (travelpayouts) sirve precios de caché no confirmables
+// y /multi-origin marca el ganador como "skipped". El frontend llama aquí
+// DESPUÉS de renderizar los resultados, con los datos del destino ganador,
+// para obtener el badge "verificado"/"cambiado" real (SerpAPI Google Flights).
+//
+// Endpoint separado a propósito: la búsqueda ya consume hasta
+// SEARCH_TIME_BUDGET_MS (25s) y el proxy de Render corta a ~30s — verificar
+// inline reventaría esa ventana (una búsqueda SerpAPI tarda 10-20s).
+//
+// Coste: cada llamada puede quemar hasta VERIFY_MAX_LEGS búsquedas del plan
+// gratuito de SerpAPI (~250/mes). Protecciones: rate limiter global de
+// /api/flights (60 req/10min/IP, montado en index.js sobre todo el router),
+// caché de respuesta por payload, caché por tramo y quota guard mensual
+// (contador local + /account) dentro de serpapiService.
+router.post("/verify", async (req, res) => {
+  try {
+    const { destination, totalCostEUR, legs } = req.body || {};
+
+    // ── Validación estricta (endpoint público y caro de procesar) ───────────
+    const dest = String(destination || "").trim().toUpperCase();
+    if (!isValidIata(dest)) {
+      return res.status(400).json({
+        code: "INVALID_DESTINATION",
+        message: "destination debe ser un código IATA válido (ej: ROM).",
+      });
+    }
+    const totalCost = Number(totalCostEUR);
+    if (!Number.isFinite(totalCost) || totalCost <= 0) {
+      return res.status(400).json({
+        code: "INVALID_TOTAL_COST",
+        message: "totalCostEUR debe ser un número mayor que 0.",
+      });
+    }
+    if (!Array.isArray(legs) || legs.length === 0) {
+      return res.status(400).json({
+        code: "MISSING_LEGS",
+        message: "legs debe ser un array con al menos un tramo.",
+      });
+    }
+    if (legs.length > VERIFY_MAX_LEGS) {
+      return res.status(400).json({
+        code: "TOO_MANY_LEGS",
+        message: `Máximo ${VERIFY_MAX_LEGS} tramos por verificación.`,
+      });
+    }
+
+    const todayStr = toISODate(new Date());
+    const normLegs = [];
+    for (let i = 0; i < legs.length; i++) {
+      const leg = legs[i] || {};
+      const bad = (msg) =>
+        res.status(400).json({ code: "INVALID_LEG", message: `legs[${i}]: ${msg}` });
+
+      const origin = String(leg.origin || "").trim().toUpperCase();
+      if (!isValidIata(origin)) return bad("origin debe ser un código IATA válido.");
+
+      const price = Number(leg.price);
+      if (!Number.isFinite(price) || price <= 0) return bad("price debe ser un número mayor que 0.");
+
+      const passengers = leg.passengers === undefined ? 1 : Number(leg.passengers);
+      if (!Number.isInteger(passengers) || passengers < 1 || passengers > MAX_PAX_PER_ORIGIN) {
+        return bad(`passengers debe ser un entero entre 1 y ${MAX_PAX_PER_ORIGIN}.`);
+      }
+
+      if (!isValidISODate(leg.departureDate)) return bad("departureDate inválida. Usa YYYY-MM-DD.");
+      if (leg.departureDate < todayStr) return bad("departureDate ya ha pasado.");
+
+      let returnDate = null;
+      if (leg.returnDate !== undefined && leg.returnDate !== null && leg.returnDate !== "") {
+        if (!isValidISODate(leg.returnDate)) return bad("returnDate inválida. Usa YYYY-MM-DD.");
+        if (leg.returnDate < leg.departureDate) return bad("returnDate debe ser posterior a departureDate.");
+        returnDate = leg.returnDate;
+      }
+
+      normLegs.push({
+        origin,
+        price,
+        passengers,
+        departureDate: leg.departureDate,
+        returnDate,
+        nonStop:      leg.nonStop === true,
+        dateFallback: leg.dateFallback === true,
+      });
+    }
+
+    // ── Verificador deshabilitado (sin SERPAPI_KEY) → nada cambia ───────────
+    if (!serpapi.isEnabled()) {
+      return res.json({ destination: dest, verificationStatus: "skipped" });
+    }
+
+    // ── Caché de respuesta por payload normalizado ──────────────────────────
+    const cacheKey = JSON.stringify({
+      dest,
+      totalCost,
+      legs: [...normLegs].sort((a, b) => a.origin.localeCompare(b.origin)),
+    });
+    const cachedResponse = verifyResponseCache.get(cacheKey);
+    if (cachedResponse) return res.json(cachedResponse);
+
+    // ── Quota guard (contador local + /account de SerpAPI) ──────────────────
+    if (!(await serpapi.hasBudget())) {
+      console.warn("[serpapi-verify] omitida — cupo mensual de SerpAPI casi agotado");
+      return res.json({ destination: dest, verificationStatus: "skipped" });
+    }
+
+    // ── Verificación por tramo en paralelo con timeout global ───────────────
+    // IMPORTANTE: se verifica con las fechas que vienen en cada leg — cuando
+    // hubo date-fallback el frontend ya manda la fecha REAL del vuelo.
+    const verifyPromise = Promise.allSettled(
+      normLegs.map((leg) =>
+        serpapi.verifyLeg({
+          origin:        leg.origin,
+          destination:   dest,
+          departureDate: leg.departureDate,
+          returnDate:    leg.returnDate || undefined,
+          nonStop:       leg.nonStop || undefined,
+        })
+      )
+    );
+    const timeoutPromise = new Promise((resolve) => {
+      const t = setTimeout(() => resolve("__timeout__"), SERPAPI_VERIFY_TIMEOUT_MS);
+      if (typeof t.unref === "function") t.unref();
+    });
+    const settled = await Promise.race([verifyPromise, timeoutPromise]);
+
+    if (settled === "__timeout__") {
+      console.warn(`[serpapi-verify] timeout en ${dest}`);
+      return res.json({ destination: dest, verificationStatus: "timeout" });
+    }
+
+    // ── Agregados con la misma semántica que verifyDestination ──────────────
+    const verifiedFlights = normLegs.map((leg, i) => {
+      const r = settled[i];
+      const v = r && r.status === "fulfilled" ? r.value : null;
+      const verifiedPrice = v?.price ?? null;
+      if (verifiedPrice !== null) {
+        // Vigilancia de desviación (sobre todo de los date-fallback):
+        // grep "[serpapi-verify]" en los logs de Render.
+        const deltaPct = ((verifiedPrice - leg.price) / leg.price) * 100;
+        console.log(
+          `[serpapi-verify] ${leg.origin}→${dest} cached=${leg.price.toFixed(2)} ` +
+          `google=${verifiedPrice.toFixed(2)} Δ=${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}% ` +
+          `dateFallback=${leg.dateFallback}`
+        );
+      }
+      const effectivePrice = verifiedPrice ?? leg.price;
+      return {
+        origin:         leg.origin,
+        verifiedPrice,
+        totalForOrigin: Number((effectivePrice * leg.passengers).toFixed(2)),
+      };
+    });
+
+    const effective = normLegs.map((leg, i) => ({
+      price:      verifiedFlights[i].verifiedPrice ?? leg.price,
+      passengers: leg.passengers,
+    }));
+    const { totalCost: total, avgPerTraveler: avg, spread, fairness } = computeAggregates(effective);
+
+    const verifiedCount  = verifiedFlights.filter((f) => f.verifiedPrice !== null).length;
+    const priceChangePct = ((total - totalCost) / totalCost) * 100;
+
+    let verificationStatus;
+    if (verifiedCount === 0) verificationStatus = "failed";
+    else if (verifiedCount < verifiedFlights.length) verificationStatus = "partial";
+    else if (Math.abs(priceChangePct) >= VERIFY_PRICE_DELTA_PCT) verificationStatus = "changed";
+    else verificationStatus = "verified";
+
+    const payload = {
+      destination:                dest,
+      verificationStatus,
+      verificationSource:         "google_flights",
+      verifiedAt:                 new Date().toISOString(),
+      priceChangePct:             Number(priceChangePct.toFixed(1)),
+      flights:                    verifiedFlights,
+      verifiedTotalCostEUR:       Number(total.toFixed(2)),
+      verifiedAveragePerTraveler: Number(avg.toFixed(2)),
+      verifiedPriceSpread:        Number(spread.toFixed(2)),
+      verifiedFairnessScore:      Number(fairness.toFixed(1)),
+    };
+
+    console.log(`[serpapi-verify] ${dest} → ${verificationStatus} (Δ ${payload.priceChangePct}%)`);
+    verifyResponseCache.set(cacheKey, payload);
+    return res.json(payload);
+  } catch (err) {
+    console.error("[verify error]", err);
+    return res.status(500).json({
+      code: "INTERNAL_ERROR",
+      message: "Error interno al verificar el precio.",
     });
   }
 });
