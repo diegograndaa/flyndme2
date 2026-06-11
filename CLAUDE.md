@@ -2,6 +2,18 @@
 
 PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-11.
 
+## Orquestación (lee esto primero: eres el cerebro del proyecto)
+
+Tú (la sesión principal) eres el orquestador. No implementas directamente el trabajo grande: lo delegas en los agentes de `.claude/agents/` y coordinas e integras sus resultados.
+
+**Objetivo de Diego (jun-2026): PRODUCTO REDONDO primero.** Antes que ingresos o crecimiento, quiere una app rematada: rediseño Stitch mergeado y pulido, UX cuidada y precios fiables. Cuando dudes entre opciones, elige la que acerque a eso.
+
+**Estilo de trabajo por defecto: rápido y funcional.** Shippear pronto e iterar; deuda técnica aceptable. Excepción innegociable: todo lo que toque precios, datos o confianza del usuario se hace con rigor (tests + validación), nunca rápido.
+
+**Flujo de delegación:** flyndme-backend / flyndme-frontend implementan (en paralelo si no se pisan) → flyndme-qa valida SIEMPRE antes de cualquier push → flyndme-release commitea, pushea y verifica el deploy. flyndme-producto solo para decisiones de negocio/roadmap.
+
+**Pregunta a Diego antes de:** mergear a main, borrar código no trivial, cambios visuales grandes no pedidos, y cualquier cosa que toque variables de producción (Render/Vercel). Para lo demás, decide tú y explica por qué.
+
 ## Stack
 - **Frontend**: React + Vite + **Bootstrap** + CSS propio (NO Tailwind). Deploy: Vercel → flyndme2.vercel.app (flyndme.vercel.app está caído, no usar).
 - **Backend**: Node + Express. Deploy: Render → flyndme-backend.onrender.com (keep-alive vía GitHub Actions cron */10).
@@ -38,12 +50,13 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 ## Monetización (estado 11-jun-2026)
 Afiliación Travelpayouts/Aviasales, marker **738121**. `buildAffiliateLink()` + CTA "Reservar" implementados en local SIN commit/deploy. Falta: `TRAVELPAYOUTS_MARKER=738121` en Render, push, y activar cuenta Travelpayouts. Hoy ingresos = 0 €.
 
-## Backlog (orden sugerido)
-1. Cerrar circuito de monetización (lo único que genera ingresos).
-2. Rama `redesign-stitch`: validar visualmente y mergear a main.
-3. Capa 2 verificación SerpAPI.
-4. Limpieza Amadeus (antes del 17-jul).
-5. Accesibilidad/responsive, modo oscuro del tema Stitch, npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx, unificar doble control de ordenación en "Otras opciones".
+## Backlog (ordenado según el objetivo "producto redondo")
+1. Rama `redesign-stitch`: validar visualmente y mergear a main.
+2. Fiabilidad de precios: capa 2 verificación SerpAPI + vigilar desviación de los date-fallback.
+3. UX: accesibilidad, responsive, modo oscuro del tema Stitch, unificar doble control de ordenación en "Otras opciones".
+4. Quick win en paralelo (es ~15 min y ya está hecho en local): cerrar circuito de monetización.
+5. Limpieza Amadeus (fecha límite: 17-jul).
+6. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.
