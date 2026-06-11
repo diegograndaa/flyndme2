@@ -1,26 +1,23 @@
 const express = require("express");
 const router  = express.Router();
 
-// Proveedor de datos de vuelos. FLIGHT_PROVIDER selecciona la implementación
-// ("amadeus" | "travelpayouts"); USE_MOCK=true fuerza el mock determinista e
-// ignora FLIGHT_PROVIDER (desarrollo sin red y suite de tests).
-// Migración jul-2026: Amadeus cierra su portal self-service el 17-07-2026 →
-// travelpayouts (Aviasales Data API, caché 48h gratuita) pasa a ser el primario.
+// Proveedor de datos de vuelos. Primario: travelpayouts (Aviasales Data API,
+// caché 48h gratuita + deep links de afiliado). USE_MOCK=true fuerza el mock
+// determinista e ignora FLIGHT_PROVIDER (desarrollo sin red y suite de tests).
 const USE_MOCK = String(process.env.USE_MOCK || "").toLowerCase() === "true";
 const FLIGHT_PROVIDER = USE_MOCK
   ? "mock"
-  : String(process.env.FLIGHT_PROVIDER || "amadeus").trim().toLowerCase();
+  : String(process.env.FLIGHT_PROVIDER || "travelpayouts").trim().toLowerCase();
 
 const PROVIDER_MODULES = {
-  mock:          "../services/mockAmadeusService",
-  amadeus:       "../services/amadeusService",
+  mock:          "../services/mockFlightService",
   travelpayouts: "../services/travelpayoutsService",
 };
 if (!PROVIDER_MODULES[FLIGHT_PROVIDER]) {
   // index.js validateConfig() ya avisa (y aborta en prod); aquí degradamos.
-  console.warn(`[flights] FLIGHT_PROVIDER="${FLIGHT_PROVIDER}" desconocido — usando amadeus.`);
+  console.warn(`[flights] FLIGHT_PROVIDER="${FLIGHT_PROVIDER}" desconocido — usando travelpayouts.`);
 }
-const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.amadeus);
+const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.travelpayouts);
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
@@ -131,8 +128,8 @@ function computeAggregates(flightsWithPax) {
  * Fetch all origins for a single (destination, date) combination in parallel.
  * Returns a result object or null if any origin has no valid offer.
  * originPax[i] = number of travellers departing from originList[i].
- * Note: searches still use adults=1 at Amadeus; we scale per-origin in code so
- * the inner cache hits across searches with different pax configurations.
+ * Note: searches still use adults=1 at the provider; we scale per-origin in
+ * code so the inner cache hits across searches with different pax configurations.
  */
 async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight) {
   const options = { ...optionsBase };
@@ -305,8 +302,8 @@ function buildOriginPax(rawOrigins, passengers, originList) {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// Monthly Amadeus budget status — costs zero quota. Useful to monitor how much
-// of the free tier is left without opening the Amadeus dashboard.
+// Monthly provider budget status — costs zero quota. Travelpayouts is free
+// (unlimited:true); the gate exists for any future metered provider.
 router.get("/budget", (_req, res) => {
   const b = budgetStatus();
   res.json({ ...b, remaining: b.unlimited ? null : b.remaining });
@@ -339,7 +336,7 @@ router.post("/multi-origin", async (req, res) => {
     // nonStop: solo true explicito (boolean o "true"); cualquier otra cosa → sin filtro
     nonStop  = nonStop === true || nonStop === "true" ? true : undefined;
 
-    // travelClass: enum cerrado de Amadeus; un valor arbitrario provocaria un
+    // travelClass: enum cerrado; un valor arbitrario provocaria un
     // 400 silencioso en cada llamada y una respuesta vacia confusa.
     const VALID_TRAVEL_CLASSES = ["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"];
     if (travelClass !== undefined && travelClass !== null && travelClass !== "") {
@@ -408,7 +405,7 @@ router.post("/multi-origin", async (req, res) => {
         message: "Fecha de vuelta inválida. Usa YYYY-MM-DD.",
       });
     }
-    // Fechas en el pasado: Amadeus las rechaza llamada a llamada y el usuario
+    // Fechas en el pasado: el proveedor no tiene datos y el usuario
     // recibiria un "sin resultados" confuso. Mejor un 400 claro aqui.
     const todayStr = toISODate(new Date());
     if (departureDate < todayStr) {
@@ -417,8 +414,8 @@ router.post("/multi-origin", async (req, res) => {
         message: "La fecha de salida ya ha pasado.",
       });
     }
-    // Amadeus solo admite búsquedas hasta ~361 días vista; más allá devuelve
-    // error por llamada (quota quemada y "sin resultados" confuso).
+    // Más allá de ~1 año vista las aerolíneas no publican inventario y la
+    // caché del proveedor está vacía: mejor un 400 claro que "sin resultados".
     const MAX_HORIZON_DAYS = 360;
     const horizonStr = toISODate(addDays(new Date(), MAX_HORIZON_DAYS));
     const lastDate = (tripType === "roundtrip" && returnDate > departureDate) ? returnDate : departureDate;
@@ -462,7 +459,7 @@ router.post("/multi-origin", async (req, res) => {
       return res.json(cached);
     }
 
-    // ── Monthly budget gate (free Amadeus quota protection) ──────────────────
+    // ── Monthly budget gate (proveedores con cupo; travelpayouts es ilimitado) ─
     // Tras el chequeo de cache: un hit de cache no consume quota y debe
     // servirse aunque el presupuesto mensual este agotado.
     const budget = budgetStatus();
@@ -596,7 +593,7 @@ router.post("/multi-origin", async (req, res) => {
       return a.totalCostEUR - b.totalCostEUR;
     });
 
-    // Verify the winner before responding (re-prices its N legs via Amadeus pricing).
+    // Verify the winner before responding (re-prices its N legs via the provider).
     // Only the winner is verified to keep quota usage bounded. Failures degrade
     // gracefully: the original search price is shown with verificationStatus tag.
     // Skipped entirely when the remaining monthly budget is too low.

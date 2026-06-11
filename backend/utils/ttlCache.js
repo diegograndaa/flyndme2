@@ -1,6 +1,6 @@
 // ─── TtlCache ────────────────────────────────────────────────────────────────
 // Cache en memoria con TTL y tope de tamaño. Extraída de la lógica duplicada
-// en routes/flights.js y services/amadeusService.js (Mejora 7).
+// en routes/flights.js y los servicios de proveedor (Mejora 7).
 //
 //   const cache = new TtlCache({ ttlMs: 600000, maxSize: 200 });
 //   cache.set("k", value);          // expira en ttlMs

@@ -4,7 +4,7 @@
 // These tests are intentionally light: they cover the API contract and the
 // invariants we care about most (pax math, verification fields, cache key,
 // share/OG round-trip, validation errors). They use the mock service so they
-// burn zero Amadeus quota and run in ~2s end-to-end.
+// make zero external API calls and run in ~2s end-to-end.
 
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
@@ -80,7 +80,7 @@ test("version endpoint exposes commit + env without secrets", async () => {
   assert.ok(["string", "object"].includes(typeof r.body.commit));
   assert.equal(typeof r.body.node, "string");
   assert.equal(r.body.mock, true);
-  assert.equal(r.body.amadeus_env, process.env.AMADEUS_ENV || "test");
+  assert.equal(r.body.provider, "mock");
   assert.equal(typeof r.body.uptime_s, "number");
   // Sanity: no secret-looking fields leaked
   for (const k of Object.keys(r.body)) {
@@ -269,18 +269,17 @@ function spawnBackend(env, timeoutMs = 3000) {
   });
 }
 
-test("prod startup: refuses to boot without AMADEUS_API_KEY", async () => {
+test("prod startup: refuses to boot without TRAVELPAYOUTS_TOKEN", async () => {
   const r = await spawnBackend({
     NODE_ENV: "production",
     PORT: "5097",
     USE_MOCK: "false",
-    AMADEUS_API_KEY: "",
-    AMADEUS_API_SECRET: "",
+    TRAVELPAYOUTS_TOKEN: "",
     ALLOW_INSECURE_PROD: "",
   });
   assert.equal(r.timedOut, false, "process should have exited, not timed out");
   assert.equal(r.exitCode, 1, `expected exit 1, got ${r.exitCode}`);
-  assert.ok(r.stderr.includes("AMADEUS_API_KEY"), "stderr should mention missing key");
+  assert.ok(r.stderr.includes("TRAVELPAYOUTS_TOKEN"), "stderr should mention missing token");
 });
 
 test("prod startup: boots cleanly with USE_MOCK=true and explicit origins", async () => {
@@ -413,7 +412,7 @@ test("cache: destinos equivalentes sin normalizar comparten entrada de cache", a
   assert.deepEqual(r1.body, r2.body);
 });
 
-test("validacion: fechas mas alla del horizonte de Amadeus → 400 DATE_TOO_FAR", async () => {
+test("validacion: fechas mas alla del horizonte de busqueda → 400 DATE_TOO_FAR", async () => {
   const far = new Date(Date.now() + 400 * 86400000).toISOString().slice(0, 10);
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON"],

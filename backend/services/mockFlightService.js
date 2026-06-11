@@ -1,7 +1,6 @@
-// Mock implementation of amadeusService — drop-in replacement when
-// USE_MOCK=true. Produces deterministic, realistic-looking flight offers
-// without hitting the Amadeus API. Used for local development to avoid
-// burning quota and for running the app offline.
+// Mock flight provider — drop-in replacement when USE_MOCK=true.
+// Produces deterministic, realistic-looking flight offers without hitting
+// any external API. Used for local development and the test suite.
 
 const MOCK_DELAY_MS           = Number(process.env.MOCK_DELAY_MS           || 60);
 const MOCK_VERIFY_SUCCESS_RATE = Number(process.env.MOCK_VERIFY_SUCCESS_RATE || 0.95);
@@ -111,7 +110,7 @@ function mockOffer(origin, dest, date, returnDate, price) {
   };
 }
 
-// ─── Public API (mirrors amadeusService) ──────────────────────────────────
+// ─── Public API (mirrors travelpayoutsService) ────────────────────────────
 
 async function getAccessToken() {
   return "MOCK_TOKEN";

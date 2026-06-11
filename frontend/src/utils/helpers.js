@@ -59,7 +59,7 @@ export const AIRPORTS = [
 ];
 
 // ── Multi-airport mapping: city codes → specific airports ───────────────────
-// Amadeus accepts city codes (LON, PAR, etc.) and searches all airports.
+// The flight API accepts city codes (LON, PAR, etc.) and searches all airports.
 // This map helps display which airport the result refers to.
 export const MULTI_AIRPORT = {
   LON: ["LHR", "LGW", "STN", "LTN"],
