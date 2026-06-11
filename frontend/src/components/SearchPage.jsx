@@ -254,7 +254,7 @@ const SearchPage = React.memo(function SearchPage({
                       setDragIdx(-1); setDragOver(-1);
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
-                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder">⠿</span>}
+                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>}
                     <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon">👤</span>{idx + 1}
                     </span>
@@ -269,6 +269,11 @@ const SearchPage = React.memo(function SearchPage({
                         type="text"
                         className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
                         placeholder={idx === 0 && showTyping ? "" : t("search.placeholder")}
+                        aria-label={t("search.originAria", { n: idx + 1 })}
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-expanded={acFocus === idx && acSuggestions.length > 0}
+                        aria-controls={`sf-ac-list-${idx}`}
                         value={origin}
                         onChange={(e) => {
                           const val = e.target.value.toUpperCase();
@@ -297,9 +302,11 @@ const SearchPage = React.memo(function SearchPage({
                       />
                       {/* Inline autocomplete dropdown */}
                       {acFocus === idx && acSuggestions.length > 0 && (
-                        <div className="sf-ac-dropdown">
+                        <div className="sf-ac-dropdown" role="listbox" id={`sf-ac-list-${idx}`}>
                           {acSuggestions.map((a, ai) => (
                             <div key={a.code}
+                              role="option"
+                              aria-selected={ai === acHighlight}
                               className={`sf-ac-item${ai === acHighlight ? " sf-ac-item--hl" : ""}`}
                               onMouseDown={(e) => { e.preventDefault(); const copy = [...origins]; copy[idx] = a.code; setOrigins(copy); setAcFocus(-1); }}
                               onMouseEnter={() => setAcHighlight(ai)}>
@@ -318,19 +325,19 @@ const SearchPage = React.memo(function SearchPage({
                       )}
                     </div>
                     {/* Passenger count stepper */}
-                    <div className="sf-pax" title={t("search.paxTooltip")}>
-                      <button type="button" className="sf-pax-btn"
+                    <div className="sf-pax" title={t("search.paxTooltip")} role="group" aria-label={t("search.paxTooltip")}>
+                      <button type="button" className="sf-pax-btn" aria-label={t("search.paxDecrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.max(1, (p[idx] || 1) - 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
                       <span className="sf-pax-count">{passengers[idx] || 1}</span>
-                      <button type="button" className="sf-pax-btn"
+                      <button type="button" className="sf-pax-btn" aria-label={t("search.paxIncrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
                     </div>
                     {/* Reorder + remove */}
                     <div className="sf-origin-actions-inline">
                       {origins.length > 1 && idx > 0 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")} aria-label={t("search.moveUp")}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
@@ -339,7 +346,7 @@ const SearchPage = React.memo(function SearchPage({
                           }}>↑</button>
                       )}
                       {origins.length > 1 && idx < origins.length - 1 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={t("search.moveDown")}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
@@ -361,6 +368,7 @@ const SearchPage = React.memo(function SearchPage({
                         }}
                         disabled={loading}
                         title={t("search.removeTitle")}
+                        aria-label={t("search.removeTitle")}
                       >✕</button>
                     )}
                   </div>
@@ -388,9 +396,10 @@ const SearchPage = React.memo(function SearchPage({
             {/* Trip type + Dates combined */}
             <div className="sf-section">
               <div className="sf-label">{t("search.tripTypeLabel")}</div>
-              <div className="sf-pills" style={{ marginBottom: 16 }}>
+              <div className="sf-pills" style={{ marginBottom: 16 }} role="group" aria-label={t("search.tripTypeLabel")}>
                 {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                   <button key={v} type="button"
+                    aria-pressed={tripType === v}
                     className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
                     onClick={() => {
                       setTripType(v);
@@ -407,9 +416,9 @@ const SearchPage = React.memo(function SearchPage({
               <div className="sf-label">{t("search.datesLabel")}</div>
               <div className="row g-3">
                 <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
-                  <label className="sf-input-label">{t("search.departure")}</label>
+                  <label className="sf-input-label" htmlFor="sf-date-dep">{t("search.departure")}</label>
                   <div className="sf-date-wrap">
-                    <input type="date" className="form-control sf-input"
+                    <input type="date" id="sf-date-dep" className="form-control sf-input"
                       value={departureDate} min={todayISO()}
                       onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
                     {departureDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(departureDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(departureDate)}</span>}
@@ -417,9 +426,9 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
                 {tripType === "roundtrip" && (
                   <div className="col-sm-6">
-                    <label className="sf-input-label">{t("search.return")}</label>
+                    <label className="sf-input-label" htmlFor="sf-date-ret">{t("search.return")}</label>
                     <div className="sf-date-wrap">
-                      <input type="date" className="form-control sf-input"
+                      <input type="date" id="sf-date-ret" className="form-control sf-input"
                         value={returnDate} min={departureDate || todayISO()}
                         onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
                       {returnDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(returnDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(returnDate)}</span>}
@@ -446,10 +455,11 @@ const SearchPage = React.memo(function SearchPage({
             <button
               type="button"
               className="sf-advanced-toggle"
+              aria-expanded={showAdvanced}
               onClick={() => setShowAdvanced((v) => !v)}
             >
               {showAdvanced ? t("search.hideAdvanced") : t("search.showAdvanced")}
-              <span className={`sf-advanced-arrow${showAdvanced ? " sf-advanced-arrow--open" : ""}`}>▾</span>
+              <span className={`sf-advanced-arrow${showAdvanced ? " sf-advanced-arrow--open" : ""}`} aria-hidden="true">▾</span>
             </button>
 
             {/* Advanced: Flex dates + Optimize + Budget */}
@@ -472,9 +482,10 @@ const SearchPage = React.memo(function SearchPage({
                     </div>
                   </div>
                   {flexEnabled && (
-                    <div className="sf-flex-pills mt-2">
+                    <div className="sf-flex-pills mt-2" role="group" aria-label={t("search.flexLabel")}>
                       {[1, 2, 3].map((d) => (
                         <button key={d} type="button"
+                          aria-pressed={flexDays === d}
                           className={`sf-pill sf-pill--sm${flexDays === d ? " sf-pill--active" : ""}`}
                           onClick={() => setFlexDays(d)} disabled={loading}>
                           ±{d} {t("search.flexDaysUnit")}
@@ -488,11 +499,13 @@ const SearchPage = React.memo(function SearchPage({
                 <div className="sf-section">
                   <div className="sf-label">
                     {t("search.optimizeLabel")}
-                    <span className="sf-label-help" title={t("search.optimizeHelp")}>?</span>
+                    {/* aria-hidden: el texto de ayuda ya está visible en sf-hint debajo */}
+                    <span className="sf-label-help" title={t("search.optimizeHelp")} aria-hidden="true">?</span>
                   </div>
-                  <div className="sf-pills">
+                  <div className="sf-pills" role="group" aria-label={t("search.optimizeLabel")}>
                     {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
                       <button key={v} type="button"
+                        aria-pressed={optimizeBy === v}
                         className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
                         onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
                     ))}
@@ -520,6 +533,7 @@ const SearchPage = React.memo(function SearchPage({
                   {budgetEnabled && (
                     <div className="sf-budget-box mt-3">
                       <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
+                        aria-label={t("search.budgetLabel")}
                         value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
                       <div className="d-flex justify-content-between small" style={{ color: "var(--slate-500)" }}>
                         <span>{formatEur(BUDGET_MIN)}</span>
@@ -547,9 +561,10 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Cabin class */}
                 <div className="sf-section">
                   <div className="sf-label mb-1">{t("search.cabinLabel")}</div>
-                  <div className="sf-pills">
+                  <div className="sf-pills" role="group" aria-label={t("search.cabinLabel")}>
                     {[["ECONOMY", t("search.cabinEconomy")], ["PREMIUM_ECONOMY", t("search.cabinPremium")], ["BUSINESS", t("search.cabinBusiness")]].map(([v, l]) => (
                       <button key={v} type="button"
+                        aria-pressed={cabinClass === v}
                         className={`sf-pill sf-pill--sm${cabinClass === v ? " sf-pill--active" : ""}`}
                         onClick={() => setCabinClass(v)} disabled={loading}>
                         {l}
@@ -561,9 +576,10 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Currency selector */}
                 <div className="sf-section">
                   <div className="sf-label mb-1">{t("search.currencyLabel")}</div>
-                  <div className="sf-pills">
+                  <div className="sf-pills" role="group" aria-label={t("search.currencyLabel")}>
                     {["EUR", "GBP", "USD"].map((c) => (
                       <button key={c} type="button"
+                        aria-pressed={currency === c}
                         className={`sf-pill sf-pill--sm${currency === c ? " sf-pill--active" : ""}`}
                         onClick={() => setCurrency(c)} disabled={loading}>
                         {c === "EUR" ? "€ EUR" : c === "GBP" ? "£ GBP" : "$ USD"}
@@ -614,6 +630,7 @@ const SearchPage = React.memo(function SearchPage({
                           const isOn = selectedDests.length === 0 || selectedDests.includes(a.code);
                           return (
                             <button key={a.code} type="button"
+                              aria-pressed={isOn}
                               className={`sf-dest-chip${isOn ? " sf-dest-chip--on" : ""}`}
                               onClick={() => {
                                 if (selectedDests.length === 0) {
@@ -690,7 +707,7 @@ const SearchPage = React.memo(function SearchPage({
         {/* ── Right: airport picker (desktop sidebar / mobile bottom drawer) ── */}
         {showMobileAirports && <div className="sf-drawer-overlay" onClick={() => setShowMobileAirports(false)} />}
         <aside className={`sf-airports fm-card${showMobileAirports ? " sf-airports--open" : ""}`}>
-          <div className="sf-drawer-handle" onClick={() => setShowMobileAirports(false)}>
+          <div className="sf-drawer-handle" onClick={() => setShowMobileAirports(false)} aria-hidden="true">
             <span className="sf-drawer-bar" />
           </div>
           <div className="sf-airports-header">
@@ -710,8 +727,8 @@ const SearchPage = React.memo(function SearchPage({
                 <div key={a.code}
                   className={`sf-airport-item${isSelected ? " sf-airport-item--selected" : ""}`}
                   onClick={() => !loading && handleClickAirport(a.code)}
-                  role="button" tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleClickAirport(a.code)}>
+                  role="button" tabIndex={0} aria-pressed={isSelected}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!loading) handleClickAirport(a.code); } }}>
                   <span className="sf-airport-code">{a.code}</span>
                   <span className="sf-airport-city">{a.city}</span>
                   <span className="sf-airport-country">{a.country}</span>

@@ -48,10 +48,10 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
   ];
   return (
     <div className="fm-shortcuts-overlay" onClick={onClose}>
-      <div className="fm-shortcuts-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="fm-shortcuts-modal" role="dialog" aria-modal="true" aria-label={t("shortcuts.title")} onClick={(e) => e.stopPropagation()}>
         <div className="fm-shortcuts-header">
           <span className="fm-shortcuts-title">{t("shortcuts.title")}</span>
-          <button type="button" className="fm-shortcuts-close" onClick={onClose}>✕</button>
+          <button type="button" className="fm-shortcuts-close" onClick={onClose} aria-label={t("a11y.close")}>✕</button>
         </div>
         <div className="fm-shortcuts-list">
           {shortcuts.map(s => (
@@ -82,6 +82,7 @@ export function Breadcrumb({ current, onNavigate }) {
           <button type="button"
             className={`fm-breadcrumb-item${c.key === current ? " fm-breadcrumb-item--active" : ""}`}
             onClick={() => c.key !== current && onNavigate(c.key)}
+            aria-current={c.key === current ? "page" : undefined}
             disabled={c.key === current}>
             {c.label}
           </button>

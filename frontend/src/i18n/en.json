@@ -207,6 +207,9 @@
     "closeDrawer": "Done",
     "paxLabel": "travelers",
     "paxTooltip": "Number of travelers from this city",
+    "paxDecrease": "One traveler less from this city",
+    "paxIncrease": "One traveler more from this city",
+    "originAria": "Departure city for traveler {{n}}",
     "directOnly": "Direct flights only",
     "directHint": "Show only non-stop flights",
     "cabinLabel": "Cabin class",
@@ -230,8 +233,9 @@
   },
   "results": {
     "eyebrow": "Recommended destination",
-    "criterionPrice": "Price",
-    "criterionFairness": "Fairness",
+    "criterionPrice": "Cheapest",
+    "criterionFairness": "Most balanced",
+    "criterionGroupLabel": "Choose winner and sort order",
     "departureLabel": "Departure: {{date}}",
     "roundtripDates": "{{dep}} → {{ret}}",
     "roundtripTag": "Round trip",
@@ -267,9 +271,8 @@
     "hide": "Hide",
     "showMap": "Map",
     "showCompare": "Compare",
-    "sortBy": "Sort by",
-    "sortPrice": "Price",
-    "sortFairness": "Fairness",
+    "sortedByPrice": "Sorted by total price",
+    "sortedByFairness": "Sorted by fairness",
     "celebrate": "Great deal!",
     "celebrateSub": "This is one of the cheapest group flights we've found",
     "originsUsed": "origins",
@@ -375,12 +378,6 @@
     "noAlternatives": "No alternatives available",
     "budgetActive": "Active budget: max. {{amount}} per person.",
     "budgetFilter": "Active filter: max. {{amount}} per person.",
-    "sortLabel": "Sort by:",
-    "sortDefault": "Main criterion",
-    "sortPriceAsc": "Cheapest first",
-    "sortPriceDesc": "Most expensive first",
-    "sortPerPerson": "Price per person",
-    "sortFairness": "Most fair",
     "noMore": "No more alternatives to show.",
     "noAltSuggestion": "Try adding more origins or using flexible dates to find alternatives.",
     "season.summer": "Summer",
@@ -471,7 +468,8 @@
   },
   "favorites": {
     "title": "Saved destinations",
-    "empty": "No favorites yet. Tap the heart on any destination to save it here."
+    "empty": "No favorites yet. Tap the heart on any destination to save it here.",
+    "remove": "Remove {{city}} from saved destinations"
   },
   "breadcrumb": {
     "home": "Home",
@@ -480,7 +478,10 @@
   },
   "a11y": {
     "skipToContent": "Skip to content",
-    "scrollToTop": "Scroll to top"
+    "scrollToTop": "Scroll to top",
+    "close": "Close",
+    "resultsAnnounce": "{{n}} destinations found. Recommended: {{dest}}, {{price}} per person.",
+    "priceVerified": "The recommended price has been re-checked."
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",

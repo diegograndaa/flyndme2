@@ -28,10 +28,11 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
   return (
     <div className="fm-split-card view-enter">
       <div className="fm-split-header">
-        <span className="fm-split-title">{t("results.splitTitle")}</span>
-        <div className="fm-split-toggle">
+        <h2 className="fm-split-title mb-0">{t("results.splitTitle")}</h2>
+        <div className="fm-split-toggle" role="group" aria-label={t("results.splitTitle")}>
           {[["equal", t("results.splitEqual")], ["actual", t("results.splitActual")]].map(([v, l]) => (
             <button key={v} type="button"
+              aria-pressed={splitMode === v}
               className={`fm-split-pill${splitMode === v ? " fm-split-pill--active" : ""}`}
               onClick={() => setSplitMode(v)}>{l}</button>
           ))}
@@ -79,7 +80,7 @@ export function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
 
   return (
     <div className="fm-plan-trip view-enter">
-      <div className="fm-plan-trip-title">{t("results.planTripTitle")}</div>
+      <h2 className="fm-plan-trip-title">{t("results.planTripTitle")}</h2>
       <div className="fm-plan-trip-subtitle">{t("results.planTripSub", { city })}</div>
       <div className="fm-plan-trip-links">
         <a href={bookingUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
@@ -197,7 +198,7 @@ export function TopDestinationsPodium({ flights, currency, onSelect }) {
 
   return (
     <div className="fm-podium view-enter">
-      <div className="fm-podium-title">{t("results.topDestinations")}</div>
+      <h2 className="fm-podium-title">{t("results.topDestinations")}</h2>
       <div className="fm-podium-cards">
         {sorted.map((dest, pos) => {
           const code = normalizeCode(dest.destination);

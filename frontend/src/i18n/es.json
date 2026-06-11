@@ -207,6 +207,9 @@
     "closeDrawer": "Listo",
     "paxLabel": "viajeros",
     "paxTooltip": "Número de viajeros desde esta ciudad",
+    "paxDecrease": "Un viajero menos desde esta ciudad",
+    "paxIncrease": "Un viajero más desde esta ciudad",
+    "originAria": "Ciudad de salida del viajero {{n}}",
     "directOnly": "Solo vuelos directos",
     "directHint": "Mostrar solo vuelos sin escalas",
     "cabinLabel": "Clase de cabina",
@@ -230,8 +233,9 @@
   },
   "results": {
     "eyebrow": "Destino recomendado",
-    "criterionPrice": "Precio",
-    "criterionFairness": "Equidad",
+    "criterionPrice": "Más barato",
+    "criterionFairness": "Más equitativo",
+    "criterionGroupLabel": "Elegir ganador y orden de la lista",
     "departureLabel": "Salida: {{date}}",
     "roundtripDates": "{{dep}} → {{ret}}",
     "roundtripTag": "Ida y vuelta",
@@ -267,9 +271,8 @@
     "hide": "Ocultar",
     "showMap": "Mapa",
     "showCompare": "Comparar",
-    "sortBy": "Ordenar por",
-    "sortPrice": "Precio",
-    "sortFairness": "Equidad",
+    "sortedByPrice": "Ordenado por precio total",
+    "sortedByFairness": "Ordenado por equidad",
     "celebrate": "¡Gran oferta!",
     "celebrateSub": "Este es uno de los vuelos de grupo más baratos que hemos encontrado",
     "originsUsed": "orígenes",
@@ -375,12 +378,6 @@
     "noAlternatives": "No hay alternativas disponibles",
     "budgetActive": "Presupuesto activo: máx. {{amount}} por persona.",
     "budgetFilter": "Filtro activo: máx. {{amount}} por persona.",
-    "sortLabel": "Ordenar por:",
-    "sortDefault": "Criterio principal",
-    "sortPriceAsc": "Más barato primero",
-    "sortPriceDesc": "Más caro primero",
-    "sortPerPerson": "Precio por persona",
-    "sortFairness": "Más equitativo",
     "noMore": "No hay más alternativas.",
     "noAltSuggestion": "Prueba añadiendo más orígenes o usando fechas flexibles para encontrar alternativas.",
     "season.summer": "Verano",
@@ -471,6 +468,7 @@
   },
   "favorites": {
     "title": "Destinos guardados",
+    "remove": "Quitar {{city}} de destinos guardados",
     "empty": "Aún no tienes favoritos. Pulsa el corazón en cualquier destino para guardarlo aquí."
   },
   "breadcrumb": {
@@ -480,7 +478,10 @@
   },
   "a11y": {
     "skipToContent": "Ir al contenido",
-    "scrollToTop": "Ir arriba"
+    "scrollToTop": "Ir arriba",
+    "close": "Cerrar",
+    "resultsAnnounce": "{{n}} destinos encontrados. Recomendado: {{dest}}, {{price}} por persona.",
+    "priceVerified": "El precio recomendado se ha vuelto a comprobar."
   },
   "shortcuts": {
     "title": "Atajos de teclado",

@@ -12,7 +12,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
-  airportName, countryFlag, destQuickInfo
+  airportName, countryFlag, destQuickInfo, scrollBehavior
 } from "./utils/helpers";
 import { convertPrice, approxDistKm, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { parseSearchLinkParams } from "./utils/urlParams";
@@ -153,13 +153,13 @@ const SearchParamsSummary = React.memo(function SearchParamsSummary({
 
   return (
     <div className="fm-search-summary">
-      <button type="button" className="fm-search-summary-toggle" onClick={() => setOpen(v => !v)}>
+      <button type="button" className="fm-search-summary-toggle" onClick={() => setOpen(v => !v)} aria-expanded={open}>
         <div className="fm-search-summary-origins">
           {origins.map(o => (
             <span key={o} className="fm-search-summary-chip">{countryFlag(o)} {o}</span>
           ))}
         </div>
-        <span className={`fm-search-summary-chevron${open ? " fm-search-summary-chevron--open" : ""}`}>▾</span>
+        <span className={`fm-search-summary-chevron${open ? " fm-search-summary-chevron--open" : ""}`} aria-hidden="true">▾</span>
       </button>
       {open && (
         <div className="fm-search-summary-tags">
@@ -295,7 +295,6 @@ export default function App() {
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
-  const [sortMode,        setSortMode]        = useState("default"); // default | price | fairness
 
   // UI state
   const [loading,     setLoading]     = useState(false);
@@ -868,7 +867,7 @@ export default function App() {
 
           setView("results");
           document.title = "FlyndMe - Flight Results";
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          window.scrollTo({ top: 0, behavior: scrollBehavior() });
           // Record search duration
           if (searchStartRef.current) {
             setSearchDuration(((Date.now() - searchStartRef.current) / 1000).toFixed(1));
@@ -924,7 +923,7 @@ export default function App() {
       {/* Header */}
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
-          <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setView("landing")}>
+          <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("landing"); } }}>
             <img src={`${getBaseUrl()}logo-flyndme.svg`} alt="FlyndMe" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
@@ -934,14 +933,15 @@ export default function App() {
           <div className="d-flex align-items-center gap-2">
             {favs.length > 0 && (
               <button type="button" className="fm-fav-header-btn" onClick={() => setShowFavPanel((v) => !v)}
-                title={t("results.favorite")}>
-                ❤️ <span className="fm-fav-header-count">{favs.length}</span>
+                title={t("favorites.title")} aria-label={`${t("favorites.title")} (${favs.length})`}
+                aria-expanded={showFavPanel}>
+                <span aria-hidden="true">❤️</span> <span className="fm-fav-header-count">{favs.length}</span>
               </button>
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
             {view === "results" && (
-              <button type="button" className="btn btn-sm btn-outline-secondary"
+              <button type="button" className="btn btn-sm btn-outline-secondary fm-header-newsearch"
                 onClick={() => { setView("search"); setShowAlt(false); }}>
                 {t("header.newSearch")}
               </button>
@@ -954,10 +954,10 @@ export default function App() {
       {showFavPanel && (
         <>
           <div className="fm-fav-overlay" onClick={() => setShowFavPanel(false)} />
-          <div className="fm-fav-panel">
+          <div className="fm-fav-panel" role="dialog" aria-modal="true" aria-label={t("favorites.title")}>
             <div className="fm-fav-panel-header">
               <span className="fm-fav-panel-title">{t("favorites.title")}</span>
-              <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)}>✕</button>
+              <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)} aria-label={t("a11y.close")}>✕</button>
             </div>
             {favs.length === 0 ? (
               <div className="fm-fav-panel-empty">{t("favorites.empty")}</div>
@@ -971,7 +971,7 @@ export default function App() {
                       <span className="fm-fav-panel-city">{f.city}</span>
                     </div>
                     <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
-                    <button type="button" className="fm-fav-panel-remove"
+                    <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: f.city || f.code })}
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}>✕</button>
                   </div>
                 ))}
@@ -990,8 +990,25 @@ export default function App() {
       {/* Keyboard shortcuts overlay */}
       <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t} />
 
+      {/* Live region (a11y): anuncia la llegada de resultados y la verificación
+          asíncrona del precio del ganador (el badge cambia sin recargar). */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {view === "results" && bestDestination
+          ? [
+              t("a11y.resultsAnnounce", {
+                n: flights.length,
+                dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
+                price: formatEur(bestDestination.averageCostPerTraveler, 0),
+              }),
+              (bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed")
+                ? t("a11y.priceVerified")
+                : "",
+            ].join(" ").trim()
+          : ""}
+      </div>
+
       {/* Views */}
-      <div id="main-content">
+      <div id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
           <Landing searchForm={
@@ -1036,6 +1053,10 @@ export default function App() {
 
       {view === "results" && bestDestination && (
         <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+          {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
+          <h1 className="sr-only">
+            {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
+          </h1>
           <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
 
           {/* Aviso de resultados parciales (la búsqueda agotó su presupuesto de tiempo) */}
@@ -1066,10 +1087,11 @@ export default function App() {
               <span className="fm-sticky-dest">✈ {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
               <span className="fm-sticky-price">{currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency)}/pp</span>
               <span className="fm-sticky-origins">{cleanOrigins.join(" · ")}</span>
-              <div className="fm-currency-switcher">
+              <div className="fm-currency-switcher" role="group" aria-label={t("search.currencyLabel")}>
                 {["EUR", "GBP", "USD"].map(c => (
                   <button key={c} type="button"
                     className={`fm-currency-btn${currency === c ? " fm-currency-btn--active" : ""}`}
+                    aria-label={c} aria-pressed={currency === c}
                     onClick={() => setCurrency(c)}>
                     {FX_SYMBOLS[c]}
                   </button>
@@ -1185,24 +1207,27 @@ export default function App() {
             <div className="rv-tabs mt-4" ref={tabContentRef}>
               <button type="button"
                 className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
-                onClick={() => { setShowAlt(showAlt === "map" ? false : "map"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
+                aria-expanded={showAlt === "map"} aria-controls="rv-panel-map"
+                onClick={() => { setShowAlt(showAlt === "map" ? false : "map"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
                 🗺 {t("results.showMap")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
-                onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
+                aria-expanded={showAlt === "compare"} aria-controls="rv-panel-compare"
+                onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
                 📊 {t("results.showCompare")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
-                onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100); }}>
+                aria-expanded={showAlt === "list"} aria-controls="rv-panel-list"
+                onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
                 📋 {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
               </button>
             </div>
           )}
 
           {showAlt === "map" && flights.length > 1 && (
-            <div className="mt-3 view-enter">
+            <div className="mt-3 view-enter" id="rv-panel-map">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
                   <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
@@ -1212,7 +1237,7 @@ export default function App() {
           )}
 
           {showAlt === "compare" && flights.length > 1 && (
-            <div className="mt-3 view-enter">
+            <div className="mt-3 view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
                   <CompareChart flights={flights} bestDestination={bestDestination} />
@@ -1222,24 +1247,21 @@ export default function App() {
           )}
 
           {showAlt === "list" && flights.length > 1 && (
-            <div className="mt-4">
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h3 className="h5 fw-bold mb-0" style={{ color: "var(--navy)" }}>{t("results.otherOptions")}</h3>
+            <div className="mt-4" id="rv-panel-list">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <h2 className="h5 fw-bold mb-0" style={{ color: "var(--navy)" }}>{t("results.otherOptions")}</h2>
                 <div className="d-flex align-items-center gap-2">
-                  <span className="small" style={{ color: "var(--slate-500)" }}>{t("results.sortBy")}:</span>
-                  <div className="sf-pills">
-                    {[["default", "—"], ["price", t("results.sortPrice")], ["fairness", t("results.sortFairness")]].map(([v, l]) => (
-                      <button key={v} type="button"
-                        className={`sf-pill sf-pill--sm${sortMode === v ? " sf-pill--active" : ""}`}
-                        onClick={() => setSortMode(v)}>{l}</button>
-                    ))}
-                  </div>
+                  {/* La lista sigue al criterio único (toggle de la WinnerCard):
+                      antes había aquí dos controles de orden que se pisaban. */}
+                  <span className="small" style={{ color: "var(--slate-700)" }}>
+                    {uiCriterion === "fairness" ? t("results.sortedByFairness") : t("results.sortedByPrice")}
+                  </span>
                   <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
                 </div>
               </div>
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <FlightResults
-                  flights={sortMode === "price" ? [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR) : sortMode === "fairness" ? [...flights].sort((a, b) => (b.fairnessScore || 0) - (a.fairnessScore || 0)) : flights}
+                  flights={flights}
                   optimizeBy={uiCriterion}
                   bestDestination={bestDestination}
                   origins={cleanOrigins}
@@ -1304,7 +1326,7 @@ export default function App() {
               <button className="btn btn-sm btn-light fw-semibold" onClick={handleInstall}>
                 {t("pwa.install")}
               </button>
-              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)}>✕</button>
+              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)} aria-label={t("a11y.close")}>✕</button>
             </div>
           </div>
         </div>
@@ -1316,8 +1338,9 @@ export default function App() {
             <span className="app-footer-brand">{t("footerBrand")}</span>
             <span className="app-footer-tagline">{t("footerTagline")}</span>
             <nav className="app-footer-links">
-              <a className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</a>
-              <a className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: "smooth" }); }, 100); }}>{t("footerFaq")}</a>
+              {/* Botones, no <a> sin href: los anchors sin href no reciben foco de teclado */}
+              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</button>
+              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: scrollBehavior() }); }, 100); }}>{t("footerFaq")}</button>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
             </nav>
             <span className="app-footer-copy">{t("footerCopy")}</span>

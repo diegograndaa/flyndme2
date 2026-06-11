@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  convertPrice, approxDistKm, pickBest, buildResultsCsv, AIRPORT_COORDS,
+  convertPrice, approxDistKm, pickBest, sortByCriterion, buildResultsCsv, AIRPORT_COORDS,
 } from "../src/utils/resultsLogic.js";
 
 test("convertPrice: convierte con tasas estáticas y símbolo correcto", () => {
@@ -46,6 +46,31 @@ test("pickBest: por fairness elige mayor score, empate → más barato", () => {
 test("pickBest: null con lista vacía o ausente", () => {
   assert.equal(pickBest([], "total"), null);
   assert.equal(pickBest(null, "total"), null);
+});
+
+test("sortByCriterion: por total ordena coste ascendente", () => {
+  const codes = sortByCriterion(RESULTS, "total").map((d) => d.destination);
+  assert.deepEqual(codes, ["LIS", "ROM", "PAR"]);
+});
+
+test("sortByCriterion: por fairness ordena score desc, empate → más barato", () => {
+  // ROM y PAR empatan a 80; ROM (300) va antes que PAR (400)
+  const codes = sortByCriterion(RESULTS, "fairness").map((d) => d.destination);
+  assert.deepEqual(codes, ["ROM", "PAR", "LIS"]);
+});
+
+test("sortByCriterion: coherente con pickBest (el primero es el ganador)", () => {
+  for (const mode of ["total", "fairness"]) {
+    assert.equal(sortByCriterion(RESULTS, mode)[0].destination, pickBest(RESULTS, mode).destination);
+  }
+});
+
+test("sortByCriterion: no muta la lista original y tolera vacío/ausente", () => {
+  const copy = [...RESULTS];
+  sortByCriterion(RESULTS, "total");
+  assert.deepEqual(RESULTS, copy);
+  assert.deepEqual(sortByCriterion([], "total"), []);
+  assert.deepEqual(sortByCriterion(null, "fairness"), []);
 });
 
 test("buildResultsCsv: cabecera, filas y precios por origen", () => {

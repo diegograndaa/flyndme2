@@ -28,7 +28,7 @@
 
 .wc-card .wc-badge-winner.wc-badge-winner {
   background: var(--coral);
-  color: #fff;
+  color: #16173B; /* AA: blanco sobre coral no llega a 4.5:1 en texto pequeño */
   border: none;
   border-radius: var(--radius-full);
   font-weight: 700;
@@ -108,7 +108,7 @@
 }
 .wc-card .wc-flight-meta-item.wc-flight-meta-item {
   background: var(--slate-100);
-  color: var(--slate-500);
+  color: var(--slate-700); /* AA sobre lavanda */
   border: none;
   border-radius: var(--radius-full);
 }
@@ -213,7 +213,7 @@
   border-radius: 50%;
   background: var(--slate-100);
   border: none;
-  color: var(--slate-500);
+  color: var(--slate-700); /* AA sobre lavanda */
   font-size: .78rem;
   font-weight: 700;
 }

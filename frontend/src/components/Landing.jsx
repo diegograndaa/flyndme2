@@ -6,15 +6,21 @@
 import React, { useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 
-const FaqItem = React.memo(function FaqItem({ q, a }) {
+const FaqItem = React.memo(function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
   return (
     <div className={`lp-faq-item${open ? " lp-faq-item--open" : ""}`}>
-      <button type="button" className="lp-faq-q" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span>{q}</span>
-        <span className="lp-faq-chevron">{open ? "−" : "+"}</span>
-      </button>
-      <div className="lp-faq-a-wrap">
+      {/* h3 envolviendo el botón: patrón de acordeón accesible (WAI-ARIA) */}
+      <h3 className="lp-faq-h">
+        <button type="button" className="lp-faq-q" onClick={() => setOpen(!open)}
+          aria-expanded={open} aria-controls={id}>
+          <span>{q}</span>
+          <span className="lp-faq-chevron" aria-hidden="true">{open ? "−" : "+"}</span>
+        </button>
+      </h3>
+      {/* aria-hidden cuando está plegada: el colapso es solo visual (grid 0fr)
+          y sin esto los lectores de pantalla leían las respuestas cerradas */}
+      <div className="lp-faq-a-wrap" id={id} aria-hidden={!open}>
         <div className="lp-faq-a">{a}</div>
       </div>
     </div>
@@ -57,7 +63,7 @@ const Landing = React.memo(function Landing({ searchForm }) {
       <section className="lp-how">
         <div className="container" style={{ maxWidth: 720 }}>
           <div className="lp-card">
-            <div className="lp-card-title">{t("landing.howTitle")}</div>
+            <h2 className="lp-card-title">{t("landing.howTitle")}</h2>
             <ul className="lp-steps">
               {Array.isArray(steps) && steps.map((s, i) => (
                 <li key={i}><span className="lp-step-num">{i + 1}</span>{s}</li>
@@ -77,7 +83,7 @@ const Landing = React.memo(function Landing({ searchForm }) {
           <h2 className="lp-faq-title">{t("landing.faqTitle")}</h2>
           <div className="lp-faq-list">
             {Array.isArray(faqs) && faqs.map((item, i) => (
-              <FaqItem key={i} q={item.q} a={item.a} />
+              <FaqItem key={i} q={item.q} a={item.a} id={`lp-faq-a-${i}`} />
             ))}
           </div>
         </div>

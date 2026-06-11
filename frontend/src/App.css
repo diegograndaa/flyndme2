@@ -243,8 +243,16 @@ body {
 }
 .app-logo-sub {
   font-size: 12px;
-  color: var(--slate-400);
+  color: var(--slate-500); /* AA sobre blanco */
   font-weight: 500;
+}
+/* Header compacto en móvil: a 360px el header desbordaba 38px (medido) */
+@media (max-width: 576px) {
+  .app-logo-sub { display: none; }
+}
+@media (max-width: 480px) {
+  /* "Nueva búsqueda" duplicada: breadcrumb, barra fija y logo ya llevan a casa */
+  .fm-header-newsearch { display: none; }
 }
 
 /* ── PWA Install banner ── */
@@ -286,7 +294,10 @@ body {
   justify-content: center;
   gap: 8px;
   background: var(--primary);
-  color: var(--white) !important;
+  /* Tinta fija: blanco sobre coral #FF6B6B da 2.8:1 (suspende AA). El navy
+     #16173B da 6.2:1 a cualquier tamaño y es lo que ya mostraba el modo
+     oscuro (var(--white) ahí resolvía a un navy casi idéntico). */
+  color: #16173B !important;
   border: none;
   border-radius: var(--radius-sm);
   font-weight: 700;
@@ -670,6 +681,12 @@ body {
 .lp-faq-item:first-child {
   border-top: 1px solid var(--slate-200);
 }
+/* h3 envoltorio del botón del acordeón (a11y): sin estilos propios */
+.lp-faq-h {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
 .lp-faq-q {
   display: flex;
   justify-content: space-between;
@@ -780,7 +797,7 @@ body {
 }
 .sf-hint {
   font-size: 12px;
-  color: var(--slate-400);
+  color: var(--slate-500); /* AA: slate-400 no llegaba a 4.5:1 sobre blanco */
   margin-top: 2px;
 }
 
@@ -803,6 +820,12 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+}
+/* En pantallas estrechas la fila puede partirse: el input mantiene un ancho
+   útil y los controles (pax/reordenar/quitar) bajan a una segunda línea */
+@media (max-width: 480px) {
+  .sf-origin-row { flex-wrap: wrap; }
+  .sf-input-wrap { min-width: 170px; }
 }
 .sf-badge {
   min-width: 34px;
@@ -1095,7 +1118,7 @@ body {
 }
 .sf-airport-country {
   font-size: 12px;
-  color: var(--slate-400);
+  color: var(--slate-500); /* AA sobre blanco */
   font-weight: 500;
 }
 
@@ -2731,6 +2754,17 @@ body {
   .sf-pill         { padding: 12px 20px; }
   .sf-remove       { width: 40px; height: 40px; }
   .alt-card-link   { padding: 10px 16px; }
+  .sf-pax-btn      { width: 34px; height: 34px; font-size: 16px; }
+  .sf-reorder-btn  { width: 30px; height: 26px; font-size: 12px; }
+  .fm-currency-btn { padding: 8px 12px; font-size: 13px; }
+  .fm-sticky-btn   { padding: 8px 14px; }
+  .rv-tab          { padding: 12px 20px; }
+  .altl-link       { padding: 8px 12px; }
+  .fm-quick-research-btn { padding: 10px 16px; }
+  .fm-split-pill   { padding: 8px 14px; }
+  .wc-criterion-pill { padding: 10px 18px; }
+  .app-footer-link { padding: 8px 4px; }
+  .fm-breadcrumb-item { padding: 8px 8px; }
 
   /* Active state instead of hover on touch */
   .sf-airport-item:active {
@@ -2772,6 +2806,11 @@ html {
 .wc-card .btn:focus-visible,
 .wc-card a:focus-visible {
   outline-color: var(--white);
+}
+/* Elementos enfocables sobre la franja navy del resumen */
+.wc-summary :focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* ── Selection / highlight color ─────────────────────────────── */
@@ -2828,6 +2867,8 @@ html {
   .sf-form    { padding: 20px 16px; }
   .sf-title   { font-size: 18px; }
   .sf-section { padding: 14px; }
+  /* El margen -20px del submit sticky desbordaba 4px con padding 16px */
+  .sf-submit-wrap { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
   .wc-body    { padding: 20px 16px; }
   .wc-dest-code { font-size: 28px; }
   .wc-dest-big  { font-size: 22px; }
@@ -3554,7 +3595,8 @@ html {
   z-index: 100;
   box-shadow: var(--shadow-lg);
 }
-.wc-summary-item--tooltip:hover .wc-tooltip {
+.wc-summary-item--tooltip:hover .wc-tooltip,
+.wc-summary-item--tooltip:focus-within .wc-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
   pointer-events: auto;
@@ -4150,7 +4192,7 @@ html {
   color: var(--primary);
 }
 .fm-sticky-origins {
-  color: var(--slate-400);
+  color: var(--slate-500); /* AA sobre la barra blanca */
   font-size: 12px;
   flex: 1;
   white-space: nowrap;
@@ -5840,6 +5882,11 @@ html {
   text-decoration: none;
   transition: color .2s;
   cursor: pointer;
+  /* También se usa como <button> (a11y): neutralizar estilos de botón */
+  background: none;
+  border: none;
+  padding: 4px 2px; /* área de pulsación ≥24px de alto */
+  font-family: inherit;
 }
 .app-footer-link:hover {
   color: var(--blue-600);

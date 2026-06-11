@@ -56,6 +56,21 @@ export function pickBest(arr, mode) {
   });
 }
 
+// ── Orden de la lista de alternativas según criterio ────────────────────────
+// Mismo criterio que pickBest para que el ganador y la lista sean coherentes:
+// "total" → coste total ascendente; "fairness" → equidad descendente con
+// desempate por menor coste total. Devuelve copia, no muta.
+export function sortByCriterion(arr, mode) {
+  const list = [...(arr || [])];
+  if (mode === "fairness") {
+    return list.sort((a, b) =>
+      (b.fairnessScore ?? 0) - (a.fairnessScore ?? 0) ||
+      (a.totalCostEUR ?? 0) - (b.totalCostEUR ?? 0)
+    );
+  }
+  return list.sort((a, b) => (a.totalCostEUR ?? 0) - (b.totalCostEUR ?? 0));
+}
+
 // ── CSV de resultados (parte pura; la descarga vive en App.jsx) ──────────────
 function csvCell(c) {
   // Escapado RFC 4180: comillas dobles duplicadas

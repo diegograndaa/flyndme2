@@ -3,6 +3,7 @@
 // esqueletos de carga. Sin estado de negocio.
 import React, { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { scrollBehavior } from "../utils/helpers";
 
 export const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
   const { t } = useI18n();
@@ -43,7 +44,7 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
     <button
       type="button"
       className={`scroll-top-btn${visible ? " visible" : ""}`}
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
       aria-label={t("a11y.scrollToTop")}
       title={t("a11y.scrollToTop")}
     >
@@ -68,6 +69,7 @@ export const LangSelector = React.memo(function LangSelector() {
           type="button"
           className={`btn ${lang === code ? "btn-light fw-bold" : "btn-outline-secondary"}`}
           style={{ minWidth: 38, fontSize: 13 }}
+          aria-pressed={lang === code}
           onClick={() => setLang(code)}
         >
           {label}
@@ -87,8 +89,8 @@ export const Toast = React.memo(function Toast({ message, type = "success", onDo
   }, [onDone]);
 
   return (
-    <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`}>
-      <span className="fm-toast-icon">
+    <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`} role="status">
+      <span className="fm-toast-icon" aria-hidden="true">
         {type === "success" ? "✓" : type === "error" ? "✗" : "ℹ"}
       </span>
       {message}

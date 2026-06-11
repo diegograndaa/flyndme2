@@ -9,6 +9,7 @@ import {
   buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf, countryFlag
 } from "../utils/helpers";
 import { getCityImage } from "../utils/cityImages";
+import { sortByCriterion } from "../utils/resultsLogic";
 import "../styles/results-simple.css";
 
 function AltThumb({ code, city }) {
@@ -92,6 +93,7 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
 
 export default function FlightResults({
   flights = [],
+  optimizeBy = "total",
   bestDestination,
   origins = [],
   departureDate = "",
@@ -101,22 +103,18 @@ export default function FlightResults({
   maxBudgetPerTraveler = null,
 }) {
   const { t } = useI18n();
-  const [sortBy, setSortBy] = useState("default");
   const [openCode, setOpenCode] = useState(null);
 
   const safeFlights = Array.isArray(flights) ? flights : [];
 
+  // Un único criterio de orden (el mismo que elige al ganador): la lista
+  // sigue a `optimizeBy` (uiCriterion en App.jsx) en vez de tener su propio
+  // control local — antes había dos controles que se pisaban entre sí.
   const bestCode = normalizeCode(bestDestination?.destination);
   const alternatives = useMemo(() => {
-    let list = safeFlights.filter((f) => normalizeCode(f.destination) !== bestCode);
-
-    if (sortBy === "priceAsc")   list = [...list].sort((a, b) => (a.totalCostEUR ?? 0) - (b.totalCostEUR ?? 0));
-    if (sortBy === "priceDesc")  list = [...list].sort((a, b) => (b.totalCostEUR ?? 0) - (a.totalCostEUR ?? 0));
-    if (sortBy === "perPerson")  list = [...list].sort((a, b) => (a.averageCostPerTraveler ?? 0) - (b.averageCostPerTraveler ?? 0));
-    if (sortBy === "fairness")   list = [...list].sort((a, b) => (b.fairnessScore ?? 0) - (a.fairnessScore ?? 0));
-
-    return list;
-  }, [safeFlights, bestCode, sortBy]);
+    const list = safeFlights.filter((f) => normalizeCode(f.destination) !== bestCode);
+    return sortByCriterion(list, optimizeBy);
+  }, [safeFlights, bestCode, optimizeBy]);
 
   if (!safeFlights.length) return (
     <div className="alt-empty">
@@ -135,23 +133,6 @@ export default function FlightResults({
       {budgetEnabled && (
         <div className="alert alert-info py-2 mb-3">
           {t("alt.budgetFilter", { amount: formatEur(Number(maxBudgetPerTraveler ?? 0), 0) })}
-        </div>
-      )}
-
-      {/* Sort control */}
-      {alternatives.length > 1 && (
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <label className="form-label small mb-0 fw-semibold" htmlFor="altSort" style={{ color: "var(--slate-700)", whiteSpace: "nowrap" }}>
-            {t("alt.sortLabel")}
-          </label>
-          <select id="altSort" className="form-select form-select-sm" style={{ maxWidth: 260 }}
-            value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="default">{t("alt.sortDefault")}</option>
-            <option value="priceAsc">{t("alt.sortPriceAsc")}</option>
-            <option value="priceDesc">{t("alt.sortPriceDesc")}</option>
-            <option value="perPerson">{t("alt.sortPerPerson")}</option>
-            <option value="fairness">{t("alt.sortFairness")}</option>
-          </select>
         </div>
       )}
 

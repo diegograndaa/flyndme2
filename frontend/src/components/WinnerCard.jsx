@@ -102,7 +102,7 @@ const WinnerCard = React.memo(function WinnerCard({
           <span className="wc-dest-code">{city || code}</span>
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
-        <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} title={t("results.favorite")}>
+        <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
           {isFav ? "❤️" : "🤍"}
         </button>
         {/* Savings + trip duration + countdown + vs last search chips */}
@@ -153,7 +153,7 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
         <div className="wc-summary-divider" />
         <div className="wc-summary-item wc-summary-item--tooltip">
-          <div className="wc-summary-label">{t("results.fairnessLabel")} <span className="wc-fairness-help">?</span></div>
+          <div className="wc-summary-label">{t("results.fairnessLabel")} <span className="wc-fairness-help" tabIndex={0} aria-label={t("results.fairnessHelp")}>?</span></div>
           <div className="wc-summary-fairness">
             <svg className="wc-fairness-ring" viewBox="0 0 40 40" width="44" height="44">
               <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
@@ -161,7 +161,9 @@ const WinnerCard = React.memo(function WinnerCard({
                 strokeDasharray={`${((dest.fairnessScore ?? 0) / 100) * 100.53} 100.53`}
                 strokeLinecap="round" transform="rotate(-90 20 20)"
                 style={{ transition: "stroke-dasharray .8s ease" }} />
-              <text x="20" y="22" textAnchor="middle" fill={fairness.color} fontSize="11" fontWeight="800">
+              {/* Número en blanco: los tonos AA para fondo claro no contrastan
+                  sobre la franja navy; el color semántico queda en el anillo */}
+              <text x="20" y="22" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="800">
                 {(dest.fairnessScore ?? 0).toFixed(0)}
               </text>
             </svg>
@@ -193,12 +195,14 @@ const WinnerCard = React.memo(function WinnerCard({
 
       {/* Body */}
       <div className="wc-body">
-        {/* Criterion toggle */}
+        {/* Criterion toggle: control único que gobierna ganador Y lista de
+            alternativas (uiCriterion en App.jsx). */}
         <div className="wc-criterion-row">
-          <div className="wc-criterion-pills">
+          <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
             {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
                 className={`wc-criterion-pill${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
+                aria-pressed={uiCriterion === v}
                 onClick={() => onChangeCriterion(v)}>{l}</button>
             ))}
           </div>
@@ -210,12 +214,12 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* ── Booking section (collapsible) ── */}
         {cleanOrigins.length > 0 && dep && (
           <div className="wc-booking">
-            <button type="button" className="wc-booking-toggle" onClick={() => setBookingOpen((v) => !v)}>
+            <button type="button" className="wc-booking-toggle" onClick={() => setBookingOpen((v) => !v)} aria-expanded={bookingOpen}>
               <div>
                 <div className="wc-booking-title">{t("results.bookTitle")}</div>
                 <div className="wc-booking-sub">{t("results.bookSub")}</div>
               </div>
-              <span className={`wc-booking-chevron${bookingOpen ? " wc-booking-chevron--open" : ""}`}>▾</span>
+              <span className={`wc-booking-chevron${bookingOpen ? " wc-booking-chevron--open" : ""}`} aria-hidden="true">▾</span>
             </button>
 
             <div className={`wc-booking-collapse${bookingOpen ? " wc-booking-collapse--open" : ""}`}>

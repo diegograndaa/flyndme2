@@ -84,9 +84,9 @@ test("buildGoogleFlightsUrl: estructura básica", () => {
 });
 
 test("fairnessColor: umbrales coherentes (verde alto, rojo bajo)", () => {
-  assert.equal(fairnessColor(90), "#16A34A");
-  assert.equal(fairnessColor(70), "#0062E3");
-  assert.equal(fairnessColor(50), "#D97706");
+  assert.equal(fairnessColor(90), "#15803D");
+  assert.equal(fairnessColor(70), "#0059B8");
+  assert.equal(fairnessColor(50), "#B45309");
   assert.equal(fairnessColor(10), "#DC2626");
 });
 

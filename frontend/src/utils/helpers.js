@@ -182,10 +182,20 @@ export async function copyText(text) {
   } catch { return false; }
 }
 
+// Comportamiento de scroll respetando prefers-reduced-motion (a11y):
+// los scrollTo/scrollIntoView "smooth" de JS ignoran la media query de CSS.
+export function scrollBehavior() {
+  try {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth";
+  } catch { return "auto"; }
+}
+
+// Tonos oscurecidos para cumplir contraste AA (≥4.5:1) como texto pequeño
+// sobre fondos claros (blanco/lavanda). El azul es el --secondary de la marca.
 export function fairnessColor(s) {
-  if (s >= 85) return "#16A34A";
-  if (s >= 65) return "#0062E3";
-  if (s >= 45) return "#D97706";
+  if (s >= 85) return "#15803D";
+  if (s >= 65) return "#0059B8";
+  if (s >= 45) return "#B45309";
   return "#DC2626";
 }
 

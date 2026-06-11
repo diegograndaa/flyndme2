@@ -51,11 +51,11 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buildAffiliateLink()` (con tests) + CTA "Reservar" desplegados, `TRAVELPAYOUTS_MARKER=738121` activo en Render y cuenta Travelpayouts activada. Verificado en prod con búsqueda real: todos los deep links llevan `&marker=738121`. Pendiente solo esperar las primeras reservas (comisión ~1,1-1,3%) — vigilar el dashboard de Travelpayouts. Nota API: la respuesta de /multi-origin anida los offers en `flights[].flights[].offer.link`.
 
 ## Backlog (ordenado según el objetivo "producto redondo")
-1. Capa 2 activa: comprobar badge ✓ con búsqueda real en la web (1 min, Diego) → vigilar `[serpapi-verify]` en logs de Render (desviación date-fallback) y el cupo en serpapi.com.
-2. UX: accesibilidad, responsive, modo oscuro del tema Stitch, unificar doble control de ordenación en "Otras opciones".
+1. UX (en curso): accesibilidad, responsive y unificar doble control de ordenación en "Otras opciones" (tanda 1); modo oscuro del tema Stitch (tanda 2, enseñar a Diego antes de mergear).
+2. Vigilancia continua capa 2: `[serpapi-verify]` en logs de Render (desviación date-fallback) y cupo en serpapi.com.
 3. Resto: npm audit fix, capturas README, extraer Landing/CostSplitCard de App.jsx.
 
-Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada y validada por QA (endpoint /verify + verificación async en frontend, 31 tests nuevos, contrato E2E 19/19).
+Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada, desplegada y VERIFICADA en prod (badge ✓ confirmado por Diego con búsqueda real; fix aeropuertos reales porque Google Flights no acepta códigos de ciudad).
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.

@@ -18,7 +18,7 @@
 .btn-fm-primary.btn-fm-primary {
   background: var(--coral);
   background-image: none;
-  color: #fff;
+  color: #16173B; /* tinta sobre coral: ver nota AA en App.css */
   border: none;
   border-radius: var(--radius-sm);
   font-weight: 700;
@@ -39,7 +39,7 @@
 }
 .lp-h1-accent { color: var(--primary); }
 .lp-eyebrow.lp-eyebrow { color: var(--primary); }
-.lp-lead.lp-lead { color: var(--slate-500); }
+.lp-lead.lp-lead { color: var(--slate-700); } /* AA sobre el degradado lavanda */
 .lp-card.lp-card,
 .lp-usecase-card.lp-usecase-card,
 .lp-faq-item.lp-faq-item,
@@ -134,7 +134,7 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-xs);
-  color: var(--slate-500);
+  color: var(--slate-700); /* AA: slate-500 sobre lavanda #EEECFF da 4.3:1 */
   font-weight: 600;
 }
 .sf-pill--active.sf-pill--active {
@@ -193,6 +193,11 @@
   flex: 0 0 auto;
 }
 .fm-podium-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+/* Móvil: las 3 tarjetas-fila no caben en horizontal (quedaban a ~95px con
+   miniatura de 72px); se apilan a ancho completo */
+@media (max-width: 640px) {
+  .fm-podium .fm-podium-cards { flex-direction: column; align-items: stretch; }
+}
 .fm-podium .fm-podium-city  { color: var(--navy); font-weight: 700; }
 .fm-podium .fm-podium-code  { color: var(--slate-500); }
 .fm-podium .fm-podium-price { color: var(--navy); font-weight: 800; }
@@ -252,6 +257,7 @@
   background: var(--slate-100);
   border: none;
   border-radius: var(--radius-full);
+  color: var(--slate-700); /* AA sobre lavanda */
 }
 
 /* Banner de destino */
@@ -291,10 +297,10 @@
 .app-footer.app-footer {
   background: var(--slate-100);
   border-top: none;
-  color: var(--slate-500);
+  color: var(--slate-700); /* AA sobre lavanda */
 }
 .app-footer-brand.app-footer-brand { color: var(--primary); font-weight: 800; }
-.app-footer-link.app-footer-link { color: var(--slate-500); }
+.app-footer-link.app-footer-link { color: var(--slate-700); }
 .app-footer-link.app-footer-link:hover { color: var(--secondary); }
 
 /* ── Home fusionada (hero + buscador en una pantalla) ──────────── */
