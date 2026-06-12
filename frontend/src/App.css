@@ -2543,13 +2543,20 @@ body {
   font-size: 10px;
   font-weight: 800;
   background: var(--slate-200);
-  color: var(--slate-600);
+  /* a11y AA: --slate-600 no existe (heredaba el color del tab: 4.33:1 en
+     oscuro, 3.90:1 en claro). slate-700 da 6.93:1 claro / 7.12:1 oscuro. */
+  color: var(--slate-700);
   margin-left: 4px;
   vertical-align: middle;
 }
 .rv-tab--active .rv-tab-badge {
   background: rgba(255,255,255,.25);
-  color: var(--white);
+  /* a11y AA: el tab activo Stitch usa fondo --primary-light con texto
+     --primary-deep; var(--white) daba 1.21:1 claro / 2.62:1 oscuro. */
+  color: var(--primary-deep);
+}
+[data-theme="dark"] .rv-tab--active .rv-tab-badge {
+  background: rgba(0,0,0,.25); /* #FFC9C7 sobre el chip: 10.57:1 */
 }
 
 /* ── Destination map ── */

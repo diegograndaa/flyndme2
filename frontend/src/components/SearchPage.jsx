@@ -8,6 +8,7 @@ import {
   formatDate, weekdayOf, todayISO, countryFlag,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
 // único consumidor es este componente).
@@ -111,6 +112,10 @@ const SearchPage = React.memo(function SearchPage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [showMobileAirports, setShowMobileAirports] = useState(false);
+  // Focus-trap solo cuando actúa como bottom drawer modal en móvil (en
+  // escritorio es un sidebar inline y showMobileAirports nunca se activa:
+  // el botón que lo abre está display:none).
+  const drawerTrapRef = useFocusTrap(showMobileAirports, () => setShowMobileAirports(false));
   const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
   const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
   const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
@@ -706,7 +711,11 @@ const SearchPage = React.memo(function SearchPage({
 
         {/* ── Right: airport picker (desktop sidebar / mobile bottom drawer) ── */}
         {showMobileAirports && <div className="sf-drawer-overlay" onClick={() => setShowMobileAirports(false)} />}
-        <aside className={`sf-airports fm-card${showMobileAirports ? " sf-airports--open" : ""}`}>
+        <aside className={`sf-airports fm-card${showMobileAirports ? " sf-airports--open" : ""}`}
+          ref={drawerTrapRef}
+          role={showMobileAirports ? "dialog" : undefined}
+          aria-modal={showMobileAirports ? "true" : undefined}
+          aria-label={t("search.airportsTitle")}>
           <div className="sf-drawer-handle" onClick={() => setShowMobileAirports(false)} aria-hidden="true">
             <span className="sf-drawer-bar" />
           </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense, startTransition } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import "./styles/theme-stitch.css";
@@ -10,22 +10,22 @@ const DestinationMap = React.lazy(() => import("./components/DestinationMap"));
 const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
-  AIRPORTS, AIRPORT_MAP, getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, weekdayOf, todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, copyText, fairnessColor,
-  airportName, countryFlag, destQuickInfo, scrollBehavior
+  getBaseUrl, normalizeCode, cityOf, destLabel,
+  formatEur, formatDate, weekdayOf, todayISO, copyText,
+  countryFlag, scrollBehavior
 } from "./utils/helpers";
-import { convertPrice, approxDistKm, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
+import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, FriendlyError, AnimatedStat } from "./components/UiBits";
+import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, AnimatedStat } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
-import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } from "./components/ChromeBits";
+import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
+import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
-import VerificationBadge from "./components/VerificationBadge";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -306,6 +306,9 @@ export default function App() {
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
+  // Focus-trap del panel de favoritos (a11y): el foco entra al abrir, Tab
+  // cicla dentro, Escape cierra y el foco vuelve al botón ❤️ del header.
+  const favPanelTrapRef = useFocusTrap(showFavPanel, () => setShowFavPanel(false));
 
   // Last search best price (for comparison)
   const [lastBestPrice, setLastBestPrice] = useState(() => {
@@ -955,7 +958,7 @@ export default function App() {
       {showFavPanel && (
         <>
           <div className="fm-fav-overlay" onClick={() => setShowFavPanel(false)} />
-          <div className="fm-fav-panel" role="dialog" aria-modal="true" aria-label={t("favorites.title")}>
+          <div className="fm-fav-panel" ref={favPanelTrapRef} role="dialog" aria-modal="true" aria-label={t("favorites.title")}>
             <div className="fm-fav-panel-header">
               <span className="fm-fav-panel-title">{t("favorites.title")}</span>
               <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)} aria-label={t("a11y.close")}>✕</button>
@@ -1146,17 +1149,17 @@ export default function App() {
             <span className="fm-stats-item">
               <AnimatedStat value={flights.length} /> {t("results.destsAnalyzed")}
             </span>
-            <span className="fm-stats-sep">·</span>
+            <span className="fm-stats-sep" aria-hidden="true">·</span>
             <span className="fm-stats-item">
               <AnimatedStat value={cleanOrigins.length} /> {t("results.originsUsed")}
             </span>
-            <span className="fm-stats-sep">·</span>
+            <span className="fm-stats-sep" aria-hidden="true">·</span>
             <span className="fm-stats-item">
               <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
             </span>
             {searchDuration > 0 && (
               <>
-                <span className="fm-stats-sep">·</span>
+                <span className="fm-stats-sep" aria-hidden="true">·</span>
                 <span className="fm-stats-item fm-stats-item--time">
                   ⏱ {searchDuration}s
                 </span>

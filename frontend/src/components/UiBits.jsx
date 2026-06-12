@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // Esqueleto de carga de la vista de resultados
 export function ResultsSkeleton() {
@@ -39,6 +40,8 @@ export function ScrollProgressBar() {
 
 // Overlay de atajos de teclado
 export function KeyboardShortcutsOverlay({ show, onClose, t }) {
+  // Focus-trap (a11y): debe llamarse antes del early return (reglas de hooks).
+  const trapRef = useFocusTrap(show, onClose);
   if (!show) return null;
   const shortcuts = [
     { key: "Esc", desc: t("shortcuts.escape") },
@@ -48,7 +51,7 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
   ];
   return (
     <div className="fm-shortcuts-overlay" onClick={onClose}>
-      <div className="fm-shortcuts-modal" role="dialog" aria-modal="true" aria-label={t("shortcuts.title")} onClick={(e) => e.stopPropagation()}>
+      <div className="fm-shortcuts-modal" ref={trapRef} role="dialog" aria-modal="true" aria-label={t("shortcuts.title")} onClick={(e) => e.stopPropagation()}>
         <div className="fm-shortcuts-header">
           <span className="fm-shortcuts-title">{t("shortcuts.title")}</span>
           <button type="button" className="fm-shortcuts-close" onClick={onClose} aria-label={t("a11y.close")}>✕</button>
@@ -78,7 +81,7 @@ export function Breadcrumb({ current, onNavigate }) {
     <nav className="fm-breadcrumb" aria-label="breadcrumb">
       {crumbs.map((c, i) => (
         <React.Fragment key={c.key}>
-          {i > 0 && <span className="fm-breadcrumb-sep">›</span>}
+          {i > 0 && <span className="fm-breadcrumb-sep" aria-hidden="true">›</span>}
           <button type="button"
             className={`fm-breadcrumb-item${c.key === current ? " fm-breadcrumb-item--active" : ""}`}
             onClick={() => c.key !== current && onNavigate(c.key)}
