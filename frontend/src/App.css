@@ -2596,10 +2596,13 @@ body {
   border: 1.5px solid rgba(255,255,255,.7);
   box-shadow: 0 1px 3px rgba(0,0,0,.15);
 }
-.dm-dot--cheap    { background: #22C55E; }
-.dm-dot--mid      { background: #D97706; }
+/* Extremos de la rampa de precio de las burbujas (priceColor en
+   DestinationMap.jsx): tonos con profundidad para texto blanco AA.
+   El punto de origen usa --secondary, igual que el marcador del mapa. */
+.dm-dot--cheap    { background: #15803D; }
+.dm-dot--mid      { background: #B45309; }
 .dm-dot--expensive { background: #DC2626; }
-.dm-dot--origin   { background: #00B179; }
+.dm-dot--origin   { background: var(--secondary); }
 
 .dm-container {
   position: relative;
@@ -2611,6 +2614,129 @@ body {
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* ── Pintura del mapa (SVG con geografía real, temable claro/oscuro) ── */
+
+/* Mar con degradado y viñeta suave para dar profundidad de lámina */
+.dm-sea-stop1 { stop-color: #E8F1FB; }
+.dm-sea-stop2 { stop-color: #CFE0F4; }
+.dm-vignette-in  { stop-color: #16173B; stop-opacity: 0; }
+.dm-vignette-out { stop-color: #16173B; stop-opacity: .07; }
+
+.dm-graticule line {
+  stroke: #A4BCDD;
+  stroke-width: .5;
+  opacity: .45;
+}
+
+/* Tierra: papel lavanda con relleno alternado sutil por país y fronteras
+   reales finas (Natural Earth) */
+.dm-land {
+  fill: #EFEDF7;
+  stroke: #C2BDD8;
+  stroke-width: .6;
+  stroke-linejoin: round;
+}
+.dm-land--alt { fill: #E7E4F2; }
+
+/* Arcos de vuelo origen → ganador, con flujo de guiones y avión */
+.dm-arc {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 7 5;
+  opacity: .55;
+  animation: dm-dash-flow 1.4s linear infinite;
+}
+@keyframes dm-dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+.dm-plane {
+  fill: var(--primary);
+  opacity: .9;
+}
+
+/* Burbujas de destino (el fill por precio se calcula en JS) */
+.dm-bubble {
+  stroke: #FFFFFF;
+  stroke-width: 2;
+  opacity: .94;
+  transition: r .2s ease;
+}
+.dm-bubble--best {
+  fill: var(--primary);
+  stroke: #6D0010;
+  stroke-width: 3;
+}
+.dm-best-halo {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 5;
+  opacity: .28;
+}
+.dm-bubble-text {
+  fill: #FFFFFF;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, .28);
+  stroke-width: 2px;
+}
+
+/* Indicador de ciudad fuera del lienzo (p. ej. Tenerife): anillo punteado
+   y flecha hacia la posición real */
+.dm-offmap-ring {
+  fill: none;
+  stroke: #45466E;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  opacity: .85;
+}
+.dm-offmap-arrow { fill: #45466E; opacity: .85; }
+
+/* Etiqueta de ciudad (hover / mejor destino) */
+.dm-city-pill {
+  fill: #FFFFFF;
+  stroke: #E2E8F0;
+  stroke-width: .5;
+  opacity: .95;
+}
+.dm-city-pill-text { fill: #16173B; font-weight: 700; }
+
+/* Marcadores de origen */
+.dm-origin { fill: var(--secondary); stroke: #FFFFFF; stroke-width: 2.5; }
+.dm-origin-core { fill: #FFFFFF; }
+.dm-origin-pill { fill: var(--secondary); opacity: .92; }
+.dm-origin-pill-text { fill: #FFFFFF; font-weight: 700; }
+
+/* Pastilla "★ Mejor" */
+.dm-best-pill { fill: var(--primary); }
+.dm-best-pill-text { fill: #FFFFFF; font-weight: 700; }
+
+/* Modo oscuro: mar navy profundo, tierra en la familia #2C2D52 */
+[data-theme="dark"] .dm-sea-stop1 { stop-color: #15163C; }
+[data-theme="dark"] .dm-sea-stop2 { stop-color: #0E0F2C; }
+[data-theme="dark"] .dm-vignette-out { stop-color: #000000; stop-opacity: .25; }
+[data-theme="dark"] .dm-graticule line { stroke: #34355C; opacity: .6; }
+[data-theme="dark"] .dm-land { fill: #2C2D52; stroke: #4A4B78; }
+[data-theme="dark"] .dm-land--alt { fill: #272850; }
+[data-theme="dark"] .dm-bubble { stroke: #E1E0FF; }
+/* En oscuro --primary es #FFB3B0: texto tinta y anillo rosado profundo */
+[data-theme="dark"] .dm-bubble--best { stroke: #D9817D; }
+[data-theme="dark"] .dm-bubble-text--best { fill: #16173B; stroke: none; }
+[data-theme="dark"] .dm-offmap-ring { stroke: #9B9AC6; }
+[data-theme="dark"] .dm-offmap-arrow { fill: #9B9AC6; }
+[data-theme="dark"] .dm-city-pill { fill: #2C2D52; stroke: #45466E; }
+[data-theme="dark"] .dm-city-pill-text { fill: #E1E0FF; }
+[data-theme="dark"] .dm-origin { stroke: #16173B; }
+[data-theme="dark"] .dm-origin-core { fill: #16173B; }
+[data-theme="dark"] .dm-origin-pill-text { fill: #16173B; }
+[data-theme="dark"] .dm-best-pill-text { fill: #16173B; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dm-arc { animation: none; }
+  .dm-bubble { transition: none; }
 }
 
 .dm-tooltip {
@@ -2645,6 +2771,10 @@ body {
   color: var(--slate-400);
   font-size: 11px;
 }
+/* En oscuro el tooltip invierte (fondo --navy = #E1E0FF claro): el verde
+   --accent (#52DEA2) y el gris --slate-400 (#9B9AC6) no daban AA ahí. */
+[data-theme="dark"] .dm-tooltip-price { color: #006C48; }
+[data-theme="dark"] .dm-tooltip-fairness { color: #45466E; }
 
 /* ── Compare chart ── */
 

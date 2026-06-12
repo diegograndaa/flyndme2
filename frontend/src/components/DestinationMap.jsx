@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur } from "../utils/helpers";
+import { COUNTRIES } from "./europeGeo";
 
 // ── City coordinates (lon, lat) for European destinations ────────────────────
 const CITY_COORDS = {
@@ -28,15 +29,13 @@ const MAP_BOUNDS = { lonMin: -14, lonMax: 36, latMin: 30, latMax: 62 };
 const SVG_W = 700;
 const SVG_H = 500;
 
+const MERC_MIN = Math.log(Math.tan(Math.PI / 4 + (MAP_BOUNDS.latMin * Math.PI) / 360));
+const MERC_MAX = Math.log(Math.tan(Math.PI / 4 + (MAP_BOUNDS.latMax * Math.PI) / 360));
+
 function project(lon, lat) {
   const x = ((lon - MAP_BOUNDS.lonMin) / (MAP_BOUNDS.lonMax - MAP_BOUNDS.lonMin)) * SVG_W;
-  const latRad = (lat * Math.PI) / 180;
-  const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-  const latMinRad = (MAP_BOUNDS.latMin * Math.PI) / 180;
-  const latMaxRad = (MAP_BOUNDS.latMax * Math.PI) / 180;
-  const mercMin = Math.log(Math.tan(Math.PI / 4 + latMinRad / 2));
-  const mercMax = Math.log(Math.tan(Math.PI / 4 + latMaxRad / 2));
-  const y = SVG_H - ((mercN - mercMin) / (mercMax - mercMin)) * SVG_H;
+  const mercN = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  const y = SVG_H - ((mercN - MERC_MIN) / (MERC_MAX - MERC_MIN)) * SVG_H;
   return [x, y];
 }
 
@@ -48,122 +47,55 @@ function toPath(coords) {
   }).join(" ") + " Z";
 }
 
-// ── Simplified coastline polygons (lon, lat) ─────────────────────────────────
-// These are heavily simplified outlines for visual reference only.
+// ── Real country shapes (Natural Earth, see europeGeo.js) ───────────────────
+// Pre-projected once at module load; fills alternate subtly per country so
+// internal borders read without strong color differences.
+const COUNTRY_PATHS = COUNTRIES.map((c) => ({
+  iso: c.iso,
+  alt: (c.iso.charCodeAt(0) + c.iso.charCodeAt(c.iso.length - 1)) % 2 === 1,
+  d: c.rings.map(toPath).join(" "),
+}));
 
-const IBERIA = [
-  [-9.5, 37.0], [-9.3, 38.7], [-8.8, 41.2], [-8.9, 42.1], [-9.3, 43.0],
-  [-8.2, 43.4], [-6.0, 43.6], [-4.5, 43.4], [-3.8, 43.4], [-1.8, 43.4],
-  [0.3, 42.7], [3.2, 42.4], [3.3, 41.9], [2.1, 41.3], [0.8, 40.7],
-  [-0.3, 39.5], [0.0, 38.7], [-0.5, 37.8], [-1.6, 37.0], [-2.3, 36.7],
-  [-5.3, 36.1], [-5.6, 36.0], [-7.4, 37.0], [-9.5, 37.0],
-];
+// ── Edge clamping for cities outside the visible canvas (TFS, etc.) ─────────
+const EDGE_PAD = 16;
+function clampPos([x, y]) {
+  const cx = Math.min(SVG_W - EDGE_PAD, Math.max(EDGE_PAD, x));
+  const cy = Math.min(SVG_H - EDGE_PAD, Math.max(EDGE_PAD, y));
+  const offMap = cx !== x || cy !== y;
+  return {
+    pos: [cx, cy],
+    offMap,
+    // Angle pointing from the clamped position towards the real location
+    offAngle: offMap ? (Math.atan2(y - cy, x - cx) * 180) / Math.PI : 0,
+  };
+}
 
-const FRANCE_BENELUX = [
-  [-1.8, 43.4], [-1.2, 46.2], [-1.8, 47.2], [-3.5, 48.5], [-1.5, 48.6],
-  [0.0, 49.5], [1.8, 51.0], [2.5, 51.1], [3.4, 51.4], [4.3, 51.5],
-  [5.0, 51.5], [6.1, 51.9], [6.0, 50.8], [6.4, 49.5], [8.2, 49.0],
-  [7.6, 47.6], [7.0, 47.3], [6.8, 46.4], [6.1, 46.2], [6.6, 45.1],
-  [7.1, 44.2], [6.5, 43.2], [5.4, 43.2], [4.2, 43.5], [3.0, 42.5],
-  [0.3, 42.7], [-1.8, 43.4],
-];
+// Quadratic Bézier arc between two points, bowed upwards (great-circle feel).
+function flightArc([x1, y1], [x2, y2]) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.hypot(dx, dy) || 1;
+  const lift = Math.min(46, dist * 0.18);
+  // Perpendicular to the chord, always bowing towards the top of the map
+  let px = -dy / dist;
+  let py = dx / dist;
+  if (py > 0) { px = -px; py = -py; }
+  const cx = (x1 + x2) / 2 + px * lift;
+  const cy = (y1 + y2) / 2 + py * lift;
+  return {
+    d: `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`,
+    // Bézier midpoint (t = 0.5) and tangent angle (parallel to the chord there)
+    mid: [(x1 + 2 * cx + x2) / 4, (y1 + 2 * cy + y2) / 4],
+    angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+  };
+}
 
-const BRITAIN = [
-  [-5.7, 50.1], [-5.0, 50.3], [-3.5, 50.4], [-1.2, 50.8], [1.4, 51.4],
-  [1.7, 52.5], [0.5, 52.9], [0.3, 53.5], [-0.5, 54.0], [-1.2, 54.6],
-  [-3.0, 55.0], [-3.4, 55.9], [-5.2, 56.1], [-5.7, 57.6], [-5.0, 58.5],
-  [-3.0, 58.6], [-2.0, 57.7], [-1.8, 57.5], [-2.0, 56.0], [-3.4, 55.9],
-  [-4.8, 54.9], [-3.2, 54.1], [-3.0, 53.4], [-4.1, 53.3], [-5.3, 51.8],
-  [-5.7, 50.1],
-];
+// Small airplane silhouette pointing towards +x, centred on the origin.
+const PLANE_PATH =
+  "M7 0c0-.5-.5-.9-1.3-.9H2.4L-1.2-4.4h-1.5l1.8 3.5h-3.3L-5.5-2.4h-1.1L-5.8 0l-.8 2.4h1.1l1.3-1.5h3.3l-1.8 3.5h1.5L2.4.9h3.3C6.5.9 7 .5 7 0z";
 
-const IRELAND = [
-  [-9.9, 52.2], [-10.0, 53.5], [-8.5, 54.3], [-7.3, 55.3], [-6.2, 55.2],
-  [-5.5, 54.2], [-6.0, 52.7], [-6.4, 52.2], [-9.0, 51.3], [-9.9, 52.2],
-];
-
-const ITALY = [
-  [6.6, 45.1], [7.7, 44.1], [8.3, 44.0], [9.7, 44.4], [10.0, 44.0],
-  [11.1, 42.4], [11.8, 42.1], [12.5, 41.9], [13.6, 41.2], [14.0, 40.7],
-  [15.0, 40.0], [15.6, 40.1], [16.5, 39.0], [16.1, 38.8], [15.7, 38.0],
-  [15.6, 37.9], [12.4, 37.8], [12.0, 38.2], [13.3, 38.2], [15.2, 38.8],
-  [15.6, 40.1], [15.0, 40.0], [14.8, 40.6], [13.7, 41.3], [12.3, 41.8],
-  [11.1, 44.0], [10.5, 44.9], [10.0, 45.5], [8.8, 46.0], [7.0, 45.9],
-  [6.6, 45.1],
-];
-
-const SCANDINAVIA = [
-  [4.8, 58.0], [5.3, 59.0], [5.0, 61.0], [6.0, 62.5],
-  [10.5, 59.9], [11.0, 59.0], [12.0, 56.0], [12.6, 56.0],
-  [14.0, 55.4], [13.0, 55.3], [11.0, 55.2], [8.6, 54.9],
-  [8.1, 55.5], [8.6, 57.0], [7.0, 57.9], [4.8, 58.0],
-];
-
-const SCANDINAVIA_NORTH = [
-  [12.6, 56.0], [14.3, 55.5], [14.8, 56.2], [16.5, 56.6],
-  [18.3, 59.3], [18.5, 60.5], [17.3, 62.5], [14.5, 63.5],
-  [11.5, 63.0], [10.0, 62.5], [6.0, 62.5], [10.5, 59.9],
-  [12.0, 56.0], [12.6, 56.0],
-];
-
-const BALKANS = [
-  [13.5, 45.5], [14.5, 45.3], [16.0, 45.8], [19.0, 45.0], [20.4, 44.8],
-  [22.0, 44.0], [22.5, 43.2], [23.3, 42.7], [24.0, 42.1], [26.0, 41.7],
-  [26.5, 40.5], [24.0, 38.0], [23.6, 38.0], [22.7, 37.6], [21.7, 38.3],
-  [20.0, 39.6], [19.5, 40.5], [19.8, 41.3], [19.3, 42.2], [18.5, 42.5],
-  [17.6, 42.9], [16.4, 43.5], [15.2, 44.2], [14.3, 44.9], [13.5, 45.5],
-];
-
-const CENTRAL_EAST = [
-  [14.3, 55.5], [14.2, 54.0], [16.0, 54.5], [18.5, 54.4],
-  [20.0, 54.3], [22.8, 55.0], [24.0, 56.0], [24.8, 57.0],
-  [24.4, 59.4], [28.0, 59.5], [28.0, 56.0], [27.5, 54.0],
-  [24.0, 53.9], [23.8, 52.7], [24.1, 50.9], [24.0, 49.0],
-  [22.5, 48.1], [21.0, 48.5], [17.0, 48.0], [16.8, 48.7],
-  [15.0, 49.0], [14.5, 48.6], [13.0, 48.3], [12.1, 47.7],
-  [9.6, 47.5], [8.6, 47.6], [8.2, 49.0], [6.4, 49.5],
-  [6.0, 50.8], [6.1, 51.9], [5.9, 53.0], [8.6, 54.9],
-  [11.0, 55.2], [12.0, 56.0], [14.3, 55.5],
-];
-
-const TURKEY_EU = [
-  [26.0, 41.7], [28.0, 41.0], [29.1, 41.3], [29.5, 41.2],
-  [28.5, 41.7], [26.5, 42.0], [26.0, 41.7],
-];
-
-const NORTH_AFRICA = [
-  [-5.6, 36.0], [-2.3, 35.0], [0.0, 35.5], [3.0, 37.0],
-  [9.0, 37.0], [10.5, 37.0], [10.5, 35.0], [0.0, 34.0],
-  [-5.0, 34.0], [-6.0, 35.0], [-5.6, 36.0],
-];
-
-const MOROCCO = [
-  [-13.0, 32.0], [-13.0, 35.0], [-6.0, 35.0], [-5.0, 34.0],
-  [-1.0, 35.0], [-2.3, 35.0], [-5.6, 36.0], [-5.3, 36.1],
-  [-7.4, 37.0], [-9.5, 37.0], [-9.8, 36.0], [-10.0, 34.0],
-  [-13.0, 32.0],
-];
-
-const SICILY = [
-  [12.4, 37.8], [13.0, 37.5], [15.2, 37.1], [15.7, 38.0], [15.6, 37.9],
-  [13.3, 38.2], [12.0, 38.2], [12.4, 37.8],
-];
-
-const SARDINIA = [
-  [8.1, 39.1], [9.0, 39.0], [9.8, 39.2], [9.7, 40.9], [8.3, 41.1],
-  [8.1, 40.7], [8.1, 39.1],
-];
-
-const CORSICA = [
-  [8.6, 41.4], [9.4, 41.4], [9.6, 42.0], [9.4, 43.0], [8.6, 42.5],
-  [8.6, 41.4],
-];
-
-const ALL_LANDS = [
-  IBERIA, FRANCE_BENELUX, BRITAIN, IRELAND, ITALY, SCANDINAVIA,
-  SCANDINAVIA_NORTH, BALKANS, CENTRAL_EAST, TURKEY_EU,
-  NORTH_AFRICA, MOROCCO, SICILY, SARDINIA, CORSICA,
-];
+const GRATICULE_LON = [-10, 0, 10, 20, 30];
+const GRATICULE_LAT = [35, 40, 45, 50, 55, 60];
 
 export default function DestinationMap({ flights, bestDestination, origins }) {
   const { t } = useI18n();
@@ -191,7 +123,7 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
       const code = normalizeCode(o);
       const coords = CITY_COORDS[code];
       if (!coords) return null;
-      return { code, city: cityOf(code), pos: project(coords[0], coords[1]) };
+      return { code, city: cityOf(code), ...clampPos(project(coords[0], coords[1])) };
     }).filter(Boolean);
   }, [origins]);
 
@@ -199,30 +131,30 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
     return Object.entries(destData).map(([code, data]) => {
       const coords = CITY_COORDS[code];
       if (!coords) return null;
-      return { code, ...data, pos: project(coords[0], coords[1]) };
+      return { code, ...data, ...clampPos(project(coords[0], coords[1])) };
     }).filter(Boolean);
   }, [destData]);
 
+  // Normalizado al rango real del resultado: el más barato es verde y el más
+  // caro rojo (antes el mínimo era 0 y el verde no aparecía nunca).
   const prices = destPoints.map((d) => d.avg).filter(Boolean);
-  const minPrice = Math.min(...prices, 0);
-  const maxPrice = Math.max(...prices, 1);
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 1;
 
+  // Green → amber → red ramp with enough depth for white text (AA at bold 9px)
   function priceColor(avg) {
-    if (!avg) return "#94A3B8";
+    if (!avg) return "#64748B";
     const ratio = (avg - minPrice) / (maxPrice - minPrice || 1);
+    const mix = (a, b, k) => Math.round(a + (b - a) * k);
     if (ratio < 0.5) {
-      const r = Math.round(34 + (217 - 34) * (ratio * 2));
-      const g = Math.round(197 + (119 - 197) * (ratio * 2));
-      return `rgb(${r}, ${g}, 56)`;
+      const k = ratio * 2; // #15803D → #B45309
+      return `rgb(${mix(21, 180, k)}, ${mix(128, 83, k)}, ${mix(61, 9, k)})`;
     }
-    const r = Math.round(217 + (220 - 217) * ((ratio - 0.5) * 2));
-    const g = Math.round(119 - 119 * ((ratio - 0.5) * 2));
-    return `rgb(${r}, ${g}, 38)`;
+    const k = (ratio - 0.5) * 2; // #B45309 → #DC2626
+    return `rgb(${mix(180, 220, k)}, ${mix(83, 38, k)}, ${mix(9, 38, k)})`;
   }
 
-  // Pre-compute land paths
-  const landPaths = useMemo(() => ALL_LANDS.map(toPath), []);
-
+  const bestPoint = destPoints.find((d) => d.isBest) || null;
   const hoveredData = hovered ? destData[hovered] || null : null;
 
   return (
@@ -249,63 +181,54 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
         <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="dm-svg" role="img"
           aria-label={t("map.ariaLabel")}>
           <defs>
-            <linearGradient id="seaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#DBEAFE" />
-              <stop offset="100%" stopColor="#C7D9F0" />
+            <linearGradient id="dmSea" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop className="dm-sea-stop1" offset="0%" />
+              <stop className="dm-sea-stop2" offset="100%" />
             </linearGradient>
-            <filter id="landShadow" x="-2%" y="-2%" width="104%" height="104%">
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.08" />
+            <radialGradient id="dmVignette" cx="50%" cy="46%" r="72%">
+              <stop className="dm-vignette-in" offset="62%" />
+              <stop className="dm-vignette-out" offset="100%" />
+            </radialGradient>
+            <filter id="dmLandShadow" x="-3%" y="-3%" width="106%" height="106%">
+              <feDropShadow dx="0" dy="1" stdDeviation="1.6" floodColor="#0B1030" floodOpacity="0.18" />
             </filter>
           </defs>
 
           {/* Sea background */}
-          <rect width={SVG_W} height={SVG_H} rx="12" fill="url(#seaGrad)" />
+          <rect width={SVG_W} height={SVG_H} fill="url(#dmSea)" />
 
-          {/* Graticule (grid lines) */}
-          {[-10, 0, 10, 20, 30].map((lon) => {
-            const [x1] = project(lon, MAP_BOUNDS.latMin);
-            const [x2] = project(lon, MAP_BOUNDS.latMax);
-            return <line key={`glon${lon}`} x1={x1} y1={0} x2={x2} y2={SVG_H}
-              stroke="#B0C4E0" strokeWidth="0.5" opacity="0.4" />;
-          })}
-          {[35, 40, 45, 50, 55, 60].map((lat) => {
-            const [, y1] = project(MAP_BOUNDS.lonMin, lat);
-            return <line key={`glat${lat}`} x1={0} y1={y1} x2={SVG_W} y2={y1}
-              stroke="#B0C4E0" strokeWidth="0.5" opacity="0.4" />;
-          })}
+          {/* Graticule (under land) */}
+          <g className="dm-graticule">
+            {GRATICULE_LON.map((lon) => {
+              const [x] = project(lon, MAP_BOUNDS.latMin);
+              return <line key={`glon${lon}`} x1={x} y1={0} x2={x} y2={SVG_H} />;
+            })}
+            {GRATICULE_LAT.map((lat) => {
+              const [, y] = project(MAP_BOUNDS.lonMin, lat);
+              return <line key={`glat${lat}`} x1={0} y1={y} x2={SVG_W} y2={y} />;
+            })}
+          </g>
 
-          {/* Land masses */}
-          {landPaths.map((d, i) => (
-            <path key={i} d={d}
-              fill="#E8ECF1" stroke="#C8CDD5" strokeWidth="0.8"
-              filter="url(#landShadow)" />
-          ))}
+          {/* Real land masses with national borders (Natural Earth) */}
+          <g filter="url(#dmLandShadow)">
+            {COUNTRY_PATHS.map((c, i) => (
+              <path key={`${c.iso}${i}`} d={c.d}
+                className={c.alt ? "dm-land dm-land--alt" : "dm-land"} />
+            ))}
+          </g>
 
-          {/* Country borders (subtle inner lines) */}
-          {[
-            // France-Spain border
-            [[-1.8, 43.4], [0.3, 42.7], [3.2, 42.4]],
-            // France-Italy
-            [[6.6, 45.1], [7.0, 44.2], [7.1, 44.2]],
-            // Germany-France
-            [[6.4, 49.5], [8.2, 49.0], [7.6, 47.6]],
-          ].map((border, i) => {
-            const d = border.map(([lon, lat], j) => {
-              const [x, y] = project(lon, lat);
-              return `${j === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-            }).join(" ");
-            return <path key={`border${i}`} d={d} fill="none" stroke="#C0C8D4" strokeWidth="0.5" strokeDasharray="3 2" />;
-          })}
+          {/* Soft vignette for plate depth */}
+          <rect width={SVG_W} height={SVG_H} fill="url(#dmVignette)" style={{ pointerEvents: "none" }} />
 
-          {/* Connection lines from origins to best destination */}
-          {bestCode && CITY_COORDS[bestCode] && originPoints.map((o) => {
-            const destPos = project(CITY_COORDS[bestCode][0], CITY_COORDS[bestCode][1]);
+          {/* Flight arcs from each origin to the best destination */}
+          {bestPoint && originPoints.map((o) => {
+            const arc = flightArc(o.pos, bestPoint.pos);
             return (
-              <line key={`line-${o.code}`}
-                x1={o.pos[0]} y1={o.pos[1]}
-                x2={destPos[0]} y2={destPos[1]}
-                stroke="#AE2F34" strokeWidth="1.8" strokeDasharray="6 4" opacity="0.35"
-              />
+              <g key={`arc-${o.code}`}>
+                <path d={arc.d} className="dm-arc" />
+                <path d={PLANE_PATH} className="dm-plane"
+                  transform={`translate(${arc.mid[0].toFixed(1)},${arc.mid[1].toFixed(1)}) rotate(${arc.angle.toFixed(1)})`} />
+              </g>
             );
           })}
 
@@ -317,32 +240,35 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
               <g key={d.code}
                 onMouseEnter={() => setHovered(d.code)}
                 onMouseLeave={() => setHovered(null)}
+                opacity={hovered && !isHov && !d.isBest ? 0.45 : 1}
                 style={{ cursor: "pointer" }}>
-                {/* Drop shadow ring */}
-                <circle cx={d.pos[0]} cy={d.pos[1]} r={r + 2}
-                  fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="3"
-                  style={{ transition: "r 0.2s" }} />
-                <circle cx={d.pos[0]} cy={d.pos[1]}
-                  r={r}
-                  fill={d.isBest ? "#AE2F34" : priceColor(d.avg)}
-                  stroke={d.isBest ? "#6D0010" : "white"}
-                  strokeWidth={d.isBest ? 3 : 2}
-                  opacity={hovered && !isHov ? 0.4 : 0.92}
-                  style={{ transition: "all 0.2s ease" }}
+                {d.isBest && (
+                  <circle cx={d.pos[0]} cy={d.pos[1]} r={r + 7} className="dm-best-halo" />
+                )}
+                {d.offMap && (
+                  <>
+                    <circle cx={d.pos[0]} cy={d.pos[1]} r={r + 5} className="dm-offmap-ring" />
+                    <path d="M0,-3.4 L5.4,0 L0,3.4 Z" className="dm-offmap-arrow"
+                      transform={`translate(${(d.pos[0] + Math.cos((d.offAngle * Math.PI) / 180) * (r + 9)).toFixed(1)},${(d.pos[1] + Math.sin((d.offAngle * Math.PI) / 180) * (r + 9)).toFixed(1)}) rotate(${d.offAngle.toFixed(1)})`} />
+                  </>
+                )}
+                <circle cx={d.pos[0]} cy={d.pos[1]} r={r}
+                  className={d.isBest ? "dm-bubble dm-bubble--best" : "dm-bubble"}
+                  fill={d.isBest ? undefined : priceColor(d.avg)}
                 />
                 <text x={d.pos[0]} y={d.pos[1] + 1}
                   textAnchor="middle" dominantBaseline="central"
-                  fill="white" fontSize={d.isBest ? 10 : 9} fontWeight="700"
+                  className={d.isBest ? "dm-bubble-text dm-bubble-text--best" : "dm-bubble-text"}
+                  fontSize={d.isBest ? 10 : 9}
                   style={{ pointerEvents: "none" }}>
                   {formatEur(d.avg, 0).replace(/[€\s]/g, "")}
                 </text>
                 {(d.isBest || isHov) && (
                   <>
                     <rect x={d.pos[0] - 30} y={d.pos[1] - (d.isBest ? 36 : 30)} width="60" height="16" rx="4"
-                      fill="white" stroke="#E2E8F0" strokeWidth="0.5" opacity="0.9"
-                      style={{ pointerEvents: "none" }} />
+                      className="dm-city-pill" style={{ pointerEvents: "none" }} />
                     <text x={d.pos[0]} y={d.pos[1] - (d.isBest ? 26 : 20)}
-                      textAnchor="middle" fill="#111827" fontSize="10" fontWeight="700"
+                      textAnchor="middle" className="dm-city-pill-text" fontSize="10"
                       style={{ pointerEvents: "none" }}>
                       {d.city || d.code}
                     </text>
@@ -355,33 +281,28 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
           {/* Origin markers */}
           {originPoints.map((o) => (
             <g key={`origin-${o.code}`}>
-              <circle cx={o.pos[0]} cy={o.pos[1]} r="8"
-                fill="#0059B8" stroke="white" strokeWidth="2.5" />
-              <circle cx={o.pos[0]} cy={o.pos[1]} r="3"
-                fill="white" />
+              <circle cx={o.pos[0]} cy={o.pos[1]} r="8" className="dm-origin" />
+              <circle cx={o.pos[0]} cy={o.pos[1]} r="3" className="dm-origin-core" />
               <rect x={o.pos[0] - 16} y={o.pos[1] - 22} width="32" height="14" rx="4"
-                fill="#0059B8" opacity="0.9" />
+                className="dm-origin-pill" />
               <text x={o.pos[0]} y={o.pos[1] - 13}
-                textAnchor="middle" fill="white" fontSize="9" fontWeight="700">
+                textAnchor="middle" className="dm-origin-pill-text" fontSize="9">
                 {o.code}
               </text>
             </g>
           ))}
 
           {/* Best destination star label */}
-          {bestCode && CITY_COORDS[bestCode] && (() => {
-            const pos = project(CITY_COORDS[bestCode][0], CITY_COORDS[bestCode][1]);
-            return (
-              <g>
-                <rect x={pos[0] - 24} y={pos[1] + 20} width="48" height="16" rx="8"
-                  fill="#AE2F34" />
-                <text x={pos[0]} y={pos[1] + 30}
-                  textAnchor="middle" fill="white" fontSize="9" fontWeight="700">
-                  ★ {t("map.best")}
-                </text>
-              </g>
-            );
-          })()}
+          {bestPoint && (
+            <g>
+              <rect x={bestPoint.pos[0] - 24} y={bestPoint.pos[1] + 20} width="48" height="16" rx="8"
+                className="dm-best-pill" />
+              <text x={bestPoint.pos[0]} y={bestPoint.pos[1] + 30}
+                textAnchor="middle" className="dm-best-pill-text" fontSize="9">
+                ★ {t("map.best")}
+              </text>
+            </g>
+          )}
         </svg>
 
         {/* Hover tooltip */}
