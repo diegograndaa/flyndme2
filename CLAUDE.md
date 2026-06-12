@@ -1,6 +1,6 @@
 # FlyndMe
 
-PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-11.
+PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-13.
 
 ## Orquestación (lee esto primero: eres el cerebro del proyecto)
 
@@ -31,7 +31,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 
 ## Estructura clave
 - `backend/services/`: travelpayoutsService.js (activo), serpapiService.js (verificación capa 2), mockFlightService.js (USE_MOCK=true). TtlCache, quota guard mensual, rate limiting.
-- `frontend/src/`: App.jsx (~2.000 líneas, sigue grande), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
+- `frontend/src/`: App.jsx (~1.350 líneas tras extraer componentes y podar imports muertos), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, ResultsPanels.jsx (incluye CostSplitCard), DestinationMap.jsx (mapa SVG con geodatos reales Natural Earth en europeGeo.js, regenerable con `frontend/scripts/build-map-geo.mjs`), hooks/ (useFocusTrap), utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
 
 ## Diseño vigente (tema Stitch)
 Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179, Plus Jakarta Sans. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos. **Modo oscuro completo** (familia navy/lavanda #131434/#1B1C40/#2C2D52, granate aclarado #FFB3B0 con texto tinta #16173B): toggle en header + `prefers-color-scheme`, anti-flash inline en index.html, localStorage `flyndme_theme`. Contraste AA en ambos temas (medido); un solo control de ordenación ("Más barato | Más equitativo" en WinnerCard).
@@ -52,9 +52,11 @@ Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buil
 
 ## Backlog (ordenado según el objetivo "producto redondo")
 1. Vigilancia continua capa 2: `[serpapi-verify]` en logs de Render (desviación date-fallback) y cupo en serpapi.com.
-2. Resto: favicons ausentes en frontend/public (404 en index.html, solo hay logo-flyndme.svg); npm audit fix; capturas README; extraer Landing/CostSplitCard de App.jsx; micro-a11y pendiente (separadores decorativos `.fm-stats-sep`/`.fm-breadcrumb-sep`, `.rv-tab-badge` 4.33:1 en oscuro, focus-trap en paneles).
+2. Resto: capturas README; migrar a vite@8 cuando toque (cierra los avisos de esbuild/vite del audit, solo afectan al dev server — hacerlo como tarea propia con QA completo).
 
 Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada, desplegada y VERIFICADA en prod (badge ✓ confirmado por Diego con búsqueda real; fix aeropuertos reales porque Google Flights no acepta códigos de ciudad); UX tanda 1 (control de ordenación único, a11y AA, responsive 360px) y tanda 2 (modo oscuro Stitch completo, lista abierta al cambiar criterio, fix crash de favoritos) aprobadas por Diego.
+
+Hecho (12/13-jun-2026): tanda 3 de fixes publicada (`e9b193b`: sección de compra desplegable —selectores BEM—, deep links Skyscanner/Google Flights con aeropuertos reales, formato yymmdd, botón muted legible en oscuro); favicons generados en frontend/public (todas las referencias de index.html/manifest resuelven); npm audit fix (backend a 0 vulnerabilidades; frontend solo quedan esbuild/vite dev-only); Landing/CostSplitCard ya estaban extraídos en commits previos — se podaron 11 imports muertos de App.jsx; micro-a11y completado (separadores `aria-hidden`, `.rv-tab-badge` AA en todos los estados —estaba roto por un `var(--slate-600)` inexistente—, useFocusTrap en favoritos/atajos/drawer móvil); mapa de destinos rediseñado con geodatos reales Natural Earth 50m (chunk lazy 23,5 KB gzip, claro+oscuro, arcos Bézier, clamp para ciudades fuera de bbox tipo TFS); manifest.json de la PWA pasado a colores Stitch (theme #AE2F34, fondo #FCF8FF).
 
 ## Agentes
 Hay 5 subagentes en `.claude/agents/` (backend, frontend, qa, release, producto). Delega el trabajo en ellos según el área; qa valida antes de cualquier push.
