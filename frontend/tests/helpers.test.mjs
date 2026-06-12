@@ -62,12 +62,13 @@ test("todayISO devuelve YYYY-MM-DD", () => {
 });
 
 test("buildSkyscannerUrl: estructura, fechas y oneway/roundtrip", () => {
+  // Formato canónico de Skyscanner: yymmdd
   const ow = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", tripType: "oneway" });
-  assert.ok(ow.startsWith("https://www.skyscanner.es/transport/flights/mad/rom/20260915/"));
+  assert.ok(ow.startsWith("https://www.skyscanner.es/transport/flights/mad/rom/260915/"));
   assert.ok(ow.includes("rtn=0"));
 
   const rt = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", returnDate: "2026-09-20", tripType: "roundtrip" });
-  assert.ok(rt.includes("/20260915/20260920/"));
+  assert.ok(rt.includes("/260915/260920/"));
   assert.ok(rt.includes("rtn=1"));
 
   // Sin datos imprescindibles → cadena vacía (no URL rota)

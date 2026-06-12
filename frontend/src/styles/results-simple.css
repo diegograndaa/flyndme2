@@ -284,6 +284,14 @@
   color: #16173B;
 }
 [data-theme="dark"] .altl-link:hover { color: #16173B; }
+/* La variante muted tiene fondo oscuro, no rosa: la regla genérica de arriba
+   la dejaba con tinta sobre oscuro (~1:1, ilegible). Texto claro encima. */
+[data-theme="dark"] .altl-link--muted {
+  background: #2C2D52;
+  color: #E1E0FF;
+  border-color: #3F4066;
+}
+[data-theme="dark"] .altl-link--muted:hover { color: #E1E0FF; }
 
 @media (max-width: 560px) {
   .altl-fair { display: none; }

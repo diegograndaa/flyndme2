@@ -3818,7 +3818,9 @@ html {
   transition: transform .3s ease;
   font-size: 12px;
 }
-.wc-booking-chevron.open {
+/* OJO: el JSX emite modificadores BEM (--open); el selector compuesto
+   ".open" dejó la sección de compra plegada para siempre en prod. */
+.wc-booking-chevron--open {
   transform: rotate(180deg);
 }
 .wc-booking-collapse {
@@ -3826,7 +3828,7 @@ html {
   grid-template-rows: 0fr;
   transition: grid-template-rows .35s ease;
 }
-.wc-booking-collapse.open {
+.wc-booking-collapse--open {
   grid-template-rows: 1fr;
 }
 .wc-booking-collapse > div {
@@ -5314,12 +5316,6 @@ html {
   0%   { left: -50%; }
   50%  { left: 100%; }
   100% { left: 100%; }
-}
-
-/* ── Smooth expand/collapse for booking section ────────────── */
-
-.wc-booking-collapse {
-  transition: max-height .4s cubic-bezier(.16,1,.3,1), opacity .3s ease;
 }
 
 /* ── Focus ring for keyboard users ─────────────────────────── */

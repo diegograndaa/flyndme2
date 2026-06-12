@@ -236,8 +236,12 @@ const WinnerCard = React.memo(function WinnerCard({
                 const effRet = tripType === "roundtrip" ? (finfo.flightReturnDate || ret) : ret;
                 const originCity = cityOf(origin);
                 const destCity = city || code;
-                const ssUrl = buildSkyscannerUrl({ origin, destination: code, departureDate: effDep, returnDate: effRet, tripType });
-                const gfUrl = buildGoogleFlightsUrl({ origin, destination: code, departureDate: effDep, returnDate: effRet, tripType });
+                // Aeropuertos reales del billete (mejor deep link que el
+                // código de ciudad ROM/LON; Google Flights ni lo acepta).
+                const ssOrigin = offer?.tp?.originAirport || origin;
+                const ssDest   = offer?.tp?.destinationAirport || code;
+                const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
+                const gfUrl = buildGoogleFlightsUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
 
                 // Extract itinerary details (outbound)
                 const itin = offer?.itineraries?.[0];

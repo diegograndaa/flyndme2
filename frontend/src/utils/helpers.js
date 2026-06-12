@@ -143,8 +143,9 @@ const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.me
 export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
   const from = String(origin || "").toLowerCase();
   const to   = String(destination || "").toLowerCase();
-  const dep  = String(departureDate || "").replace(/-/g, "");
-  const ret  = tripType === "roundtrip" ? String(returnDate || "").replace(/-/g, "") : "";
+  // Formato canónico de Skyscanner: yymmdd (260915), no yyyymmdd.
+  const dep  = String(departureDate || "").replace(/-/g, "").slice(2);
+  const ret  = tripType === "roundtrip" ? String(returnDate || "").replace(/-/g, "").slice(2) : "";
   if (!from || !to || !dep) return "";
   const base = "https://www.skyscanner.es/transport/flights";
   const path = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;

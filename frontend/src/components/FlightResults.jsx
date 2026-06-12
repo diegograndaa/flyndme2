@@ -61,8 +61,11 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
             // Fecha real del precio (fallback de fecha vecina)
             const effDep = f.flightDate || dep;
             const effRet = tripType === "roundtrip" ? (f.flightReturnDate || ret) : ret;
-            const ssUrl = buildSkyscannerUrl({ origin: originCode, destination: code, departureDate: effDep, returnDate: effRet, tripType });
-            const gfUrl = buildGoogleFlightsUrl({ origin: originCode, destination: code, departureDate: effDep, returnDate: effRet, tripType });
+            // Aeropuertos reales del billete cuando el offer los trae
+            const ssOrigin = f.offer?.tp?.originAirport || originCode;
+            const ssDest   = f.offer?.tp?.destinationAirport || code;
+            const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
+            const gfUrl = buildGoogleFlightsUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
             return (
               <div key={i} className="altl-detail-row">
                 <span className="altl-detail-origin">
