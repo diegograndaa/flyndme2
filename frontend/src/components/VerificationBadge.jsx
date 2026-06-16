@@ -1,5 +1,6 @@
 import React from "react";
 import { useI18n } from "../i18n/useI18n";
+import { formatEur } from "../utils/helpers";
 
 // Renders a trust chip for the winning destination based on whether the backend
 // successfully re-priced its offers via Amadeus Flight Offers Price.
@@ -22,6 +23,12 @@ export default function VerificationBadge({ dest }) {
     icon = pct > 0 ? "↑" : "↓";
     const sign = pct > 0 ? "+" : "";
     text = t("verifyBadge.changed", { pct: `${sign}${pct.toFixed(0)}%` });
+    // Transparencia: el precio mostrado YA es el verificado; enseñamos de cuánto
+    // venía el orientativo (cached* lo guarda mergeVerification al promocionar).
+    const wasAvg = Number(dest?.cachedAveragePerTraveler);
+    if (Number.isFinite(wasAvg) && wasAvg > 0) {
+      hint = t("verifyBadge.wasPrice", { price: formatEur(wasAvg, 0) });
+    }
   } else {
     // partial / failed / timeout → low confidence
     kind = "indicative";

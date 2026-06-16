@@ -5,8 +5,11 @@
 //
 // Flujo: el frontend pinta los resultados de /multi-origin al instante con
 // verificationStatus "skipped" (badge "precio orientativo") y, cuando llega la
-// verificación, mergea los campos verified* para que VerificationBadge pase a
-// ✓ verde o ↑/↓. Nunca se re-ordenan resultados ni se cambian precios mostrados.
+// verificación, mergea los campos verified*. Si la verificación fue COMPLETA
+// (todos los legs), el precio verificado PASA A SER el precio mostrado (el
+// orientativo se guarda en cached* para el "antes"); VerificationBadge pasa a
+// ✓ verde o ↑/↓. Nunca se re-ordenan los resultados (solo se verifica el
+// ganador, así que compararlo con las alternativas orientativas sería injusto).
 
 // ¿Procede verificar este destino? Solo si el backend lo dejó en "skipped" y
 // trae vuelos. Con resultados parciales, solo si TODOS los legs traen offer
@@ -51,8 +54,7 @@ export function buildVerifyPayload(dest, { departureDate, returnDate, tripType }
 }
 
 // Campos de nivel destino que el endpoint puede devolver y que se mergean tal
-// cual. Todo lo demás de la respuesta se ignora: jamás se pisan los precios
-// originales (totalCostEUR, averageCostPerTraveler, price...).
+// cual (se guardan SIEMPRE como verified*, además de promocionarse si procede).
 const DEST_VERIFY_FIELDS = [
   "verificationStatus",
   "verificationSource",
@@ -64,16 +66,44 @@ const DEST_VERIFY_FIELDS = [
   "verifiedFairnessScore",
 ];
 
-// Devuelve una copia del destino con los campos de verificación mergeados.
-// Por origen (dentro de flights) solo se AÑADEN campos verified*: el total
-// verificado se guarda como verifiedTotalForOrigin aunque la respuesta lo
-// llame totalForOrigin, para no pisar el valor original del leg.
+// Estados en los que el backend verificó TODOS los legs contra Google Flights:
+// los agregados verified* son entonces 100% precio real y se PROMOCIONAN a
+// precio mostrado (el orientativo previo se guarda en cached* para enseñar el
+// "antes"). En partial/failed/timeout/skipped NO se promociona nada: un total
+// mezcla (parte verificado, parte caché) no puede presentarse como verificado.
+const FULLY_VERIFIED = new Set(["verified", "changed"]);
+
+// [campo mostrado, campo verificado, campo donde guardar el orientativo previo]
+const PROMOTE_DEST = [
+  ["totalCostEUR", "verifiedTotalCostEUR", "cachedTotalCostEUR"],
+  ["averageCostPerTraveler", "verifiedAveragePerTraveler", "cachedAveragePerTraveler"],
+  ["priceSpread", "verifiedPriceSpread", "cachedPriceSpread"],
+  ["fairnessScore", "verifiedFairnessScore", "cachedFairnessScore"],
+];
+
+// Devuelve una copia del destino con la verificación mergeada. Los campos
+// verified* se guardan SIEMPRE; además, si la verificación es COMPLETA
+// (verified/changed), el precio verificado pasa a ser el precio mostrado
+// (total, por viajero, spread, fairness y price/totalForOrigin de cada leg),
+// conservando el orientativo en cached*. Nunca se re-ordenan los resultados.
 export function mergeVerification(dest, verification) {
   if (!dest || !verification) return dest;
 
   const merged = { ...dest };
   for (const key of DEST_VERIFY_FIELDS) {
     if (verification[key] !== undefined) merged[key] = verification[key];
+  }
+
+  const promote = FULLY_VERIFIED.has(verification.verificationStatus);
+
+  if (promote) {
+    for (const [shown, verified, cached] of PROMOTE_DEST) {
+      const v = verification[verified];
+      if (Number.isFinite(v)) {
+        merged[cached] = dest[shown];
+        merged[shown] = v;
+      }
+    }
   }
 
   const vLegs = Array.isArray(verification.flights)
@@ -92,6 +122,15 @@ export function mergeVerification(dest, verification) {
       if (v.verifiedPrice !== undefined) nf.verifiedPrice = v.verifiedPrice;
       const vTotal = v.verifiedTotalForOrigin ?? v.totalForOrigin;
       if (vTotal !== undefined) nf.verifiedTotalForOrigin = vTotal;
+      // Promoción del precio del leg a mostrado (solo verificación completa).
+      if (promote && Number.isFinite(v.verifiedPrice)) {
+        nf.cachedPrice = f.price;
+        nf.price = v.verifiedPrice;
+        if (Number.isFinite(vTotal)) {
+          nf.cachedTotalForOrigin = f.totalForOrigin;
+          nf.totalForOrigin = vTotal;
+        }
+      }
       return nf;
     });
   }

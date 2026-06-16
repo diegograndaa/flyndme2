@@ -14,10 +14,13 @@ function makeDest(overrides = {}) {
   return {
     destination: "ROM",
     totalCostEUR: 420.5,
+    averageCostPerTraveler: 140.17,
+    priceSpread: 30.51,
+    fairnessScore: 80,
     verificationStatus: "skipped",
     flights: [
-      { origin: "MAD", price: 120.5, passengers: 2, offer: { tp: {} } },
-      { origin: "LON", price: 89.99, offer: { tp: {} } },
+      { origin: "MAD", price: 120.5, passengers: 2, totalForOrigin: 241, offer: { tp: {} } },
+      { origin: "LON", price: 89.99, totalForOrigin: 89.99, offer: { tp: {} } },
     ],
     ...overrides,
   };
@@ -143,7 +146,7 @@ test("shouldVerify: con partial exige offers completos en todos los legs", () =>
 
 // ── mergeVerification ────────────────────────────────────────────────────────
 
-test("mergeVerification: añade campos verified* sin tocar los precios originales", () => {
+test("mergeVerification: status 'changed' PROMOCIONA el precio verificado a mostrado", () => {
   const dest = makeDest();
   const merged = mergeVerification(dest, {
     verificationStatus: "changed",
@@ -161,31 +164,78 @@ test("mergeVerification: añade campos verified* sin tocar los precios originale
   });
 
   assert.equal(merged.verificationStatus, "changed");
-  assert.equal(merged.verificationSource, "serpapi");
   assert.equal(merged.priceChangePct, 7.5);
+  // verified* se conservan
   assert.equal(merged.verifiedTotalCostEUR, 452.0);
   assert.equal(merged.verifiedAveragePerTraveler, 150.67);
-  assert.equal(merged.verifiedPriceSpread, 60);
-  assert.equal(merged.verifiedFairnessScore, 72);
-  // Precios originales intactos (regla: NUNCA cambiar el precio mostrado)
-  assert.equal(merged.totalCostEUR, 420.5);
-  assert.equal(merged.flights[0].price, 120.5);
-  assert.equal(merged.flights[1].price, 89.99);
-  // Per-origin: verifiedPrice y total verificado SIEMPRE bajo verified*
-  assert.equal(merged.flights[0].verifiedPrice, 130);
-  assert.equal(merged.flights[0].verifiedTotalForOrigin, 260);
+  // PROMOCIÓN: el precio mostrado pasa a ser el verificado (precio real)
+  assert.equal(merged.totalCostEUR, 452.0);
+  assert.equal(merged.averageCostPerTraveler, 150.67);
+  assert.equal(merged.priceSpread, 60);
+  assert.equal(merged.fairnessScore, 72);
+  // El orientativo previo queda guardado en cached* (para el "antes")
+  assert.equal(merged.cachedTotalCostEUR, 420.5);
+  assert.equal(merged.cachedAveragePerTraveler, 140.17);
+  assert.equal(merged.cachedPriceSpread, 30.51);
+  assert.equal(merged.cachedFairnessScore, 80);
+  // Per-origin: price promocionado, orientativo guardado en cachedPrice
+  assert.equal(merged.flights[0].price, 130);
+  assert.equal(merged.flights[0].cachedPrice, 120.5);
+  assert.equal(merged.flights[0].totalForOrigin, 260);
+  assert.equal(merged.flights[0].cachedTotalForOrigin, 241);
+  assert.equal(merged.flights[1].price, 96);
+  assert.equal(merged.flights[1].cachedPrice, 89.99);
   assert.equal(merged.flights[1].verifiedPrice, 96);
-  assert.equal(merged.flights[1].verifiedTotalForOrigin, 96);
-  // El orden de los legs no cambia y el original no se muta
+  // El orden no cambia y el ORIGINAL no se muta
   assert.equal(merged.flights[0].origin, "MAD");
-  assert.equal(dest.verificationStatus, "skipped");
-  assert.equal(dest.flights[0].verifiedPrice, undefined);
+  assert.equal(dest.totalCostEUR, 420.5);
+  assert.equal(dest.averageCostPerTraveler, 140.17);
+  assert.equal(dest.flights[0].price, 120.5);
+  assert.equal(dest.flights[0].cachedPrice, undefined);
 });
 
-test("mergeVerification: respuesta sin legs o destino nulo no rompe", () => {
+test("mergeVerification: status 'partial' NO promociona (mezcla ≠ verificado)", () => {
+  const dest = makeDest();
+  const merged = mergeVerification(dest, {
+    verificationStatus: "partial",
+    priceChangePct: 4,
+    verifiedTotalCostEUR: 430,
+    verifiedAveragePerTraveler: 143.3,
+    flights: [
+      { origin: "MAD", verifiedPrice: 130, totalForOrigin: 260 },
+      { origin: "LON", verifiedPrice: null }, // este leg no se pudo verificar
+    ],
+  });
+  // verified* se registran, pero el precio MOSTRADO no se toca
+  assert.equal(merged.verifiedTotalCostEUR, 430);
+  assert.equal(merged.totalCostEUR, 420.5);
+  assert.equal(merged.averageCostPerTraveler, 140.17);
+  assert.equal(merged.flights[0].price, 120.5);
+  assert.equal(merged.flights[1].price, 89.99);
+  // verifiedPrice por leg sí se guarda; cached* NO se crea (no hubo promoción)
+  assert.equal(merged.flights[0].verifiedPrice, 130);
+  assert.equal("cachedPrice" in merged.flights[0], false);
+  assert.equal("cachedTotalCostEUR" in merged, false);
+});
+
+test("mergeVerification: status 'verified' (precio igual) también promociona", () => {
+  const merged = mergeVerification(makeDest(), {
+    verificationStatus: "verified",
+    verifiedTotalCostEUR: 421,
+    verifiedAveragePerTraveler: 140.33,
+    flights: [{ origin: "MAD", verifiedPrice: 120.7 }, { origin: "LON", verifiedPrice: 90 }],
+  });
+  assert.equal(merged.totalCostEUR, 421);
+  assert.equal(merged.cachedTotalCostEUR, 420.5);
+  assert.equal(merged.flights[0].price, 120.7);
+});
+
+test("mergeVerification: respuesta sin legs ni agregados o destino nulo no rompe", () => {
   const dest = makeDest();
   const merged = mergeVerification(dest, { verificationStatus: "verified", verifiedAt: "x" });
   assert.equal(merged.verificationStatus, "verified");
+  // Sin agregados verificados no hay nada que promocionar → precio intacto
+  assert.equal(merged.totalCostEUR, 420.5);
   assert.deepEqual(merged.flights, dest.flights);
   assert.equal(mergeVerification(null, { verificationStatus: "verified" }), null);
   assert.equal(mergeVerification(dest, null), dest);

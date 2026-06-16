@@ -336,6 +336,7 @@
   "verifyBadge": {
     "confirmed": "Precio confirmado",
     "changed": "Precio actualizado {{pct}}",
+    "wasPrice": "Antes {{price}}/persona (orientativo) · ahora el real de Google Flights",
     "indicative": "Precio indicativo",
     "verifiedAt": "Verificado a las {{time}}",
     "indicativeHint": "No se pudo re-tarifar en vivo; se muestra el precio de la búsqueda original."
