@@ -7,6 +7,14 @@ entre viajeros (fairness score).
 
 **Demo**: https://flyndme2.vercel.app · **API**: https://flyndme-backend.onrender.com
 
+## Capturas
+
+| Introduce las ciudades de cada viajero | Destino ganador y reparto del coste |
+|:--:|:--:|
+| ![Home de FlyndMe: formulario multi-origen con selector de aeropuertos](docs/screenshots/home.png) | ![Resultado: destino ganador con coste total del grupo y coste por viajero](docs/screenshots/results.png) |
+
+![Mapa con geografía real: los vuelos de cada origen convergen en el destino más barato del grupo](docs/screenshots/map.png)
+
 ## Arquitectura
 
 ```
