@@ -10,6 +10,7 @@ import {
 } from "../utils/helpers";
 import { getCityImage } from "../utils/cityImages";
 import { sortByCriterion } from "../utils/resultsLogic";
+import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 
 function AltThumb({ code, city }) {
@@ -81,9 +82,9 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
                 </span>
                 <span className="altl-detail-links">
                   {/* Primario: deep link de Aviasales con marker de afiliado */}
-                  {f.offer?.link && <a href={f.offer.link} target="_blank" rel="noreferrer" className="altl-link">{t("results.bookCta")}</a>}
-                  {ssUrl && <a href={ssUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted">Skyscanner</a>}
-                  {gfUrl && <a href={gfUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted">Google Flights</a>}
+                  {f.offer?.link && <a href={f.offer.link} target="_blank" rel="noreferrer" className="altl-link" onClick={() => track("book_click", { provider: "travelpayouts", dest: code, origin: originCode, where: "alt" })}>{t("results.bookCta")}</a>}
+                  {ssUrl && <a href={ssUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted" onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin: originCode, where: "alt" })}>Skyscanner</a>}
+                  {gfUrl && <a href={gfUrl} target="_blank" rel="noreferrer" className="altl-link altl-link--muted" onClick={() => track("book_click", { provider: "google", dest: code, origin: originCode, where: "alt" })}>Google Flights</a>}
                 </span>
               </div>
             );

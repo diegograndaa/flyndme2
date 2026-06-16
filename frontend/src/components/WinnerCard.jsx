@@ -9,6 +9,7 @@ import {
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName, fairnessColor,
 } from "../utils/helpers";
 import { convertPrice } from "../utils/resultsLogic";
+import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
 import VerificationBadge from "./VerificationBadge";
@@ -343,19 +344,22 @@ const WinnerCard = React.memo(function WinnerCard({
                           afiliado (única vía de monetización). Lleva la búsqueda
                           exacta de este precio ya hecha. */}
                       {offer?.link && (
-                        <a href={offer.link} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book">
+                        <a href={offer.link} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
+                          onClick={() => track("book_click", { provider: "travelpayouts", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon">🎟️</span>
                           {t("results.bookCta")}
                         </a>
                       )}
                       {ssUrl && (
-                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta">
+                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta"
+                          onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon">🔍</span>
                           Skyscanner
                         </a>
                       )}
                       {gfUrl && (
-                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--google">
+                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--google"
+                          onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon">✈</span>
                           Google Flights
                         </a>

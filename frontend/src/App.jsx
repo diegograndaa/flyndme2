@@ -16,6 +16,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { parseSearchLinkParams } from "./utils/urlParams";
+import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, AnimatedStat } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
@@ -701,15 +702,12 @@ export default function App() {
     } catch { /* user cancelled */ }
   };
 
-  // ── Simple analytics (beacon-based, no external deps) ─────────────────────
+  // ── Analítica (Vercel Web Analytics, ver utils/analytics.js) ──────────────
+  // trackEvent es un alias fino sobre track() para no tocar las ~7 llamadas ya
+  // existentes (shares, pwa_install, search_complete).
 
   function trackEvent(event, data = {}) {
-    try {
-      // Log to console for now; replace with your analytics endpoint
-      console.log(`[analytics] ${event}`, data);
-      // If you have an analytics endpoint, uncomment:
-      // navigator.sendBeacon?.(`${API_BASE}/api/events`, JSON.stringify({ event, ...data, ts: Date.now() }));
-    } catch { /* silent */ }
+    track(event, data);
   }
 
   // ── Ensure backend is awake before searching ─────────────────────────────────
@@ -781,6 +779,8 @@ export default function App() {
       if (!returnDate)               { setError(t("errors.noReturn")); return; }
       if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
     }
+
+    trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
