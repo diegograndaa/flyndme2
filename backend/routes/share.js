@@ -80,7 +80,7 @@ router.post("/", createShareLimiter, (req, res) => {
 
 // ─── GET /api/share/:id/og — render OG meta tags for social previews ────────
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://flyndme.vercel.app";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://flyndme2.vercel.app";
 
 const CITY_NAMES = {
   MAD: "Madrid", BCN: "Barcelona", LON: "London", PAR: "Paris", ROM: "Rome",

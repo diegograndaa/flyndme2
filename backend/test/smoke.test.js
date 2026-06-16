@@ -243,6 +243,14 @@ test("OG meta tags count actual pax, not origins", async () => {
   assert.ok(m, "OG description meta tag present");
   assert.ok(m[1].includes("4 travelers"),
     `expected "4 travelers" in OG description, got "${m[1]}"`);
+  // Regresión: el default de FRONTEND_URL no debe apuntar al dominio muerto
+  // flyndme.vercel.app (404) — rompía la preview OG de los enlaces compartidos.
+  const img = og.body.match(/og:image[^>]*content="([^"]+)"/);
+  assert.ok(img, "OG image meta tag present");
+  assert.ok(img[1].startsWith("https://"),
+    `OG image should be an absolute https URL, got "${img[1]}"`);
+  assert.ok(!/\/\/flyndme\.vercel\.app(\/|")/.test(og.body),
+    "OG meta tags must not reference the dead flyndme.vercel.app domain");
 });
 
 // ─── Startup config validation (production mode) ─────────────────────────

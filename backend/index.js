@@ -78,7 +78,7 @@ function validateConfig() {
       warnings.push("ALLOWED_ORIGINS no está definida — usando fallback hardcoded (flyndme.vercel.app + flyndme2.vercel.app). Define la variable para tu dominio real.");
     }
     if (!process.env.FRONTEND_URL) {
-      warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme.vercel.app.");
+      warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme2.vercel.app.");
     }
   }
 
