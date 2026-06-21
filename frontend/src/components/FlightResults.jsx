@@ -4,6 +4,7 @@
 // medallas ni chips decorativos — un solo color de acento.
 import React, { useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { Calendar, Search } from "lucide-react";
 import {
   normalizeCode, formatEur, formatDate, fairnessColor, getBaseUrl,
   buildSkyscannerUrl, buildGoogleFlightsUrl, AIRPORT_MAP, cityOf, countryFlag
@@ -73,7 +74,7 @@ const AltRow = React.memo(function AltRow({ dest, rank, departureDate, returnDat
                   {originCode} <span className="altl-detail-city">{cityOf(originCode)}</span>
                   {f.dateFallback && (
                     <span className="altl-date-note" title={t("results.dateFallbackHint")}>
-                      📅 {formatDate(effDep)}
+                      <Calendar size={13} aria-hidden="true" /> {formatDate(effDep)}
                     </span>
                   )}
                 </span>
@@ -122,7 +123,7 @@ export default function FlightResults({
 
   if (!safeFlights.length) return (
     <div className="alt-empty">
-      <div className="alt-empty-icon">🔎</div>
+      <div className="alt-empty-icon"><Search size={28} aria-hidden="true" /></div>
       <div className="alt-empty-title">{t("alt.noAlternatives")}</div>
       <div className="alt-empty-sub">
         {budgetEnabled

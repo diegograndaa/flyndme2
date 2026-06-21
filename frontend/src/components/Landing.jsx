@@ -5,6 +5,7 @@
 // `searchForm` y se renderiza directamente bajo el hero.
 import React, { useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import ConvergenceHero from "./ConvergenceHero";
 
 const FaqItem = React.memo(function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
@@ -35,22 +36,29 @@ const Landing = React.memo(function Landing({ searchForm }) {
 
   return (
     <>
-      {/* Hero */}
+      {/* Hero: texto + diagrama de convergencia (la firma visual) */}
       <section className="lp-hero lp-hero--merged">
         <div className="container" style={{ maxWidth: 1080 }}>
-          <span className="lp-eyebrow">{t("landing.eyebrow")}</span>
-          <h1 className="lp-h1">{(() => {
-            const title = t("landing.title");
-            const accent = t("landing.titleAccent");
-            const i = typeof accent === "string" && accent && typeof title === "string" ? title.indexOf(accent) : -1;
-            if (i < 0) return title;
-            return (<>
-              {title.slice(0, i)}
-              <span className="lp-h1-accent">{accent}</span>
-              {title.slice(i + accent.length)}
-            </>);
-          })()}</h1>
-          <p className="lp-lead">{t("landing.lead")}</p>
+          <div className="lp-hero-grid">
+            <div className="lp-hero-text">
+              <span className="lp-eyebrow">{t("landing.eyebrow")}</span>
+              <h1 className="lp-h1">{(() => {
+                const title = t("landing.title");
+                const accent = t("landing.titleAccent");
+                const i = typeof accent === "string" && accent && typeof title === "string" ? title.indexOf(accent) : -1;
+                if (i < 0) return title;
+                return (<>
+                  {title.slice(0, i)}
+                  <span className="lp-h1-accent">{accent}</span>
+                  {title.slice(i + accent.length)}
+                </>);
+              })()}</h1>
+              <p className="lp-lead">{t("landing.lead")}</p>
+            </div>
+            <div className="lp-hero-visual">
+              <ConvergenceHero />
+            </div>
+          </div>
         </div>
       </section>
 

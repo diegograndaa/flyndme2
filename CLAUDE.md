@@ -1,6 +1,6 @@
 # FlyndMe
 
-PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-16.
+PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-22.
 
 ## Orquestación (lee esto primero: eres el cerebro del proyecto)
 
@@ -15,7 +15,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 **Pregunta a Diego antes de:** mergear a main, borrar código no trivial, cambios visuales grandes no pedidos, y cualquier cosa que toque variables de producción (Render/Vercel). Para lo demás, decide tú y explica por qué.
 
 ## Stack
-- **Frontend**: React + Vite + **Bootstrap** + CSS propio (NO Tailwind). Deploy: Vercel → flyndme2.vercel.app (flyndme.vercel.app está caído, no usar).
+- **Frontend**: React + Vite + **Bootstrap (subset Sass: solo los componentes en uso, ver `src/styles/bootstrap-custom.scss`)** + CSS propio (NO Tailwind). Deploy: Vercel → flyndme2.vercel.app (flyndme.vercel.app está caído, no usar).
 - **Backend**: Node + Express. Deploy: Render → flyndme-backend.onrender.com (keep-alive vía GitHub Actions cron */10).
 
 ## Proveedor de datos de vuelos
@@ -26,15 +26,15 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 
 ## Comandos
 - Tests backend: `cd backend && npm test` (~91 tests, sin red, con mocks).
-- Tests frontend: `cd frontend && npm test` (~57 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
+- Tests frontend: `cd frontend && npm test` (~59 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
 - Dev frontend: `cd frontend && npm run dev` · Build: `npm run build`.
 
 ## Estructura clave
 - `backend/services/`: travelpayoutsService.js (activo), serpapiService.js (verificación capa 2), mockFlightService.js (USE_MOCK=true). TtlCache, quota guard mensual, rate limiting.
-- `frontend/src/`: App.jsx (~1.350 líneas tras extraer componentes y podar imports muertos), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, ResultsPanels.jsx (incluye CostSplitCard), DestinationMap.jsx (mapa SVG con geodatos reales Natural Earth en europeGeo.js, regenerable con `frontend/scripts/build-map-geo.mjs`), hooks/ (useFocusTrap), utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css), cityImages.js, i18n EN/ES.
+- `frontend/src/`: App.jsx (~1.350 líneas tras extraer componentes y podar imports muertos), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, ResultsPanels.jsx (incluye CostSplitCard), DestinationMap.jsx (mapa SVG con geodatos reales Natural Earth en europeGeo.js, regenerable con `frontend/scripts/build-map-geo.mjs`), hooks/ (useFocusTrap), utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css, bootstrap-custom.scss = subset Sass de Bootstrap), CompareChart.jsx (pestaña Comparar = ranking de barras, ya no scatter), ConvergenceHero.jsx (firma del hero), cityImages.js, i18n EN/ES.
 
 ## Diseño vigente (tema Stitch)
-Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179, Plus Jakarta Sans. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos. **Modo oscuro completo** (familia navy/lavanda #131434/#1B1C40/#2C2D52, granate aclarado #FFB3B0 con texto tinta #16173B): toggle en header + `prefers-color-scheme`, anti-flash inline en index.html, localStorage `flyndme_theme`. Contraste AA en ambos temas (medido); un solo control de ordenación ("Más barato | Más equitativo" en WinnerCard).
+Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179. **Tipografía**: Plus Jakarta Sans (UI/cuerpo) + **Bricolage Grotesque** como display solo en el H1 del hero (`--font-display`). **Iconos**: `lucide-react` (set SVG coherente, `currentColor`) — NO emojis en la UI (quedan emojis solo en bloques i18n muertos no renderizados: testimonials/trustBadges/example). **Hero**: diagrama de convergencia (varios orígenes → punto de encuentro, `ConvergenceHero.jsx`, animado, reduced-motion). Precios con `tabular-nums`. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos. **Modo oscuro completo** (familia navy/lavanda #131434/#1B1C40/#2C2D52, granate aclarado #FFB3B0 con texto tinta #16173B): toggle en header + `prefers-color-scheme`, anti-flash inline en index.html, localStorage `flyndme_theme`. Contraste AA en ambos temas (medido); un solo control de ordenación ("Más barato | Más equitativo" en WinnerCard).
 
 ## Reglas duras
 1. **Nunca inventar precios ni fingir verificación.** Sin datos → sin resultados. No fabricar aeropuertos de escala.
@@ -53,7 +53,11 @@ Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buil
 ## Backlog (ordenado según el objetivo "producto redondo")
 Backlog técnico original VACÍO (capturas README, vite@8, SEO, analítica y promoción del precio verificado: todo hecho 16-jun). Quedan:
 1. **Vigilancias pasivas** (sin fecha): capa 2 `[serpapi-verify]` en logs de Render + cupo serpapi.com; primeras reservas de afiliado en el dashboard de Travelpayouts; y ahora **Vercel Analytics** (búsquedas y `book_click`) cuando haya tráfico real.
-2. **Candidatos de mejora abiertos** (de la pregunta "qué más mejorar" del 16-jun, ninguno pedido aún): recortar el CSS (se importa Bootstrap entero, 60 KB gzip); valorar verificar (capa 2) más allá del ganador, vigilando el cupo de SerpAPI.
+2. **Candidatos de mejora abiertos**: valorar verificar (capa 2) más allá del ganador, vigilando el cupo de SerpAPI; poda de CSS muerto en `App.css` (578 de 1.031 clases sin referencia en JSX tras la poda de widgets de junio — pendiente, requiere pasada con cuidado); más mejoras estéticas si se quiere (imágenes de ciudad con tratamiento editorial, microinteracciones del reveal de resultados, WinnerCard más celebratorio — del audit del 22-jun).
+
+Hecho (22-jun-2026): **tanda estética** (tras audit visual con capturas). **Hero v2 = firma de convergencia**: nuevo `ConvergenceHero.jsx` (varios orígenes MAD/LON/BER → un punto de encuentro, arcos granate animados con `prefers-reduced-motion`, sin precios inventados); hero a dos columnas (texto + diagrama), copy nueva en voz de usuario ("Where should you all meet?" / "¿Dónde quedáis todos?"), eyebrow redundante "✈ FlyndMe" eliminado. **Display font Bricolage Grotesque** solo en el H1 (`--font-display`, añadida a index.html junto a Jakarta). **Más granate**: acento del H1, eyebrow, orbs del hero retintados de azul/verde a granate/coral. **Iconos `lucide-react`**: los ~78 emojis de la UI sustituidos por iconos SVG coherentes (`currentColor`, regla `.lucide` para alineación inline); quedan emojis SOLO en i18n muerto no renderizado. **Precios `tabular-nums`** en WinnerCard/comparador/alternativas. 59/59 tests, build OK. Sin tocar datos/precios. Audit identificó además (no hecho): imágenes de ciudad editoriales, microinteracciones, WinnerCard más celebratorio.
+
+Hecho (21-jun-2026): **recorte de peso del frontend** (`181925b`): fuera el import muerto de `bootstrap.bundle.min.js` (no se usa ningún componente JS de Bootstrap — cero `data-bs-*`/API JS) y el `bootstrap.min.css` completo sustituido por `src/styles/bootstrap-custom.scss` (subset Sass: solo buttons/button-group/card/badge/alert/spinners/form-control/grid + utilidades planas exactas; añadida devDep `sass`). El loader SSR de tests stubea `.scss/.sass`. Resultado: **CSS 60,1→37,9 KB gzip (−37%), JS 113,6→91,6 KB gzip (−19%)**, ~44 KB menos en la ruta crítica. **Rediseño de la pestaña Comparar** (`2790ff5`): el scatter precio-vs-fairness (poco legible) sustituido por un ranking de barras horizontales ordenado de más barato a más caro (escala compartida), con la equidad CONCRETA ("cada uno paga €min–€max" + banda en la misma escala, precios reales `flights[].price`) y etiqueta humana en vez del score 0-100; eliminado el SVG del scatter y su CSS `cc-*`. HTML/CSS accesible, modo oscuro vía tokens del sistema. i18n EN+ES a mano, 59/59 tests. Ambos commits directo a main, **deploy verificado en prod por contenido** (chunk `CompareChart` nuevo con `cmp-row`/`cmp-spread`, scatter `cc-quad`/`scaleX` desaparecidos, Popper de Bootstrap fuera, i18n nueva servida). OJO: los hashes de bundle de Vercel difieren de los del build local (mismo contenido, distinto entorno) → verificar deploys por contenido, no por hash.
 
 Hecho (11-jun-2026): rediseño Stitch mergeado a main y rama borrada; Amadeus eliminado (código + variables Render); monetización completa y verificada en prod (buildAffiliateLink + CTA + marker activo, 6 tests); capa 2 SerpAPI implementada, desplegada y VERIFICADA en prod (badge ✓ confirmado por Diego con búsqueda real; fix aeropuertos reales porque Google Flights no acepta códigos de ciudad); UX tanda 1 (control de ordenación único, a11y AA, responsive 360px) y tanda 2 (modo oscuro Stitch completo, lista abierta al cambiar criterio, fix crash de favoritos) aprobadas por Diego.
 

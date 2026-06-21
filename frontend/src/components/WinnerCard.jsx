@@ -12,6 +12,7 @@ import { convertPrice } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
+import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2 } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
 
@@ -104,7 +105,7 @@ const WinnerCard = React.memo(function WinnerCard({
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
-          {isFav ? "❤️" : "🤍"}
+          {isFav ? <Heart size={18} fill="currentColor" aria-hidden="true" /> : <Heart size={18} aria-hidden="true" />}
         </button>
         {/* Savings + trip duration + countdown + vs last search chips */}
         <div className="wc-chips-overlay">
@@ -113,7 +114,7 @@ const WinnerCard = React.memo(function WinnerCard({
           {/* Algún origen usa precio de una fecha vecina (sin dato exacto) */}
           {dest.hasDateFallback && (
             <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
-              📅 {t("results.dateFallbackBadge")}
+              <Calendar size={13} aria-hidden="true" /> {t("results.dateFallbackBadge")}
             </span>
           )}
           {savingsPct > 5 && (
@@ -279,7 +280,7 @@ const WinnerCard = React.memo(function WinnerCard({
                     {finfo.dateFallback && (
                       <div className="wc-flight-meta" title={t("results.dateFallbackHint")}>
                         <span className="wc-flight-meta-item wc-flight-meta--stops">
-                          📅 {t("results.dateFallbackChip", { date: formatDate(effDep) })}{tripType === "roundtrip" && effRet ? ` → ${formatDate(effRet)}` : ""}
+                          <Calendar size={13} aria-hidden="true" /> {t("results.dateFallbackChip", { date: formatDate(effDep) })}{tripType === "roundtrip" && effRet ? ` → ${formatDate(effRet)}` : ""}
                         </span>
                       </div>
                     )}
@@ -290,7 +291,7 @@ const WinnerCard = React.memo(function WinnerCard({
                       </div>
                       <div className="wc-flight-arrow-wrap">
                         <div className="wc-flight-line" />
-                        <span className="wc-flight-plane">✈</span>
+                        <span className="wc-flight-plane"><Plane size={14} aria-hidden="true" /></span>
                         <div className="wc-flight-line" />
                       </div>
                       <div className="wc-flight-endpoint wc-flight-endpoint--right">
@@ -346,29 +347,29 @@ const WinnerCard = React.memo(function WinnerCard({
                       {offer?.link && (
                         <a href={offer.link} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
                           onClick={() => track("book_click", { provider: "travelpayouts", dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon">🎟️</span>
+                          <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
                         </a>
                       )}
                       {ssUrl && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta"
                           onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon">🔍</span>
+                          <span className="wc-cta-icon"><Search size={16} aria-hidden="true" /></span>
                           Skyscanner
                         </a>
                       )}
                       {gfUrl && (
                         <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--google"
                           onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon">✈</span>
+                          <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
                           Google Flights
                         </a>
                       )}
                       <button type="button" className="wc-cta wc-cta--copy" onClick={() => {
                         const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""}`;
                         copyText(txt);
-                      }} title={t("results.copyFlight")}>
-                        📋
+                      }} title={t("results.copyFlight")} aria-label={t("results.copyFlight")}>
+                        <Copy size={15} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -400,11 +401,11 @@ const WinnerCard = React.memo(function WinnerCard({
             {shareStatus === "ok" ? t("results.copied") : shareStatus === "saving" ? "…" : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
           </button>
           <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
-            <span className="wc-wa-icon">💬</span> WhatsApp
+            <span className="wc-wa-icon"><MessageCircle size={15} aria-hidden="true" /></span> WhatsApp
           </button>
           {onCopySearchLink && (
             <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink}>
-              🔗 {t("results.copySearchLink")}
+              <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}
             </button>
           )}
           <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>

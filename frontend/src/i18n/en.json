@@ -7,10 +7,12 @@
     "serverWaking": "Server waking up…"
   },
   "landing": {
-    "eyebrow": "✈ FlyndMe",
-    "title": "Find the cheapest place to meet your group",
-    "titleAccent": "your group",
-    "lead": "Enter each traveler's city and instantly discover where it's cheapest to meet. That simple.",
+    "eyebrow": "Many cities. One meeting point.",
+    "title": "Where should you all meet?",
+    "titleAccent": "you all",
+    "lead": "FlyndMe compares flights from everyone's city at once — and finds the cheapest place to reunite, fairly.",
+    "diagramAlt": "Flight paths from several origin cities converging on a single meeting point",
+    "diagramMeet": "Best meeting point",
     "cta": "Start searching",
     "chips": [
       "Multi-origin",

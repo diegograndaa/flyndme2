@@ -1,6 +1,7 @@
 import React from "react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
+import { Check, ArrowUp, ArrowDown, Info } from "lucide-react";
 
 // Renders a trust chip for the winning destination based on whether the backend
 // successfully re-priced its offers via Amadeus Flight Offers Price.
@@ -16,11 +17,11 @@ export default function VerificationBadge({ dest }) {
   let kind, icon, text, hint;
   if (status === "verified") {
     kind = "verified";
-    icon = "✓";
+    icon = <Check size={13} aria-hidden="true" />;
     text = t("verifyBadge.confirmed");
   } else if (status === "changed") {
     kind = "changed";
-    icon = pct > 0 ? "↑" : "↓";
+    icon = pct > 0 ? <ArrowUp size={13} aria-hidden="true" /> : <ArrowDown size={13} aria-hidden="true" />;
     const sign = pct > 0 ? "+" : "";
     text = t("verifyBadge.changed", { pct: `${sign}${pct.toFixed(0)}%` });
     // Transparencia: el precio mostrado YA es el verificado; enseñamos de cuánto
@@ -32,7 +33,7 @@ export default function VerificationBadge({ dest }) {
   } else {
     // partial / failed / timeout → low confidence
     kind = "indicative";
-    icon = "ℹ";
+    icon = <Info size={13} aria-hidden="true" />;
     text = t("verifyBadge.indicative");
     hint = t("verifyBadge.indicativeHint");
   }

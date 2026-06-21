@@ -27,6 +27,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
+import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -939,7 +940,7 @@ export default function App() {
               <button type="button" className="fm-fav-header-btn" onClick={() => setShowFavPanel((v) => !v)}
                 title={t("favorites.title")} aria-label={`${t("favorites.title")} (${favs.length})`}
                 aria-expanded={showFavPanel}>
-                <span aria-hidden="true">❤️</span> <span className="fm-fav-header-count">{favs.length}</span>
+                <Heart size={16} fill="currentColor" aria-hidden="true" /> <span className="fm-fav-header-count">{favs.length}</span>
               </button>
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
@@ -961,7 +962,7 @@ export default function App() {
           <div className="fm-fav-panel" ref={favPanelTrapRef} role="dialog" aria-modal="true" aria-label={t("favorites.title")}>
             <div className="fm-fav-panel-header">
               <span className="fm-fav-panel-title">{t("favorites.title")}</span>
-              <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)} aria-label={t("a11y.close")}>✕</button>
+              <button type="button" className="fm-fav-panel-close" onClick={() => setShowFavPanel(false)} aria-label={t("a11y.close")}><X size={18} aria-hidden="true" /></button>
             </div>
             {favs.length === 0 ? (
               <div className="fm-fav-panel-empty">{t("favorites.empty")}</div>
@@ -976,7 +977,7 @@ export default function App() {
                     </div>
                     <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: f.city || f.code })}
-                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}>✕</button>
+                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })} aria-label={t("a11y.close")}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
               </div>
@@ -1066,7 +1067,7 @@ export default function App() {
           {/* Aviso de resultados parciales (la búsqueda agotó su presupuesto de tiempo) */}
           {partialResults && (
             <div className="alert alert-warning py-2 mb-3" role="status">
-              ⏱ {t("results.partialNotice")}
+              <Clock size={14} aria-hidden="true" /> {t("results.partialNotice")}
             </div>
           )}
 
@@ -1088,7 +1089,7 @@ export default function App() {
           {/* Sticky results mini-bar */}
           <div className="fm-sticky-bar">
             <div className="fm-sticky-inner">
-              <span className="fm-sticky-dest">✈ {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
+              <span className="fm-sticky-dest"><Plane size={14} aria-hidden="true" /> {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
               <span className="fm-sticky-price">{currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency)}/pp</span>
               <span className="fm-sticky-origins">{cleanOrigins.join(" · ")}</span>
               <div className="fm-currency-switcher" role="group" aria-label={t("search.currencyLabel")}>
@@ -1161,12 +1162,12 @@ export default function App() {
               <>
                 <span className="fm-stats-sep" aria-hidden="true">·</span>
                 <span className="fm-stats-item fm-stats-item--time">
-                  ⏱ {searchDuration}s
+                  <Clock size={13} aria-hidden="true" /> {searchDuration}s
                 </span>
               </>
             )}
             <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
-              📥 CSV
+              <Download size={14} aria-hidden="true" /> CSV
             </button>
           </div>
 
@@ -1177,7 +1178,7 @@ export default function App() {
             const saved = maxTotal - bestDestination.totalCostEUR;
             if (saved > 10) return (
               <div className="fm-group-savings view-enter">
-                <span className="fm-group-savings-icon">💰</span>
+                <span className="fm-group-savings-icon"><Wallet size={16} aria-hidden="true" /></span>
                 <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
               </div>
             );
@@ -1213,19 +1214,19 @@ export default function App() {
                 className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "map"} aria-controls="rv-panel-map"
                 onClick={() => { setShowAlt(showAlt === "map" ? false : "map"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                🗺 {t("results.showMap")}
+                <MapIcon size={15} aria-hidden="true" /> {t("results.showMap")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "compare"} aria-controls="rv-panel-compare"
                 onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                📊 {t("results.showCompare")}
+                <BarChart3 size={15} aria-hidden="true" /> {t("results.showCompare")}
               </button>
               <button type="button"
                 className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "list"} aria-controls="rv-panel-list"
                 onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                📋 {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
+                <List size={15} aria-hidden="true" /> {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
               </button>
             </div>
           )}
@@ -1330,7 +1331,7 @@ export default function App() {
               <button className="btn btn-sm btn-light fw-semibold" onClick={handleInstall}>
                 {t("pwa.install")}
               </button>
-              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)} aria-label={t("a11y.close")}>✕</button>
+              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)} aria-label={t("a11y.close")}><X size={16} aria-hidden="true" /></button>
             </div>
           </div>
         </div>

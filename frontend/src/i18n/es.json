@@ -7,10 +7,12 @@
     "serverWaking": "Servidor iniciándose…"
   },
   "landing": {
-    "eyebrow": "✈ FlyndMe",
-    "title": "Encuentra el destino más barato para tu grupo",
-    "titleAccent": "tu grupo",
-    "lead": "Introduce la ciudad de cada viajero y descubre al instante dónde es más barato reunirse. Así de simple.",
+    "eyebrow": "Muchas ciudades. Un punto de encuentro.",
+    "title": "¿Dónde quedáis todos?",
+    "titleAccent": "todos",
+    "lead": "FlyndMe compara los vuelos desde la ciudad de cada uno y encuentra el lugar más barato — y justo — para reuniros.",
+    "diagramAlt": "Trayectos de vuelo desde varias ciudades de origen convergiendo en un único punto de encuentro",
+    "diagramMeet": "Mejor punto de encuentro",
     "cta": "Empezar búsqueda",
     "chips": [
       "Multi-origen",

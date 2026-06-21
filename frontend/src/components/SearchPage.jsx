@@ -3,6 +3,7 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { Check, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, weekdayOf, todayISO, countryFlag,
@@ -192,17 +193,17 @@ const SearchPage = React.memo(function SearchPage({
           {!loading && (
             <div className="sf-completion-strip">
               <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? "✓" : "1"}</span>
+                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? <Check size={14} /> : "1"}</span>
                 <span className="sf-completion-label">{t("search.completionOrigins")}</span>
               </div>
               <div className="sf-completion-line" />
               <div className={`sf-completion-step${departureDate ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{departureDate ? "✓" : "2"}</span>
+                <span className="sf-completion-icon">{departureDate ? <Check size={14} /> : "2"}</span>
                 <span className="sf-completion-label">{t("search.completionDates")}</span>
               </div>
               <div className="sf-completion-line" />
               <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? "✓" : "3"}</span>
+                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? <Check size={14} /> : "3"}</span>
                 <span className="sf-completion-label">{t("search.completionReady")}</span>
               </div>
             </div>
@@ -230,7 +231,7 @@ const SearchPage = React.memo(function SearchPage({
             {/* Empty state prompt */}
             {origins.length === 1 && !origins[0].trim() && !loading && (
               <div className="sf-empty-state">
-                <div className="sf-empty-icon">🗺️</div>
+                <div className="sf-empty-icon"><MapIcon size={28} aria-hidden="true" /></div>
                 <div className="sf-empty-text">{t("search.emptyHint")}</div>
               </div>
             )}
@@ -259,9 +260,9 @@ const SearchPage = React.memo(function SearchPage({
                       setDragIdx(-1); setDragOver(-1);
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
-                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>}
+                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true"><GripVertical size={14} /></span>}
                     <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
-                      <span className="sf-badge-icon">👤</span>{idx + 1}
+                      <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
                       {/* Typing placeholder animation */}
@@ -348,7 +349,7 @@ const SearchPage = React.memo(function SearchPage({
                             [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
                             [p[idx], p[idx - 1]] = [p[idx - 1], p[idx]];
                             setOrigins(o); setPassengers(p); setActiveIdx(idx - 1);
-                          }}>↑</button>
+                          }} aria-hidden="false"><ArrowUp size={15} /></button>
                       )}
                       {origins.length > 1 && idx < origins.length - 1 && (
                         <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={t("search.moveDown")}
@@ -357,7 +358,7 @@ const SearchPage = React.memo(function SearchPage({
                             [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
                             [p[idx], p[idx + 1]] = [p[idx + 1], p[idx]];
                             setOrigins(o); setPassengers(p); setActiveIdx(idx + 1);
-                          }}>↓</button>
+                          }}><ArrowDown size={15} /></button>
                       )}
                     </div>
                     {origins.length > 1 && (
@@ -374,7 +375,7 @@ const SearchPage = React.memo(function SearchPage({
                         disabled={loading}
                         title={t("search.removeTitle")}
                         aria-label={t("search.removeTitle")}
-                      >✕</button>
+                      ><X size={16} /></button>
                     )}
                   </div>
                 );
@@ -447,7 +448,7 @@ const SearchPage = React.memo(function SearchPage({
                 <div className="sf-date-warnings mt-2">
                   {dateWarnings.map((w) => (
                     <div key={w.key} className={`sf-date-warn sf-date-warn--${w.type}`}>
-                      <span className="sf-date-warn-icon">{w.type === "error" ? "⚠️" : w.type === "warn" ? "⚡" : "💡"}</span>
+                      <span className="sf-date-warn-icon">{w.type === "error" ? <AlertTriangle size={15} /> : w.type === "warn" ? <Zap size={15} /> : <Lightbulb size={15} />}</span>
                       <span>{w.text}</span>
                     </div>
                   ))}
@@ -687,7 +688,7 @@ const SearchPage = React.memo(function SearchPage({
                 <div className="sf-summary-meta">
                   {(() => {
                     const totalPax = origins.filter(o => o.trim()).reduce((s, o, i) => s + (passengers[i] || 1), 0);
-                    return totalPax > 1 ? <span className="sf-summary-pax-total">👥 {totalPax} {t("search.paxLabel")}</span> : null;
+                    return totalPax > 1 ? <span className="sf-summary-pax-total"><Users size={14} aria-hidden="true" /> {totalPax} {t("search.paxLabel")}</span> : null;
                   })()}
                   {departureDate && <span>{formatDate(departureDate)}</span>}
                   {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
@@ -726,7 +727,7 @@ const SearchPage = React.memo(function SearchPage({
             </button>
           </div>
           <div className="sf-picker-hint">
-            <span className="sf-picker-hint-icon">👆</span>
+            <span className="sf-picker-hint-icon"><Hand size={15} aria-hidden="true" /></span>
             {t("search.airportsHint", { n: safeIdx + 1 })}
           </div>
           <div className="sf-airport-list">
@@ -741,7 +742,7 @@ const SearchPage = React.memo(function SearchPage({
                   <span className="sf-airport-code">{a.code}</span>
                   <span className="sf-airport-city">{a.city}</span>
                   <span className="sf-airport-country">{a.country}</span>
-                  {isSelected && <span className="sf-airport-check">✓</span>}
+                  {isSelected && <span className="sf-airport-check"><Check size={14} /></span>}
                 </div>
               );
             })}

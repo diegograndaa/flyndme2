@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { scrollBehavior } from "../utils/helpers";
+import { Sun, Moon, ArrowUp, Check, X, Info, Lightbulb } from "lucide-react";
 
 export const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle }) {
   const { t } = useI18n();
@@ -19,7 +20,7 @@ export const ThemeToggle = React.memo(function ThemeToggle({ resolved, toggle })
       aria-label={t("theme.dark")}
       title={isDark ? t("theme.light") : t("theme.dark")}
     >
-      <span aria-hidden="true">{isDark ? "☀️" : "🌙"}</span>
+      <span aria-hidden="true">{isDark ? <Sun size={18} /> : <Moon size={18} />}</span>
     </button>
   );
 });
@@ -58,7 +59,7 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
           strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
           style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset .1s" }} />
       </svg>
-      <span className="scroll-top-arrow">↑</span>
+      <span className="scroll-top-arrow"><ArrowUp size={18} aria-hidden="true" /></span>
     </button>
   );
 });
@@ -95,7 +96,7 @@ export const Toast = React.memo(function Toast({ message, type = "success", onDo
   return (
     <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`} role="status">
       <span className="fm-toast-icon" aria-hidden="true">
-        {type === "success" ? "✓" : type === "error" ? "✗" : "ℹ"}
+        {type === "success" ? <Check size={16} /> : type === "error" ? <X size={16} /> : <Info size={16} />}
       </span>
       {message}
     </div>
@@ -124,7 +125,7 @@ export const LoadingTips = React.memo(function LoadingTips() {
 
   return (
     <div className={`loading-tip${fade ? " loading-tip--visible" : ""}`}>
-      <span className="loading-tip-icon">💡</span>
+      <span className="loading-tip-icon"><Lightbulb size={16} aria-hidden="true" /></span>
       <span className="loading-tip-text">{tips[idx % tips.length]}</span>
     </div>
   );
@@ -163,7 +164,7 @@ export const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] 
         {steps.map((label, i) => (
           <div key={i} className={`sk-step${i <= activeStep ? " sk-step--active" : ""}${i < activeStep ? " sk-step--done" : ""}`}>
             <div className="sk-step-dot">
-              {i < activeStep ? "✓" : i + 1}
+              {i < activeStep ? <Check size={14} /> : i + 1}
             </div>
             <span className="sk-step-label">{label}</span>
             {i < steps.length - 1 && <div className="sk-step-line" />}

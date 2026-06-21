@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { X, Frown } from "lucide-react";
 
 // Esqueleto de carga de la vista de resultados
 export function ResultsSkeleton() {
@@ -54,7 +55,7 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
       <div className="fm-shortcuts-modal" ref={trapRef} role="dialog" aria-modal="true" aria-label={t("shortcuts.title")} onClick={(e) => e.stopPropagation()}>
         <div className="fm-shortcuts-header">
           <span className="fm-shortcuts-title">{t("shortcuts.title")}</span>
-          <button type="button" className="fm-shortcuts-close" onClick={onClose} aria-label={t("a11y.close")}>✕</button>
+          <button type="button" className="fm-shortcuts-close" onClick={onClose} aria-label={t("a11y.close")}><X size={18} aria-hidden="true" /></button>
         </div>
         <div className="fm-shortcuts-list">
           {shortcuts.map(s => (
@@ -100,7 +101,7 @@ export const FriendlyError = React.memo(function FriendlyError({ message, onRetr
   const { t } = useI18n();
   return (
     <div className="fm-error-state">
-      <div className="fm-error-icon">😕</div>
+      <div className="fm-error-icon"><Frown size={32} aria-hidden="true" /></div>
       <h3 className="fm-error-title">{t("errors.friendlyTitle")}</h3>
       <p className="fm-error-message">{message}</p>
       {onRetry && (

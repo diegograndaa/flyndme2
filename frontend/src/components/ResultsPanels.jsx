@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, getBaseUrl, countryFlag, fairnessColor } from "../utils/helpers";
+import { BedDouble, Target, Map as MapIcon, History, Link2, Check } from "lucide-react";
 import { convertPrice } from "../utils/resultsLogic";
 import { getCityImage } from "../utils/cityImages";
 
@@ -84,15 +85,15 @@ export function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
       <div className="fm-plan-trip-subtitle">{t("results.planTripSub", { city })}</div>
       <div className="fm-plan-trip-links">
         <a href={bookingUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🏨</span>
+          <span className="fm-plan-trip-link-icon"><BedDouble size={18} aria-hidden="true" /></span>
           <span>{t("results.planHotels")}</span>
         </a>
         <a href={activitiesUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🎯</span>
+          <span className="fm-plan-trip-link-icon"><Target size={18} aria-hidden="true" /></span>
           <span>{t("results.planActivities")}</span>
         </a>
         <a href={mapsUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
-          <span className="fm-plan-trip-link-icon">🗺️</span>
+          <span className="fm-plan-trip-link-icon"><MapIcon size={18} aria-hidden="true" /></span>
           <span>{t("results.planMap")}</span>
         </a>
       </div>
@@ -108,7 +109,7 @@ export function SearchHistoryPanel({ searches, onLoad, onClear, t }) {
     <div className="fm-history view-enter">
       <button type="button" className="fm-history-toggle" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
         <span className="fm-history-toggle-left">
-          <span className="fm-history-icon">🕘</span>
+          <span className="fm-history-icon"><History size={16} aria-hidden="true" /></span>
           <span className="fm-history-title">{t("history.title")}</span>
           <span className="fm-history-count">{searches.length}</span>
         </span>
@@ -181,10 +182,10 @@ export function ResultsShareLink({ origins, departureDate, returnDate, tripType,
 
   return (
     <div className="fm-sharelink view-enter">
-      <span className="fm-sharelink-icon">🔗</span>
+      <span className="fm-sharelink-icon"><Link2 size={16} aria-hidden="true" /></span>
       <span className="fm-sharelink-text">{t("shareLink.label")}</span>
       <button type="button" className="fm-sharelink-btn" onClick={handleCopy}>
-        {copied ? "✓ " + t("shareLink.copied") : t("shareLink.copy")}
+        {copied ? <><Check size={14} aria-hidden="true" /> {t("shareLink.copied")}</> : t("shareLink.copy")}
       </button>
     </div>
   );
