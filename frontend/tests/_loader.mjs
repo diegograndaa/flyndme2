@@ -76,8 +76,8 @@ const jsxPlugin = () => ({
 });
 
 export async function resolve(specifier, context, nextResolve) {
-  // CSS (propio o de bootstrap) → módulo vacío
-  if (specifier.endsWith(".css")) {
+  // CSS/SCSS (propio o de bootstrap) → módulo vacío
+  if (/\.(css|scss|sass)$/.test(specifier)) {
     return { url: "data:text/css-stub," + encodeURIComponent(specifier), shortCircuit: true };
   }
   // Imports relativos sin extensión (estilo Vite) → probar .jsx / .js

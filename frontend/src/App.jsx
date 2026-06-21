@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "./styles/bootstrap-custom.scss";
 import "./App.css";
 import "./styles/theme-stitch.css";
 import FlightResults from "./components/FlightResults";
