@@ -2783,42 +2783,177 @@ body {
 [data-theme="dark"] .dm-tooltip-price { color: #006C48; }
 [data-theme="dark"] .dm-tooltip-fairness { color: #45466E; }
 
-/* ── Compare chart ── */
+/* ── Compare: ranking de barras horizontales ── */
+/* Usa los tokens del sistema (--white, --navy, --slate-*, --primary, --fair-*),
+   que se redefinen en [data-theme="dark"], así que el modo oscuro funciona solo. */
 
-.cc-wrap {
+.cmp {
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: 20px;
-  overflow: hidden;
 }
-.cc-title {
+.cmp-head { margin-bottom: 16px; }
+.cmp-title {
   font-size: 16px;
   font-weight: 800;
   color: var(--navy);
-  margin: 0 0 12px;
+  margin: 0 0 4px;
 }
-.cc-container {
+.cmp-sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--slate-500);
+  margin: 0;
+}
+
+.cmp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cmp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--slate-200);
+  background: var(--bg);
+}
+.cmp-row--best {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}
+.cmp-rank {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--slate-700);
+  background: var(--slate-100);
+}
+.cmp-row--best .cmp-rank {
+  color: #fff;
+  background: var(--primary);
+}
+[data-theme="dark"] .cmp-row--best .cmp-rank { color: var(--white); }
+
+.cmp-main { flex: 1 1 auto; min-width: 0; }
+
+.cmp-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-bottom: 8px;
+}
+.cmp-city { font-size: 15px; font-weight: 800; color: var(--navy); }
+.cmp-code {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--slate-500);
+}
+.cmp-best {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+[data-theme="dark"] .cmp-best { color: var(--primary-deep); }
+.cmp-fair {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+}
+.cmp-fair-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Gráfico: barra (precio) + etiqueta + banda de reparto, escala compartida */
+.cmp-graph {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+}
+.cmp-bar {
+  grid-column: 1;
   position: relative;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--slate-100);
+  overflow: hidden;
 }
-.cc-svg {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
+.cmp-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 999px;
+  min-width: 3px;
+  transition: width .5s ease;
 }
-/* Modo oscuro del scatter: los atributos SVG del JSX son el tema claro y
-   estas reglas CSS (que ganan a los presentation attributes) los pisan */
-[data-theme="dark"] .cc-quad-rect { opacity: .1; }
-[data-theme="dark"] .cc-axis { stroke: #3F4066; }
-[data-theme="dark"] .cc-grid-line { stroke: #34355C; }
-[data-theme="dark"] .cc-axis-label,
-[data-theme="dark"] .cc-grid-num { fill: #9B9AC6; }
-[data-theme="dark"] .cc-point-name { fill: #E1E0FF; }
-[data-theme="dark"] .cc-quad-label { opacity: .85; }
-[data-theme="dark"] .cc-quad-label--good { fill: #52DEA2; }
-[data-theme="dark"] .cc-quad-label--exp { fill: #FDBA74; }
-[data-theme="dark"] .cc-quad-label--cheap { fill: #FBBF24; }
-[data-theme="dark"] .cc-quad-label--bad { fill: #FFB4AB; }
+.cmp-price {
+  grid-column: 2;
+  text-align: right;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy);
+  white-space: nowrap;
+}
+.cmp-price-u {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--slate-500);
+  margin-top: -1px;
+}
+.cmp-spread {
+  grid-column: 1;
+  position: relative;
+  height: 6px;
+}
+.cmp-spread-rail {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 999px;
+  opacity: .35;
+  min-width: 2px;
+}
+.cmp-spread-dot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.cmp-row--best .cmp-spread-dot { box-shadow: 0 0 0 2px var(--primary-50); }
+
+.cmp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--slate-500);
+}
+.cmp-meta-total { font-weight: 700; color: var(--slate-700); }
 
 /* ── Skeleton loading ──────────────────────────────────────── */
 

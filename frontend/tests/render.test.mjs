@@ -82,7 +82,7 @@ test("render: CompareChart y DestinationMap con fixtures", async () => {
   const { default: CompareChart } = await import("../src/components/CompareChart.jsx");
   const { default: DestinationMap } = await import("../src/components/DestinationMap.jsx");
   const flights = [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS", totalCostEUR: 280, fairnessScore: 60 }];
-  assert.ok(renderWithI18n(React.createElement(CompareChart, { flights, bestDestination: FIXTURE_DEST })).includes("svg"));
+  assert.ok(renderWithI18n(React.createElement(CompareChart, { flights, bestDestination: FIXTURE_DEST })).includes("cmp-row"));
   assert.ok(renderWithI18n(React.createElement(DestinationMap, { flights, bestDestination: FIXTURE_DEST, origins: ["MAD", "LON"] })).includes("svg"));
 });
 

@@ -428,13 +428,12 @@
     "ariaLabel": "Mapa de destinos europeos con precios de vuelos"
   },
   "compare": {
-    "title": "Precio vs Equidad",
-    "priceAxis": "Precio medio/persona",
-    "fairnessAxis": "Equidad",
-    "cheapFair": "Barato y justo",
-    "cheapUnfair": "Barato pero desigual",
-    "expFair": "Caro pero justo",
-    "expUnfair": "Caro y desigual"
+    "title": "Destinos comparados",
+    "subtitle": "Ordenados de más barato a más caro. Cada barra es el precio medio por persona; debajo, lo que paga realmente cada viajero.",
+    "perPerson": "por persona",
+    "eachPays": "Cada uno paga {{min}}–{{max}}",
+    "group": "grupo {{total}}",
+    "best": "Mejor"
   },
   "social": {
     "counter": "{{n}} grupos han buscado hoy",

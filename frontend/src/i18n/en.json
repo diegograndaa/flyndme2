@@ -428,13 +428,12 @@
     "ariaLabel": "Map of European destinations with flight prices"
   },
   "compare": {
-    "title": "Price vs Fairness",
-    "priceAxis": "Avg. price per person",
-    "fairnessAxis": "Fairness score",
-    "cheapFair": "Cheap & fair",
-    "cheapUnfair": "Cheap but uneven",
-    "expFair": "Pricey but fair",
-    "expUnfair": "Pricey & uneven"
+    "title": "Destinations compared",
+    "subtitle": "Sorted cheapest first. Each bar is the average price per person; below it, the range each traveler actually pays.",
+    "perPerson": "per person",
+    "eachPays": "Each pays {{min}}–{{max}}",
+    "group": "group {{total}}",
+    "best": "Best"
   },
   "social": {
     "counter": "{{n}} groups have searched today",
