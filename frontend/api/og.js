@@ -1,6 +1,6 @@
 // Vercel Edge function: dynamic Open Graph image for shared FlyndMe results.
 // Renders a 1200x630 card from query params so a shared link previews the actual
-// result ("Meet in Paris · 169 € per person") in WhatsApp/Twitter/etc.
+// result ("Meet in Paris · 169 EUR per person") in WhatsApp/Twitter/etc.
 //
 // The card tree is built WITHOUT JSX (plain element objects) so the exact same
 // builder can be rendered to a PNG locally for visual QA, no transpile needed.
@@ -74,10 +74,13 @@ async function loadFont(origin) {
 export default async function handler(req) {
   try {
     const { searchParams, origin } = new URL(req.url);
-    // El subset "latin" de la fuente no incluye el glifo € (U+20AC) y el runtime
-    // Edge no tiene fallback (en Node sí, por eso en local se veía bien) → el €
-    // salía como tofu. Renderizamos "EUR": "€169"/"169 €" → "169 EUR".
-    const eur = (s) => String(s || "").replace(/€\s*(\d[\d.,]*)/g, "$1 EUR").replace(/€/g, "EUR").trim();
+    // El subset "latin" de la fuente no incluye el glifo EUR (U+20AC) y el runtime
+    // Edge no tiene fallback (en Node sí, por eso en local se veía bien) → el EUR
+    // salía como tofu. Renderizamos "EUR": "EUR169"/"169 EUR" → "169 EUR".
+    const E = String.fromCharCode(0x20AC); // euro built at runtime: a literal
+    // euro sign in the source was mangled by the Edge bundler so the regex
+    // never matched. Keep the source pure ASCII.
+    const eur = (s) => { s = String(s || ""); return s.indexOf(E) < 0 ? s : (s.split(E).join("").replace(/\s+/g, " ").trim() + " EUR"); };
     const data = {
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
       pp: eur(searchParams.get("pp")).slice(0, 24),
@@ -86,7 +89,7 @@ export default async function handler(req) {
       n: (searchParams.get("n") || "").slice(0, 4),
     };
     const font = await loadFont(origin);
-    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur1" } };
+    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur3" } };
     if (font) opts.fonts = [{ name: "Jakarta", data: font, weight: 700, style: "normal" }];
     return new ImageResponse(buildCard(data), opts);
   } catch (e) {
