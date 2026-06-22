@@ -288,7 +288,7 @@ body {
   font-weight: 500;
 }
 /* Header compacto en móvil: a 360px el header desbordaba 38px (medido) */
-@media (max-width: 576px) {
+@media (max-width: 600px) {
   .app-logo-sub { display: none; }
 }
 @media (max-width: 480px) {
@@ -647,7 +647,7 @@ body {
   opacity: .85;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 600px) {
   .lp-example-card { flex-direction: column; padding: 24px 20px; }
   .lp-example-arrow { transform: rotate(90deg); }
 }
@@ -669,7 +669,7 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .lp-usecases-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {
@@ -1955,7 +1955,7 @@ body {
   display: none;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .sf-pick-btn {
     display: inline-flex;
   }
@@ -2405,7 +2405,7 @@ body {
 
 /* ── Responsive ──────────────────────────────────────────────── */
 
-@media (max-width: 576px) {
+@media (max-width: 600px) {
   .wc-dest-code { font-size: 30px; }
   .wc-body      { padding: 20px 16px 16px; }
   .wc-flight-code { font-size: 15px; }
@@ -3134,7 +3134,7 @@ body {
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
-@media (max-width: 640px) {
+@media (max-width: 600px) {
   .sk-alts { grid-template-columns: 1fr; }
   .sk-step-label { font-size: 11px; }
   .sk-step-line { width: 20px; }
@@ -3686,7 +3686,7 @@ html {
   margin-top: 16px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .sf-submit-wrap {
     position: sticky;
     bottom: 0;
@@ -5846,7 +5846,7 @@ html {
 
 /* ── Responsive adjustments for trip summary ───────────────── */
 
-@media (max-width: 576px) {
+@media (max-width: 600px) {
   .wc-trip-summary {
     flex-wrap: wrap;
     gap: 10px;
@@ -6348,14 +6348,14 @@ html {
 [data-theme="dark"] .lp-testimonial-text { color: #C8C7F0; }
 [data-theme="dark"] .lp-testimonial-name { color: #E1E0FF; }
 [data-theme="dark"] .lp-testimonial-origin { color: #9B9AC6; }
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .lp-testimonials-grid {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 0 16px;
   }
 }
-@media (min-width: 769px) and (max-width: 960px) {
+@media (min-width: 768px) and (max-width: 960px) {
   .lp-testimonials-grid {
     grid-template-columns: repeat(2, 1fr);
   }
