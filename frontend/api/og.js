@@ -74,11 +74,15 @@ async function loadFont(origin) {
 export default async function handler(req) {
   try {
     const { searchParams, origin } = new URL(req.url);
+    // El subset "latin" de la fuente no incluye el glifo € (U+20AC) y el runtime
+    // Edge no tiene fallback (en Node sí, por eso en local se veía bien) → el €
+    // salía como tofu. Renderizamos "EUR": "€169"/"169 €" → "169 EUR".
+    const eur = (s) => String(s || "").replace(/€\s*(\d[\d.,]*)/g, "$1 EUR").replace(/€/g, "EUR").trim();
     const data = {
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
-      pp: (searchParams.get("pp") || "").slice(0, 20),
+      pp: eur(searchParams.get("pp")).slice(0, 24),
       from: (searchParams.get("from") || "").slice(0, 80),
-      total: (searchParams.get("total") || "").slice(0, 20),
+      total: eur(searchParams.get("total")).slice(0, 24),
       n: (searchParams.get("n") || "").slice(0, 4),
     };
     const font = await loadFont(origin);
