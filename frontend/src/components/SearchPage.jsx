@@ -750,6 +750,23 @@ const SearchPage = React.memo(function SearchPage({
             })}
             {!filtered.length && <div className="text-center small" style={{ color: "var(--slate-400)", padding: "16px 0" }}>{t("search.noMatches")}</div>}
           </div>
+          {/* Guía rápida (solo desktop): da propósito a la columna cuando la
+              lista de aeropuertos se filtra a pocos resultados. El CSS la oculta
+              en móvil (donde la aside es un drawer). */}
+          <div className="sf-aside-guide">
+            <div className="sf-aside-guide-title">{t("search.asideGuideTitle")}</div>
+            <ol className="sf-aside-guide-list">
+              {(() => {
+                const gs = t("search.asideGuideSteps");
+                return Array.isArray(gs) ? gs.map((s, i) => (
+                  <li key={i} className="sf-aside-guide-step">
+                    <span className="sf-aside-guide-num">{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                )) : null;
+              })()}
+            </ol>
+          </div>
         </aside>
       </div>
     </div>

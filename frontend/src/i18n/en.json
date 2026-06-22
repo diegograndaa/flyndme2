@@ -204,6 +204,8 @@
     "destReset": "Reset to all",
     "airportsTitle": "Pick an airport",
     "airportsHint": "Select for traveler {{n}}",
+    "asideGuideTitle": "In 3 steps",
+    "asideGuideSteps": ["Add each departure city", "Compare fares & dates", "Share & book together"],
     "noMatches": "No matches",
     "pickAirport": "Pick from list",
     "closeDrawer": "Done",

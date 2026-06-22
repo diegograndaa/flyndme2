@@ -204,6 +204,8 @@
     "destReset": "Restaurar todos",
     "airportsTitle": "Elige un aeropuerto",
     "airportsHint": "Selecciona para el viajero {{n}}",
+    "asideGuideTitle": "En 3 pasos",
+    "asideGuideSteps": ["Añade cada ciudad de salida", "Compara precios y fechas", "Comparte y reservad juntos"],
     "noMatches": "Sin coincidencias",
     "pickAirport": "Elegir de la lista",
     "closeDrawer": "Listo",
