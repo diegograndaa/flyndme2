@@ -74,22 +74,12 @@ async function loadFont(origin) {
 export default async function handler(req) {
   try {
     const { searchParams, origin } = new URL(req.url);
-    // El subset "latin" de la fuente no incluye el glifo EUR (U+20AC) y el runtime
-    // Edge no tiene fallback (en Node sí, por eso en local se veía bien) → el EUR
-    // salía como tofu. Renderizamos "EUR": "EUR169"/"169 EUR" → "169 EUR".
-    const E = String.fromCharCode(0x20AC); // euro built at runtime: a literal
-    // euro sign in the source was mangled by the Edge bundler so the regex
-    // never matched. Keep the source pure ASCII.
+    // The bundled font subset has no euro glyph (U+20AC) and the Edge runtime
+    // has no fallback (Node does, so it looked fine locally), so a euro sign
+    // rendered as tofu. Render "EUR" instead. Euro built via fromCharCode so the
+    // source stays pure ASCII. "EUR169"/"169 EUR" -> "169 EUR".
+    const E = String.fromCharCode(0x20AC);
     const eur = (s) => { s = String(s || ""); return s.indexOf(E) < 0 ? s : (s.split(E).join("").replace(/\s+/g, " ").trim() + " EUR"); };
-    if (searchParams.get("debug") === "1") {
-      const raw = searchParams.get("pp") || "";
-      const font0 = await loadFont(origin);
-      return new Response(JSON.stringify({
-        raw, codes: [...raw].map((c) => c.codePointAt(0)),
-        Ecode: E.codePointAt(0), idx: raw.indexOf(E), eur: eur(raw),
-        fontBytes: font0 ? font0.byteLength : null,
-      }), { headers: { "content-type": "application/json", "x-og-version": "eur4" } });
-    }
     const data = {
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
       pp: eur(searchParams.get("pp")).slice(0, 24),
@@ -98,7 +88,7 @@ export default async function handler(req) {
       n: (searchParams.get("n") || "").slice(0, 4),
     };
     const font = await loadFont(origin);
-    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur4" } };
+    const opts = { width: 1200, height: 630 };
     if (font) opts.fonts = [{ name: "Jakarta", data: font, weight: 700, style: "normal" }];
     return new ImageResponse(buildCard(data), opts);
   } catch (e) {
