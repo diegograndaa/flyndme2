@@ -140,9 +140,7 @@
 [data-theme="dark"] .lp-card,
 [data-theme="dark"] .lp-faq-item,
 [data-theme="dark"] .lp-usecase-card,
-[data-theme="dark"] .lp-example-card,
-[data-theme="dark"] .wc-card,
-[data-theme="dark"] .alt-card {
+[data-theme="dark"] .wc-card {
   background: #1B1C40;
   border-color: #2C2D52;
 }
@@ -198,11 +196,6 @@
   background: var(--primary-light);
   border-color: var(--primary);
   color: var(--primary);
-}
-
-[data-theme="dark"] .fm-celebrate {
-  background: linear-gradient(135deg, #064E3B 0%, #065F46 100%);
-  border-color: #059669;
 }
 
 [data-theme="dark"] .pwa-banner {
@@ -361,17 +354,6 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.btn-lg-fm {
-  padding: 16px 36px;
-  font-size: 16px;
-  border-radius: var(--radius-md);
-}
-.btn-sm-fm {
-  padding: 8px 14px;
-  font-size: 13px;
-  border-radius: var(--radius-xs);
-}
-
 .fm-card {
   background: var(--white);
   border: 1px solid var(--slate-200);
@@ -442,34 +424,10 @@ body {
   max-width: 460px;
 }
 
-.lp-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 /* Social proof */
-.lp-social-proof {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.lp-social-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: socialPulse 2s ease-in-out infinite;
-  flex-shrink: 0;
-}
 @keyframes socialPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(5,195,168,.4); }
   50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(5,195,168,0); }
-}
-.lp-social-text {
-  font-size: 13px;
-  color: var(--slate-500);
-  font-weight: 500;
 }
 
 .lp-chip {
@@ -562,63 +520,6 @@ body {
   background: var(--slate-50);
   border-bottom: 1px solid var(--slate-200);
 }
-.lp-example-title {
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--navy);
-  text-align: center;
-  margin: 0 0 8px;
-  letter-spacing: -.3px;
-}
-.lp-example-sub {
-  font-size: 15px;
-  color: var(--slate-500);
-  text-align: center;
-  margin: 0 auto 32px;
-  max-width: 520px;
-  line-height: 1.6;
-}
-.lp-example-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-xl);
-  padding: 32px;
-  box-shadow: var(--shadow-md);
-  max-width: 680px;
-  margin: 0 auto;
-}
-.lp-example-origins {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.lp-example-origin {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--slate-50);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--primary);
-}
-.lp-example-origin span {
-  font-weight: 500;
-  color: var(--slate-500);
-  font-size: 13px;
-}
-.lp-example-arrow {
-  font-size: 28px;
-  color: var(--slate-300);
-  font-weight: 300;
-}
 .lp-example-result {
   background: linear-gradient(145deg, #16173B, #2C2D52);
   border-radius: var(--radius-lg);
@@ -627,54 +528,8 @@ body {
   min-width: 180px;
   text-align: center;
 }
-.lp-example-winner {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: .7;
-  margin-bottom: 8px;
-}
-.lp-example-dest {
-  font-size: 22px;
-  font-weight: 900;
-  margin-bottom: 6px;
-  letter-spacing: -.3px;
-}
-.lp-example-price {
-  font-size: 14px;
-  font-weight: 600;
-  opacity: .85;
-}
-
-@media (max-width: 600px) {
-  .lp-example-card { flex-direction: column; padding: 24px 20px; }
-  .lp-example-arrow { transform: rotate(90deg); }
-}
 
 /* Use cases section */
-.lp-usecases {
-  padding: 64px 0;
-  background: var(--slate-50);
-}
-.lp-usecases-title {
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--navy);
-  text-align: center;
-  margin-bottom: 32px;
-}
-.lp-usecases-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-@media (max-width: 767.98px) {
-  .lp-usecases-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-  .lp-usecases-grid { grid-template-columns: 1fr; }
-}
 .lp-usecase-card {
   background: var(--white);
   border-radius: var(--radius-md);
@@ -686,23 +541,6 @@ body {
 .lp-usecase-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-}
-.lp-usecase-icon {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 12px;
-}
-.lp-usecase-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--navy);
-  margin: 0 0 8px;
-}
-.lp-usecase-desc {
-  font-size: 13px;
-  color: var(--slate-500);
-  margin: 0;
-  line-height: 1.5;
 }
 
 /* FAQ section */
@@ -1071,17 +909,6 @@ body {
 }
 
 /* Flexible dates toggle */
-.sf-flex-toggle {
-  background: var(--slate-50);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-}
-.sf-flex-label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--navy);
-}
 .sf-flex-pills {
   display: flex;
   gap: 8px;
@@ -1675,17 +1502,6 @@ body {
   min-width: 140px;
 }
 .wc-cta-icon { font-size: 14px; }
-
-.wc-cta--skyscanner {
-  background: #0770e3;
-  color: var(--white) !important;
-  box-shadow: 0 4px 12px rgba(7,112,227,.25);
-}
-.wc-cta--skyscanner:hover {
-  background: #0558b8;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(7,112,227,.35);
-}
 .wc-cta--google {
   background: var(--white);
   color: var(--navy) !important;
@@ -2133,245 +1949,7 @@ body {
 
 /* ── Alternative cards ────────────────────────────────────────── */
 
-.alt-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.alt-card {
-  background: var(--white);
-  border: 1.5px solid var(--slate-200);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all .2s;
-}
-.alt-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-4px) scale(1.01);
-  border-color: var(--primary);
-}
-.alt-card--best {
-  border-color: var(--primary);
-  border-width: 2px;
-}
-
-.alt-card-img-wrap {
-  position: relative;
-  height: 150px;
-  overflow: hidden;
-}
-.alt-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform .3s;
-}
-.alt-card:hover .alt-card-img {
-  transform: scale(1.03);
-}
-.alt-card-img-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.05) 0%, rgba(0,0,0,.45) 100%);
-}
-.alt-card-img-label {
-  position: absolute;
-  left: 14px;
-  bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.alt-card-code {
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--white);
-  line-height: 1;
-  text-shadow: 0 2px 8px rgba(0,0,0,.3);
-}
-.alt-card-city {
-  font-size: 12px;
-  color: rgba(255,255,255,.75);
-  font-weight: 600;
-}
-.alt-card-price-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: var(--white);
-  color: var(--primary);
-  font-size: 16px;
-  font-weight: 900;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
-}
-.alt-card-price-badge span {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--slate-500);
-}
-.alt-card-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: var(--primary);
-  color: var(--white);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  box-shadow: 0 4px 12px rgba(0,98,227,.3);
-}
-
-.alt-card-body { padding: 16px 18px 18px; }
-.alt-card-rank-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.alt-card-rank {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--slate-400);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-.alt-card-weather {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--slate-500);
-  background: var(--slate-50);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--slate-100);
-}
-[data-theme="dark"] .alt-card-weather {
-  background: rgba(255,255,255,.06);
-  border-color: rgba(255,255,255,.1);
-}
-
-.alt-card-prices {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-.alt-card-plabel {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--slate-400);
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  margin-bottom: 3px;
-}
-.alt-card-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--navy);
-}
-
-.alt-card-bar-wrap {
-  height: 4px;
-  background: var(--slate-100);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin-bottom: 14px;
-}
-.alt-card-bar-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width .6s ease;
-}
-
 /* Main booking CTA on alt cards */
-.alt-card-book-btn {
-  display: block;
-  width: 100%;
-  text-align: center;
-  padding: 10px 16px;
-  background: #0770e3;
-  color: var(--white) !important;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--font);
-  border-radius: var(--radius-sm);
-  text-decoration: none !important;
-  margin-bottom: 10px;
-  transition: all .15s;
-  box-shadow: 0 3px 10px rgba(7,112,227,.2);
-}
-.alt-card-book-btn:hover {
-  background: #0558b8;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(7,112,227,.3);
-}
-
-.alt-card-toggle {
-  background: transparent;
-  border: none;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 0;
-  cursor: pointer;
-  margin-bottom: 8px;
-  font-family: var(--font);
-}
-.alt-card-toggle:hover { text-decoration: underline; }
-
-.alt-card-detail     { list-style: none; padding: 0; margin: 0; }
-.alt-card-detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--slate-100);
-  font-size: 13px;
-}
-.alt-card-detail-row:last-child { border-bottom: none; }
-.alt-card-detail-origin {
-  color: var(--slate-500);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.alt-card-detail-city {
-  font-size: 11px;
-  color: var(--slate-400);
-  font-weight: 500;
-}
-.alt-card-detail-price  { font-weight: 700; color: var(--navy); }
-.alt-card-detail-links {
-  display: flex;
-  gap: 4px;
-  margin-left: auto;
-}
-.alt-mini-link {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-xs);
-  text-decoration: none !important;
-  background: #0770e3;
-  color: var(--white) !important;
-  transition: all .12s;
-}
-.alt-mini-link:hover { background: #0558b8; }
-.alt-mini-link--gf {
-  background: var(--white);
-  color: var(--navy) !important;
-  border: 1px solid var(--slate-200);
-}
-.alt-mini-link--gf:hover {
-  border-color: var(--slate-400);
-  background: var(--slate-50);
-}
 
 .alt-empty {
   text-align: center;
@@ -2481,15 +2059,8 @@ body {
 .view-enter {
   animation: fadeInUp .4s cubic-bezier(.22,1,.36,1) both;
 }
-.view-enter-search .sf-form {
-  animation: slideInLeft .45s cubic-bezier(.22,1,.36,1) both;
-}
-.view-enter-search .sf-airports {
-  animation: slideInRight .45s cubic-bezier(.22,1,.36,1) .08s both;
-}
 /* Stagger children in results view */
 .view-enter .fm-group-savings { animation: fadeInUp .4s cubic-bezier(.22,1,.36,1) .15s both; }
-.view-enter .fm-celebrate     { animation: fadeInUp .4s cubic-bezier(.22,1,.36,1) .15s both; }
 .view-enter .fm-stats-bar     { animation: fadeInUp .4s cubic-bezier(.22,1,.36,1) .2s both; }
 .view-enter .fm-quick-research { animation: fadeInUp .4s cubic-bezier(.22,1,.36,1) .3s both; }
 
@@ -2514,26 +2085,8 @@ body {
 }
 
 /* Alternative cards staggered */
-.alt-card { animation: fadeInUp .4s ease both; }
-.alt-card:nth-child(1) { animation-delay: .0s; }
-.alt-card:nth-child(2) { animation-delay: .06s; }
-.alt-card:nth-child(3) { animation-delay: .12s; }
-.alt-card:nth-child(4) { animation-delay: .18s; }
-.alt-card:nth-child(5) { animation-delay: .24s; }
-.alt-card:nth-child(6) { animation-delay: .30s; }
 
 /* Smooth collapse for breakdown details */
-.alt-card-detail-wrap {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows .3s ease;
-}
-.alt-card-detail-wrap.open {
-  grid-template-rows: 1fr;
-}
-.alt-card-detail-wrap > div {
-  overflow: hidden;
-}
 
 /* Toast notification */
 .fm-toast {
@@ -3101,12 +2654,6 @@ body {
 .sk-step--done .sk-step-line {
   background: var(--accent);
 }
-.sk-hint {
-  text-align: center;
-  color: var(--slate-400);
-  font-size: 13px;
-  margin-bottom: 20px;
-}
 
 /* Skeleton cards */
 .sk-card {
@@ -3147,7 +2694,6 @@ body {
   .sf-airport-item { padding: 14px 16px; }
   .sf-pill         { padding: 12px 20px; }
   .sf-remove       { width: 40px; height: 40px; }
-  .alt-card-link   { padding: 10px 16px; }
   .sf-pax-btn      { width: 34px; height: 34px; font-size: 16px; }
   .sf-reorder-btn  { width: 30px; height: 26px; font-size: 12px; }
   .fm-currency-btn { padding: 8px 12px; font-size: 13px; }
@@ -3171,9 +2717,6 @@ body {
   }
   .btn-fm-primary:active {
     transform: scale(.98);
-  }
-  .alt-card:active {
-    transform: scale(.99);
   }
   .lp-faq-item:active {
     border-color: var(--primary);
@@ -3236,18 +2779,11 @@ html {
   .wc-actions,
   .wc-book,
   .sf-airports,
-  .alt-card-links,
-  .alt-card-toggle,
   .btn-fm-primary { display: none !important; }
 
   .wc-card {
     box-shadow: none !important;
     border: 2px solid #333;
-    page-break-inside: avoid;
-  }
-  .alt-card {
-    box-shadow: none !important;
-    border: 1px solid #999;
     page-break-inside: avoid;
   }
   body { background: white; }
@@ -3265,9 +2801,6 @@ html {
   .sf-submit-wrap { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
   .wc-body    { padding: 20px 16px; }
   .wc-dest-code { font-size: 28px; }
-  .wc-dest-big  { font-size: 22px; }
-  .wc-price-block > div { padding: 14px 12px; }
-  .alt-grid   { grid-template-columns: 1fr; }
 }
 
 /* ── Reduce motion for accessibility ─────────────────────────── */
@@ -3282,32 +2815,6 @@ html {
 }
 
 /* ── Celebrate badge (cheap flight confetti) ── */
-.fm-celebrate {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border: 1px solid #6ee7b7;
-  border-radius: var(--radius-md);
-  animation: celebratePop 0.5s ease-out;
-}
-.fm-celebrate-confetti {
-  font-size: 28px;
-  animation: confettiShake 0.6s ease-out;
-}
-.fm-celebrate strong {
-  display: block;
-  color: #065f46;
-  font-size: 15px;
-}
-.fm-celebrate-sub {
-  display: block;
-  color: #047857;
-  font-size: 13px;
-  margin-top: 2px;
-}
 @keyframes celebratePop {
   0% { opacity: 0; transform: scale(0.9) translateY(10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -3462,142 +2969,7 @@ html {
 
 /* ── VS Compare (side-by-side) ────────────────────────────────── */
 
-.vs-wrap {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-}
-.vs-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--navy);
-  margin: 0 0 16px;
-  text-align: center;
-}
-
-.vs-selectors {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-.vs-select {
-  flex: 1;
-  max-width: 260px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font);
-  color: var(--navy);
-  background: var(--slate-50);
-  cursor: pointer;
-}
-.vs-select:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0,98,227,.1);
-}
-.vs-badge {
-  background: var(--primary);
-  color: white;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  letter-spacing: 1px;
-  flex-shrink: 0;
-}
-
-.vs-table {
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-.vs-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  background: linear-gradient(135deg, #16173B 0%, #2C2D52 100%);
-  color: white;
-  padding: 14px 16px;
-  gap: 8px;
-}
-.vs-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  padding: 12px 16px;
-  gap: 8px;
-  border-bottom: 1px solid var(--slate-100);
-}
-.vs-row:last-child { border-bottom: none; }
-.vs-row:nth-child(even) { background: var(--slate-50); }
-
-.vs-col { text-align: center; }
-.vs-col--label {
-  text-align: left;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--slate-500);
-}
-.vs-col--dest {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.vs-dest-code {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: .3px;
-}
-.vs-dest-city {
-  font-size: 12px;
-  opacity: .75;
-  font-weight: 500;
-}
-.vs-col--val {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
-}
-.vs-col--winner {
-  color: var(--success);
-  position: relative;
-}
-.vs-col--winner::after {
-  content: "✓";
-  margin-left: 4px;
-  font-size: 12px;
-}
-
-[data-theme="dark"] .vs-wrap {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .vs-select {
-  background: #16173B;
-  color: #E1E0FF;
-  border-color: #3F4066;
-}
-[data-theme="dark"] .vs-table {
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .vs-row {
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .vs-row:nth-child(even) {
-  background: #16173B;
-}
-
 @media (max-width: 480px) {
-  .vs-selectors { flex-direction: column; }
-  .vs-select { max-width: 100%; }
-  .vs-dest-code { font-size: 16px; }
-  .vs-col--val { font-size: 13px; }
   .fm-stats-bar { font-size: 12px; gap: 6px; }
 }
 
@@ -3634,25 +3006,6 @@ html {
 }
 
 /* ── Share button variants ────────────────────────────────────── */
-
-.wc-action-btn--telegram {
-  background: #0088cc;
-  color: white;
-  border-color: #0088cc;
-}
-.wc-action-btn--telegram:hover {
-  background: #006fa6;
-  border-color: #006fa6;
-}
-.wc-action-btn--email {
-  background: var(--slate-700);
-  color: white;
-  border-color: var(--slate-700);
-}
-.wc-action-btn--email:hover {
-  background: var(--slate-900);
-  border-color: var(--slate-900);
-}
 
 /* ── Search badges (active filters in results) ────────────────── */
 
@@ -3804,20 +3157,6 @@ html {
   font-size: 11px;
   line-height: 1;
 }
-.wc-verify-chip--verified {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  box-shadow: 0 2px 8px rgba(22,163,74,.4);
-}
-.wc-verify-chip--changed {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  box-shadow: 0 2px 8px rgba(217,119,6,.4);
-}
-.wc-verify-chip--indicative {
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  color: rgba(255,255,255,.9);
-}
 
 /* ── CSV export button in stats bar ───────────────────────────── */
 
@@ -3904,28 +3243,6 @@ html {
 }
 
 /* ── Popular routes on landing ────────────────────────────────── */
-
-.lp-routes {
-  padding: 48px 0;
-}
-.lp-routes-title {
-  text-align: center;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--navy);
-  margin: 0 0 8px;
-}
-.lp-routes-sub {
-  text-align: center;
-  font-size: 15px;
-  color: var(--slate-500);
-  margin: 0 0 28px;
-}
-.lp-routes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
 .lp-route-card {
   display: flex;
   flex-direction: column;
@@ -3944,25 +3261,12 @@ html {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
-.lp-route-emoji {
-  font-size: 28px;
-}
-.lp-route-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--navy);
-}
-.lp-route-cities {
-  font-size: 12px;
-  color: var(--slate-400);
-}
 [data-theme="dark"] .lp-route-card {
   background: #16173B;
   border-color: #2C2D52;
 }
 
 @media (max-width: 480px) {
-  .lp-routes-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-route-card { padding: 14px 10px; }
 }
 
@@ -4021,15 +3325,6 @@ html {
 }
 
 /* ── Summary copy button ──────────────────────────────────────── */
-
-.wc-action-btn--summary {
-  background: var(--slate-100);
-  color: var(--navy);
-  border-color: var(--slate-200);
-}
-.wc-action-btn--summary:hover {
-  background: var(--slate-200);
-}
 
 /* ── Traveler summary bar (above submit) ────────────────────── */
 
@@ -4172,50 +3467,7 @@ html {
 
 /* ── Price vs last search chip ──────────────────────────────── */
 
-.wc-vs-last-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: var(--radius-lg);
-  font-size: 12px;
-  font-weight: 700;
-  backdrop-filter: blur(8px);
-}
-.wc-vs-last-chip--cheaper {
-  background: rgba(22,163,74,.2);
-  color: #4ADE80;
-}
-.wc-vs-last-chip--pricier {
-  background: rgba(220,38,38,.2);
-  color: #FCA5A5;
-}
-
 /* ── Alt card chips row ─────────────────────────────────────── */
-
-.alt-card-chips {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.alt-card-info-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  background: var(--slate-50);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  color: var(--slate-500);
-  white-space: nowrap;
-}
-[data-theme="dark"] .alt-card-info-chip {
-  background: #2C2D52;
-  border-color: #3F4066;
-  color: #C8C7F0;
-}
 
 /* ═══════════════ Round 12 ═══════════════════════════════════ */
 
@@ -4296,38 +3548,7 @@ html {
 }
 
 /* ── Winner card confetti burst ─────────────────────────────── */
-
-.wc-confetti {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 10;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.wc-confetti-piece {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  animation: confettiBurst .9s ease-out forwards;
-  animation-delay: calc(var(--ci) * 40ms);
-  opacity: 0;
-}
 /* Rotate pieces around a circle with different colors */
-.wc-confetti-piece:nth-child(1)  { background: #F59E0B; }
-.wc-confetti-piece:nth-child(2)  { background: #0D71E4; }
-.wc-confetti-piece:nth-child(3)  { background: #10B981; }
-.wc-confetti-piece:nth-child(4)  { background: #EF4444; }
-.wc-confetti-piece:nth-child(5)  { background: #8B5CF6; }
-.wc-confetti-piece:nth-child(6)  { background: #EC4899; }
-.wc-confetti-piece:nth-child(7)  { background: #F59E0B; }
-.wc-confetti-piece:nth-child(8)  { background: #0D71E4; }
-.wc-confetti-piece:nth-child(9)  { background: #10B981; }
-.wc-confetti-piece:nth-child(10) { background: #EF4444; }
-.wc-confetti-piece:nth-child(11) { background: #8B5CF6; }
-.wc-confetti-piece:nth-child(12) { background: #EC4899; }
 
 @keyframes confettiBurst {
   0% {
@@ -4348,18 +3569,6 @@ html {
 
 /* Fallback for browsers without trig functions: stagger via nth-child */
 @supports not (transform: translate(calc(cos(30deg) * 1px), 0)) {
-  .wc-confetti-piece:nth-child(1)  { --dx: -60px; --dy: -40px; }
-  .wc-confetti-piece:nth-child(2)  { --dx:  40px; --dy: -50px; }
-  .wc-confetti-piece:nth-child(3)  { --dx: -80px; --dy:  10px; }
-  .wc-confetti-piece:nth-child(4)  { --dx:  70px; --dy:  20px; }
-  .wc-confetti-piece:nth-child(5)  { --dx: -30px; --dy:  60px; }
-  .wc-confetti-piece:nth-child(6)  { --dx:  90px; --dy: -20px; }
-  .wc-confetti-piece:nth-child(7)  { --dx: -100px; --dy:  40px; }
-  .wc-confetti-piece:nth-child(8)  { --dx:  50px; --dy:  70px; }
-  .wc-confetti-piece:nth-child(9)  { --dx: -40px; --dy: -60px; }
-  .wc-confetti-piece:nth-child(10) { --dx:  110px; --dy:  0px; }
-  .wc-confetti-piece:nth-child(11) { --dx: -90px; --dy: -30px; }
-  .wc-confetti-piece:nth-child(12) { --dx:  20px; --dy:  50px; }
   @keyframes confettiBurst {
     0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
     100% { opacity: 0; transform: translate(var(--dx, 60px), var(--dy, 40px)) rotate(220deg) scale(0.3); }
@@ -4525,14 +3734,6 @@ html {
 /* ═══════════════ Round 14 ═══════════════════════════════════ */
 
 /* ── Medal badges on alt cards ──────────────────────────────── */
-
-.alt-card-rank--medal {
-  font-weight: 800;
-}
-.alt-card-medal {
-  font-size: 16px;
-  margin-right: 2px;
-}
 
 /* ── Sticky results bar ─────────────────────────────────────── */
 
@@ -4996,43 +4197,7 @@ html {
 
 /* ── Price-per-km badge ───────────────────────────────────── */
 
-.wc-km-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(0,98,227,.08);
-  color: var(--primary);
-  border-radius: var(--radius-sm);
-  margin-left: 6px;
-}
-[data-theme="dark"] .wc-km-badge {
-  background: rgba(172,199,255,.1);
-  color: #ACC7FF;
-}
-
 /* ── Share-as-image button ────────────────────────────────── */
-
-.wc-share-img-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #7C3AED, #4F46E5);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: all .2s;
-}
-.wc-share-img-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79,70,229,.3);
-}
 
 /* ── Drag handle for origin reorder ───────────────────────── */
 
@@ -5087,102 +4252,9 @@ html {
 
 /* ── Destination quick info strip ─────────────────────────── */
 
-.wc-quick-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 16px;
-  font-size: 13px;
-  color: #64748B;
-  background: #F8FAFC;
-  border-bottom: 1px solid #E2E8F0;
-}
-.wc-quick-info-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-[data-theme="dark"] .wc-quick-info {
-  background: #16173B;
-  border-color: #2C2D52;
-  color: #C8C7F0;
-}
-
 /* ── Price sparkline ──────────────────────────────────────── */
 
-.fm-sparkline-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  margin-bottom: 12px;
-}
-.fm-sparkline-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748B;
-  white-space: nowrap;
-}
-.fm-sparkline {
-  flex-shrink: 0;
-}
-.fm-sparkline-range {
-  font-size: 12px;
-  color: #94A3B8;
-  white-space: nowrap;
-}
-[data-theme="dark"] .fm-sparkline-wrap {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-sparkline-label { color: #C8C7F0; }
-
 /* ── Origin summary chips ─────────────────────────────────── */
-
-.fm-origin-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.fm-origin-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-lg);
-  font-size: 13px;
-  transition: all .15s;
-}
-.fm-origin-chip:hover {
-  border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(0,98,227,.08);
-}
-.fm-origin-chip-flag {
-  font-size: 16px;
-}
-.fm-origin-chip-code {
-  font-weight: 700;
-  color: var(--navy);
-}
-.fm-origin-chip-price {
-  font-weight: 600;
-  color: var(--primary);
-  font-size: 12px;
-}
-[data-theme="dark"] .fm-origin-chip {
-  background: #2C2D52;
-  border-color: #3F4066;
-}
-[data-theme="dark"] .fm-origin-chip-code { color: #E1E0FF; }
-[data-theme="dark"] .fm-origin-chip:hover {
-  border-color: #ACC7FF;
-}
 
 /* ── Results skeleton ─────────────────────────────────────── */
 
@@ -5225,30 +4297,6 @@ html {
 }
 
 /* ── Countdown to departure chip ──────────────────────────── */
-
-.wc-countdown-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  backdrop-filter: blur(6px);
-  letter-spacing: .3px;
-}
-.wc-countdown-chip--normal {
-  background: rgba(255,255,255,.18);
-  color: #fff;
-}
-.wc-countdown-chip--soon {
-  background: rgba(251,191,36,.25);
-  color: #FDE68A;
-}
-.wc-countdown-chip--urgent {
-  background: rgba(239,68,68,.3);
-  color: #FCA5A5;
-  animation: countdownPulse 1.5s ease infinite;
-}
 @keyframes countdownPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: .7; }
@@ -5256,119 +4304,11 @@ html {
 
 /* ── Duration comparison bar ──────────────────────────────── */
 
-.wc-duration-bar-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-}
-.wc-duration-bar {
-  flex: 1;
-  height: 4px;
-  background: rgba(255,255,255,.12);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.wc-duration-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width .4s cubic-bezier(.22,1,.36,1);
-}
-.wc-duration-bar-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,.7);
-  white-space: nowrap;
-}
-
 /* ── Landing live stats ───────────────────────────────────── */
-
-.lp-live-stats {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #64748B;
-}
-.lp-live-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.lp-live-stat strong {
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-}
-.lp-live-stat-sep {
-  color: #CBD5E1;
-}
-[data-theme="dark"] .lp-live-stats { color: #C8C7F0; }
-[data-theme="dark"] .lp-live-stat strong { color: #ACC7FF; }
-[data-theme="dark"] .lp-live-stat-sep { color: #6E6F94; }
 
 /* ── Price alert hint ─────────────────────────────────────── */
 
-.fm-alert-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, rgba(251,191,36,.06), rgba(245,158,11,.06));
-  border: 1px solid rgba(251,191,36,.2);
-  border-radius: var(--radius-sm);
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: #92400E;
-}
-.fm-alert-hint-icon { font-size: 16px; }
-.fm-alert-hint-text { flex: 1; }
-.fm-alert-hint-badge {
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  background: rgba(251,191,36,.15);
-  color: #B45309;
-  border-radius: var(--radius-xs);
-  white-space: nowrap;
-}
-[data-theme="dark"] .fm-alert-hint {
-  background: linear-gradient(135deg, rgba(251,191,36,.04), rgba(245,158,11,.04));
-  border-color: rgba(251,191,36,.15);
-  color: #FDE68A;
-}
-[data-theme="dark"] .fm-alert-hint-badge {
-  background: rgba(251,191,36,.1);
-  color: #FBBF24;
-}
-
 /* ── Total distance summary ───────────────────────────────── */
-
-.fm-distance-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: #475569;
-}
-.fm-distance-icon { font-size: 16px; }
-.fm-distance-avg {
-  margin-left: auto;
-  font-size: 12px;
-  color: #94A3B8;
-}
-[data-theme="dark"] .fm-distance-summary {
-  background: #16173B;
-  border-color: #2C2D52;
-  color: #C8C7F0;
-}
-[data-theme="dark"] .fm-distance-avg { color: #9B9AC6; }
 
 /* ═══════════════════════════════════════════════════════════════
    Round 18 — Visual polish & micro-interactions
@@ -5520,9 +4460,7 @@ html {
 }
 
 /* Cifras tabulares para los precios (alinean en columnas) */
-.wc-summary-price, .wc-flight-price-tag, .wc-flight-compare-price,
-.wc-trip-summary-value, .cmp-price, .alt-card-price, .alt-card-prices,
-.alt-card-price-badge, .wc-price-block {
+.wc-summary-price, .wc-flight-price-tag, .cmp-price {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -5543,71 +4481,6 @@ html {
 }
 
 /* ── Flight time comparison bar (mini-table in booking) ───── */
-
-.wc-flight-compare-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 12px;
-  color: var(--slate-500);
-}
-.wc-flight-compare-origin {
-  min-width: 36px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.wc-flight-compare-bar-wrap {
-  flex: 1;
-  height: 6px;
-  background: var(--slate-100);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.wc-flight-compare-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width .6s ease;
-}
-.wc-flight-compare-dur {
-  min-width: 44px;
-  text-align: right;
-  font-weight: 500;
-  font-size: 11px;
-  color: var(--slate-500);
-}
-.wc-flight-compare-price {
-  min-width: 50px;
-  text-align: right;
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--navy);
-}
-[data-theme="dark"] .wc-flight-compare-origin { color: #C8C7F0; }
-[data-theme="dark"] .wc-flight-compare-bar-wrap { background: #2C2D52; }
-[data-theme="dark"] .wc-flight-compare-dur { color: #C8C7F0; }
-[data-theme="dark"] .wc-flight-compare-price { color: #E1E0FF; }
-
-.wc-flight-compare-section {
-  margin: 12px 0 4px;
-  padding: 10px 14px;
-  background: var(--slate-50);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--slate-100);
-}
-.wc-flight-compare-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--slate-400);
-  margin-bottom: 6px;
-}
-[data-theme="dark"] .wc-flight-compare-section {
-  background: rgba(255,255,255,.02);
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .wc-flight-compare-title { color: #9B9AC6; }
 
 /* ── Hover micro-interactions ─────────────────────────────── */
 
@@ -5668,14 +4541,6 @@ html {
   background: rgba(0,98,227,.02);
 }
 
-.fm-origin-chip {
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.fm-origin-chip:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-sm);
-}
-
 .sf-recent-chip {
   transition: transform .15s ease, background .15s ease;
 }
@@ -5703,10 +4568,6 @@ html {
 }
 
 /* ── Weather badge styling in quick-info ──────────────────── */
-
-.wc-quick-info-item:last-child {
-  border-right: none;
-}
 
 /* ── Staggered animation for booking cards ─────────────────── */
 
@@ -5794,71 +4655,9 @@ html {
 
 /* ── Enhanced confetti with more variation ──────────────────── */
 
-.wc-confetti-piece:nth-child(odd) {
-  animation-duration: 1.2s;
-}
-.wc-confetti-piece:nth-child(even) {
-  animation-duration: 0.9s;
-}
-
 /* ── Trip comparison summary card ──────────────────────────── */
 
-.wc-trip-summary {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 18px;
-  margin: 12px 0;
-  background: linear-gradient(135deg, var(--primary-50), rgba(5,195,168,.04));
-  border: 1px solid var(--primary-light);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-}
-.wc-trip-summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-.wc-trip-summary-value {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--primary-dark);
-}
-.wc-trip-summary-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--slate-500);
-}
-.wc-trip-summary-sep {
-  width: 1px;
-  height: 32px;
-  background: var(--slate-200);
-}
-[data-theme="dark"] .wc-trip-summary {
-  background: linear-gradient(135deg, rgba(0,98,227,.06), rgba(5,195,168,.03));
-  border-color: rgba(0,98,227,.15);
-}
-[data-theme="dark"] .wc-trip-summary-value { color: #ACC7FF; }
-[data-theme="dark"] .wc-trip-summary-label { color: #9B9AC6; }
-[data-theme="dark"] .wc-trip-summary-sep { background: #2C2D52; }
-
 /* ── Responsive adjustments for trip summary ───────────────── */
-
-@media (max-width: 600px) {
-  .wc-trip-summary {
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-  }
-  .wc-trip-summary-sep {
-    display: none;
-  }
-  .wc-trip-summary-item {
-    min-width: 60px;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    Round 19 — Functional polish
@@ -6012,67 +4811,7 @@ html {
 
 /* ── Destination category tags ─────────────────────────────── */
 
-.wc-dest-categories {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-.wc-dest-cat {
-  padding: 1px 8px;
-  border-radius: var(--radius-full);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .3px;
-  background: rgba(255,255,255,.2);
-  color: rgba(255,255,255,.9);
-  backdrop-filter: blur(4px);
-}
-.wc-dest-cat--beach {
-  background: rgba(234,179,8,.3);
-  color: #FEF3C7;
-}
-.wc-dest-cat--budget {
-  background: rgba(34,197,94,.3);
-  color: #DCFCE7;
-}
-.wc-dest-cat--capital {
-  background: rgba(99,102,241,.3);
-  color: #E0E7FF;
-}
-
 /* ── Best weekday insight ──────────────────────────────────── */
-
-.fm-weekday-insight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  margin-bottom: 10px;
-  font-size: 13px;
-  color: var(--slate-500);
-}
-.fm-weekday-insight--cheap {
-  background: linear-gradient(135deg, rgba(34,197,94,.04), rgba(22,163,74,.04));
-  border-color: rgba(34,197,94,.2);
-  color: #166534;
-}
-.fm-weekday-insight-icon {
-  font-size: 16px;
-}
-[data-theme="dark"] .fm-weekday-insight {
-  background: #16173B;
-  border-color: #2C2D52;
-  color: #C8C7F0;
-}
-[data-theme="dark"] .fm-weekday-insight--cheap {
-  background: linear-gradient(135deg, rgba(34,197,94,.04), rgba(22,163,74,.04));
-  border-color: rgba(34,197,94,.15);
-  color: #52DEA2;
-}
 
 /* ── Top Destinations Podium ─────────────────────────────────── */
 
@@ -6188,67 +4927,6 @@ html {
 
 /* ── Price Donut Chart ──────────────────────────────────────── */
 
-.fm-donut-wrap {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-donut-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 12px;
-}
-.fm-donut-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.fm-donut-svg {
-  flex-shrink: 0;
-}
-.fm-donut-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-.fm-donut-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-.fm-donut-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.fm-donut-legend-origin {
-  color: var(--slate-600);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.fm-donut-legend-pct {
-  font-weight: 600;
-  color: var(--slate-800);
-  font-variant-numeric: tabular-nums;
-}
-[data-theme="dark"] .fm-donut-wrap {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-donut-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-donut-legend-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-donut-legend-pct { color: #E1E0FF; }
-
 /* ── Backend Status Dot ─────────────────────────────────────── */
 
 .fm-backend-dot {
@@ -6275,24 +4953,6 @@ html {
 }
 
 /* ── Testimonials ───────────────────────────────────────────── */
-
-.lp-testimonials {
-  padding: 48px 0 32px;
-}
-.lp-testimonials-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--slate-800);
-  text-align: center;
-  margin-bottom: 28px;
-}
-.lp-testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  max-width: 960px;
-  margin: 0 auto;
-}
 .lp-testimonial-card {
   padding: 20px;
   background: var(--white);
@@ -6304,61 +4964,12 @@ html {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0,0,0,.06);
 }
-.lp-testimonial-stars {
-  color: #FBBF24;
-  font-size: 14px;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-}
-.lp-testimonial-text {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--slate-600);
-  margin-bottom: 14px;
-  font-style: italic;
-}
-.lp-testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.lp-testimonial-avatar {
-  font-size: 28px;
-  line-height: 1;
-}
-.lp-testimonial-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-  display: block;
-}
-.lp-testimonial-origin {
-  font-size: 12px;
-  color: var(--slate-400);
-  display: block;
-}
-[data-theme="dark"] .lp-testimonials-title { color: #E1E0FF; }
 [data-theme="dark"] .lp-testimonial-card {
   background: #2C2D52;
   border-color: #3F4066;
 }
 [data-theme="dark"] .lp-testimonial-card:hover {
   box-shadow: 0 6px 20px rgba(0,0,0,.25);
-}
-[data-theme="dark"] .lp-testimonial-text { color: #C8C7F0; }
-[data-theme="dark"] .lp-testimonial-name { color: #E1E0FF; }
-[data-theme="dark"] .lp-testimonial-origin { color: #9B9AC6; }
-@media (max-width: 767.98px) {
-  .lp-testimonials-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 0 16px;
-  }
-}
-@media (min-width: 768px) and (max-width: 960px) {
-  .lp-testimonials-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* ── Enhanced Footer ────────────────────────────────────────── */
@@ -6413,113 +5024,7 @@ html {
 
 /* ── Price Confidence Meter ────────────────────────────────── */
 
-.fm-confidence {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  margin: 10px 0;
-  font-size: 13px;
-}
-.fm-confidence-icon {
-  font-size: 12px;
-  line-height: 1;
-}
-.fm-confidence-label {
-  color: var(--slate-600);
-  white-space: nowrap;
-}
-.fm-confidence-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--slate-200);
-  border-radius: 3px;
-  overflow: hidden;
-  min-width: 60px;
-}
-.fm-confidence-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width .6s ease;
-}
-.fm-confidence--high .fm-confidence-fill { background: #22C55E; }
-.fm-confidence--medium .fm-confidence-fill { background: #F59E0B; }
-.fm-confidence--low .fm-confidence-fill { background: #EF4444; }
-[data-theme="dark"] .fm-confidence {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-confidence-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-confidence-bar { background: #2C2D52; }
-
 /* ── Origin Savings Card ───────────────────────────────────── */
-
-.fm-origin-savings {
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  margin: 14px 0;
-}
-.fm-origin-savings-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 12px;
-}
-.fm-origin-savings-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.fm-origin-savings-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.fm-origin-savings-code {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-600);
-  min-width: 60px;
-}
-.fm-origin-savings-bar-wrap {
-  flex: 1;
-  height: 8px;
-  background: var(--slate-100);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.fm-origin-savings-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #22C55E, #16A34A);
-  border-radius: 4px;
-  transition: width .6s ease;
-}
-.fm-origin-savings-amount {
-  font-size: 13px;
-  font-weight: 700;
-  color: #16A34A;
-  min-width: 50px;
-  text-align: right;
-}
-.fm-origin-savings-note {
-  font-size: 11px;
-  color: var(--slate-400);
-  margin-top: 8px;
-}
-[data-theme="dark"] .fm-origin-savings {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-origin-savings-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-origin-savings-code { color: #C8C7F0; }
-[data-theme="dark"] .fm-origin-savings-bar-wrap { background: #2C2D52; }
-[data-theme="dark"] .fm-origin-savings-amount { color: #52DEA2; }
-[data-theme="dark"] .fm-origin-savings-note { color: #9B9AC6; }
 
 /* ── Airline Logo in Booking Cards ─────────────────────────── */
 
@@ -6533,109 +5038,10 @@ html {
 }
 
 /* ── Landing Mini Demo ─────────────────────────────────────── */
-
-.lp-demo-section {
-  padding: 32px 0 16px;
-}
-.lp-mini-demo {
-  display: flex;
-  justify-content: center;
-}
-.lp-mini-demo-window {
-  width: 360px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,.12);
-  border: 1px solid var(--slate-200);
-  background: var(--white);
-}
-.lp-mini-demo-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  background: var(--slate-100);
-  border-bottom: 1px solid var(--slate-200);
-}
-.lp-mini-demo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-.lp-mini-demo-dot--red { background: #EF4444; }
-.lp-mini-demo-dot--yellow { background: #F59E0B; }
-.lp-mini-demo-dot--green { background: #22C55E; }
-.lp-mini-demo-bar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--slate-500);
-}
-.lp-mini-demo-body {
-  padding: 20px;
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.lp-mini-demo-origins {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.lp-mini-demo-chip {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, var(--blue-50, #F0F6FF), var(--blue-100, #D7E2FF));
-  border: 1px solid rgba(59,130,246,.2);
-  border-radius: var(--radius-xs);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--blue-700, #004591);
-  animation: fm-chip-pop .3s ease both;
-}
 @keyframes fm-chip-pop {
   0% { opacity: 0; transform: scale(.8); }
   100% { opacity: 1; transform: scale(1); }
 }
-.lp-mini-demo-result {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  animation: fm-chip-pop .4s ease both;
-}
-.lp-mini-demo-arrow {
-  color: var(--slate-400);
-  font-size: 18px;
-}
-.lp-mini-demo-dest {
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--slate-800);
-}
-.lp-mini-demo-price {
-  font-weight: 700;
-  font-size: 16px;
-  color: #16A34A;
-  margin-left: auto;
-}
-[data-theme="dark"] .lp-mini-demo-window {
-  background: #2C2D52;
-  border-color: #3F4066;
-  box-shadow: 0 8px 32px rgba(0,0,0,.35);
-}
-[data-theme="dark"] .lp-mini-demo-bar {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .lp-mini-demo-bar-title { color: #9B9AC6; }
-[data-theme="dark"] .lp-mini-demo-chip {
-  background: rgba(172,199,255,.1);
-  border-color: rgba(172,199,255,.2);
-  color: #ACC7FF;
-}
-[data-theme="dark"] .lp-mini-demo-dest { color: #E1E0FF; }
-[data-theme="dark"] .lp-mini-demo-price { color: #52DEA2; }
 
 /* ── Currency Quick Switcher ───────────────────────────────── */
 
@@ -6771,44 +5177,6 @@ html {
 [data-theme="dark"] .fm-shortcuts-desc { color: #C8C7F0; }
 
 /* ── Trust Badges ──────────────────────────────────────────── */
-
-.lp-trust {
-  padding: 24px 0 0;
-}
-.lp-trust-grid {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.lp-trust-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  color: var(--slate-600);
-  font-weight: 500;
-}
-.lp-trust-icon {
-  font-size: 16px;
-}
-.lp-trust-text {
-  color: inherit;
-}
-[data-theme="dark"] .lp-trust-badge {
-  background: #2C2D52;
-  border-color: #3F4066;
-  color: #C8C7F0;
-}
-@media (max-width: 600px) {
-  .lp-trust-grid { gap: 8px; }
-  .lp-trust-badge { padding: 6px 10px; font-size: 12px; }
-  .lp-mini-demo-window { width: 100%; }
-}
 
 /* ── Cost Split Calculator ─────────────────────────────────── */
 
@@ -6987,239 +5355,9 @@ html {
 
 /* ── Travel Checklist ───────────────────────────────────────── */
 
-.fm-checklist {
-  margin: 14px 0;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-.fm-checklist-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 14px 16px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background .2s;
-}
-.fm-checklist-toggle:hover { background: var(--slate-50, #F8FAFC); }
-.fm-checklist-toggle-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.fm-checklist-icon { font-size: 18px; }
-.fm-checklist-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-checklist-progress {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.fm-checklist-pct {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--blue-600);
-}
-.fm-checklist-chevron {
-  font-size: 14px;
-  color: var(--slate-400);
-  transition: transform .2s;
-}
-.fm-checklist-chevron--open { transform: rotate(180deg); }
-.fm-checklist-body {
-  padding: 0 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.fm-checklist-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--slate-50, #F8FAFC);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background .2s, opacity .2s;
-}
-.fm-checklist-item--done {
-  opacity: .55;
-  text-decoration: line-through;
-}
-.fm-checklist-item:hover { background: var(--slate-100); }
-.fm-checklist-check {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--blue-600);
-  cursor: pointer;
-}
-.fm-checklist-item-icon { font-size: 16px; }
-.fm-checklist-item-label {
-  font-size: 13px;
-  color: var(--slate-700);
-}
-[data-theme="dark"] .fm-checklist {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-checklist-toggle:hover { background: #16173B; }
-[data-theme="dark"] .fm-checklist-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-checklist-pct { color: #ACC7FF; }
-[data-theme="dark"] .fm-checklist-item { background: #16173B; }
-[data-theme="dark"] .fm-checklist-item:hover { background: #2C2D52; }
-[data-theme="dark"] .fm-checklist-item-label { color: #C8C7F0; }
-
 /* ── Destination Radar Chart ───────────────────────────────── */
 
-.fm-radar {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-radar-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 12px;
-}
-.fm-radar-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.fm-radar-svg {
-  flex-shrink: 0;
-}
-.fm-radar-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.fm-radar-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-radar-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-[data-theme="dark"] .fm-radar {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-radar-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-radar-legend-item { color: #E1E0FF; }
-[data-theme="dark"] .fm-radar-svg circle { stroke: #3F4066; }
-[data-theme="dark"] .fm-radar-svg line { stroke: #3F4066; }
-[data-theme="dark"] .fm-radar-svg text { fill: #C8C7F0; }
-@media (max-width: 600px) {
-  .fm-radar-content { flex-direction: column; }
-}
-
 /* ── Flight Timeline ──────────────────────────────────────── */
-
-.fm-timeline {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-timeline-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 12px;
-}
-.fm-timeline-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.fm-timeline-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.fm-timeline-origin {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--slate-600);
-  min-width: 50px;
-  flex-shrink: 0;
-}
-.fm-timeline-track {
-  flex: 1;
-  position: relative;
-  height: 28px;
-  background: var(--slate-100);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.fm-timeline-bar {
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  background: linear-gradient(135deg, #0D71E4, #0059B8);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  transition: left 0.4s ease, width 0.4s ease;
-}
-.fm-timeline-bar-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: white;
-  white-space: nowrap;
-  padding: 0 6px;
-  text-shadow: 0 1px 2px rgba(0,0,0,.2);
-}
-.fm-timeline-times {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  flex-shrink: 0;
-  min-width: 46px;
-}
-.fm-timeline-dep {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--slate-700);
-}
-.fm-timeline-arr {
-  font-size: 10px;
-  color: var(--slate-500);
-}
-[data-theme="dark"] .fm-timeline {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-timeline-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-timeline-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-timeline-track { background: #2C2D52; }
-[data-theme="dark"] .fm-timeline-dep { color: #E1E0FF; }
-[data-theme="dark"] .fm-timeline-arr { color: #C8C7F0; }
-@media (max-width: 600px) {
-  .fm-timeline-times { display: none; }
-}
 
 /* ── Search History Panel ────────────────────────────────── */
 
@@ -7334,101 +5472,7 @@ html {
 
 /* ── Weather Badge ────────────────────────────────────────── */
 
-.fm-weather-badge {
-  margin: 6px 0;
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-  border-radius: var(--radius-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.fm-weather-badge-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #92400E;
-}
-[data-theme="dark"] .fm-weather-badge {
-  background: linear-gradient(135deg, #78350F, #92400E);
-}
-[data-theme="dark"] .fm-weather-badge-text { color: #FDE68A; }
-
 /* ── Results Summary Card ─────────────────────────────────── */
-
-.fm-summary-card {
-  margin: 14px 0;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--white), var(--slate-50));
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-summary-card-header {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.fm-summary-card-dest {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--slate-800);
-}
-.fm-summary-card-code {
-  font-size: 12px;
-  color: var(--slate-500);
-  font-weight: 500;
-}
-.fm-summary-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.fm-summary-card-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.fm-summary-card-stat-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--slate-500);
-  font-weight: 600;
-}
-.fm-summary-card-stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--slate-800);
-}
-.fm-summary-card-origins {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.fm-summary-card-origin {
-  font-size: 11px;
-  background: var(--blue-50);
-  color: var(--blue-700, #004591);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-}
-.fm-summary-card-dates {
-  font-size: 12px;
-  color: var(--slate-500);
-}
-[data-theme="dark"] .fm-summary-card {
-  background: linear-gradient(135deg, #16173B, #16173B);
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-summary-card-dest { color: #E1E0FF; }
-[data-theme="dark"] .fm-summary-card-code { color: #C8C7F0; }
-[data-theme="dark"] .fm-summary-card-stat-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-summary-card-stat-value { color: #E1E0FF; }
-[data-theme="dark"] .fm-summary-card-origin { background: rgba(172,199,255,.15); color: #ACC7FF; }
-[data-theme="dark"] .fm-summary-card-dates { color: #C8C7F0; }
 
 /* ── Reduced Motion Accessibility ─────────────────────────── */
 
@@ -7444,8 +5488,6 @@ html {
   animation: none !important;
   opacity: 1 !important;
 }
-[data-reduced-motion="true"] .lp-mini-demo-chip,
-[data-reduced-motion="true"] .fm-celebrate-confetti,
 [data-reduced-motion="true"] .sk-timer-fill,
 [data-reduced-motion="true"] .loading-tip {
   animation: none !important;
@@ -7459,12 +5501,6 @@ html {
 }
 [data-high-contrast="true"] .fm-podium-card,
 [data-high-contrast="true"] .fm-split-card,
-[data-high-contrast="true"] .fm-origin-savings,
-[data-high-contrast="true"] .fm-donut-wrap,
-[data-high-contrast="true"] .fm-radar,
-[data-high-contrast="true"] .fm-timeline,
-[data-high-contrast="true"] .fm-summary-card,
-[data-high-contrast="true"] .fm-checklist,
 [data-high-contrast="true"] .fm-history {
   border-width: 2px;
   border-color: #1E293B;
@@ -7478,190 +5514,11 @@ html {
 
 /* ── Price per km ranking ──────────────────────────────────── */
 
-.fm-ppkm {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-ppkm-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 2px;
-}
-.fm-ppkm-sub {
-  font-size: 11px;
-  color: var(--slate-500);
-  margin-bottom: 12px;
-}
-.fm-ppkm-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.fm-ppkm-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.fm-ppkm-rank {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--blue-600);
-  min-width: 18px;
-  text-align: center;
-}
-.fm-ppkm-city {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-  min-width: 80px;
-  flex-shrink: 0;
-}
-.fm-ppkm-bar-wrap {
-  flex: 1;
-  height: 8px;
-  background: var(--slate-100);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.fm-ppkm-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #10B981, #059669);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-.fm-ppkm-value {
-  font-size: 11px;
-  font-weight: 700;
-  color: #059669;
-  min-width: 60px;
-  text-align: right;
-  flex-shrink: 0;
-}
-[data-theme="dark"] .fm-ppkm {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-ppkm-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-ppkm-sub { color: #C8C7F0; }
-[data-theme="dark"] .fm-ppkm-city { color: #E1E0FF; }
-[data-theme="dark"] .fm-ppkm-bar-wrap { background: #2C2D52; }
-[data-theme="dark"] .fm-ppkm-rank { color: #ACC7FF; }
-[data-theme="dark"] .fm-ppkm-value { color: #52DEA2; }
-
 /* ── Group Arrival Sync ──────────────────────────────────── */
-
-.fm-arrival-sync {
-  margin: 8px 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.fm-arrival-sync--great { background: #ECFDF5; border: 1px solid #A7F3D0; }
-.fm-arrival-sync--good { background: #FFFBEB; border: 1px solid #FDE68A; }
-.fm-arrival-sync--wide { background: #FEF2F2; border: 1px solid #FECACA; }
-.fm-arrival-sync-icon { font-size: 16px; }
-.fm-arrival-sync-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.fm-arrival-sync-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-arrival-sync-spread {
-  font-size: 11px;
-  color: var(--slate-500);
-}
-[data-theme="dark"] .fm-arrival-sync--great { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); }
-[data-theme="dark"] .fm-arrival-sync--good { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); }
-[data-theme="dark"] .fm-arrival-sync--wide { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
-[data-theme="dark"] .fm-arrival-sync-label { color: #E1E0FF; }
-[data-theme="dark"] .fm-arrival-sync-spread { color: #C8C7F0; }
 
 /* ── Share as Story Button ───────────────────────────────── */
 
-.fm-story-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border: none;
-  background: linear-gradient(135deg, #8B5CF6, #6D28D9);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: transform .15s, box-shadow .15s;
-}
-.fm-story-btn:hover {
-  transform: scale(1.03);
-  box-shadow: 0 2px 8px rgba(109,40,217,.3);
-}
-.fm-story-btn-icon { font-size: 14px; }
-
 /* ── Destination Quick Facts ─────────────────────────────── */
-
-.fm-facts {
-  margin: 10px 0;
-  padding: 14px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-facts-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 10px;
-}
-.fm-facts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
-}
-.fm-facts-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--slate-50);
-  border-radius: var(--radius-xs);
-}
-.fm-facts-item-icon { font-size: 18px; flex-shrink: 0; }
-.fm-facts-item-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.fm-facts-item-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  color: var(--slate-500);
-  font-weight: 600;
-}
-.fm-facts-item-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-[data-theme="dark"] .fm-facts {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-facts-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-facts-item { background: #16173B; }
-[data-theme="dark"] .fm-facts-item-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-facts-item-value { color: #E1E0FF; }
 
 /* ── Scroll Progress Bar ─────────────────────────────────── */
 
@@ -7678,386 +5535,17 @@ html {
 
 /* ── Trip Countdown ───────────────────────────────────────── */
 
-.fm-countdown {
-  margin: 8px 0;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.fm-countdown--relaxed { background: #F0F6FF; border: 1px solid #ACC7FF; }
-.fm-countdown--coming { background: #F0FDF4; border: 1px solid #BBF7D0; }
-.fm-countdown--soon { background: #FFFBEB; border: 1px solid #FDE68A; }
-.fm-countdown--urgent { background: #FEF2F2; border: 1px solid #FECACA; }
-.fm-countdown--today { background: linear-gradient(135deg, #FEF2F2, #FEE2E2); border: 1px solid #FECACA; }
-.fm-countdown-icon { font-size: 18px; }
-.fm-countdown-digits {
-  display: flex;
-  gap: 8px;
-}
-.fm-countdown-unit {
-  font-size: 12px;
-  color: var(--slate-600);
-}
-.fm-countdown-unit strong {
-  font-size: 18px;
-  color: var(--slate-800);
-  margin-right: 2px;
-}
-.fm-countdown-label {
-  font-size: 11px;
-  color: var(--slate-500);
-  margin-left: auto;
-}
-.fm-countdown-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #DC2626;
-}
-[data-theme="dark"] .fm-countdown--relaxed { background: rgba(172,199,255,.1); border-color: rgba(172,199,255,.3); }
-[data-theme="dark"] .fm-countdown--coming { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); }
-[data-theme="dark"] .fm-countdown--soon { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); }
-[data-theme="dark"] .fm-countdown--urgent { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
-[data-theme="dark"] .fm-countdown--today { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.3); }
-[data-theme="dark"] .fm-countdown-unit { color: #C8C7F0; }
-[data-theme="dark"] .fm-countdown-unit strong { color: #E1E0FF; }
-[data-theme="dark"] .fm-countdown-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-countdown-text { color: #FFB4AB; }
-
 /* ── CO2 Estimate Badge ──────────────────────────────────── */
-
-.fm-co2 {
-  margin: 8px 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.fm-co2--low { background: #ECFDF5; border: 1px solid #A7F3D0; }
-.fm-co2--medium { background: #FFFBEB; border: 1px solid #FDE68A; }
-.fm-co2--high { background: #FEF2F2; border: 1px solid #FECACA; }
-.fm-co2-icon { font-size: 18px; }
-.fm-co2-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.fm-co2-main {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-co2-equiv {
-  font-size: 11px;
-  color: var(--slate-500);
-}
-[data-theme="dark"] .fm-co2--low { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); }
-[data-theme="dark"] .fm-co2--medium { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); }
-[data-theme="dark"] .fm-co2--high { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); }
-[data-theme="dark"] .fm-co2-main { color: #E1E0FF; }
-[data-theme="dark"] .fm-co2-equiv { color: #C8C7F0; }
 
 /* ── Destination Popularity Meter ────────────────────────── */
 
-.fm-popularity {
-  margin: 10px 0;
-  padding: 14px 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-popularity-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 10px;
-}
-.fm-popularity-stats {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.fm-popularity-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 70px;
-}
-.fm-popularity-stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--blue-600);
-}
-.fm-popularity-stat-label {
-  font-size: 10px;
-  color: var(--slate-500);
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  font-weight: 600;
-}
-.fm-popularity-bar-wrap {
-  width: 80px;
-  height: 8px;
-  background: var(--slate-100);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.fm-popularity-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #0D71E4, #0D71E4);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-[data-theme="dark"] .fm-popularity {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-popularity-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-popularity-stat-value { color: #ACC7FF; }
-[data-theme="dark"] .fm-popularity-stat-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-popularity-bar-wrap { background: #2C2D52; }
-
 /* ── Group Chat Link ─────────────────────────────────────── */
-
-.fm-groupchat {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-groupchat-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: 2px;
-}
-.fm-groupchat-sub {
-  font-size: 12px;
-  color: var(--slate-500);
-  margin-bottom: 12px;
-}
-.fm-groupchat-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.fm-groupchat-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform .15s, box-shadow .15s;
-}
-.fm-groupchat-btn:hover {
-  transform: scale(1.03);
-}
-.fm-groupchat-btn--wa {
-  background: #25D366;
-  color: white;
-}
-.fm-groupchat-btn--wa:hover { box-shadow: 0 2px 8px rgba(37,211,102,.3); }
-.fm-groupchat-btn--tg {
-  background: #0088CC;
-  color: white;
-}
-.fm-groupchat-btn--tg:hover { box-shadow: 0 2px 8px rgba(0,136,204,.3); }
-.fm-groupchat-btn--copy {
-  background: var(--slate-100);
-  color: var(--slate-700);
-}
-.fm-groupchat-btn--copy:hover { background: var(--slate-200); }
-[data-theme="dark"] .fm-groupchat {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-groupchat-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-groupchat-sub { color: #C8C7F0; }
-[data-theme="dark"] .fm-groupchat-btn--copy {
-  background: #2C2D52;
-  color: #E1E0FF;
-}
-[data-theme="dark"] .fm-groupchat-btn--copy:hover { background: #3F4066; }
-@media (max-width: 480px) {
-  .fm-groupchat-actions { flex-direction: column; }
-  .fm-groupchat-btn { justify-content: center; }
-}
 
 /* ── Baggage Reminder ─────────────────────────────────────── */
 
-.fm-baggage {
-  margin: 8px 0;
-  padding: 10px 14px;
-  background: #FFF7ED;
-  border: 1px solid #FED7AA;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.fm-baggage-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-.fm-baggage-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.fm-baggage-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #9A3412;
-}
-.fm-baggage-sub {
-  font-size: 11px;
-  color: #C2410C;
-}
-[data-theme="dark"] .fm-baggage {
-  background: rgba(234,88,12,.1);
-  border-color: rgba(234,88,12,.3);
-}
-[data-theme="dark"] .fm-baggage-title { color: #FB923C; }
-[data-theme="dark"] .fm-baggage-sub { color: #FDBA74; }
-
 /* ── Origin Ranking Table ────────────────────────────────── */
 
-.fm-origin-table {
-  margin: 14px 0;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
-.fm-origin-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.fm-origin-table-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-origin-table-sort {
-  display: flex;
-  gap: 4px;
-}
-.fm-origin-table-pill {
-  padding: 3px 10px;
-  border: 1px solid var(--slate-200);
-  background: transparent;
-  border-radius: var(--radius-lg);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--slate-500);
-  cursor: pointer;
-  transition: all .15s;
-}
-.fm-origin-table-pill--active {
-  background: var(--blue-600);
-  border-color: var(--blue-600);
-  color: white;
-}
-.fm-origin-table-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fm-origin-table-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--slate-50);
-  border-radius: var(--radius-xs);
-  transition: background .15s;
-}
-.fm-origin-table-row:hover { background: var(--blue-50); }
-.fm-origin-table-row--best {
-  background: #ECFDF5;
-  border-left: 3px solid #10B981;
-}
-.fm-origin-table-row--worst {
-  background: #FEF2F2;
-  border-left: 3px solid #EF4444;
-}
-.fm-origin-table-pos {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--slate-400);
-  min-width: 16px;
-  text-align: center;
-}
-.fm-origin-table-flag { font-size: 14px; }
-.fm-origin-table-code {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-  min-width: 36px;
-}
-.fm-origin-table-airline {
-  font-size: 11px;
-  color: var(--slate-500);
-  font-weight: 500;
-  min-width: 24px;
-}
-.fm-origin-table-stops {
-  font-size: 10px;
-  color: var(--slate-400);
-  min-width: 30px;
-}
-.fm-origin-table-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--slate-800);
-  margin-left: auto;
-}
-[data-theme="dark"] .fm-origin-table {
-  background: #16173B;
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .fm-origin-table-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-origin-table-pill { border-color: #3F4066; color: #C8C7F0; }
-[data-theme="dark"] .fm-origin-table-pill--active { background: #0D71E4; border-color: #0D71E4; color: white; }
-[data-theme="dark"] .fm-origin-table-row { background: #16173B; }
-[data-theme="dark"] .fm-origin-table-row:hover { background: #2C2D52; }
-[data-theme="dark"] .fm-origin-table-row--best { background: rgba(16,185,129,.1); border-color: #10B981; }
-[data-theme="dark"] .fm-origin-table-row--worst { background: rgba(239,68,68,.1); border-color: #EF4444; }
-[data-theme="dark"] .fm-origin-table-code { color: #E1E0FF; }
-[data-theme="dark"] .fm-origin-table-price { color: #E1E0FF; }
-
 /* ── Trip Type Insight ───────────────────────────────────── */
-
-.fm-triptype-insight {
-  margin: 6px 0;
-  padding: 8px 14px;
-  background: #F0F6FF;
-  border: 1px solid #ACC7FF;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.fm-triptype-insight-icon { font-size: 16px; }
-.fm-triptype-insight-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1E40AF;
-}
-[data-theme="dark"] .fm-triptype-insight {
-  background: rgba(172,199,255,.1);
-  border-color: rgba(172,199,255,.3);
-}
-[data-theme="dark"] .fm-triptype-insight-text { color: #ACC7FF; }
 
 /* ── Destination Image Banner ────────────────────────────── */
 
@@ -8107,193 +5595,11 @@ html {
 
 /* ── Alternative Dates Hint (Round 29) ────────────────────── */
 
-.fm-altdates {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border: 1px solid #f59e0b;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-altdates-icon { font-size: 22px; flex-shrink: 0; }
-.fm-altdates-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-altdates-title { font-weight: 700; font-size: 13px; color: #92400e; }
-.fm-altdates-text { font-size: 13px; color: #78350f; line-height: 1.4; }
-[data-theme="dark"] .fm-altdates {
-  background: linear-gradient(135deg, #451a03, #78350f);
-  border-color: #b45309;
-}
-[data-theme="dark"] .fm-altdates-title { color: #fcd34d; }
-[data-theme="dark"] .fm-altdates-text { color: #fde68a; }
-
 /* ── Flight Duration Comparison (Round 29) ────────────────── */
-
-.fm-duration {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-duration-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 14px;
-}
-.fm-duration-bars { display: flex; flex-direction: column; gap: 10px; }
-.fm-duration-row { display: flex; align-items: center; gap: 10px; }
-.fm-duration-origin {
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-  min-width: 65px;
-  text-align: right;
-}
-.fm-duration-barwrap {
-  flex: 1;
-  display: flex;
-  height: 18px;
-  background: #f1f5f9;
-  border-radius: 9px;
-  overflow: hidden;
-}
-.fm-duration-fly {
-  background: linear-gradient(90deg, #0D71E4, #0059B8);
-  border-radius: 9px 0 0 9px;
-  min-width: 2px;
-}
-.fm-duration-lay {
-  background: linear-gradient(90deg, #fbbf24, #f59e0b);
-  min-width: 2px;
-}
-.fm-duration-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  min-width: 50px;
-}
-.fm-duration-legend {
-  display: flex;
-  gap: 16px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid #e5e7eb;
-}
-.fm-duration-legend-item { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 5px; }
-.fm-duration-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-.fm-duration-dot--fly { background: #0D71E4; }
-.fm-duration-dot--lay { background: #f59e0b; }
-[data-theme="dark"] .fm-duration {
-  background: #2C2D52;
-  border-color: #3F4066;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-}
-[data-theme="dark"] .fm-duration-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-duration-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-duration-barwrap { background: #3F4066; }
-[data-theme="dark"] .fm-duration-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-duration-legend { border-top-color: #3F4066; }
-[data-theme="dark"] .fm-duration-legend-item { color: #C8C7F0; }
 
 /* ── Destination Currency Converter (Round 29) ────────────── */
 
-.fm-fxcalc {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-fxcalc-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px;
-}
-.fm-fxcalc-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.fm-fxcalc-input-wrap {
-  display: flex;
-  align-items: center;
-  background: #f1f5f9;
-  border-radius: var(--radius-sm);
-  padding: 0 12px;
-  border: 1px solid #e2e8f0;
-}
-.fm-fxcalc-symbol { font-weight: 700; color: #64748b; font-size: 16px; }
-.fm-fxcalc-input {
-  border: none;
-  background: transparent;
-  width: 80px;
-  padding: 8px 6px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  outline: none;
-}
-.fm-fxcalc-arrow { font-size: 18px; color: #94a3b8; font-weight: 700; }
-.fm-fxcalc-result { display: flex; align-items: baseline; gap: 6px; }
-.fm-fxcalc-converted {
-  font-size: 22px;
-  font-weight: 800;
-  color: #059669;
-}
-.fm-fxcalc-code { font-size: 12px; font-weight: 600; color: #64748b; }
-.fm-fxcalc-note {
-  display: block;
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 8px;
-}
-[data-theme="dark"] .fm-fxcalc {
-  background: #2C2D52;
-  border-color: #3F4066;
-}
-[data-theme="dark"] .fm-fxcalc-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-fxcalc-input-wrap { background: #3F4066; border-color: #6E6F94; }
-[data-theme="dark"] .fm-fxcalc-symbol { color: #C8C7F0; }
-[data-theme="dark"] .fm-fxcalc-input { color: #E1E0FF; }
-[data-theme="dark"] .fm-fxcalc-arrow { color: #9B9AC6; }
-[data-theme="dark"] .fm-fxcalc-converted { color: #52DEA2; }
-[data-theme="dark"] .fm-fxcalc-code { color: #C8C7F0; }
-[data-theme="dark"] .fm-fxcalc-note { color: #9B9AC6; }
-
 /* ── Booking Window Tip (Round 29) ────────────────────────── */
-
-.fm-bookwin {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  border: 1px solid;
-}
-.fm-bookwin--urgent { background: #fef2f2; border-color: #fca5a5; }
-.fm-bookwin--soon { background: #fff7ed; border-color: #fdba74; }
-.fm-bookwin--good { background: #f0fdf4; border-color: #86efac; }
-.fm-bookwin--early { background: #f0fdf4; border-color: #86efac; }
-.fm-bookwin--veryearly { background: #F0F6FF; border-color: #ACC7FF; }
-.fm-bookwin-icon { font-size: 20px; flex-shrink: 0; }
-.fm-bookwin-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-bookwin-title { font-weight: 700; font-size: 13px; color: #334155; }
-.fm-bookwin-text { font-size: 13px; color: #475569; line-height: 1.4; }
-[data-theme="dark"] .fm-bookwin--urgent { background: #450a0a; border-color: #991b1b; }
-[data-theme="dark"] .fm-bookwin--soon { background: #451a03; border-color: #9a3412; }
-[data-theme="dark"] .fm-bookwin--good { background: #052e16; border-color: #166534; }
-[data-theme="dark"] .fm-bookwin--early { background: #052e16; border-color: #166534; }
-[data-theme="dark"] .fm-bookwin--veryearly { background: #1e3a5f; border-color: #004591; }
-[data-theme="dark"] .fm-bookwin-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-bookwin-text { color: #C8C7F0; }
 
 /* ── Results Share Link (Round 29) ────────────────────────── */
 
@@ -8336,874 +5642,84 @@ html {
 [data-theme="dark"] .fm-sharelink-btn:hover { background: #004591; }
 
 @media (max-width: 600px) {
-  .fm-altdates { padding: 10px 14px; }
-  .fm-duration { padding: 14px 14px; }
-  .fm-duration-origin { min-width: 50px; font-size: 12px; }
-  .fm-fxcalc { padding: 14px 14px; }
-  .fm-fxcalc-row { gap: 8px; }
-  .fm-bookwin { padding: 10px 14px; }
   .fm-sharelink { padding: 10px 14px; flex-wrap: wrap; }
 }
 
 /* ── Stopover Info (Round 30) ─────────────────────────────── */
 
-.fm-stopover {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-stopover-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px;
-}
-.fm-stopover-alldirect {
-  display: inline-block;
-  background: #dcfce7;
-  color: #166534;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: var(--radius-lg);
-  padding: 4px 12px;
-  margin-bottom: 10px;
-}
-.fm-stopover-list { display: flex; flex-direction: column; gap: 8px; }
-.fm-stopover-row { display: flex; align-items: center; gap: 10px; }
-.fm-stopover-origin { font-size: 13px; font-weight: 600; color: #475569; min-width: 65px; }
-.fm-stopover-badge {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: var(--radius-lg);
-}
-.fm-stopover-badge--direct { background: #dcfce7; color: #166534; }
-.fm-stopover-badge--one { background: #fef3c7; color: #92400e; }
-.fm-stopover-badge--multi { background: #fef2f2; color: #991b1b; }
-[data-theme="dark"] .fm-stopover { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-stopover-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-stopover-alldirect { background: #052e16; color: #52DEA2; }
-[data-theme="dark"] .fm-stopover-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-stopover-badge--direct { background: #052e16; color: #52DEA2; }
-[data-theme="dark"] .fm-stopover-badge--one { background: #451a03; color: #fcd34d; }
-[data-theme="dark"] .fm-stopover-badge--multi { background: #450a0a; color: #FFB4AB; }
-
 /* ── Airline Logos (Round 30) ─────────────────────────────── */
-
-.fm-airlines {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-.fm-airlines-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-.fm-airlines-logos { display: flex; gap: 8px; flex-wrap: wrap; }
-.fm-airlines-chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-lg);
-  padding: 4px 10px 4px 5px;
-}
-.fm-airlines-img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
-.fm-airlines-code { font-size: 12px; font-weight: 700; color: #334155; }
-[data-theme="dark"] .fm-airlines-label { color: #C8C7F0; }
-[data-theme="dark"] .fm-airlines-chip { background: #3F4066; border-color: #6E6F94; }
-[data-theme="dark"] .fm-airlines-code { color: #E1E0FF; }
 
 /* ── Price History Hint (Round 30) ────────────────────────── */
 
-.fm-pricehint {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: var(--radius-sm);
-  padding: 12px 18px;
-  margin-bottom: 14px;
-  border: 1px solid;
-}
-.fm-pricehint--rising { background: #fef2f2; border-color: #fca5a5; }
-.fm-pricehint--stable { background: #f0fdf4; border-color: #86efac; }
-.fm-pricehint--may-drop { background: #F0F6FF; border-color: #ACC7FF; }
-.fm-pricehint-icon { font-size: 18px; flex-shrink: 0; }
-.fm-pricehint-text { font-size: 13px; color: #334155; line-height: 1.4; }
-[data-theme="dark"] .fm-pricehint--rising { background: #450a0a; border-color: #991b1b; }
-[data-theme="dark"] .fm-pricehint--stable { background: #052e16; border-color: #166534; }
-[data-theme="dark"] .fm-pricehint--may-drop { background: #1e3a5f; border-color: #004591; }
-[data-theme="dark"] .fm-pricehint-text { color: #E1E0FF; }
-
 /* ── Group Budget Gauge (Round 30) ────────────────────────── */
-
-.fm-budgetgauge {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-budgetgauge-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px;
-}
-.fm-budgetgauge-track {
-  width: 100%;
-  height: 16px;
-  background: #f1f5f9;
-  border-radius: var(--radius-xs);
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-.fm-budgetgauge-fill {
-  height: 100%;
-  border-radius: var(--radius-xs);
-  transition: width .6s ease;
-}
-.fm-budgetgauge-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #475569;
-}
-.fm-budgetgauge-remaining { font-weight: 600; color: #059669; }
-[data-theme="dark"] .fm-budgetgauge { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-budgetgauge-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-budgetgauge-track { background: #3F4066; }
-[data-theme="dark"] .fm-budgetgauge-info { color: #C8C7F0; }
-[data-theme="dark"] .fm-budgetgauge-remaining { color: #52DEA2; }
 
 /* ── Destination Visa Hint (Round 30) ─────────────────────── */
 
-.fm-visa {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: var(--radius-sm);
-  padding: 12px 18px;
-  margin-bottom: 14px;
-  border: 1px solid;
-}
-.fm-visa--ok { background: #f0fdf4; border-color: #86efac; }
-.fm-visa--check { background: #fff7ed; border-color: #fdba74; }
-.fm-visa-icon { font-size: 18px; flex-shrink: 0; }
-.fm-visa-text { font-size: 13px; color: #334155; line-height: 1.4; }
-[data-theme="dark"] .fm-visa--ok { background: #052e16; border-color: #166534; }
-[data-theme="dark"] .fm-visa--check { background: #451a03; border-color: #9a3412; }
-[data-theme="dark"] .fm-visa-text { color: #E1E0FF; }
-
-@media (max-width: 600px) {
-  .fm-stopover { padding: 14px 14px; }
-  .fm-stopover-origin { min-width: 50px; font-size: 12px; }
-  .fm-pricehint { padding: 10px 14px; }
-  .fm-budgetgauge { padding: 14px 14px; }
-  .fm-visa { padding: 10px 14px; }
-}
-
 /* ── Return Flight Preview (Round 31) ─────────────────────── */
-
-.fm-returnflight {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-returnflight-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px;
-}
-.fm-returnflight-list { display: flex; flex-direction: column; gap: 8px; }
-.fm-returnflight-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  flex-wrap: wrap;
-}
-.fm-returnflight-origin { font-weight: 600; color: #475569; min-width: 55px; }
-.fm-returnflight-logo { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
-.fm-returnflight-carrier { font-weight: 700; color: #334155; font-size: 12px; }
-.fm-returnflight-times { color: #64748b; font-size: 12px; }
-[data-theme="dark"] .fm-returnflight { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-returnflight-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-returnflight-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-returnflight-carrier { color: #E1E0FF; }
-[data-theme="dark"] .fm-returnflight-times { color: #C8C7F0; }
 
 /* ── Destination Event Hint (Round 31) ────────────────────── */
 
-.fm-destevent {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: linear-gradient(135deg, #fdf4ff, #f5d0fe);
-  border: 1px solid #d946ef;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-destevent-icon { font-size: 22px; flex-shrink: 0; }
-.fm-destevent-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-destevent-title { font-weight: 700; font-size: 13px; color: #86198f; }
-.fm-destevent-text { font-size: 13px; color: #701a75; line-height: 1.4; }
-[data-theme="dark"] .fm-destevent {
-  background: linear-gradient(135deg, #4a044e, #86198f30);
-  border-color: #a21caf;
-}
-[data-theme="dark"] .fm-destevent-title { color: #e879f9; }
-[data-theme="dark"] .fm-destevent-text { color: #f0abfc; }
-
 /* ── Price Breakdown Accordion (Round 31) ─────────────────── */
-
-.fm-pricebd {
-  background: white;
-  border-radius: var(--radius-md);
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-.fm-pricebd-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 14px 18px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: left;
-}
-.fm-pricebd-toggle:hover { background: #f8fafc; }
-.fm-pricebd-toggle-icon { font-size: 12px; color: #94a3b8; }
-.fm-pricebd-content { padding: 0 18px 14px; }
-.fm-pricebd-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 8px;
-}
-.fm-pricebd-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 6px 0;
-  font-size: 13px;
-}
-.fm-pricebd-origin { font-weight: 600; color: #334155; }
-.fm-pricebd-val { color: #64748b; }
-.fm-pricebd-val--tax { color: #f59e0b; }
-.fm-pricebd-val--total { font-weight: 700; color: #1e293b; }
-[data-theme="dark"] .fm-pricebd { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-pricebd-toggle { color: #E1E0FF; }
-[data-theme="dark"] .fm-pricebd-toggle:hover { background: #3F4066; }
-[data-theme="dark"] .fm-pricebd-header { color: #9B9AC6; border-bottom-color: #3F4066; }
-[data-theme="dark"] .fm-pricebd-origin { color: #E1E0FF; }
-[data-theme="dark"] .fm-pricebd-val { color: #C8C7F0; }
-[data-theme="dark"] .fm-pricebd-val--tax { color: #fbbf24; }
-[data-theme="dark"] .fm-pricebd-val--total { color: #E1E0FF; }
 
 /* ── Group Size Indicator (Round 31) ──────────────────────── */
 
-.fm-groupsize {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 12px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-groupsize-avatars { display: flex; margin-left: 4px; }
-.fm-groupsize-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #f1f5f9;
-  border: 2px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  margin-left: -8px;
-  position: relative;
-}
-.fm-groupsize-avatar:first-child { margin-left: 0; }
-.fm-groupsize-more {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  border: 2px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  margin-left: -8px;
-}
-.fm-groupsize-label { font-size: 14px; font-weight: 600; color: #334155; }
-.fm-groupsize-toggle {
-  margin-left: auto;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-xs);
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e293b;
-  cursor: pointer;
-  transition: background .2s;
-}
-.fm-groupsize-toggle:hover { background: #e2e8f0; }
-[data-theme="dark"] .fm-groupsize { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-groupsize-avatar { background: #3F4066; border-color: #2C2D52; }
-[data-theme="dark"] .fm-groupsize-more { background: #6E6F94; border-color: #2C2D52; color: #E1E0FF; }
-[data-theme="dark"] .fm-groupsize-label { color: #E1E0FF; }
-[data-theme="dark"] .fm-groupsize-toggle { background: #3F4066; border-color: #6E6F94; color: #E1E0FF; }
-[data-theme="dark"] .fm-groupsize-toggle:hover { background: #6E6F94; }
-
 /* ── Search Duration Badge (Round 31) ─────────────────────── */
-
-.fm-searchspeed {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  padding: 8px 0;
-  margin-bottom: 10px;
-}
-.fm-searchspeed-icon { font-size: 16px; }
-.fm-searchspeed-time { font-size: 14px; font-weight: 700; color: #334155; }
-.fm-searchspeed-rating { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-[data-theme="dark"] .fm-searchspeed-time { color: #E1E0FF; }
-
-@media (max-width: 600px) {
-  .fm-returnflight { padding: 14px 14px; }
-  .fm-returnflight-row { gap: 6px; }
-  .fm-destevent { padding: 10px 14px; }
-  .fm-pricebd-toggle { padding: 12px 14px; }
-  .fm-pricebd-content { padding: 0 14px 12px; }
-  .fm-pricebd-header, .fm-pricebd-row { grid-template-columns: 1.2fr 1fr 1fr 1fr; font-size: 11px; }
-  .fm-groupsize { padding: 10px 14px; gap: 8px; }
-  .fm-groupsize-avatar { width: 28px; height: 28px; font-size: 14px; }
-  .fm-groupsize-toggle { padding: 5px 10px; font-size: 12px; }
-}
 
 /* ── Nearby Airports Hint (Round 32) ──────────────────────── */
 
-.fm-nearby {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-  border: 1px solid #6ee7b7;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-nearby-icon { font-size: 20px; flex-shrink: 0; }
-.fm-nearby-body { display: flex; flex-direction: column; gap: 4px; }
-.fm-nearby-title { font-weight: 700; font-size: 13px; color: #065f46; }
-.fm-nearby-text { font-size: 13px; color: #047857; line-height: 1.4; }
-[data-theme="dark"] .fm-nearby {
-  background: linear-gradient(135deg, #052e16, #065f4630);
-  border-color: #059669;
-}
-[data-theme="dark"] .fm-nearby-title { color: #52DEA2; }
-[data-theme="dark"] .fm-nearby-text { color: #a7f3d0; }
-
 /* ── Destination Timezone Compare (Round 32) ──────────────── */
-
-.fm-timezone {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-}
-.fm-timezone-icon { font-size: 20px; flex-shrink: 0; }
-.fm-timezone-body { display: flex; flex-direction: column; gap: 4px; }
-.fm-timezone-title { font-weight: 700; font-size: 13px; color: #1e293b; }
-.fm-timezone-list { display: flex; gap: 12px; flex-wrap: wrap; }
-.fm-timezone-item { font-size: 13px; color: #475569; font-weight: 600; }
-[data-theme="dark"] .fm-timezone { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-timezone-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-timezone-item { color: #C8C7F0; }
 
 /* ── Flight Class Badge (Round 32) ────────────────────────── */
 
-.fm-flightclass {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-.fm-flightclass-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: var(--radius-lg);
-  background: white;
-  border: 2px solid;
-  color: #334155;
-}
-[data-theme="dark"] .fm-flightclass-badge { background: #2C2D52; color: #E1E0FF; }
-
 /* ── Trip Summary Export (Round 32) ───────────────────────── */
-
-.fm-tripexport {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 14px;
-}
-.fm-tripexport-btn {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--radius-sm);
-  padding: 10px 22px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  transition: all .2s;
-}
-.fm-tripexport-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-[data-theme="dark"] .fm-tripexport-btn {
-  background: #3F4066;
-  border-color: #6E6F94;
-  color: #E1E0FF;
-}
-[data-theme="dark"] .fm-tripexport-btn:hover { background: #6E6F94; }
 
 /* ── Price Compare External (Round 32) ────────────────────── */
 
-.fm-extcompare {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--radius-sm);
-  padding: 12px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  flex-wrap: wrap;
-}
-.fm-extcompare-label { font-size: 13px; font-weight: 600; color: #475569; }
-.fm-extcompare-links { display: flex; gap: 8px; }
-.fm-extcompare-link {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: var(--radius-xs);
-  text-decoration: none;
-  transition: opacity .2s;
-}
-.fm-extcompare-link:hover { opacity: .85; }
-.fm-extcompare-link--sky { background: #0770e3; color: white; }
-.fm-extcompare-link--gf { background: #4285f4; color: white; }
-[data-theme="dark"] .fm-extcompare { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-extcompare-label { color: #C8C7F0; }
-
-@media (max-width: 600px) {
-  .fm-nearby { padding: 10px 14px; }
-  .fm-timezone { padding: 10px 14px; }
-  .fm-extcompare { padding: 10px 14px; }
-  .fm-tripexport-btn { padding: 8px 16px; font-size: 12px; }
-}
-
 /* ── Destination Safety Rating (Round 33) ─────────────────── */
-
-.fm-safety {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-}
-.fm-safety-icon { font-size: 20px; flex-shrink: 0; }
-.fm-safety-body { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.fm-safety-title { font-weight: 700; font-size: 13px; color: #1e293b; }
-.fm-safety-bar-wrap {
-  width: 100%;
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.fm-safety-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
-.fm-safety-label { font-size: 12px; font-weight: 700; }
-[data-theme="dark"] .fm-safety { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-safety-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-safety-bar-wrap { background: #3F4066; }
 
 /* ── Flight Connection Warning (Round 33) ─────────────────── */
 
-.fm-connwarn {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-connwarn-icon { font-size: 20px; flex-shrink: 0; }
-.fm-connwarn-body { display: flex; flex-direction: column; gap: 4px; }
-.fm-connwarn-title { font-weight: 700; font-size: 13px; color: #991b1b; }
-.fm-connwarn-text { font-size: 13px; color: #7f1d1d; line-height: 1.4; }
-[data-theme="dark"] .fm-connwarn { background: #450a0a; border-color: #991b1b; }
-[data-theme="dark"] .fm-connwarn-title { color: #FFB4AB; }
-[data-theme="dark"] .fm-connwarn-text { color: #fecaca; }
-
 /* ── Seasonal Demand Indicator (Round 33) ─────────────────── */
-
-.fm-season {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  border: 1px solid;
-}
-.fm-season--peak { background: #fef2f2; border-color: #fca5a5; }
-.fm-season--shoulder { background: #fffbeb; border-color: #fcd34d; }
-.fm-season--off { background: #F0F6FF; border-color: #ACC7FF; }
-.fm-season-icon { font-size: 20px; flex-shrink: 0; }
-.fm-season-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-season-title { font-weight: 700; font-size: 13px; color: #334155; }
-.fm-season-text { font-size: 13px; color: #475569; line-height: 1.4; }
-[data-theme="dark"] .fm-season--peak { background: #450a0a; border-color: #991b1b; }
-[data-theme="dark"] .fm-season--shoulder { background: #451a03; border-color: #b45309; }
-[data-theme="dark"] .fm-season--off { background: #1e3a5f; border-color: #004591; }
-[data-theme="dark"] .fm-season-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-season-text { color: #C8C7F0; }
 
 /* ── Origin Distance Map (Round 33) ──────────────────────── */
 
-.fm-distmap {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-distmap-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 14px;
-}
-.fm-distmap-bars { display: flex; flex-direction: column; gap: 10px; }
-.fm-distmap-row { display: flex; align-items: center; gap: 10px; }
-.fm-distmap-origin { font-size: 13px; font-weight: 600; color: #475569; min-width: 65px; text-align: right; }
-.fm-distmap-barwrap {
-  flex: 1;
-  height: 14px;
-  background: #f1f5f9;
-  border-radius: 7px;
-  overflow: hidden;
-}
-.fm-distmap-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #06b6d4, #0891b2);
-  border-radius: 7px;
-  min-width: 4px;
-}
-.fm-distmap-label { font-size: 12px; font-weight: 600; color: #64748b; min-width: 70px; }
-[data-theme="dark"] .fm-distmap { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-distmap-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-distmap-origin { color: #C8C7F0; }
-[data-theme="dark"] .fm-distmap-barwrap { background: #3F4066; }
-[data-theme="dark"] .fm-distmap-label { color: #C8C7F0; }
-
 /* ── Quick Bookmark Button (Round 33) ─────────────────────── */
 
-.fm-bookmark-btn {
-  display: block;
-  margin: 0 auto 14px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: var(--radius-sm);
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #334155;
-  cursor: pointer;
-  transition: all .2s;
-}
-.fm-bookmark-btn:hover { border-color: #f59e0b; color: #f59e0b; }
-.fm-bookmark-btn--saved { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
-[data-theme="dark"] .fm-bookmark-btn { background: #3F4066; border-color: #6E6F94; color: #E1E0FF; }
-[data-theme="dark"] .fm-bookmark-btn:hover { border-color: #fbbf24; color: #fbbf24; }
-[data-theme="dark"] .fm-bookmark-btn--saved { border-color: #fbbf24; color: #fbbf24; background: #451a03; }
-
-@media (max-width: 600px) {
-  .fm-safety { padding: 10px 14px; }
-  .fm-connwarn { padding: 10px 14px; }
-  .fm-season { padding: 10px 14px; }
-  .fm-distmap { padding: 14px 14px; }
-  .fm-distmap-origin { min-width: 50px; font-size: 12px; }
-  .fm-bookmark-btn { padding: 8px 18px; font-size: 13px; }
-}
-
 /* ── Departure Countdown 24h (Round 34) ───────────────────── */
-
-.fm-dep24 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: linear-gradient(135deg, #fef2f2, #fee2e2);
-  border: 2px solid #ef4444;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  animation: fm-dep24-pulse 2s infinite;
-}
 @keyframes fm-dep24-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.3); }
   50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
 }
-.fm-dep24-icon { font-size: 22px; }
-.fm-dep24-text { font-size: 14px; font-weight: 700; color: #991b1b; }
-[data-theme="dark"] .fm-dep24 { background: linear-gradient(135deg, #450a0a, #7f1d1d); border-color: #dc2626; }
-[data-theme="dark"] .fm-dep24-text { color: #FFB4AB; }
 
 /* ── Price Savings vs Solo (Round 34) ─────────────────────── */
 
-.fm-solosave {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-  border: 1px solid #34d399;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-solosave-icon { font-size: 22px; flex-shrink: 0; }
-.fm-solosave-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-solosave-title { font-weight: 700; font-size: 13px; color: #065f46; }
-.fm-solosave-text { font-size: 13px; color: #047857; line-height: 1.4; }
-[data-theme="dark"] .fm-solosave { background: linear-gradient(135deg, #052e16, #065f4630); border-color: #059669; }
-[data-theme="dark"] .fm-solosave-title { color: #52DEA2; }
-[data-theme="dark"] .fm-solosave-text { color: #a7f3d0; }
-
 /* ── Destination Local Transport (Round 34) ───────────────── */
-
-.fm-transport {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid #e5e7eb;
-}
-.fm-transport-title { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 10px; }
-.fm-transport-modes { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.fm-transport-mode {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 5px 12px;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: var(--radius-lg);
-  color: #0369a1;
-}
-.fm-transport-tip { font-size: 12px; color: #64748b; display: block; }
-[data-theme="dark"] .fm-transport { background: #2C2D52; border-color: #3F4066; }
-[data-theme="dark"] .fm-transport-title { color: #E1E0FF; }
-[data-theme="dark"] .fm-transport-mode { background: #0c4a6e; border-color: #0369a1; color: #7dd3fc; }
-[data-theme="dark"] .fm-transport-tip { color: #C8C7F0; }
 
 /* ── Multi-City Badge (Round 34) ──────────────────────────── */
 
-.fm-multicity {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
-  border: 1px solid #c084fc;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-multicity-icon { font-size: 20px; flex-shrink: 0; }
-.fm-multicity-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-multicity-title { font-weight: 700; font-size: 13px; color: #6b21a8; }
-.fm-multicity-text { font-size: 13px; color: #7e22ce; line-height: 1.4; }
-[data-theme="dark"] .fm-multicity { background: linear-gradient(135deg, #3b0764, #6b21a830); border-color: #9333ea; }
-[data-theme="dark"] .fm-multicity-title { color: #d8b4fe; }
-[data-theme="dark"] .fm-multicity-text { color: #e9d5ff; }
-
 /* ── Flight Operator Note (Round 34) ──────────────────────── */
 
-.fm-codeshare {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  border-radius: var(--radius-sm);
-  padding: 14px 18px;
-  margin-bottom: 14px;
-}
-.fm-codeshare-icon { font-size: 20px; flex-shrink: 0; }
-.fm-codeshare-body { display: flex; flex-direction: column; gap: 4px; }
-.fm-codeshare-title { font-weight: 700; font-size: 13px; color: #92400e; }
-.fm-codeshare-text { font-size: 13px; color: #78350f; }
-[data-theme="dark"] .fm-codeshare { background: #451a03; border-color: #b45309; }
-[data-theme="dark"] .fm-codeshare-title { color: #fcd34d; }
-[data-theme="dark"] .fm-codeshare-text { color: #fde68a; }
-
 /* ── More Details Toggle & Section ───────────────────────── */
-.fm-more-toggle { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; margin-top: 16px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px dashed #7dd3fc; border-radius: var(--radius-md); cursor: pointer; font-weight: 700; font-size: 15px; color: #0369a1; transition: all .2s; }
-.fm-more-toggle:hover { background: linear-gradient(135deg, #e0f2fe, #bae6fd); border-color: #38bdf8; }
-.fm-more-arrow { display: inline-block; transition: transform .3s; font-size: 18px; }
-.fm-more-arrow--open { transform: rotate(180deg); }
-.fm-more-section { margin-top: 8px; }
-[data-theme="dark"] .fm-more-toggle { background: linear-gradient(135deg, #0c4a6e, #075985); border-color: #38bdf8; color: #7dd3fc; }
-[data-theme="dark"] .fm-more-toggle:hover { background: linear-gradient(135deg, #075985, #0369a1); }
 
 /* ── Round 35: Destination Food Culture ──────────────────── */
-.fm-food { display: flex; align-items: center; gap: 12px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
-.fm-food-emoji { font-size: 28px; flex-shrink: 0; }
-.fm-food-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-food-title { font-weight: 700; font-size: 13px; color: #92400e; }
-.fm-food-dish { font-size: 13px; color: #78350f; }
-[data-theme="dark"] .fm-food { background: #451a03; border-color: #d97706; }
-[data-theme="dark"] .fm-food-title { color: #fcd34d; }
-[data-theme="dark"] .fm-food-dish { color: #fde68a; }
 
 /* ── Round 35: WiFi Availability Hint ───────────────────── */
-.fm-wifi { display: flex; align-items: center; gap: 12px; background: #F0F6FF; border: 1px solid #0D71E4; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
-.fm-wifi-icon { font-size: 24px; flex-shrink: 0; }
-.fm-wifi-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-wifi-title { font-weight: 700; font-size: 13px; color: #1e40af; }
-.fm-wifi-rating { font-size: 13px; color: #1e3a8a; }
-.fm-wifi-bar { height: 6px; border-radius: 3px; background: #D7E2FF; overflow: hidden; margin-top: 4px; }
-.fm-wifi-bar-fill { height: 100%; border-radius: 3px; background: #0D71E4; transition: width .4s; }
-[data-theme="dark"] .fm-wifi { background: #2C2D52; border-color: #ACC7FF; }
-[data-theme="dark"] .fm-wifi-title { color: #ACC7FF; }
-[data-theme="dark"] .fm-wifi-rating { color: #ACC7FF; }
-[data-theme="dark"] .fm-wifi-bar { background: #3F4066; }
 
 /* ── Round 35: Price Per Day Calculator ─────────────────── */
-.fm-perday { display: flex; align-items: center; gap: 12px; background: #f0fdf4; border: 1px solid #22c55e; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
-.fm-perday-icon { font-size: 24px; flex-shrink: 0; }
-.fm-perday-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-perday-title { font-weight: 700; font-size: 13px; color: #166534; }
-.fm-perday-text { font-size: 13px; color: #15803d; }
-.fm-perday-amount { font-weight: 800; font-size: 18px; color: #16a34a; }
-[data-theme="dark"] .fm-perday { background: #052e16; border-color: #4ade80; }
-[data-theme="dark"] .fm-perday-title { color: #52DEA2; }
-[data-theme="dark"] .fm-perday-text { color: #bbf7d0; }
-[data-theme="dark"] .fm-perday-amount { color: #4ade80; }
 
 /* ── Round 35: Early Morning Warning ────────────────────── */
-.fm-earlyam { display: flex; align-items: center; gap: 12px; background: #fefce8; border: 1px solid #eab308; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
-.fm-earlyam-icon { font-size: 24px; flex-shrink: 0; }
-.fm-earlyam-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-earlyam-title { font-weight: 700; font-size: 13px; color: #854d0e; }
-.fm-earlyam-text { font-size: 13px; color: #713f12; }
-[data-theme="dark"] .fm-earlyam { background: #422006; border-color: #facc15; }
-[data-theme="dark"] .fm-earlyam-title { color: #fde047; }
-[data-theme="dark"] .fm-earlyam-text { color: #fef08a; }
 
 /* ── Round 35: Destination Language Phrase ───────────────── */
-.fm-phrase { display: flex; align-items: center; gap: 12px; background: #faf5ff; border: 1px solid #a855f7; border-radius: var(--radius-md); padding: 14px 18px; margin-top: 10px; animation: fadeIn .4s; }
-.fm-phrase-icon { font-size: 24px; flex-shrink: 0; }
-.fm-phrase-body { display: flex; flex-direction: column; gap: 2px; }
-.fm-phrase-title { font-weight: 700; font-size: 13px; color: #6b21a8; }
-.fm-phrase-word { font-size: 14px; color: #7c3aed; font-style: italic; }
-.fm-phrase-meaning { font-size: 12px; color: #6b21a8; opacity: .8; }
-[data-theme="dark"] .fm-phrase { background: #2e1065; border-color: #c084fc; }
-[data-theme="dark"] .fm-phrase-title { color: #d8b4fe; }
-[data-theme="dark"] .fm-phrase-word { color: #c4b5fd; }
-[data-theme="dark"] .fm-phrase-meaning { color: #ddd6fe; }
-
-@media (max-width: 600px) {
-  .fm-dep24 { padding: 10px 14px; }
-  .fm-solosave { padding: 10px 14px; }
-  .fm-transport { padding: 14px 14px; }
-  .fm-multicity { padding: 10px 14px; }
-  .fm-codeshare { padding: 10px 14px; }
-  .fm-food { padding: 10px 14px; }
-  .fm-wifi { padding: 10px 14px; }
-  .fm-perday { padding: 10px 14px; }
-  .fm-earlyam { padding: 10px 14px; }
-  .fm-phrase { padding: 10px 14px; }
-}
 
 /* ── Print Styles (Round 35 updated) ──────────────────────── */
 
 @media print {
-  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn,
-  .pwa-banner, .fm-toast, .fm-shortcuts-overlay,
-  .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research,
-  .fm-alert-hint, .fm-plan-trip, .fm-breadcrumb, .fm-checklist,
-  .fm-history, .fm-timeline, .fm-scroll-progress, .fm-story-btn,
-  .fm-countdown, .fm-groupchat, .fm-baggage, .fm-dest-banner,
-  .fm-altdates, .fm-bookwin, .fm-sharelink, .fm-fxcalc,
-  .fm-pricehint, .fm-visa, .fm-airlines, .fm-destevent,
-  .fm-searchspeed, .fm-groupsize, .fm-nearby, .fm-tripexport,
-  .fm-extcompare, .fm-flightclass, .fm-connwarn, .fm-season,
-  .fm-bookmark-btn, .fm-dep24, .fm-solosave, .fm-multicity,
-  .fm-codeshare, .fm-food, .fm-wifi, .fm-earlyam, .fm-phrase, .fm-more-toggle,
-  .sf-completion-strip, .sf-recent { display: none !important; }
+  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-breadcrumb, .fm-history, .fm-scroll-progress, .fm-dest-banner, .fm-sharelink, .sf-completion-strip, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
   .wc-image { max-height: 200px; }
-  .fm-podium-card, .fm-split-card, .fm-origin-savings, .fm-donut-wrap, .fm-radar,
-  .fm-summary-card, .fm-ppkm, .fm-facts, .fm-co2, .fm-popularity,
-  .fm-origin-table, .fm-stopover, .fm-budgetgauge, .fm-duration,
-  .fm-returnflight, .fm-pricebd, .fm-timezone, .fm-safety, .fm-distmap,
-  .fm-transport, .fm-perday {
+  .fm-podium-card, .fm-split-card {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;
