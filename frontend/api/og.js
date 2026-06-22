@@ -81,6 +81,15 @@ export default async function handler(req) {
     // euro sign in the source was mangled by the Edge bundler so the regex
     // never matched. Keep the source pure ASCII.
     const eur = (s) => { s = String(s || ""); return s.indexOf(E) < 0 ? s : (s.split(E).join("").replace(/\s+/g, " ").trim() + " EUR"); };
+    if (searchParams.get("debug") === "1") {
+      const raw = searchParams.get("pp") || "";
+      const font0 = await loadFont(origin);
+      return new Response(JSON.stringify({
+        raw, codes: [...raw].map((c) => c.codePointAt(0)),
+        Ecode: E.codePointAt(0), idx: raw.indexOf(E), eur: eur(raw),
+        fontBytes: font0 ? font0.byteLength : null,
+      }), { headers: { "content-type": "application/json", "x-og-version": "eur4" } });
+    }
     const data = {
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
       pp: eur(searchParams.get("pp")).slice(0, 24),
@@ -89,7 +98,7 @@ export default async function handler(req) {
       n: (searchParams.get("n") || "").slice(0, 4),
     };
     const font = await loadFont(origin);
-    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur3" } };
+    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur4" } };
     if (font) opts.fonts = [{ name: "Jakarta", data: font, weight: 700, style: "normal" }];
     return new ImageResponse(buildCard(data), opts);
   } catch (e) {
