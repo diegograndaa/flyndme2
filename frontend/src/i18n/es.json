@@ -587,6 +587,10 @@
     "copy": "Copiar enlace",
     "copied": "¡Copiado!"
   },
+  "cheaperDate": {
+    "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
+    "use": "Usar esta fecha"
+  },
   "stopover": {
     "title": "Escalas",
     "allDirect": "¡Todos los vuelos son directos!",

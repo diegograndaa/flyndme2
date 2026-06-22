@@ -140,6 +140,21 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
   return { price, offer };
 }
 
+// Dated prices in a ±14-day window around the requested date (one-way). Mirrors
+// the real provider's getDatedPrices; mockPrice varies by date so the cheaper-
+// date nudge has something to find.
+async function getDatedPrices(origin, destination, departureDate, options = {}) {
+  if (origin === destination) return [];
+  await sleep(MOCK_DELAY_MS);
+  const out = [];
+  const base = new Date(`${departureDate}T00:00:00Z`).getTime();
+  for (let d = -14; d <= 14; d++) {
+    const date = new Date(base + d * 86400000).toISOString().slice(0, 10);
+    out.push({ date, price: mockPrice(origin, destination, date) });
+  }
+  return out;
+}
+
 async function priceFlightOffer(offer) {
   if (!offer) return null;
   await sleep(MOCK_DELAY_MS);
@@ -188,6 +203,7 @@ module.exports = {
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
+  getDatedPrices,
   priceFlightOffer,
   healthCheck,
   budgetStatus,

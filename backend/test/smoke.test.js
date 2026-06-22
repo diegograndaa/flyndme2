@@ -504,3 +504,38 @@ test("presupuesto temporal: busqueda normal lleva partial=false", async () => {
   assert.equal(r.status, 200);
   assert.equal(r.body.partial, false);
 });
+
+test("cheaper-date: devuelve una fecha mas barata con forma valida (total forzado alto)", async () => {
+  const r = await post("/api/flights/cheaper-date", {
+    origins: ["MAD", "LON", "BER"],
+    passengers: [1, 1, 1],
+    destination: "PAR",
+    departureDate: "2026-09-15",
+    tripType: "oneway",
+    currentTotalEUR: 99999, // fuerza que cualquier fecha de la ventana ahorre
+  });
+  assert.equal(r.status, 200);
+  const b = r.body.betterDate;
+  assert.ok(b, "deberia sugerir una fecha mas barata");
+  assert.notEqual(b.date, "2026-09-15", "no sugiere la misma fecha");
+  assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(b.date), "fecha ISO");
+  assert.ok(b.savingEUR > 0 && b.totalEUR > 0, "ahorro y total positivos");
+  assert.equal(b.perOrigin.length, 3, "desglose por los 3 origenes");
+  for (const o of b.perOrigin) {
+    assert.ok(["MAD", "LON", "BER"].includes(o.origin));
+    assert.ok(o.price > 0 && o.passengers >= 1);
+  }
+});
+
+test("cheaper-date: roundtrip no soportado en v1 (betterDate=null)", async () => {
+  const r = await post("/api/flights/cheaper-date", {
+    origins: ["MAD", "LON"],
+    destination: "PAR",
+    departureDate: "2026-09-15",
+    tripType: "roundtrip",
+    currentTotalEUR: 400,
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.betterDate, null);
+  assert.equal(r.body.reason, "roundtrip-unsupported");
+});

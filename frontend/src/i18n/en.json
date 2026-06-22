@@ -587,6 +587,10 @@
     "copy": "Copy link",
     "copied": "Copied!"
   },
+  "cheaperDate": {
+    "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
+    "use": "Use this date"
+  },
   "stopover": {
     "title": "Stopovers",
     "allDirect": "All direct flights!",

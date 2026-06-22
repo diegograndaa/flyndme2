@@ -562,11 +562,28 @@ const capabilities = {
   dataSource:    "cache",          // precios cacheados 48h-7d, no tiempo real
 };
 
+// Precios por fecha (ida) de una ruta, a partir de la caché de prices_for_dates
+// que la búsqueda ya consultó → coste API ~0. Devuelve el más barato por día.
+// Alimenta el "nudge de fecha más barata" (solo ida en v1).
+async function getDatedPrices(origin, destination, departureDate, options = {}) {
+  if (!origin || !destination || origin === destination) return [];
+  const tickets = await fetchTickets(origin, destination, departureDate, options);
+  const m = new Map();
+  for (const t of Array.isArray(tickets) ? tickets : []) {
+    const date = String(t?.departure_at || "").slice(0, 10);
+    const price = Number(t?.price);
+    if (!date || !Number.isFinite(price) || price <= 0) continue;
+    if (!m.has(date) || price < m.get(date)) m.set(date, price);
+  }
+  return [...m.entries()].map(([date, price]) => ({ date, price }));
+}
+
 module.exports = {
   getAccessToken,
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
+  getDatedPrices,
   priceFlightOffer,
   healthCheck,
   budgetStatus,
