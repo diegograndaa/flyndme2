@@ -3,7 +3,7 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Check, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand } from "lucide-react";
+import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, weekdayOf, todayISO, countryFlag,
@@ -742,7 +742,9 @@ const SearchPage = React.memo(function SearchPage({
                   <span className="sf-airport-code">{a.code}</span>
                   <span className="sf-airport-city">{a.city}</span>
                   <span className="sf-airport-country">{a.country}</span>
-                  {isSelected && <span className="sf-airport-check"><Check size={14} /></span>}
+                  {isSelected
+                    ? <span className="sf-airport-check"><Check size={14} /></span>
+                    : <span className="sf-airport-add" aria-hidden="true"><Plus size={15} /></span>}
                 </div>
               );
             })}

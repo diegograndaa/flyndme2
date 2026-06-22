@@ -6,6 +6,9 @@
 import React, { useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import ConvergenceHero from "./ConvergenceHero";
+import { MapPin, Search, Share2 } from "lucide-react";
+
+const STEP_ICONS = [MapPin, Search, Share2];
 
 const FaqItem = React.memo(function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
@@ -73,9 +76,15 @@ const Landing = React.memo(function Landing({ searchForm }) {
           <div className="lp-card">
             <h2 className="lp-card-title">{t("landing.howTitle")}</h2>
             <ul className="lp-steps">
-              {Array.isArray(steps) && steps.map((s, i) => (
-                <li key={i}><span className="lp-step-num">{i + 1}</span>{s}</li>
-              ))}
+              {Array.isArray(steps) && steps.map((s, i) => {
+                const StepIcon = STEP_ICONS[i];
+                return (
+                  <li key={i}>
+                    <span className="lp-step-num">{StepIcon ? <StepIcon size={15} aria-hidden="true" /> : i + 1}</span>
+                    {s}
+                  </li>
+                );
+              })}
             </ul>
             <div className="lp-card-meta">
               <span>{t("landing.metaSource")}</span>
