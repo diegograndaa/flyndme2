@@ -35,9 +35,9 @@ export default function ConvergenceHero() {
           </radialGradient>
         </defs>
 
-        {/* Arcos de convergencia (pathLength=1 → draw-in uniforme) */}
+        {/* Arcos de convergencia (draw-in vía stroke-dashoffset, ver .cv-arc) */}
         {ORIGINS.map((o, i) => (
-          <path key={o.code} className="cv-arc" d={arcPath(o)} pathLength="1"
+          <path key={o.code} className="cv-arc" d={arcPath(o)}
             fill="none" style={{ animationDelay: `${0.15 + i * 0.22}s` }} />
         ))}
 
