@@ -86,7 +86,7 @@ export default async function handler(req) {
       n: (searchParams.get("n") || "").slice(0, 4),
     };
     const font = await loadFont(origin);
-    const opts = { width: 1200, height: 630 };
+    const opts = { width: 1200, height: 630, headers: { "x-og-version": "eur1" } };
     if (font) opts.fonts = [{ name: "Jakarta", data: font, weight: 700, style: "normal" }];
     return new ImageResponse(buildCard(data), opts);
   } catch (e) {
