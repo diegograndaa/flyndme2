@@ -1,6 +1,6 @@
 # FlyndMe
 
-PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-22.
+PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-23.
 
 ## Orquestación (lee esto primero: eres el cerebro del proyecto)
 
@@ -53,7 +53,11 @@ Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) 
 Afiliación Travelpayouts/Aviasales, marker **738121**. Circuito COMPLETO: `buildAffiliateLink()` (con tests) + CTA "Reservar" desplegados, `TRAVELPAYOUTS_MARKER=738121` activo en Render y cuenta Travelpayouts activada. Verificado en prod con búsqueda real: todos los deep links llevan `&marker=738121`. Pendiente solo esperar las primeras reservas (comisión ~1,1-1,3%) — vigilar el dashboard de Travelpayouts. Nota API: la respuesta de /multi-origin anida los offers en `flights[].flights[].offer.link`.
 
 ## Backlog (ordenado según el objetivo "producto redondo")
-**ESTADO al 22-jun-2026 (empezar por aquí):** producto redondo + **tanda estética completa en prod** (3 commits del 22-jun: `f5c0b4a` hero+iconos+tabular, `c4de3ca` microinteracciones+miniaturas, `b35efe6` cohesión+formulario+pasos). La app ya tiene IDENTIDAD propia y coherente (hero de convergencia, display Bricolage en todos los títulos, iconos Lucide, microinteracciones, comparador de barras). **No hay trabajo estético pedido pendiente.** Los datos/precios no se han tocado en toda la tanda (siguen igual de fiables). Diagnóstico de fondo que sigue vigente: **el cuello de botella real ya no es producto ni datos, es TRÁFICO/usuarios** — sin visitas no hay reservas de afiliado, ni cupo de Skyscanner/Search API, ni sentido a verificar más. El kit y el tracker de outreach están en `Fyndme/` (junto al repo). Si Diego pregunta "qué mejorar": ofrecer crecimiento/distribución antes que más pulido.
+**ESTADO al 23-jun-2026 (empezar por aquí):** producto redondo y pulido + 2 funciones nuevas en prod. Main en `ab83d8e`. Resumen de la sesión 22-23 jun (todo en prod, verificado por contenido):
+- **Pulido (22-jun)**, en commits sueltos a main: P1 fix del hero de convergencia (era una regresión real: salía casi invisible; ahora ESTÁTICO y fiable, ver "Diseño vigente") · P4 unificación de tokens (radios→`--radius-*`, sombras→`--shadow-sm`) · P3 UX de un solo origen (oculta toda la UI de equidad) · P2 reequilibrio del layout desktop (hero protagonista + guía rápida en la columna del selector) · consolidación de breakpoints (escala canónica + fix del solape 768) · **poda de 555 clases CSS muertas** (CSS −29% gzip, 39→27,7 KB).
+- **Funciones nuevas (22-23 jun)**: **nudge "fecha más barata"** (`450ba1a`, ver entrada abajo) y **imagen OG dinámica al compartir** (`67d5ccf`, ver entrada abajo). Ambas verificadas en prod.
+
+Detalle de cada cosa en las entradas "Hecho" de abajo. **No hay trabajo pedido pendiente.** Los datos/precios siguen fiables (el nudge reusa el calendario de Travelpayouts, sin inventar). Diagnóstico de fondo que SIGUE vigente: **el cuello de botella real no es producto ni datos, es TRÁFICO/usuarios** — sin visitas no hay reservas de afiliado ni sentido a verificar más. El kit y el tracker de outreach están en `Fyndme/` (junto al repo). Si Diego pregunta "qué mejorar": ofrecer crecimiento/distribución antes que más pulido (la shareability OG ya empuja en esa dirección). Posible follow-up opcional anotado: fuente con cobertura latina completa en el OG si se añaden ciudades con acento o se quiere el símbolo € real.
 
 Backlog técnico original VACÍO (capturas README, vite@8, SEO, analítica y promoción del precio verificado: todo hecho 16-jun). Quedan:
 1. **Vigilancias pasivas** (sin fecha): capa 2 `[serpapi-verify]` en logs de Render + cupo serpapi.com; primeras reservas de afiliado en el dashboard de Travelpayouts; y ahora **Vercel Analytics** (búsquedas y `book_click`) cuando haya tráfico real.
