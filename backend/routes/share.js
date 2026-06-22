@@ -135,6 +135,18 @@ router.get("/:id/og", (req, res) => {
     : "Find the cheapest place to meet your group.";
   const shareUrl = `${FRONTEND_URL}?share=${id}`;
 
+  // Dynamic OG image (per-result card) rendered by the Vercel edge function.
+  // Falls back to the static preview only if no winner data is available.
+  const ogImage = best
+    ? `${FRONTEND_URL}/api/og?${new URLSearchParams({
+        dest: destCity,
+        pp: avg,
+        from: originCities,
+        total,
+        n: String(numTravelers || ""),
+      }).toString()}`
+    : `${FRONTEND_URL}/og-preview.png`;
+
   const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"/>
@@ -143,11 +155,14 @@ router.get("/:id/og", (req, res) => {
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="${escapeHtml(shareUrl)}"/>
 <meta property="og:site_name" content="FlyndMe"/>
-<meta property="og:image" content="${FRONTEND_URL}/og-preview.png"/>
+<meta property="og:image" content="${escapeHtml(ogImage)}"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="${escapeHtml(ogTitle)}"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${escapeHtml(ogTitle)}"/>
 <meta name="twitter:description" content="${escapeHtml(ogDesc)}"/>
-<meta name="twitter:image" content="${FRONTEND_URL}/og-preview.png"/>
+<meta name="twitter:image" content="${escapeHtml(ogImage)}"/>
 <meta http-equiv="refresh" content="0;url=${escapeHtml(shareUrl)}"/>
 <title>${escapeHtml(ogTitle)}</title>
 </head><body><p>Redirecting to <a href="${escapeHtml(shareUrl)}">FlyndMe</a>…</p></body></html>`;

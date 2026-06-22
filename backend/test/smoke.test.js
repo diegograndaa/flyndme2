@@ -251,6 +251,11 @@ test("OG meta tags count actual pax, not origins", async () => {
     `OG image should be an absolute https URL, got "${img[1]}"`);
   assert.ok(!/\/\/flyndme\.vercel\.app(\/|")/.test(og.body),
     "OG meta tags must not reference the dead flyndme.vercel.app domain");
+  // Imagen OG dinamica por resultado (no el preview estatico)
+  assert.ok(img[1].includes("/api/og?"),
+    `OG image should be the dynamic per-result card, got "${img[1]}"`);
+  assert.ok(img[1].includes("dest="), "dynamic OG image carries the destination");
+  assert.ok(/og:image:width/.test(og.body), "OG declares image dimensions");
 });
 
 // ─── Startup config validation (production mode) ─────────────────────────
