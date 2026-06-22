@@ -1138,7 +1138,7 @@ export default function App() {
           />
 
           {/* ── CORE: Top 3 destinations podium ── */}
-          <TopDestinationsPodium flights={flights} currency={currency} onSelect={(dest) => {
+          <TopDestinationsPodium flights={flights} currency={currency} singleOrigin={cleanOrigins.length <= 1} onSelect={(dest) => {
             const idx = flights.findIndex(f => f.destination === dest.destination);
             if (idx >= 0) {
               setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
@@ -1185,8 +1185,11 @@ export default function App() {
             return null;
           })()}
 
-          {/* ── Cost split between travelers ── */}
-          <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
+          {/* ── Cost split between travelers ── (sin sentido con un solo origen:
+              todos salen de la misma ciudad y pagan lo mismo) */}
+          {cleanOrigins.length > 1 && (
+            <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
+          )}
 
           {/* ── Share results with the group ── */}
           <ResultsShareLink origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
@@ -1245,7 +1248,7 @@ export default function App() {
             <div className="mt-3 view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <CompareChart flights={flights} bestDestination={bestDestination} />
+                  <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1} />
                 </Suspense>
               </ErrorBoundary>
             </div>

@@ -21,7 +21,7 @@ function fairnessLabelKey(score) {
   return "fairness.unequal";
 }
 
-export default function CompareChart({ flights, bestDestination }) {
+export default function CompareChart({ flights, bestDestination, singleOrigin = false }) {
   const { t } = useI18n();
   const bestCode = normalizeCode(bestDestination?.destination || "");
 
@@ -81,10 +81,12 @@ export default function CompareChart({ flights, bestDestination }) {
                   <span className="cmp-city">{r.city}</span>
                   <span className="cmp-code">{r.code}</span>
                   {r.isBest && <span className="cmp-best">★ {t("compare.best")}</span>}
-                  <span className="cmp-fair" style={{ color: fColor }}>
-                    <span className="cmp-fair-dot" style={{ background: fColor }} />
-                    {fLabel}
-                  </span>
+                  {!singleOrigin && (
+                    <span className="cmp-fair" style={{ color: fColor }}>
+                      <span className="cmp-fair-dot" style={{ background: fColor }} />
+                      {fLabel}
+                    </span>
+                  )}
                 </div>
 
                 <div className="cmp-graph">

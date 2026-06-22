@@ -191,7 +191,7 @@ export function ResultsShareLink({ origins, departureDate, returnDate, tripType,
   );
 }
 
-export function TopDestinationsPodium({ flights, currency, onSelect }) {
+export function TopDestinationsPodium({ flights, currency, onSelect, singleOrigin = false }) {
   const { t } = useI18n();
   if (!flights || flights.length < 3) return null;
 
@@ -222,9 +222,11 @@ export function TopDestinationsPodium({ flights, currency, onSelect }) {
                   {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
                   <span className="fm-podium-pp">/pp</span>
                 </span>
-                <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
-                  {(dest.fairnessScore ?? 0).toFixed(0)}/100
-                </span>
+                {!singleOrigin && (
+                  <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
+                    {(dest.fairnessScore ?? 0).toFixed(0)}/100
+                  </span>
+                )}
               </span>
             </button>
           );

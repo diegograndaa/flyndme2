@@ -66,6 +66,10 @@ const WinnerCard = React.memo(function WinnerCard({
 
   const cleanOrigins = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean);
   const breakdown    = Array.isArray(dest.flights) ? dest.flights : [];
+  // Con un único origen no hay dimensión de equidad: todos salen de la misma
+  // ciudad → fairness siempre "perfecta" y spread 0. Ocultamos la UI de equidad
+  // (anillo, toggle precio/equidad y barra) para no mostrar métricas triviales.
+  const singleOrigin = cleanOrigins.length <= 1;
 
   // Build price map + itinerary info from breakdown
   const priceMap = {};
@@ -153,6 +157,7 @@ const WinnerCard = React.memo(function WinnerCard({
             : <div className="wc-summary-price wc-summary-price--secondary price-animate">{convertPrice(dest.averageCostPerTraveler, currency)}</div>
           }
         </div>
+        {!singleOrigin && <>
         <div className="wc-summary-divider" />
         <div className="wc-summary-item wc-summary-item--tooltip">
           <div className="wc-summary-label">{t("results.fairnessLabel")} <span className="wc-fairness-help" tabIndex={0} aria-label={t("results.fairnessHelp")}>?</span></div>
@@ -180,6 +185,7 @@ const WinnerCard = React.memo(function WinnerCard({
             </div>
           </div>
         </div>
+        </>}
         {dep && (
           <>
             <div className="wc-summary-divider" />
@@ -202,6 +208,7 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Criterion toggle: control único que gobierna ganador Y lista de
             alternativas (uiCriterion en App.jsx). */}
         <div className="wc-criterion-row">
+          {!singleOrigin && (
           <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
             {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
@@ -210,6 +217,7 @@ const WinnerCard = React.memo(function WinnerCard({
                 onClick={() => onChangeCriterion(v)}>{l}</button>
             ))}
           </div>
+          )}
           <div className="wc-stats-mini">
             {t("results.destsAnalyzed")}: <strong>{flightsCount}</strong>
           </div>
@@ -382,6 +390,7 @@ const WinnerCard = React.memo(function WinnerCard({
         )}
 
         {/* Fairness detail (collapsible mini) */}
+        {!singleOrigin && (
         <div className="wc-fairness-detail">
           <div className="wc-fairness-bar-full">
             <div className="wc-fairness-fill-full" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
@@ -391,6 +400,7 @@ const WinnerCard = React.memo(function WinnerCard({
             <span className="wc-fairness-spread">{t("results.maxSpread")}: {formatEur(dest.priceSpread ?? 0, 0)}</span>
           </div>
         </div>
+        )}
 
         {/* Actions */}
         <div className="wc-actions">
