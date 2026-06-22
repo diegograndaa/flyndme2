@@ -3866,6 +3866,47 @@ html {
   color: #52DEA2;
 }
 
+/* Nudge "fecha más barata": sugerencia (granate/lavanda) bajo el ganador. */
+.fm-cheaper-date {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #FCF8FF 0%, #FBE3E4 100%);
+  border: 1px solid rgba(174,47,52,.18);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+.fm-cheaper-date-icon { color: var(--primary); display: inline-flex; flex: 0 0 auto; }
+.fm-cheaper-date-text { flex: 1 1 auto; color: #16173B; font-weight: 600; line-height: 1.35; }
+.fm-cheaper-date-btn {
+  flex: 0 0 auto;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
+}
+.fm-cheaper-date-btn:hover { filter: brightness(1.08); }
+.fm-cheaper-date-btn:active { transform: translateY(1px); }
+.fm-cheaper-date-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+[data-theme="dark"] .fm-cheaper-date {
+  background: linear-gradient(135deg, rgba(255,179,176,.08) 0%, rgba(255,179,176,.16) 100%);
+  border-color: rgba(255,179,176,.25);
+}
+[data-theme="dark"] .fm-cheaper-date-text { color: #E9E9F5; }
+[data-theme="dark"] .fm-cheaper-date-btn { color: #16173B; }
+@media (max-width: 600px) {
+  .fm-cheaper-date { flex-wrap: wrap; }
+  .fm-cheaper-date-text { flex: 1 1 100%; order: 2; }
+}
+
 /* ── Quick re-search section ────────────────────────────────── */
 
 .fm-quick-research {

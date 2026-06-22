@@ -57,6 +57,9 @@ const MAX_CACHE_SIZE       = 500;
 // la fecha pedida, se busca la fecha con datos más cercana dentro de ±N días
 // y se devuelve ETIQUETADA con su fecha real (offer.dateFallback). 0 = off.
 const DATE_FLEX_DAYS       = Number(process.env.TP_DATE_FLEX_DAYS ?? 2);
+// Ventana del nudge "fecha más barata" (getDatedPrices consulta los meses que
+// toca). Coincide con windowDays por defecto de findCheaperGroupDate.
+const DATE_NUDGE_DAYS      = Number(process.env.TP_DATE_NUDGE_DAYS ?? 14);
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -562,11 +565,35 @@ const capabilities = {
   dataSource:    "cache",          // precios cacheados 48h-7d, no tiempo real
 };
 
+// Precios por DÍA (ida) de una ruta, para el "nudge de fecha más barata".
+// Consulta el CALENDARIO del mes (prices_for_dates con departure_at=YYYY-MM
+// devuelve el más barato de cada día) — una consulta de día solo trae ~ese día,
+// así que para sugerir fechas alternativas hay que pedir el mes. Cubre los meses
+// que toca la ventana de ±DATE_NUDGE_DAYS. Cacheado por mes (coste acotado;
+// Travelpayouts es gratis/ilimitado). Solo ida (v1).
+async function getDatedPrices(origin, destination, departureDate, options = {}) {
+  if (!origin || !destination || origin === destination) return [];
+  const months = monthsInWindow(departureDate, DATE_NUDGE_DAYS);
+  const m = new Map();
+  for (const month of months) {
+    let tickets = [];
+    try { tickets = await fetchTickets(origin, destination, month, options); } catch { continue; }
+    for (const t of Array.isArray(tickets) ? tickets : []) {
+      const date = String(t?.departure_at || "").slice(0, 10);
+      const price = Number(t?.price);
+      if (!date || !Number.isFinite(price) || price <= 0) continue;
+      if (!m.has(date) || price < m.get(date)) m.set(date, price);
+    }
+  }
+  return [...m.entries()].map(([date, price]) => ({ date, price }));
+}
+
 module.exports = {
   getAccessToken,
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
+  getDatedPrices,
   priceFlightOffer,
   healthCheck,
   budgetStatus,

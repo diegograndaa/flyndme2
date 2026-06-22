@@ -27,7 +27,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List } from "lucide-react";
+import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -281,6 +281,9 @@ export default function App() {
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate,    setReturnDate]    = useState("");
   const [optimizeBy,    setOptimizeBy]    = useState("total");
+  // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
+  const [cheaperDate,     setCheaperDate]     = useState(null);
+  const [pendingResearch, setPendingResearch] = useState(false);
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudget,     setMaxBudget]     = useState(200);
   const [flexEnabled,   setFlexEnabled]   = useState(false);
@@ -768,6 +771,40 @@ export default function App() {
       .catch(() => { /* silencioso: el badge "orientativo" ya cubre este estado */ });
   };
 
+  // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
+  // fecha cercana donde el GRUPO pague menos? Solo ida. Fallo silencioso.
+  const fetchCheaperDate = (winner, gen) => {
+    if (!winner || tripType !== "oneway" || !winner.totalCostEUR) return;
+    fetch(`${API_BASE}/api/flights/cheaper-date`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        origins: cleanOrigins,
+        passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+        destination: winner.destination,
+        departureDate,
+        tripType,
+        currentTotalEUR: winner.totalCostEUR,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || searchGenRef.current !== gen) return; // búsqueda nueva: descartar
+        if (data.betterDate) setCheaperDate(data.betterDate);
+      })
+      .catch(() => { /* silencioso: el nudge es opcional */ });
+  };
+
+  // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
+  // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
+  const useCheaperDate = (date) => {
+    if (!date) return;
+    trackEvent("cheaper_date_apply", { date });
+    setCheaperDate(null);
+    setDepartureDate(date);
+    setPendingResearch(true);
+  };
+
   // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
   const handleSubmit = async (e) => {
@@ -785,6 +822,7 @@ export default function App() {
 
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
+    setCheaperDate(null);
     setShowAlt(false);
     setLoading(true);
     setSearchDuration(0);
@@ -900,6 +938,7 @@ export default function App() {
             tripType,
             partial: Boolean(data.partial),
           });
+          fetchCheaperDate(winner, searchGenRef.current);
           return;
         } catch (err) {
           lastErr = err;
@@ -917,6 +956,16 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  // Relanza la búsqueda cuando "Usar esta fecha" ya ha actualizado departureDate
+  // (handleSubmit lee el estado, así que esperamos al re-render antes de enviar).
+  useEffect(() => {
+    if (pendingResearch && departureDate) {
+      setPendingResearch(false);
+      handleSubmit({ preventDefault() {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingResearch, departureDate]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -1136,6 +1185,23 @@ export default function App() {
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
           />
+
+          {/* ── Nudge: fecha cercana más barata para el grupo ── */}
+          {cheaperDate && (
+            <div className="fm-cheaper-date view-enter">
+              <span className="fm-cheaper-date-icon" aria-hidden="true"><CalendarClock size={18} /></span>
+              <span className="fm-cheaper-date-text">
+                {t("cheaperDate.text", {
+                  date: formatDate(cheaperDate.date),
+                  total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
+                  saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
+                })}
+              </span>
+              <button type="button" className="fm-cheaper-date-btn" onClick={() => useCheaperDate(cheaperDate.date)}>
+                {t("cheaperDate.use")}
+              </button>
+            </div>
+          )}
 
           {/* ── CORE: Top 3 destinations podium ── */}
           <TopDestinationsPodium flights={flights} currency={currency} singleOrigin={cleanOrigins.length <= 1} onSelect={(dest) => {
