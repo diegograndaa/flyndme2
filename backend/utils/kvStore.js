@@ -100,23 +100,35 @@ function createUpstashStore({ namespace, ttlMs }) {
   };
 }
 
+// Registro del backend REALMENTE elegido por namespace (incluida la posible
+// degradación a memoria), para poder verificarlo desde fuera vía /api/health.
+const _backends = {};
+
 // Devuelve el store adecuado según el entorno. upstash si está configurado;
 // si su init falla, degrada a memoria avisando (mejor sin persistencia que caído).
 function createStore(opts) {
   const hasUpstash =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+  let store;
   if (hasUpstash) {
     try {
-      const store = createUpstashStore(opts);
+      store = createUpstashStore(opts);
       console.log(`[kv:${opts.namespace}] backend=upstash (persistente)`);
-      return store;
     } catch (err) {
       console.error(
         `[kv:${opts.namespace}] init upstash falló (${err.message}) — usando memoria`
       );
     }
   }
-  return createMemoryStore(opts);
+  if (!store) store = createMemoryStore(opts);
+  _backends[opts.namespace] = store.backend;
+  return store;
 }
 
-module.exports = { createStore, createMemoryStore };
+// Backend elegido por namespace, p.ej. { group: "upstash", share: "upstash" }.
+// Usado por /api/health para confirmar la persistencia sin leer los logs.
+function storeBackends() {
+  return { ..._backends };
+}
+
+module.exports = { createStore, createMemoryStore, storeBackends };

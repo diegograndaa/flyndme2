@@ -10,6 +10,7 @@ const compression = require("compression");
 const flightsRoutes = require("./routes/flights");
 const shareRoutes   = require("./routes/share");
 const groupsRoutes  = require("./routes/groups");
+const { storeBackends } = require("./utils/kvStore");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -219,6 +220,10 @@ app.get("/api/health", (_req, res) => {
     },
     provider: FLIGHT_PROVIDER,
     mock: USE_MOCK,
+    // Backend real de los stores share/group: "upstash" = persistente,
+    // "memory" = se pierde al reiniciar. Permite verificar la persistencia
+    // desde fuera sin leer los logs de arranque de Render.
+    stores: storeBackends(),
     commit: VERSION.commitShort,
     timestamp: Date.now(),
   });
