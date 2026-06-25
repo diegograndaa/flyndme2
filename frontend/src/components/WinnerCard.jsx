@@ -24,6 +24,16 @@ function useFairnessLabel(score) {
   return             { text: t("fairness.unequal"),                 color: fairnessColor(score) };
 }
 
+// Colour a "who pays what" bar by how far this traveler's fare is from the
+// group's per-person average (cheaper/at-average = green, a bit over = amber,
+// well over = red). Real prices in, no invented data.
+function payColor(price, avg) {
+  const r = avg > 0 ? price / avg : 1;
+  if (r <= 1.05) return "var(--fair-high, #15803D)";
+  if (r <= 1.25) return "var(--fair-low, #B45309)";
+  return "var(--fair-bad, #DC2626)";
+}
+
 function airlineLogo(iata) {
   if (!iata || iata.length < 2) return null;
   return `https://images.kiwi.com/airlines/64/${iata}.png`;
@@ -96,6 +106,21 @@ const WinnerCard = React.memo(function WinnerCard({
     return Math.round(((avgAll - dest.averageCostPerTraveler) / avgAll) * 100);
   }, [allFlights, dest]);
 
+  // "Who pays what": real per-person fare for each origin, scaled to the
+  // priciest, with the group average marked. Makes the fairness/spread legible
+  // (replaces the abstract 0-100 ring). Hidden for single-origin (no spread).
+  const payRows = useMemo(() => {
+    if (singleOrigin || breakdown.length < 2) return null;
+    const rows = breakdown
+      .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0 }))
+      .filter((r) => r.price > 0);
+    if (rows.length < 2) return null;
+    const maxP = Math.max(...rows.map((r) => r.price));
+    const sum = rows.reduce((s, r) => s + r.price, 0);
+    const avg = dest.averageCostPerTraveler || (sum / rows.length);
+    return { rows, maxP, avg };
+  }, [breakdown, singleOrigin, dest]);
+
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
       {/* Hero image */}
@@ -157,35 +182,6 @@ const WinnerCard = React.memo(function WinnerCard({
             : <div className="wc-summary-price wc-summary-price--secondary price-animate">{convertPrice(dest.averageCostPerTraveler, currency)}</div>
           }
         </div>
-        {!singleOrigin && <>
-        <div className="wc-summary-divider" />
-        <div className="wc-summary-item wc-summary-item--tooltip">
-          <div className="wc-summary-label">{t("results.fairnessLabel")} <span className="wc-fairness-help" tabIndex={0} aria-label={t("results.fairnessHelp")}>?</span></div>
-          <div className="wc-summary-fairness">
-            <svg className="wc-fairness-ring" viewBox="0 0 40 40" width="44" height="44">
-              <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
-              {/* stroke vía style: fairness.color es var(--fair-*) y los
-                  atributos de presentación SVG no soportan var() */}
-              <circle cx="20" cy="20" r="16" fill="none" strokeWidth="3"
-                strokeDasharray={`${((dest.fairnessScore ?? 0) / 100) * 100.53} 100.53`}
-                strokeLinecap="round" transform="rotate(-90 20 20)"
-                style={{ stroke: fairness.color, transition: "stroke-dasharray .8s ease" }} />
-              {/* Número en blanco: los tonos AA para fondo claro no contrastan
-                  sobre la franja navy; el color semántico queda en el anillo */}
-              <text x="20" y="22" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="800">
-                {(dest.fairnessScore ?? 0).toFixed(0)}
-              </text>
-            </svg>
-          </div>
-          <div className="wc-tooltip wc-tooltip--fairness">
-            <div>{t("results.fairnessHelp")}</div>
-            <div className="wc-tooltip-row" style={{ marginTop: 6 }}>
-              <span>{t("results.maxSpread")}</span>
-              <span>{formatEur(dest.priceSpread ?? 0, 0)}</span>
-            </div>
-          </div>
-        </div>
-        </>}
         {dep && (
           <>
             <div className="wc-summary-divider" />
@@ -202,6 +198,31 @@ const WinnerCard = React.memo(function WinnerCard({
           </>
         )}
       </div>
+
+      {/* Who pays what — makes the per-person spread (fairness) legible */}
+      {payRows && (
+        <div className="wc-fs">
+          <div className="wc-fs-head">
+            <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
+            <span className="wc-fs-verdict" style={{ color: fairness.color }}>
+              {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
+            </span>
+          </div>
+          {payRows.rows.map((r) => (
+            <div key={r.origin} className="wc-fs-row">
+              <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
+              <div className="wc-fs-track">
+                <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / payRows.maxP) * 100)}%`, background: payColor(r.price, payRows.avg) }} />
+                <div className="wc-fs-avg" style={{ left: `${Math.min(100, (payRows.avg / payRows.maxP) * 100)}%` }} title={t("results.whoPaysAvg", { amount: formatEur(payRows.avg, 0) })} />
+              </div>
+              <span className="wc-fs-price">{currency === "EUR" ? formatEur(r.price, 0) : convertPrice(r.price, currency)}</span>
+            </div>
+          ))}
+          <div className="wc-fs-avglabel">
+            <span className="wc-fs-avgtick" aria-hidden="true" /> {t("results.whoPaysAvg", { amount: currency === "EUR" ? formatEur(payRows.avg, 0) : convertPrice(payRows.avg, currency) })}
+          </div>
+        </div>
+      )}
 
       {/* Body */}
       <div className="wc-body">
@@ -387,19 +408,6 @@ const WinnerCard = React.memo(function WinnerCard({
 
             </div>{/* /wc-booking-collapse */}
           </div>
-        )}
-
-        {/* Fairness detail (collapsible mini) */}
-        {!singleOrigin && (
-        <div className="wc-fairness-detail">
-          <div className="wc-fairness-bar-full">
-            <div className="wc-fairness-fill-full" style={{ width: `${Math.min(100, dest.fairnessScore ?? 0)}%` }} />
-          </div>
-          <div className="wc-fairness-row">
-            <span className="wc-fairness-tag-full" style={{ color: fairness.color }}>{fairness.text}</span>
-            <span className="wc-fairness-spread">{t("results.maxSpread")}: {formatEur(dest.priceSpread ?? 0, 0)}</span>
-          </div>
-        </div>
         )}
 
         {/* Actions */}
