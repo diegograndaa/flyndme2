@@ -95,6 +95,7 @@ test("fairnessColor: umbrales coherentes vía tokens (verde alto, rojo bajo)", (
 
 test("countryFlag / destQuickInfo / airportName", () => {
   assert.equal(countryFlag("MAD"), "🇪🇸");
+  assert.equal(countryFlag("PRG"), "🇨🇿"); // regresión: el país del aeropuerto es "Czechia"
   assert.equal(countryFlag("XXX"), "");
   assert.equal(destQuickInfo("MAD").lang, "ES");
   assert.equal(destQuickInfo("XXX"), null);

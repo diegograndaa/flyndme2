@@ -65,32 +65,17 @@ const WinnerCard = React.memo(function WinnerCard({
     }
   }, [dest]);
 
-  if (!dest) return null;
-
-  const code      = normalizeCode(dest.destination);
-  const city      = cityOf(code);
-  const imgUrl    = getCityImage(code, getBaseUrl(), { w: 1200, h: 500 });
-  const fairness  = useFairnessLabel(dest.fairnessScore ?? 0);
-  const dep       = dest.bestDate || "";
-  const ret       = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
-
+  // Derivados null-safe que necesitan los hooks de abajo. Van ANTES del early
+  // return para que TODOS los hooks se llamen incondicionalmente (si `dest`
+  // pasara de objeto a null, alterar el orden de hooks rompería el render).
   const cleanOrigins = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean);
-  const breakdown    = Array.isArray(dest.flights) ? dest.flights : [];
+  const breakdown    = Array.isArray(dest?.flights) ? dest.flights : [];
   // Con un único origen no hay dimensión de equidad: todos salen de la misma
   // ciudad → fairness siempre "perfecta" y spread 0. Ocultamos la UI de equidad
   // (anillo, toggle precio/equidad y barra) para no mostrar métricas triviales.
   const singleOrigin = cleanOrigins.length <= 1;
 
-  // Build price map + itinerary info from breakdown
-  const priceMap = {};
-  const offerMap = {};
-  const flightInfoMap = {};
-  breakdown.forEach((f) => {
-    const k = String(f.origin).toUpperCase();
-    priceMap[k] = f.price;
-    offerMap[k] = f.offer || null;
-    flightInfoMap[k] = f;
-  });
+  const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
 
   // Cheapest origin (for highlighting in booking cards)
   const cheapestOrigin = useMemo(() => {
@@ -117,9 +102,29 @@ const WinnerCard = React.memo(function WinnerCard({
     if (rows.length < 2) return null;
     const maxP = Math.max(...rows.map((r) => r.price));
     const sum = rows.reduce((s, r) => s + r.price, 0);
-    const avg = dest.averageCostPerTraveler || (sum / rows.length);
+    const avg = dest?.averageCostPerTraveler || (sum / rows.length);
     return { rows, maxP, avg };
   }, [breakdown, singleOrigin, dest]);
+
+  // Todos los hooks ya se han llamado de forma incondicional → early return seguro.
+  if (!dest) return null;
+
+  const code   = normalizeCode(dest.destination);
+  const city   = cityOf(code);
+  const imgUrl = getCityImage(code, getBaseUrl(), { w: 1200, h: 500 });
+  const dep    = dest.bestDate || "";
+  const ret    = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
+
+  // Build price map + itinerary info from breakdown
+  const priceMap = {};
+  const offerMap = {};
+  const flightInfoMap = {};
+  breakdown.forEach((f) => {
+    const k = String(f.origin).toUpperCase();
+    priceMap[k] = f.price;
+    offerMap[k] = f.offer || null;
+    flightInfoMap[k] = f;
+  });
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>

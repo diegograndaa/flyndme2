@@ -205,7 +205,7 @@ export function fairnessColor(s) {
 const COUNTRY_FLAGS = {
   "Spain": "🇪🇸", "United Kingdom": "🇬🇧", "France": "🇫🇷", "Italy": "🇮🇹",
   "Germany": "🇩🇪", "Netherlands": "🇳🇱", "Portugal": "🇵🇹", "Austria": "🇦🇹",
-  "Belgium": "🇧🇪", "Czech Republic": "🇨🇿", "Poland": "🇵🇱", "Greece": "🇬🇷",
+  "Belgium": "🇧🇪", "Czechia": "🇨🇿", "Poland": "🇵🇱", "Greece": "🇬🇷",
   "Ireland": "🇮🇪", "Denmark": "🇩🇰", "Sweden": "🇸🇪", "Norway": "🇳🇴",
   "Finland": "🇫🇮", "Hungary": "🇭🇺", "Switzerland": "🇨🇭", "Croatia": "🇭🇷",
   "Romania": "🇷🇴", "Bulgaria": "🇧🇬", "Serbia": "🇷🇸", "Turkey": "🇹🇷",
