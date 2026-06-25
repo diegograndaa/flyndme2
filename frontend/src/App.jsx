@@ -20,6 +20,7 @@ import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, AnimatedStat } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
+import GroupPlanner from "./components/GroupPlanner";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
@@ -308,6 +309,10 @@ export default function App() {
   const [toast,       setToast]       = useState(null); // { message, type }
   const [showFavPanel, setShowFavPanel] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  // Collaborative group planning (?group=ID)
+  const [group, setGroup] = useState(null);     // { id, departureDate, tripType, members }
+  const [groupBusy, setGroupBusy] = useState(false);
+  const [groupCopied, setGroupCopied] = useState(false);
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
@@ -483,6 +488,27 @@ export default function App() {
         window.history.replaceState({}, "", window.location.pathname);
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Load a collaborative group plan from URL (?group=ID) ───────────────
+  // Keep the ?group param in the URL (unlike ?share) so a refresh re-loads the
+  // roster while the group is still being filled.
+  useEffect(() => {
+    const gid = new URLSearchParams(window.location.search).get("group");
+    if (!gid) return;
+    fetch(`${API_BASE}/api/groups/${gid}`)
+      .then((res) => { if (!res.ok) throw new Error("Group not found"); return res.json(); })
+      .then((g) => {
+        setGroup(g);
+        if (g.departureDate) setDepartureDate(g.departureDate);
+        if (g.tripType) setTripType(g.tripType);
+        setView("group");
+      })
+      .catch(() => {
+        setToast({ message: t("group.expired"), type: "error" });
+        window.history.replaceState({}, "", window.location.pathname);
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -967,6 +993,105 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingResearch, departureDate]);
 
+  // ── Collaborative group planning ────────────────────────────────────────────
+  const groupInviteUrl = useMemo(
+    () => (group ? `${window.location.origin}${window.location.pathname}?group=${group.id}` : ""),
+    [group]
+  );
+
+  const createGroup = useCallback(async () => {
+    if (!departureDate) { setToast({ message: t("group.needDate"), type: "error" }); return; }
+    setGroupBusy(true);
+    try {
+      const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
+      const res = await fetch(`${API_BASE}/api/groups`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ departureDate, returnDate, tripType, members }),
+      });
+      if (!res.ok) throw new Error("create failed");
+      const { id } = await res.json();
+      setGroup({ id, departureDate, returnDate, tripType, members });
+      window.history.replaceState({}, "", `${window.location.pathname}?group=${id}`);
+      setView("group");
+      window.scrollTo(0, 0);
+      trackEvent("group_create", { members: members.length });
+    } catch {
+      setToast({ message: t("group.createError"), type: "error" });
+    } finally {
+      setGroupBusy(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departureDate, returnDate, tripType, cleanOrigins, passengers]);
+
+  const addGroupMember = useCallback(async (member) => {
+    if (!group) return;
+    setGroupBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(member),
+      });
+      if (!res.ok) throw new Error("add failed");
+      setGroup(await res.json());
+    } catch {
+      setToast({ message: t("group.addError"), type: "error" });
+    } finally {
+      setGroupBusy(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group]);
+
+  const removeGroupMember = useCallback(async (index) => {
+    if (!group) return;
+    setGroupBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("remove failed");
+      setGroup(await res.json());
+    } catch {
+      setToast({ message: t("group.addError"), type: "error" });
+    } finally {
+      setGroupBusy(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group]);
+
+  const refreshGroup = useCallback(async () => {
+    if (!group) return;
+    setGroupBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/groups/${group.id}`);
+      if (res.ok) setGroup(await res.json());
+    } catch { /* keep current roster */ }
+    finally { setGroupBusy(false); }
+  }, [group]);
+
+  const copyGroupLink = useCallback(async () => {
+    const ok = await copyText(groupInviteUrl);
+    if (ok) { setGroupCopied(true); setTimeout(() => setGroupCopied(false), 2000); }
+    else setToast({ message: t("share.copyError"), type: "error" });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupInviteUrl]);
+
+  const searchFromGroup = useCallback(() => {
+    if (!group?.members?.length) return;
+    setOrigins(group.members.map((m) => m.origin));
+    setPassengers(group.members.map((m) => m.passengers || 1));
+    setDepartureDate(group.departureDate);
+    setReturnDate(group.returnDate || "");
+    setTripType(group.tripType || "oneway");
+    trackEvent("group_search", { members: group.members.length });
+    setPendingResearch(true); // the effect above fires the real search after re-render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group]);
+
+  const exitGroup = useCallback(() => {
+    setGroup(null);
+    window.history.replaceState({}, "", window.location.pathname);
+    setView("search");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -1083,11 +1208,32 @@ export default function App() {
               currency={currency}         setCurrency={setCurrency}
               loading={loading}           error={error}
               onSubmit={handleSubmit}
+              onCreateGroup={createGroup}
+              groupBusy={groupBusy}
               recentSearches={recentSearches}
               onLoadRecent={loadRecentSearch}
               onClearRecent={clearRecentSearches}
             />
           } />
+        </div>
+      )}
+
+      {/* Collaborative group planning */}
+      {view === "group" && group && (
+        <div className="container py-4 view-enter" key="group" style={{ maxWidth: 720 }}>
+          <GroupPlanner
+            group={group}
+            inviteUrl={groupInviteUrl}
+            copied={groupCopied}
+            onAddMember={addGroupMember}
+            onRemoveMember={removeGroupMember}
+            onSearch={searchFromGroup}
+            onCopyLink={copyGroupLink}
+            onRefresh={refreshGroup}
+            onExit={exitGroup}
+            loading={loading}
+            busy={groupBusy}
+          />
         </div>
       )}
 

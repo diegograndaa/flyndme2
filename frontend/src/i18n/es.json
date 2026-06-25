@@ -735,5 +735,32 @@
     "title": "Frases locales útiles",
     "hello": "Hola",
     "thanks": "Gracias"
+  },
+  "group": {
+    "cta": "¿Lo planeáis entre varios? Invita a tu grupo",
+    "eyebrow": "Viaje en grupo",
+    "title": "Planificad el viaje juntos",
+    "subtitle": "Cada uno añade su ciudad de salida y FlyndMe encuentra el lugar más barato para reuniros.",
+    "inviteLabel": "Enlace de invitación",
+    "inviteHint": "Comparte este enlace para que cada viajero añada desde dónde vuela.",
+    "copy": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "rosterTitle": "Viajeros ({{n}})",
+    "refresh": "Actualizar",
+    "empty": "Nadie ha añadido su ciudad todavía. Añade la tuya abajo.",
+    "travelerN": "Viajero {{n}}",
+    "travelers": "Viajeros",
+    "remove": "Quitar",
+    "addLabel": "Añade tu ciudad de salida",
+    "namePlaceholder": "Tu nombre (opcional)",
+    "cityPlaceholder": "Ciudad o aeropuerto",
+    "add": "Añadir",
+    "findDestination": "Buscar el mejor destino",
+    "searchHint": "Cualquiera del grupo puede lanzar la búsqueda.",
+    "exit": "Volver a la búsqueda individual",
+    "needDate": "Elige primero una fecha de salida.",
+    "createError": "No se pudo crear el enlace del grupo. Inténtalo de nuevo.",
+    "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
+    "expired": "Este enlace de grupo ha caducado."
   }
 }

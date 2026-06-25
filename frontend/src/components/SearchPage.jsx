@@ -105,7 +105,7 @@ const SearchPage = React.memo(function SearchPage({
   cabinClass, setCabinClass,
   currency, setCurrency,
   loading, error,
-  onSubmit,
+  onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
 }) {
   const { t } = useI18n();
@@ -701,6 +701,11 @@ const SearchPage = React.memo(function SearchPage({
               <button type="submit" className={`btn-fm-primary w-100 py-3 fw-bold fs-6${!loading && origins.some(o => o.trim()) && departureDate ? " sf-submit--ready" : ""}`} disabled={loading}>
                 {loading ? t("search.searching") : t("search.submit")}
               </button>
+              {onCreateGroup && (
+                <button type="button" className="sf-group-cta" onClick={onCreateGroup} disabled={loading || groupBusy}>
+                  <Users size={16} className="lucide" /> {t("group.cta")}
+                </button>
+              )}
             </div>
             <div className="sf-footnote">
               <span>{t("search.footnoteTime")}</span>

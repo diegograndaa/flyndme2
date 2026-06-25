@@ -735,5 +735,32 @@
     "title": "Useful local phrases",
     "hello": "Hello",
     "thanks": "Thanks"
+  },
+  "group": {
+    "cta": "Planning with others? Invite your group",
+    "eyebrow": "Group trip",
+    "title": "Plan your trip together",
+    "subtitle": "Everyone adds their own departure city — FlyndMe finds the cheapest place to meet.",
+    "inviteLabel": "Invite link",
+    "inviteHint": "Share this link so each traveler adds where they're flying from.",
+    "copy": "Copy link",
+    "copied": "Copied!",
+    "rosterTitle": "Travelers ({{n}})",
+    "refresh": "Refresh",
+    "empty": "No one's added a city yet. Add yours below.",
+    "travelerN": "Traveler {{n}}",
+    "travelers": "Travelers",
+    "remove": "Remove",
+    "addLabel": "Add your departure city",
+    "namePlaceholder": "Your name (optional)",
+    "cityPlaceholder": "City or airport",
+    "add": "Add",
+    "findDestination": "Find the best destination",
+    "searchHint": "Anyone in the group can run the search.",
+    "exit": "Back to single search",
+    "needDate": "Pick a departure date first.",
+    "createError": "Couldn't create the group link. Try again.",
+    "addError": "Couldn't update the group. Try again.",
+    "expired": "This group link has expired."
   }
 }
