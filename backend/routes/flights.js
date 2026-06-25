@@ -323,7 +323,15 @@ function buildOriginPax(rawOrigins, passengers, originList) {
 // (unlimited:true); the gate exists for any future metered provider.
 router.get("/budget", (_req, res) => {
   const b = budgetStatus();
-  res.json({ ...b, remaining: b.unlimited ? null : b.remaining });
+  res.json({
+    ...b,
+    remaining: b.unlimited ? null : b.remaining,
+    // Capa 2 (SerpAPI): cupo mensual para VIGILAR el plan gratuito (~250/mes).
+    // `used` es el contador LOCAL desde el último arranque (se reinicia con
+    // Render); el quota guard real cruza además con GET /account. enabled=false
+    // sin SERPAPI_KEY. Coste 0: no llama a SerpAPI, solo lee el contador.
+    serpapi: { enabled: serpapi.isEnabled(), ...serpapi.budgetStatus() },
+  });
 });
 
 router.post("/multi-origin", async (req, res) => {
