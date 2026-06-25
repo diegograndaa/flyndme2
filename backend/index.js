@@ -99,6 +99,14 @@ function validateConfig() {
 
 validateConfig();
 
+// ─── Trust proxy ───────────────────────────────────────────────────────────
+// Detrás del proxy de Render: confiar en 1 salto para que express-rate-limit (y
+// req.ip) lean la IP REAL del cliente desde X-Forwarded-For, no la del
+// balanceador (si no, todos caerían en el mismo bucket → límite global). Solo
+// en prod: en dev/test no hay proxy, así que NO se confía en X-Forwarded-For
+// (evita que un cliente lo falsee para saltarse el rate limit).
+if (!isDev) app.set("trust proxy", 1);
+
 // ─── Middleware: Gzip compression ─────────────────────────────────────────
 app.use(compression());
 
