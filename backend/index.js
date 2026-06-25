@@ -9,6 +9,7 @@ const compression = require("compression");
 
 const flightsRoutes = require("./routes/flights");
 const shareRoutes   = require("./routes/share");
+const groupsRoutes  = require("./routes/groups");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -225,6 +226,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/flights", searchLimiter, flightsRoutes);
 app.use("/api/share", shareRoutes);
+app.use("/api/groups", groupsRoutes);
 
 // 404
 app.use((_req, res) => {

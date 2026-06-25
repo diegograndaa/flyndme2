@@ -258,6 +258,74 @@ test("OG meta tags count actual pax, not origins", async () => {
   assert.ok(/og:image:width/.test(og.body), "OG declares image dimensions");
 });
 
+// ─── Collaborative group planning (/api/groups) ──────────────────────────
+
+test("groups: create → read → add member → remove member round-trip", async () => {
+  // create with the organizer as the first member
+  const created = await post("/api/groups", {
+    departureDate: "2026-11-12",
+    tripType: "oneway",
+    members: [{ origin: "MAD", passengers: 1, name: "Org" }],
+  });
+  assert.equal(created.status, 200);
+  assert.ok(/^[A-Za-z0-9_-]{4,24}$/.test(created.body.id), "returns a url-safe id");
+  const id = created.body.id;
+
+  // read reflects the seed
+  let read = await get(`/api/groups/${id}`);
+  assert.equal(read.status, 200);
+  assert.equal(read.body.departureDate, "2026-11-12");
+  assert.equal(read.body.tripType, "oneway");
+  assert.equal(read.body.members.length, 1);
+  assert.equal(read.body.members[0].origin, "MAD");
+
+  // a second traveler joins
+  const joined = await post(`/api/groups/${id}/members`, { origin: "LON", passengers: 2, name: "Sam" });
+  assert.equal(joined.status, 200);
+  assert.equal(joined.body.members.length, 2);
+  assert.equal(joined.body.members[1].origin, "LON");
+  assert.equal(joined.body.members[1].passengers, 2);
+
+  // remove the first member by index
+  const del = await fetch(`${BASE}/api/groups/${id}/members/0`, { method: "DELETE" });
+  const delBody = await del.json();
+  assert.equal(del.status, 200);
+  assert.equal(delBody.members.length, 1);
+  assert.equal(delBody.members[0].origin, "LON");
+});
+
+test("groups: rejects a bad date on create", async () => {
+  const r = await post("/api/groups", { departureDate: "12/11/2026", tripType: "oneway" });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, "INVALID_DATE");
+});
+
+test("groups: unknown id is 404 on read and on join", async () => {
+  const read = await get("/api/groups/doesnotexist");
+  assert.equal(read.status, 404);
+  const join = await post("/api/groups/doesnotexist/members", { origin: "MAD" });
+  assert.equal(join.status, 404);
+});
+
+test("groups: member without an origin is rejected", async () => {
+  const created = await post("/api/groups", { departureDate: "2026-11-12" });
+  const r = await post(`/api/groups/${created.body.id}/members`, { passengers: 2 });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, "INVALID_MEMBER");
+});
+
+test("groups: enforces the 9-traveler ceiling", async () => {
+  const created = await post("/api/groups", { departureDate: "2026-11-12" });
+  const id = created.body.id;
+  for (let i = 0; i < 9; i++) {
+    const r = await post(`/api/groups/${id}/members`, { origin: `C${i}` });
+    assert.equal(r.status, 200, `member ${i} should be accepted`);
+  }
+  const overflow = await post(`/api/groups/${id}/members`, { origin: "X" });
+  assert.equal(overflow.status, 409);
+  assert.equal(overflow.body.code, "GROUP_FULL");
+});
+
 // ─── Startup config validation (production mode) ─────────────────────────
 // These spawn a separate backend process per test to assert exit behaviour,
 // so they don't share `server` with the main suite.
