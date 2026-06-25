@@ -57,9 +57,13 @@ export function buildCard({ dest, pp, from, total, n }) {
 
 async function loadFont(origin) {
   // Prefer a font bundled with the deployment (same-origin, reliable); fall back
-  // to a CDN copy of Plus Jakarta Sans if the asset isn't present.
+  // to a CDN copy of Plus Jakarta Sans if the asset isn't present. The bundled
+  // woff is a full Latin + Latin-Extended + currency subset (covers €, accented
+  // Spanish/French/German and Polish/Czech city names), so the Edge runtime —
+  // which has no system-font fallback — can render them instead of tofu.
   const sources = [
-    origin && `${origin}/fonts/PlusJakartaSans-Bold.woff`,
+    origin && `${origin}/fonts/PlusJakartaSans-Bold-latin.woff`,
+    "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans@5.0.18/files/plus-jakarta-sans-latin-ext-700-normal.woff",
     "https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans@5.0.18/files/plus-jakarta-sans-latin-700-normal.woff",
   ].filter(Boolean);
   for (const url of sources) {
@@ -74,18 +78,15 @@ async function loadFont(origin) {
 export default async function handler(req) {
   try {
     const { searchParams, origin } = new URL(req.url);
-    // The bundled font subset has no euro glyph (U+20AC) and the Edge runtime
-    // has no fallback (Node does, so it looked fine locally), so a euro sign
-    // rendered as tofu. Render "EUR" instead. Euro built via fromCharCode so the
-    // source stays pure ASCII. "EUR169"/"169 EUR" -> "169 EUR".
-    const E = String.fromCharCode(0x20AC);
-    const eur = (s) => { s = String(s || ""); return s.indexOf(E) < 0 ? s : (s.split(E).join("").replace(/\s+/g, " ").trim() + " EUR"); };
+    // The bundled font now carries the € glyph and Latin coverage, so the price
+    // strings (e.g. "€169") render directly — no "EUR" substitution needed.
+    const str = (k, max) => String(searchParams.get(k) || "").slice(0, max);
     const data = {
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
-      pp: eur(searchParams.get("pp")).slice(0, 24),
-      from: (searchParams.get("from") || "").slice(0, 80),
-      total: eur(searchParams.get("total")).slice(0, 24),
-      n: (searchParams.get("n") || "").slice(0, 4),
+      pp: str("pp", 24),
+      from: str("from", 80),
+      total: str("total", 24),
+      n: str("n", 4),
     };
     const font = await loadFont(origin);
     const opts = { width: 1200, height: 630 };
