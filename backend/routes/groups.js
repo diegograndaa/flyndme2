@@ -1,7 +1,12 @@
 const express = require("express");
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
+const { createStore } = require("../utils/kvStore");
 const router = express.Router();
+
+// Envuelve un handler async para que cualquier rechazo llegue al error handler
+// global (→ 500) en vez de quedar como unhandledRejection.
+const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // ─── Collaborative group planning ───────────────────────────────────────────
 // A "group" lets a trip organizer create a shareable plan (one date + trip type)
@@ -20,15 +25,14 @@ const MAX_ORIGIN_LEN = 60;
 const GROUP_ID_RE = /^[A-Za-z0-9_-]{4,24}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const groupStore = new Map();
-
-// Cleanup stale entries every hour (unref so it never keeps the process alive).
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, g] of groupStore.entries()) {
-    if (now > g.expiresAt) groupStore.delete(id);
-  }
-}, 60 * 60 * 1000).unref();
+// Store con TTL: in-memory por defecto; persistente (Upstash Redis) si están
+// UPSTASH_REDIS_REST_URL/TOKEN. El barrido y la evicción los gestiona el store.
+const store = createStore({
+  namespace: "group",
+  ttlMs: GROUP_TTL_MS,
+  maxSize: MAX_GROUPS,
+  sweepEveryMs: 60 * 60 * 1000,
+});
 
 function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe
@@ -78,7 +82,7 @@ const memberLimiter = rateLimit({
 
 // ─── POST /api/groups — create a group plan ─────────────────────────────────
 
-router.post("/", createLimiter, (req, res) => {
+router.post("/", createLimiter, asyncH(async (req, res) => {
   try {
     let { departureDate, returnDate, tripType, members } = req.body || {};
 
@@ -98,15 +102,8 @@ router.post("/", createLimiter, (req, res) => {
       cleaned = members.map(cleanMember).filter(Boolean).slice(0, MAX_MEMBERS);
     }
 
-    // Evict oldest if the store is full.
-    if (groupStore.size >= MAX_GROUPS) {
-      const entries = Array.from(groupStore.entries()).sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-      const toDelete = entries.slice(0, Math.max(1, entries.length - MAX_GROUPS + 50));
-      for (const [k] of toDelete) groupStore.delete(k);
-    }
-
     const id = generateId();
-    groupStore.set(id, {
+    await store.set(id, {
       departureDate,
       returnDate,
       tripType,
@@ -115,36 +112,37 @@ router.post("/", createLimiter, (req, res) => {
       expiresAt: Date.now() + GROUP_TTL_MS,
     });
 
-    console.log(`[groups] Created ${id} (store: ${groupStore.size}/${MAX_GROUPS})`);
+    const n = await store.size();
+    console.log(`[groups] Created ${id}${n != null ? ` (store: ${n}/${MAX_GROUPS})` : ""}`);
     return res.json({ id, expiresIn: GROUP_TTL_MS });
   } catch (err) {
     console.error("[groups] Error creating group:", err.message);
     return res.status(500).json({ code: "INTERNAL_ERROR", message: "Error creating group link." });
   }
-});
+}));
 
 // ─── GET /api/groups/:id — read the current roster ──────────────────────────
 
-router.get("/:id", (req, res) => {
+router.get("/:id", asyncH(async (req, res) => {
   const { id } = req.params;
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  const g = groupStore.get(id);
+  const g = await store.get(id);
   if (!g || Date.now() > g.expiresAt) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
   return res.json(publicView(id, g));
-});
+}));
 
 // ─── POST /api/groups/:id/members — a traveler adds their departure city ────
 
-router.post("/:id/members", memberLimiter, (req, res) => {
+router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
   const { id } = req.params;
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  const g = groupStore.get(id);
+  const g = await store.get(id);
   if (!g || Date.now() > g.expiresAt) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
@@ -156,17 +154,19 @@ router.post("/:id/members", memberLimiter, (req, res) => {
     return res.status(409).json({ code: "GROUP_FULL", message: `A group can have at most ${MAX_MEMBERS} travelers.` });
   }
   g.members.push(member);
+  // Conserva el TTL restante: añadir un miembro NO reinicia la caducidad (14d).
+  await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
   return res.json(publicView(id, g));
-});
+}));
 
 // ─── DELETE /api/groups/:id/members/:index — remove a roster entry ──────────
 
-router.delete("/:id/members/:index", (req, res) => {
+router.delete("/:id/members/:index", asyncH(async (req, res) => {
   const { id, index } = req.params;
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  const g = groupStore.get(id);
+  const g = await store.get(id);
   if (!g || Date.now() > g.expiresAt) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
@@ -175,9 +175,10 @@ router.delete("/:id/members/:index", (req, res) => {
     return res.status(400).json({ code: "INVALID_INDEX", message: "No such member." });
   }
   g.members.splice(i, 1);
+  await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
   return res.json(publicView(id, g));
-});
+}));
 
 module.exports = router;
 module.exports.cleanMember = cleanMember;
-module.exports._store = groupStore; // exposed for tests only
+module.exports._store = store; // exposed for tests only

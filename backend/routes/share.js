@@ -1,7 +1,12 @@
 const express = require("express");
 const crypto  = require("crypto");
 const rateLimit = require("express-rate-limit");
+const { createStore } = require("../utils/kvStore");
 const router  = express.Router();
+
+// Envuelve un handler async para que cualquier rechazo llegue al error handler
+// global (→ 500) en vez de quedar como unhandledRejection.
+const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // ─── In-memory share store (TTL: 48 hours) ──────────────────────────────────
 
@@ -9,15 +14,14 @@ const SHARE_TTL_MS   = 48 * 60 * 60 * 1000; // 48 hours
 const MAX_SHARES     = 500;
 const MAX_PAYLOAD_KB = 64;
 
-const shareStore = new Map();
-
-// Cleanup stale entries every 30 min
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, entry] of shareStore.entries()) {
-    if (now > entry.expiresAt) shareStore.delete(id);
-  }
-}, 30 * 60 * 1000).unref(); // no mantener vivo el proceso solo por la limpieza
+// Store con TTL: in-memory por defecto; persistente (Upstash Redis) si están
+// UPSTASH_REDIS_REST_URL/TOKEN. El barrido y la evicción los gestiona el store.
+const store = createStore({
+  namespace: "share",
+  ttlMs: SHARE_TTL_MS,
+  maxSize: MAX_SHARES,
+  sweepEveryMs: 30 * 60 * 1000,
+});
 
 function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe
@@ -39,7 +43,7 @@ const SHARE_ID_RE = /^[A-Za-z0-9_-]{4,24}$/;
 
 // ─── POST /api/share — save results and return share ID ─────────────────────
 
-router.post("/", createShareLimiter, (req, res) => {
+router.post("/", createShareLimiter, asyncH(async (req, res) => {
   try {
     const { results, searchParams } = req.body;
 
@@ -53,30 +57,23 @@ router.post("/", createShareLimiter, (req, res) => {
       return res.status(413).json({ code: "PAYLOAD_TOO_LARGE", message: `Max ${MAX_PAYLOAD_KB}KB allowed.` });
     }
 
-    // Evict oldest if full
-    if (shareStore.size >= MAX_SHARES) {
-      const entries = Array.from(shareStore.entries());
-      entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-      const toDelete = entries.slice(0, Math.max(1, entries.length - MAX_SHARES + 50));
-      for (const [k] of toDelete) shareStore.delete(k);
-    }
-
     const id = generateId();
-    shareStore.set(id, {
+    await store.set(id, {
       results,
       searchParams,
       createdAt: Date.now(),
       expiresAt: Date.now() + SHARE_TTL_MS,
     });
 
-    console.log(`[share] Created ${id} (store: ${shareStore.size}/${MAX_SHARES})`);
+    const n = await store.size();
+    console.log(`[share] Created ${id}${n != null ? ` (store: ${n}/${MAX_SHARES})` : ""}`);
 
     return res.json({ id, expiresIn: SHARE_TTL_MS });
   } catch (err) {
     console.error("[share] Error creating share:", err.message);
     return res.status(500).json({ code: "INTERNAL_ERROR", message: "Error creating share link." });
   }
-});
+}));
 
 // ─── GET /api/share/:id/og — render OG meta tags for social previews ────────
 
@@ -105,10 +102,10 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-router.get("/:id/og", (req, res) => {
+router.get("/:id/og", asyncH(async (req, res) => {
   const { id } = req.params;
   if (!SHARE_ID_RE.test(id)) return res.redirect(302, FRONTEND_URL);
-  const entry = shareStore.get(id);
+  const entry = await store.get(id);
 
   if (!entry || Date.now() > entry.expiresAt) {
     return res.redirect(302, FRONTEND_URL);
@@ -170,23 +167,23 @@ router.get("/:id/og", (req, res) => {
   res.set("Content-Type", "text/html; charset=utf-8");
   res.set("Cache-Control", "public, max-age=3600");
   return res.send(html);
-});
+}));
 
 // ─── GET /api/share/:id — retrieve shared results ──────────────────────────
 
-router.get("/:id", (req, res) => {
+router.get("/:id", asyncH(async (req, res) => {
   const { id } = req.params;
   if (!SHARE_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Share link not found or expired." });
   }
 
-  const entry = shareStore.get(id);
+  const entry = await store.get(id);
   if (!entry) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Share link not found or expired." });
   }
 
   if (Date.now() > entry.expiresAt) {
-    shareStore.delete(id);
+    await store.delete(id);
     return res.status(410).json({ code: "EXPIRED", message: "Share link has expired." });
   }
 
@@ -196,6 +193,6 @@ router.get("/:id", (req, res) => {
     createdAt:    entry.createdAt,
     expiresAt:    entry.expiresAt,
   });
-});
+}));
 
 module.exports = router;
