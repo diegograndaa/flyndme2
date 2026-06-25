@@ -93,6 +93,38 @@
       ]
     }
     </script>
+
+    <!-- Structured Data: FAQPage → habilita rich snippets de FAQ en Google
+         (más espacio en resultados + CTR). Refleja el FAQ de la home
+         (src/i18n/en.json → landing.faqs); mantener en sync si cambia. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Does FlyndMe sell tickets?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. We recommend the best destination, then you book directly on Skyscanner or another search engine." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the fairness score?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It measures from 0 to 100 how equally each traveler pays. The higher, the fairer." }
+        },
+        {
+          "@type": "Question",
+          "name": "How many travelers can I add?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Up to 8 travelers from different cities. The more, the more useful FlyndMe becomes." }
+        },
+        {
+          "@type": "Question",
+          "name": "Are the prices exact?",
+          "acceptedAnswer": { "@type": "Answer", "text": "They're real flight prices, but may vary slightly at the time of booking." }
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>
