@@ -1,6 +1,6 @@
 # FlyndMe
 
-PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-25.
+PWA que encuentra el destino más barato para un grupo que vuela desde varios orígenes (multi-origen → mejor destino común). Optimiza por coste total o equidad. Beta funcional EN PRODUCCIÓN con datos reales. Última actualización: 2026-06-25. · Bloque «Referencia técnica» (arquitectura, flujo, deuda priorizada) añadido el 2026-06-26 tras un análisis completo del repo.
 
 ## Orquestación (lee esto primero: eres el cerebro del proyecto)
 
@@ -25,7 +25,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 - Interfaz de servicio común: `getCheapestOffer / priceFlightOffer / budgetStatus` (los providers son drop-in, el frontend no cambia).
 
 ## Comandos
-- Tests backend: `cd backend && npm test` (~91 tests, sin red, con mocks).
+- Tests backend: `cd backend && npm test` (110 tests, sin red — mocks + inyección de transporte `__test.setTransport` + un smoke E2E que hace `spawn` del server con `USE_MOCK`).
 - Tests frontend: `cd frontend && npm test` (~59 tests, harness SSR propio en `tests/_loader.mjs`, incluye render completo de la App).
 - Dev frontend: `cd frontend && npm run dev` · Build: `npm run build`.
 - **Smoke visual local con datos mock** (para QA estética con capturas): backend `cd backend && USE_MOCK=true PORT=5000 node index.js` + frontend apuntando a él `cd frontend && VITE_API_BASE_URL=http://localhost:5000 npm run dev`. Deep-link que PRERRELLENA el formulario: `http://localhost:5173/?o=MAD&o=LON&o=BER&dep=2026-09-15&trip=oneway` (no auto-busca: hay que pulsar el `button[type=submit]`). Tema por `localStorage.flyndme_theme=dark|light`. Para capturas que el modelo pueda leer: `npm i -D puppeteer` temporal (headless, deep-link + click submit + `waitForSelector('.rv-tab')`), y **quitarlo antes de commitear** (no debe quedar en el repo). El mock muestra placeholders de imagen (las fotos reales solo en prod) y NO renderiza el CTA de Travelpayouts.
@@ -34,7 +34,57 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 ## Estructura clave
 - `backend/services/`: travelpayoutsService.js (activo), serpapiService.js (verificación capa 2), mockFlightService.js (USE_MOCK=true). TtlCache, quota guard mensual, rate limiting.
 - `backend/routes/`: flights.js (/multi-origin, /verify, /cheaper-date), share.js (resultados compartidos + OG meta), **groups.js (planificación colaborativa de grupo, `/api/groups`, store in-memory)**.
-- `frontend/src/`: App.jsx (~1.350 líneas tras extraer componentes y podar imports muertos), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, ResultsPanels.jsx (incluye CostSplitCard), DestinationMap.jsx (mapa SVG con geodatos reales Natural Earth en europeGeo.js, regenerable con `frontend/scripts/build-map-geo.mjs`), hooks/ (useFocusTrap), utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css, bootstrap-custom.scss = subset Sass de Bootstrap), CompareChart.jsx (pestaña Comparar = ranking de barras, ya no scatter), ConvergenceHero.jsx (firma del hero), GroupPlanner.jsx (planificación colaborativa de grupo, vista `?group=<id>`), cityImages.js, i18n EN/ES.
+- `frontend/src/`: App.jsx (~1.572 líneas; orquestador único: dueño de todo el estado y de todas las llamadas a la API), SearchPage.jsx, WinnerCard.jsx, FlightResults.jsx, UiBits.jsx, Landing.jsx, ResultsPanels.jsx (incluye CostSplitCard), DestinationMap.jsx (mapa SVG con geodatos reales Natural Earth en europeGeo.js, regenerable con `frontend/scripts/build-map-geo.mjs`), hooks/ (useFocusTrap), utils/ (resultsLogic, urlParams, verification), styles/ (theme-stitch.css, results-simple.css, bootstrap-custom.scss = subset Sass de Bootstrap), CompareChart.jsx (pestaña Comparar = ranking de barras, ya no scatter), ConvergenceHero.jsx (firma del hero), GroupPlanner.jsx (planificación colaborativa de grupo, vista `?group=<id>`), cityImages.js, i18n EN/ES.
+
+## Referencia técnica (arquitectura · flujo · deuda)
+> Añadida 2026-06-26 a partir de un análisis completo del repo (117 archivos). Donde algo no es verificable desde el código se marca **[a confirmar]**. Complementa las secciones de arriba con el detalle de cómo está construido y cómo mantenerlo.
+
+### Arquitectura y comunicación
+Dos servicios independientes que hablan **solo por HTTP/JSON**:
+- **Frontend (Vercel):** SPA de un único componente `App.jsx` que es **dueño de todo el estado y de todas las llamadas a la API**. Enrutado MANUAL por estado (`view ∈ {landing, search, results, group}` + `history.pushState/popstate` a mano); **sin react-router, sin Redux**. Los ~14 componentes son **100% presentacionales** (cero `fetch` propio; reciben props, emiten eventos). Siempre `fetch` nativo (nunca axios en el front).
+- **Comunicación:** `API_BASE = import.meta.env.VITE_API_BASE_URL` (sin barra final) **con fallback HARDCODEADO a `https://flyndme-backend.onrender.com`** (`App.jsx:35-36`). El backend hace toda la matemática (coste/equidad/verificación); el front no post-procesa precios.
+- **Backend (Render, Express, CommonJS):** middleware en orden `compression → logger propio → helmet (CSP off) → cors → express.json(128kb)`; rate limit **60 req/10 min/IP SOLO en `/api/flights`** (groups/share tienen sus propios limiters). `validateConfig()` al arrancar: en prod **aborta (`exit 1`)** si falta `TRAVELPAYOUTS_TOKEN`, salvo `ALLOW_INSECURE_PROD=true`. Ajustes Render: `keepAliveTimeout=65s`, graceful shutdown, `uncaughtException`→exit.
+
+### Endpoints
+| Método · Ruta | Propósito |
+|---|---|
+| `GET /` · `/api/ping` · `/api/version` · `/api/health` | status · keep-alive · fingerprint de commit · salud |
+| `POST /api/flights/multi-origin` | **Búsqueda principal** multi-origen por tiers de destinos |
+| `POST /api/flights/verify` | **Capa 2**: re-tarifica el ganador contra Google Flights (SerpAPI) |
+| `POST /api/flights/cheaper-date` | Nudge "fecha más barata para el grupo" (solo ida) |
+| `GET /api/flights/budget` | Estado del cupo mensual del proveedor (coste 0) |
+| `POST /api/share` · `GET /:id` · `GET /:id/og` | Resultados compartidos + HTML con meta OG |
+| `POST /api/groups` · `GET /:id` · `POST /:id/members` · `DELETE /:id/members/:index` | Planificación de grupo (store in-memory, TTL 14d) |
+| `GET /api/og` *(Edge, en el frontend)* | PNG 1200×630 OG dinámico desde query params |
+
+### Detalle de integración de proveedores (auth · endpoints · transformación)
+- **Travelpayouts / Aviasales (primario):** auth = header **`X-Access-Token: $TRAVELPAYOUTS_TOKEN`** (sin OAuth, sin Bearer). Endpoint `GET https://api.travelpayouts.com/aviasales/v3/prices_for_dates` (params `origin, destination, departure_at, currency, sorting=price, one_way, limit, return_at?, direct?, market?`). Datos = caché de búsquedas reales (≤48h–7d), **no reservables, solo ECONOMY**. Transformación `mapTicketToOffer` → `{id, source:"AVIASALES_CACHE", itineraries, price, link (deep link afiliado), tp:{originAirport,destinationAirport,…}}`. Robustez: rate limiter propio (5 concurrentes, gap 110ms, retry backoff 429/5xx), cache local 60min, fallback de fechas vecinas (`TP_DATE_FLEX_DAYS=2`, etiquetado con la fecha real). Cualquier error → `return null` (destino descartado en silencio). API gratis/ilimitada (600 req/min).
+- **SerpAPI / Google Flights (capa 2):** auth = **`api_key` en query**. Endpoint `GET https://serpapi.com/search.json?engine=google_flights&departure_id&arrival_id&outbound_date&type&currency=EUR`. Precio = mínimo de `best_flights`+`other_flights`; sin vuelos → `null`. Cupo gratis ~250/mes con doble quota guard (contador local + `GET /account` cacheado 10min). Verifica contra el **aeropuerto real del billete** (Google no acepta códigos de ciudad).
+- **Interfaz común drop-in:** `getCheapestOffer / priceFlightOffer / budgetStatus / getDatedPrices / capabilities`. El ganador sale `skipped` en prod porque `travelpayouts.capabilities.verification=false`.
+
+### Flujo de búsqueda end-to-end
+1. **Front:** `handleSubmit` valida → `ensureBackendAwake` (ping con reintentos, Render free duerme) → `POST /api/flights/multi-origin` (AbortController 45s, 3 reintentos, retry ante 503).
+2. **Backend `/multi-origin`:** valida (IATA, máx **8 orígenes**, 9 pax/origen, tope **16**, fechas no pasadas/≤360d, guard 1200 combinaciones) → **tiers de destinos** (24 por defecto en 3 tiers) → cache de respuesta (10min) → bucle tier a tier en chunks de 3 destinos en paralelo; por destino, **todos los orígenes en paralelo** (`getCheapestOffer`). **Regla dura:** si cualquier origen no da precio, el destino entero se descarta. **Early-break** a `TARGET_RESULTS=6` o al agotar `SEARCH_TIME_BUDGET_MS=25s` (→ `partial:true`). Orden por coste o fairness.
+3. **Front (2º plano, tras pintar):** `POST /verify` (capa 2 → `mergeVerification` promociona el precio verificado a mostrado si `verified`/`changed`) y `POST /cheaper-date` (nudge). Ambos fallan en silencio y descartan respuestas viejas vía `searchGenRef`.
+
+### Mock vs. real
+| | Mock (`USE_MOCK=true`) | Real (por defecto) |
+|---|---|---|
+| Interruptor | env `USE_MOCK` **del backend** (opt-in; en prod NO se setea) | sin `USE_MOCK` → `FLIGHT_PROVIDER=travelpayouts` |
+| Verificación del ganador | **se ejecuta** inline (mock no exporta `capabilities`) | `skipped` (capa 2 SerpAPI aparte) |
+| CTA de afiliado | **no aparece** (mock no añade `offer.link`) | aparece (deep link marker 738121) |
+
+El front NO tiene mocks propios. Único dato "sintético" del front: `FX_RATES` GBP/USD estáticas (`resultsLogic.js:8`, solo display; EUR es canónico). Migrar a real ya está por defecto: depende de las variables en Render (`TRAVELPAYOUTS_TOKEN/MARKER`, `SERPAPI_KEY`).
+
+### Problemas conocidos / deuda priorizada
+- 🔴 **CRÍTICO (seguridad):** hay **secretos reales en el historial de git** (recuperables para siempre, aunque `.env` ya está ignorado): `AMADEUS_API_KEY=pnvJpc1JXnBQp3fayjCnmLoeM21h6EYi` y `=UBiYT200drhA2hPVkEWrAxKTKdjwBe72` en `backend/.env` (commits `2cac06e`/`27f2547`/`f20e2ce`), + un `repo_token` en `backend/node_modules/debug/.coveralls.yml` (paquete de terceros, menor). Las claves **vivas** (Travelpayouts/SerpAPI) NO están en el repo, solo en Render ✅. **Acción:** dar las claves Amadeus por comprometidas (mitigado: Amadeus abandonado, portal cierra 17-jul-2026); para limpieza real, `git filter-repo` + rotar. Nunca volver a commitear un `.env`.
+- 🟠 **Alto:** (a) ✅ **RESUELTO** (jun-2026): los stores `groups`/`share` persisten en **Upstash Redis** (`backend/utils/kvStore.js`, TTL nativo) cuando están `UPSTASH_REDIS_REST_URL/TOKEN`; **in-memory de fallback** si faltan. `GET /api/health` expone `stores:{group,share}` (`upstash`|`memory`) para verificarlo. Activo en prod. (b) **`index.js` sin `app.set('trust proxy', …)`** → `express-rate-limit@7` tras el proxy de Render puede agrupar a todos bajo la IP del balanceador (límite inefectivo/global) — **[a confirmar]** `req.ip` en logs. (c) `verifyDestination`/`priceFlightOffer` (`flights.js:213`, `travelpayoutsService.js:503`) son **código muerto en prod** (solo el mock los ejercita; la verificación real es la capa 2). (d) Cupo SerpAPI frágil en reinicios (contador local se pierde; un `/verify` que da `timeout` igual consumió cupo).
+- 🟡 **Medio:** `README.md` y `MEJORAS.md` **obsoletos** (describen Amadeus/arquitectura vieja — este `CLAUDE.md` es la única fuente fiable). CSP desactivada en todos los entornos (comentario dice "solo dev") y rechazos CORS salen como HTTP 500. Caída de Travelpayouts se ve como "sin vuelos" (errores tragados → `null`). Fallback de `API_BASE` a prod (`App.jsx:36`). Suma de pasajeros del roster de grupo no validada vs `TOTAL_PAX_CAP=16`.
+- 🟢 **Bajo (limpieza):** bug de bandera PRG (`helpers.js:30` 'Czechia' no está en `COUNTRY_FLAGS`). `WinnerCard.jsx:68` viola reglas de hooks (`if(!dest) return null` antes de `useMemo`). `logo-flyndme.svg` aún AZUL `#3B82F6` (no granate; va precacheado por el SW). `sw.js` con `CACHE_NAME` fijo `flyndme-v1` (assets sin hash pueden quedar viejos). `frontend/.env.development` versionado y no ignorado. Comentarios stale de Amadeus (`VerificationBadge.jsx:7`, `App.css:3092`). `scripts/legacy/` muerto. `keep-alive.yml` se auto-deshabilita a los 60 días sin pushes.
+
+### Variables de entorno (referencia)
+- **Backend (Render):** `FLIGHT_PROVIDER` (def. travelpayouts) · `TRAVELPAYOUTS_TOKEN` (requerida) · `TRAVELPAYOUTS_MARKER` (=738121) · `SERPAPI_KEY` · `USE_MOCK` · `PORT` · `NODE_ENV` · `ALLOWED_ORIGINS` · `FRONTEND_URL` · `ALLOW_INSECURE_PROD` · `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (persistencia de share/group; sin ambas → in-memory) · tuning: `SEARCH_TARGET_RESULTS`, `SEARCH_TIME_BUDGET_MS`, `TP_DATE_FLEX_DAYS`, `TP_DATE_NUDGE_DAYS`, `SERPAPI_MONTHLY_BUDGET`, `SHARE_CREATE_LIMIT`, `GROUP_CREATE_LIMIT`, `GROUP_MEMBER_LIMIT` (ver `backend/.env.example`).
+- **Frontend (Vercel):** `VITE_API_BASE_URL` · `VITE_SKYSCANNER_AFFILIATE_ID` (opcional).
 
 ## Diseño vigente (tema Stitch)
 Granate #AE2F34 / coral #FF6B6B / lavanda (#FCF8FF fondo, #EEECFF contenedores) / azul #0059B8 / verde #00B179. **Tipografía**: Plus Jakarta Sans (UI/cuerpo) + **Bricolage Grotesque** como display solo en el H1 del hero (`--font-display`). **Iconos**: `lucide-react` (set SVG coherente, `currentColor`) — NO emojis en la UI (quedan emojis solo en bloques i18n muertos no renderizados: testimonials/trustBadges/example). **Hero**: diagrama de convergencia (varios orígenes → punto de encuentro, `ConvergenceHero.jsx`, **ESTÁTICO** salvo el pulso infinito del destino; los arcos/nodos NO animan la entrada — cualquier animación de entrada SVG repintaba mal de forma intermitente en Chromium, ver fix del 22-jun). Precios con `tabular-nums`. **Solo 2 pantallas**: home (hero+form+cómo funciona+FAQ) y resultados (lista sobria estilo Skyscanner, clases `altl-*`). En jun-2026 se podaron ~45 widgets con datos inventados: NO resucitarlos. **Modo oscuro completo** (familia navy/lavanda #131434/#1B1C40/#2C2D52, granate aclarado #FFB3B0 con texto tinta #16173B): toggle en header + `prefers-color-scheme`, anti-flash inline en index.html, localStorage `flyndme_theme`. Contraste AA en ambos temas (medido); un solo control de ordenación ("Más barato | Más equitativo" en WinnerCard).
