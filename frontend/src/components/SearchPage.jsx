@@ -3,7 +3,7 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand } from "lucide-react";
+import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand, List } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, weekdayOf, todayISO, countryFlag,
@@ -385,7 +385,7 @@ const SearchPage = React.memo(function SearchPage({
                   {t("search.addTraveler")}
                 </button>
                 <button type="button" className="sf-pick-btn" onClick={() => setShowMobileAirports(true)} disabled={loading}>
-                  {t("search.pickAirport")}
+                  <List size={14} aria-hidden="true" /> {t("search.pickAirport")}
                 </button>
                 {origins.length === 1 && !origins[0].trim() && (
                   <button type="button" className="sf-example-btn" onClick={() => {
