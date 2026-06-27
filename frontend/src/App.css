@@ -2662,7 +2662,13 @@ body {
   .sf-pill         { padding: 12px 20px; }
   .sf-remove       { width: 40px; height: 40px; }
   .sf-pax-btn      { width: 34px; height: 34px; font-size: 16px; }
-  .sf-reorder-btn  { width: 30px; height: 26px; font-size: 12px; }
+  /* Declutter the origin row on touch: HTML5 drag-reorder doesn't fire on touch
+     and the up/down arrows crowd a narrow row. Drop both — reordering origins is
+     purely cosmetic (the result is the same set). Number, city, pax, remove stay.
+     Scoped with .sf-origin-row (0,2,0) so it beats the base .sf-drag-handle
+     display rule, which sits LATER in the file (equal specificity → source order). */
+  .sf-origin-row .sf-drag-handle,
+  .sf-origin-row .sf-origin-actions-inline { display: none; }
   .fm-currency-btn { padding: 8px 12px; font-size: 13px; }
   .fm-sticky-btn   { padding: 8px 14px; }
   .rv-tab          { padding: 12px 20px; }
