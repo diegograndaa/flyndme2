@@ -569,6 +569,7 @@ export default function App() {
   // every caller can fall back gracefully. Centralising this is what lets every
   // share channel — not just WhatsApp — surface the rich result card.
   const createShareLink = async () => {
+    if (!bestDestination) return null;
     const res = await fetch(`${API_BASE}/api/share`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -586,10 +587,23 @@ export default function App() {
     }).catch(() => null);
     if (!res || !res.ok) return null;
     const { id } = await res.json();
+    // OG preview now served from a WARM Vercel edge function (frontend/api/sog.js)
+    // on this origin, NOT the Render backend that cold-starts and times out the
+    // crawler. Display data goes in the query (pure function, no DB on the crawler
+    // path); mirrors the /api/og image params + the old backend OG copy.
+    const code = normalizeCode(bestDestination.destination);
+    const ogParams = new URLSearchParams({
+      id,
+      dest: cityOf(code) || code,
+      pp: formatEur(bestDestination.averageCostPerTraveler, 0),
+      total: formatEur(bestDestination.totalCostEUR, 0),
+      from: cleanOrigins.map((o) => cityOf(normalizeCode(o)) || normalizeCode(o)).join(", "),
+      n: String(bestDestination.totalPassengers || cleanOrigins.length),
+    });
     return {
       id,
       shareUrl: `${window.location.origin}${window.location.pathname}?share=${id}`,
-      ogUrl: `${API_BASE}/api/share/${id}/og`,
+      ogUrl: `${window.location.origin}/api/sog?${ogParams.toString()}`,
     };
   };
 
@@ -1001,19 +1015,30 @@ export default function App() {
     [group]
   );
 
-  // Group invites share the backend OG link (not the bare ?group= SPA URL) so
-  // chat apps unfurl the "Where should we all meet?" invite card. The OG link is
-  // pure URL construction (no fetch), so native share stays inside the user
-  // gesture — no transient-activation problem.
+  // Group invites share the WARM Vercel OG link (frontend/api/sog.js on this
+  // origin, not the cold-starting Render backend) so chat apps unfurl the "Where
+  // should we all meet?" invite card reliably. The OG link is pure URL
+  // construction (no fetch), so native share stays inside the user gesture — no
+  // transient-activation problem.
   const handleGroupShareWhatsApp = useCallback(() => {
     if (!group) return;
-    const ogUrl = `${API_BASE}/api/groups/${group.id}/og`;
+    const ogUrl = `${window.location.origin}/api/sog?${new URLSearchParams({
+      mode: "group",
+      id: group.id,
+      n: String((group.members || []).length),
+      from: (group.members || []).map((m) => cityOf(normalizeCode(m.origin)) || m.origin).filter(Boolean).slice(0, 5).join(", "),
+    }).toString()}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(`${t("group.shareText")}\n${ogUrl}`)}`, "_blank");
   }, [group, t]);
 
   const handleGroupShareNative = useCallback(async () => {
     if (!group || typeof navigator === "undefined" || !navigator.share) return;
-    const ogUrl = `${API_BASE}/api/groups/${group.id}/og`;
+    const ogUrl = `${window.location.origin}/api/sog?${new URLSearchParams({
+      mode: "group",
+      id: group.id,
+      n: String((group.members || []).length),
+      from: (group.members || []).map((m) => cityOf(normalizeCode(m.origin)) || m.origin).filter(Boolean).slice(0, 5).join(", "),
+    }).toString()}`;
     try {
       await navigator.share({ title: "FlyndMe", text: t("group.shareText"), url: ogUrl });
     } catch { /* user cancelled */ }
