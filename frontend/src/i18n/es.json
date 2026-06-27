@@ -338,7 +338,12 @@
     "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa.",
     "dateFallbackBadge": "Fechas cercanas",
     "dateFallbackChip": "Precio del {{date}}",
-    "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo."
+    "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo.",
+    "groupNudge": {
+      "title": "¿No todos han confirmado su ciudad?",
+      "text": "Conviértelo en un plan de grupo: cada uno añade su ciudad y FlyndMe busca el sitio más barato y justo para veros todos.",
+      "cta": "Crear plan de grupo"
+    }
   },
   "verifyBadge": {
     "confirmed": "Precio confirmado",

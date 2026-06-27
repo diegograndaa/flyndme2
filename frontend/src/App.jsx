@@ -28,7 +28,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock } from "lucide-react";
+import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -1378,6 +1378,23 @@ export default function App() {
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
           />
+
+          {/* ── Nudge: convierte esta búsqueda en un plan de grupo colaborativo ── */}
+          <div className="fm-group-nudge view-enter">
+            <span className="fm-group-nudge-icon" aria-hidden="true"><Users size={20} /></span>
+            <div className="fm-group-nudge-body">
+              <p className="fm-group-nudge-title">{t("results.groupNudge.title")}</p>
+              <p className="fm-group-nudge-text">{t("results.groupNudge.text")}</p>
+            </div>
+            <button
+              type="button"
+              className="fm-group-nudge-btn"
+              onClick={createGroup}
+              disabled={groupBusy}
+            >
+              {t("results.groupNudge.cta")}
+            </button>
+          </div>
 
           {/* ── Nudge: fecha cercana más barata para el grupo ── */}
           {cheaperDate && (
