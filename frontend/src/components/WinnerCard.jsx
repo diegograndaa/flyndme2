@@ -12,7 +12,7 @@ import { convertPrice } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2 } from "lucide-react";
+import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
 
@@ -114,6 +114,11 @@ const WinnerCard = React.memo(function WinnerCard({
   const imgUrl = getCityImage(code, getBaseUrl(), { w: 1200, h: 500 });
   const dep    = dest.bestDate || "";
   const ret    = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
+
+  // Web Share API present (mobile/PWA): one "Share" opens the native OS sheet
+  // (WhatsApp/Telegram/Email/…). On desktop it's absent, so we show explicit
+  // copy + Telegram + Email buttons instead. Guarded for the SSR test render.
+  const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   // Build price map + itinerary info from breakdown
   const priceMap = {};
@@ -420,12 +425,31 @@ const WinnerCard = React.memo(function WinnerCard({
           <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
             {t("results.viewAlternatives")}
           </button>
-          <button type="button" className="wc-action-btn" onClick={onShare}>
-            {shareStatus === "ok" ? t("results.copied") : shareStatus === "saving" ? "…" : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
-          </button>
+          {/* Mobile: one "Share" → native OS sheet (covers WhatsApp/Telegram/Email/…).
+              Desktop (no Web Share API): copy-link + explicit Telegram/Email so those
+              channels stay reachable. */}
+          {canNativeShare ? (
+            <button type="button" className="wc-action-btn wc-action-btn--share" onClick={onShareNative}>
+              <Share2 size={14} aria-hidden="true" /> {t("results.share")}
+            </button>
+          ) : (
+            <button type="button" className="wc-action-btn" onClick={onShare}>
+              {shareStatus === "ok" ? t("results.copied") : shareStatus === "saving" ? "…" : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
+            </button>
+          )}
           <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
             <span className="wc-wa-icon"><MessageCircle size={15} aria-hidden="true" /></span> WhatsApp
           </button>
+          {!canNativeShare && (
+            <>
+              <button type="button" className="wc-action-btn" onClick={onShareTelegram}>
+                <Send size={14} aria-hidden="true" /> Telegram
+              </button>
+              <button type="button" className="wc-action-btn" onClick={onShareEmail}>
+                <Mail size={14} aria-hidden="true" /> Email
+              </button>
+            </>
+          )}
           {onCopySearchLink && (
             <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink}>
               <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}

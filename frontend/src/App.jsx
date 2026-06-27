@@ -719,14 +719,16 @@ export default function App() {
   // ── Native Web Share API (mobile) ──────────────────────────────────────────
 
   const handleShareNative = async () => {
-    if (!bestDestination || !navigator.share) return;
+    if (!bestDestination || typeof navigator === "undefined" || !navigator.share) return;
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
+    // Persist first so the shared link unfurls the dynamic OG card, not the bare SPA URL.
+    const link = await createShareLink();
     try {
       await navigator.share({
         title: `FlyndMe — ${destName}`,
         text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
-        url: window.location.href,
+        url: link ? link.ogUrl : window.location.href,
       });
       trackEvent("share_native", { destination: code });
     } catch { /* user cancelled */ }
