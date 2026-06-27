@@ -1731,21 +1731,25 @@ body {
 
 /* ── Mobile airport picker button ── */
 
+/* Mobile-only: a QUIET fallback to browse the airport drawer. The typed input +
+   autocomplete is the primary way to enter a city; this is demoted to a muted
+   text link (was a prominent filled pill that competed with the input). */
 .sf-pick-btn {
-  display: none; /* hidden on desktop */
-  padding: 8px 14px;
+  display: none; /* hidden on desktop; the airport list is the always-visible sidebar */
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--primary);
-  background: var(--primary-light);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-full);
+  color: var(--slate-500);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: all .15s;
+  transition: color .15s;
 }
 .sf-pick-btn:hover {
-  background: var(--primary);
-  color: var(--white);
+  color: var(--primary);
+  text-decoration: underline;
 }
 
 /* ── Airport drawer (mobile) ── */
