@@ -1960,7 +1960,7 @@ body {
   .wc-body      { padding: 20px 16px 16px; }
   .wc-flight-code { font-size: 15px; }
   .wc-flight-price-tag { font-size: 18px; }
-  .lp-hero      { padding: 48px 0 40px; }
+  .lp-hero      { padding: 24px 0 20px; }
 }
 
 /* ── Animations ──────────────────────────────────────────────── */
@@ -4392,6 +4392,9 @@ html {
 }
 .lp-hero-text { min-width: 0; }
 .lp-hero-visual { position: relative; }
+/* Instancia móvil del diagrama (remate bajo el formulario). Oculta en desktop;
+   se muestra <860px, donde la del hero se oculta. Ver el bloque responsive. */
+.lp-hero-visual-m { display: none; }
 
 /* Iconos Lucide: alineación con el texto en contextos inline; en flex se ignora */
 .lucide { vertical-align: -0.15em; flex-shrink: 0; }
@@ -4465,15 +4468,17 @@ html {
   .cv-dest-ring { animation: none; }
 }
 
-/* Responsive del hero v2 */
+/* Responsive del hero v2 — ACTION-FIRST en móvil (#4): el formulario va primero
+   (sube hacia el fold) y la firma de convergencia baja como remate bajo él. */
 @media (max-width: 860px) {
-  .lp-hero-grid { grid-template-columns: 1fr; gap: 18px; }
-  .lp-hero-visual { order: -1; }
+  .lp-hero-grid { grid-template-columns: 1fr; gap: 12px; }
+  /* Oculta el diagrama del hero y el eyebrow → titular escueto y el form sube;
+     la firma reaparece bajo el formulario (.lp-hero-visual-m). */
+  .lp-hero-visual { display: none; }
+  .lp-eyebrow { display: none; }
+  .lp-hero-visual-m { display: block; padding: 4px 16px 0; }
   .cv { max-width: 300px; }
   .cv-meet { position: static; display: block; transform: none; text-align: center; margin-top: 2px; }
-}
-@media (max-width: 480px) {
-  .lp-hero-visual { display: none; }
 }
 
 /* ── Flight time comparison bar (mini-table in booking) ───── */

@@ -23,13 +23,16 @@ function arcPath(o) {
   return `M ${o.x} ${o.y} Q ${mx} ${cy} ${DEST.x} ${DEST.y}`;
 }
 
-export default function ConvergenceHero() {
+export default function ConvergenceHero({ idSuffix = "" }) {
   const { t } = useI18n();
+  // El gradiente lleva un id; si el componente se renderiza dos veces (firma de
+  // desktop + remate de móvil) los ids chocarían → idSuffix los hace únicos.
+  const glowId = `cv-glow${idSuffix}`;
   return (
     <div className="cv" role="img" aria-label={t("landing.diagramAlt")}>
       <svg viewBox="0 0 360 300" className="cv-svg" aria-hidden="true">
         <defs>
-          <radialGradient id="cv-glow" cx="50%" cy="50%" r="50%">
+          <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.30" />
             <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </radialGradient>
@@ -50,7 +53,7 @@ export default function ConvergenceHero() {
         ))}
 
         {/* Destino: halo + anillo de pulso + punto */}
-        <circle cx={DEST.x} cy={DEST.y} r="48" fill="url(#cv-glow)" />
+        <circle cx={DEST.x} cy={DEST.y} r="48" fill={`url(#${glowId})`} />
         <circle cx={DEST.x} cy={DEST.y} r="13" className="cv-dest-ring" fill="none" />
         <circle cx={DEST.x} cy={DEST.y} r="11" className="cv-dest-dot" />
         {/* glifo de "pin" (marcador) en blanco dentro del punto */}
