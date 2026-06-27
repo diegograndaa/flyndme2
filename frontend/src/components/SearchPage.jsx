@@ -189,26 +189,6 @@ const SearchPage = React.memo(function SearchPage({
           <h2 className="sf-title">{t("search.title")}</h2>
           <p className="sf-sub">{t("search.subtitle")}</p>
 
-          {/* Form completion indicators */}
-          {!loading && (
-            <div className="sf-completion-strip">
-              <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) ? <Check size={14} /> : "1"}</span>
-                <span className="sf-completion-label">{t("search.completionOrigins")}</span>
-              </div>
-              <div className="sf-completion-line" />
-              <div className={`sf-completion-step${departureDate ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{departureDate ? <Check size={14} /> : "2"}</span>
-                <span className="sf-completion-label">{t("search.completionDates")}</span>
-              </div>
-              <div className="sf-completion-line" />
-              <div className={`sf-completion-step${origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? " sf-completion-step--done" : ""}`}>
-                <span className="sf-completion-icon">{origins.some(o => o.trim() && cityOf(normalizeCode(o))) && departureDate ? <Check size={14} /> : "3"}</span>
-                <span className="sf-completion-label">{t("search.completionReady")}</span>
-              </div>
-            </div>
-          )}
-
           {/* Recent searches */}
           {recentSearches?.length > 0 && !loading && (
             <div className="sf-recent">

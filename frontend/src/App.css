@@ -4668,74 +4668,8 @@ html {
    Round 19 — Functional polish
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Form completion indicators ────────────────────────────── */
-
-.sf-completion-strip {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: 20px;
-  padding: 10px 16px;
-  background: var(--slate-50);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--slate-100);
-}
-.sf-completion-step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: .5;
-  transition: opacity .3s ease;
-}
-.sf-completion-step--done {
-  opacity: 1;
-}
-.sf-completion-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--slate-200);
-  color: var(--slate-500);
-  transition: background .3s ease, color .3s ease;
-}
-.sf-completion-step--done .sf-completion-icon {
-  background: var(--success);
-  color: #fff;
-}
-.sf-completion-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--slate-500);
-}
-.sf-completion-step--done .sf-completion-label {
-  color: var(--navy);
-}
-.sf-completion-line {
-  flex: 1;
-  height: 2px;
-  background: var(--slate-200);
-  margin: 0 8px;
-  min-width: 16px;
-}
-[data-theme="dark"] .sf-completion-strip {
-  background: rgba(255,255,255,.02);
-  border-color: #2C2D52;
-}
-[data-theme="dark"] .sf-completion-icon {
-  background: #2C2D52;
-  color: #9B9AC6;
-}
-[data-theme="dark"] .sf-completion-step--done .sf-completion-label {
-  color: #E1E0FF;
-}
-[data-theme="dark"] .sf-completion-line {
-  background: #2C2D52;
-}
+/* (Tira de completitud 1·2·3 eliminada en #5 — redundante con la barra resumen
+   del formulario, que confirma los datos reales justo antes del CTA.) */
 
 /* ── Search params summary (results page) ──────────────────── */
 
@@ -5719,7 +5653,7 @@ html {
 /* ── Print Styles (Round 35 updated) ──────────────────────── */
 
 @media print {
-  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-breadcrumb, .fm-history, .fm-scroll-progress, .fm-dest-banner, .fm-sharelink, .sf-completion-strip, .sf-recent { display: none !important; }
+  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-breadcrumb, .fm-history, .fm-scroll-progress, .fm-dest-banner, .fm-sharelink, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
