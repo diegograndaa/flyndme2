@@ -6,7 +6,7 @@
 // owns the group state and the API calls; this component only collects input.
 import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar } from "lucide-react";
+import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2 } from "lucide-react";
 import { AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, formatDate, weekdayOf, countryFlag } from "../utils/helpers";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
@@ -23,9 +23,13 @@ function resolveOrigin(input) {
 function GroupPlanner({
   group, inviteUrl, copied,
   onAddMember, onRemoveMember, onSearch, onCopyLink, onRefresh, onExit,
+  onShareWhatsApp, onShareNative,
   loading, busy,
 }) {
   const { t } = useI18n();
+  // The Web Share API only exists on (mostly mobile) clients; gate the native
+  // button so it never renders during the SSR test harness or on desktop.
+  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [pax, setPax] = useState(1);
@@ -92,6 +96,16 @@ function GroupPlanner({
           <button type="button" className="btn-fm-primary gp-copy" onClick={onCopyLink}>
             {copied ? t("group.copied") : t("group.copy")}
           </button>
+        </div>
+        <div className="gp-invite-share">
+          <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
+            <span className="wc-wa-icon"><MessageCircle size={15} aria-hidden="true" /></span> {t("group.shareWhatsApp")}
+          </button>
+          {canNativeShare && (
+            <button type="button" className="wc-action-btn" onClick={onShareNative}>
+              <Share2 size={14} className="lucide" aria-hidden="true" /> {t("group.share")}
+            </button>
+          )}
         </div>
         <p className="gp-invite-hint">{t("group.inviteHint")}</p>
       </div>

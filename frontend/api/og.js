@@ -19,7 +19,10 @@ function el(type, style, children) {
   return { type, props: { style: { display: "flex", ...style }, children } };
 }
 
-export function buildCard({ dest, pp, from, total, n }) {
+export function buildCard({ mode, dest, pp, from, total, n }) {
+  // Group-invite variant: a group has no computed price yet (only origins), so
+  // the card invites participation instead of announcing a winner.
+  if (mode === "group") return buildGroupCard({ from, n });
   const footerBits = total
     ? `Group total ${total}${n ? `  ·  ${n} travelers` : ""}`
     : "";
@@ -55,6 +58,43 @@ export function buildCard({ dest, pp, from, total, n }) {
   );
 }
 
+// Group-invite card: same shell/wordmark as the result card (kept inline rather
+// than refactored so the prod-verified result layout stays byte-identical), but
+// framed as a call to join — there's no destination or price for a group yet.
+export function buildGroupCard({ from, n }) {
+  const count = Number(n) || 0;
+  const sub = count > 0
+    ? `${count} ${count === 1 ? "city" : "cities"} in · add yours`
+    : "Add the city you'd fly from";
+  return el(
+    "div",
+    {
+      width: "100%",
+      height: "100%",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      background: "linear-gradient(135deg, #FCF8FF 0%, #EEECFF 52%, #FBE3E4 100%)",
+      padding: "70px 76px",
+      fontFamily: "Jakarta",
+    },
+    [
+      el("div", { alignItems: "center" }, [
+        el("div", { width: 38, height: 38, borderRadius: 11, background: C.primary, marginRight: 16 }, []),
+        el("div", { fontSize: 36, fontWeight: 800, color: C.ink, letterSpacing: "-0.5px" }, "FlyndMe"),
+      ]),
+      el("div", { flexDirection: "column" }, [
+        el("div", { fontSize: 30, color: C.muted, marginBottom: 10 }, "Planning a group trip"),
+        el("div", { fontSize: 70, fontWeight: 800, color: C.ink, lineHeight: 1.05, letterSpacing: "-1px" }, "Where should we all meet?"),
+        el("div", { fontSize: 44, fontWeight: 800, color: C.primary, marginTop: 16 }, sub),
+      ]),
+      el("div", { flexDirection: "column" }, [
+        el("div", { fontSize: 32, color: C.ink }, from ? `from ${from}` : ""),
+        el("div", { fontSize: 26, color: C.muted, marginTop: 8 }, "Everyone pays their fair share · flyndme2.vercel.app"),
+      ]),
+    ]
+  );
+}
+
 async function loadFont(origin) {
   // Prefer a font bundled with the deployment (same-origin, reliable); fall back
   // to a CDN copy of Plus Jakarta Sans if the asset isn't present. The bundled
@@ -82,6 +122,7 @@ export default async function handler(req) {
     // strings (e.g. "€169") render directly — no "EUR" substitution needed.
     const str = (k, max) => String(searchParams.get(k) || "").slice(0, max);
     const data = {
+      mode: str("mode", 8),
       dest: (searchParams.get("dest") || "your group").slice(0, 40),
       pp: str("pp", 24),
       from: str("from", 80),

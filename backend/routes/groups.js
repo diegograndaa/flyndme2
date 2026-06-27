@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const { createStore } = require("../utils/kvStore");
+const { counters } = require("../utils/metrics");
 const router = express.Router();
 
 // Envuelve un handler async para que cualquier rechazo llegue al error handler
@@ -114,11 +115,73 @@ router.post("/", createLimiter, asyncH(async (req, res) => {
 
     const n = await store.size();
     console.log(`[groups] Created ${id}${n != null ? ` (store: ${n}/${MAX_GROUPS})` : ""}`);
+    counters.incr("group_created"); // fire-and-forget (loop metric)
     return res.json({ id, expiresIn: GROUP_TTL_MS });
   } catch (err) {
     console.error("[groups] Error creating group:", err.message);
     return res.status(500).json({ code: "INTERNAL_ERROR", message: "Error creating group link." });
   }
+}));
+
+// ─── GET /api/groups/:id/og — OG meta for invite-link social previews ───────
+// Mirrors share.js's OG route: served from the backend (kept warm by the
+// keep-alive cron), renders meta tags pointing at the Vercel edge image in
+// "group" mode, then redirects a human to the SPA. A group has no price yet, so
+// the card invites participation ("Where should we all meet? · N cities · add
+// yours") instead of announcing a winner.
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://flyndme2.vercel.app";
+
+function escapeHtml(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+router.get("/:id/og", asyncH(async (req, res) => {
+  const { id } = req.params;
+  if (!GROUP_ID_RE.test(id)) return res.redirect(302, FRONTEND_URL);
+  const g = await store.get(id);
+  if (!g || Date.now() > g.expiresAt) return res.redirect(302, FRONTEND_URL);
+
+  const count = Array.isArray(g.members) ? g.members.length : 0;
+  const cities = (g.members || [])
+    .map((m) => m && m.origin).filter(Boolean).slice(0, 5).join(", ");
+  const groupUrl = `${FRONTEND_URL}?group=${id}`;
+
+  const ogTitle = "FlyndMe: where should your group meet?";
+  const ogDesc = count > 0
+    ? `${count} ${count === 1 ? "city" : "cities"} added so far. Add yours — FlyndMe finds the cheapest, fairest place for the whole group to meet.`
+    : "Add the city you'd fly from — FlyndMe finds the cheapest, fairest place for the whole group to meet.";
+  const ogImage = `${FRONTEND_URL}/api/og?${new URLSearchParams({
+    mode: "group",
+    n: String(count),
+    from: cities,
+  }).toString()}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/>
+<meta property="og:title" content="${escapeHtml(ogTitle)}"/>
+<meta property="og:description" content="${escapeHtml(ogDesc)}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="${escapeHtml(groupUrl)}"/>
+<meta property="og:site_name" content="FlyndMe"/>
+<meta property="og:image" content="${escapeHtml(ogImage)}"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="${escapeHtml(ogTitle)}"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="${escapeHtml(ogTitle)}"/>
+<meta name="twitter:description" content="${escapeHtml(ogDesc)}"/>
+<meta name="twitter:image" content="${escapeHtml(ogImage)}"/>
+<meta http-equiv="refresh" content="0;url=${escapeHtml(groupUrl)}"/>
+<title>${escapeHtml(ogTitle)}</title>
+</head><body><p>Redirecting to <a href="${escapeHtml(groupUrl)}">FlyndMe</a>…</p></body></html>`;
+
+  res.set("Content-Type", "text/html; charset=utf-8");
+  // TTL corto: el roster (y por tanto la tarjeta) cambia según se suman viajeros.
+  res.set("Cache-Control", "public, max-age=300");
+  return res.send(html);
 }));
 
 // ─── GET /api/groups/:id — read the current roster ──────────────────────────
@@ -132,6 +195,8 @@ router.get("/:id", asyncH(async (req, res) => {
   if (!g || Date.now() > g.expiresAt) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
+  // Alguien abrió un ?group= (cota superior: incluye refrescos del organizador).
+  counters.incr("group_landing");
   return res.json(publicView(id, g));
 }));
 
@@ -156,6 +221,7 @@ router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
   g.members.push(member);
   // Conserva el TTL restante: añadir un miembro NO reinicia la caducidad (14d).
   await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
+  counters.incr("group_member_added"); // el multiplicador real del loop
   return res.json(publicView(id, g));
 }));
 

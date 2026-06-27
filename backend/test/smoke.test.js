@@ -326,6 +326,76 @@ test("groups: enforces the 9-traveler ceiling", async () => {
   assert.equal(overflow.body.code, "GROUP_FULL");
 });
 
+// ─── Loop metrics (/api/health → metrics) ────────────────────────────────
+// Va ANTES del test de rate-limit de shares para que el POST /api/share aquí
+// no salga 429. Usa deltas (antes/después) para ser robusto a lo que ya creó
+// el resto del fichero.
+test("metrics: el loop de distribución se contabiliza en /api/health", async () => {
+  const before = (await get("/api/health")).body.metrics;
+  assert.ok(before && typeof before === "object", "health expone un objeto metrics");
+  for (const k of ["share_created", "share_landing", "group_created", "group_landing", "group_member_added"]) {
+    assert.equal(typeof before[k], "number", `metric ${k} es numérica`);
+  }
+
+  // share_created + share_landing
+  const search = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"], passengers: [1, 1], departureDate: "2026-11-15", tripType: "oneway",
+  });
+  const created = await post("/api/share", {
+    results: search.body,
+    searchParams: { origins: ["MAD", "LON"], passengers: [1, 1], departureDate: "2026-11-15", tripType: "oneway" },
+  });
+  assert.equal(created.status, 200);
+  const land = await get(`/api/share/${created.body.id}`); // un landing real
+  assert.equal(land.status, 200);
+
+  // group_created + group_landing + group_member_added
+  const g = await post("/api/groups", {
+    departureDate: "2026-11-15", tripType: "oneway", members: [{ origin: "MAD" }],
+  });
+  assert.equal(g.status, 200);
+  await get(`/api/groups/${g.body.id}`);                          // un landing
+  await post(`/api/groups/${g.body.id}/members`, { origin: "LON" }); // un miembro
+
+  const after = (await get("/api/health")).body.metrics;
+  assert.ok(after.share_created      > before.share_created,      "share_created sube");
+  assert.ok(after.share_landing      > before.share_landing,      "share_landing sube");
+  assert.ok(after.group_created      > before.group_created,      "group_created sube");
+  assert.ok(after.group_landing      > before.group_landing,      "group_landing sube");
+  assert.ok(after.group_member_added > before.group_member_added, "group_member_added sube");
+});
+
+test("groups: /og expone meta de invitación que apuntan a la tarjeta dinámica de grupo", async () => {
+  const created = await post("/api/groups", {
+    departureDate: "2026-11-20", tripType: "oneway",
+    members: [{ origin: "MAD" }, { origin: "LON" }],
+  });
+  assert.equal(created.status, 200);
+
+  const og = await get(`/api/groups/${created.body.id}/og`);
+  assert.equal(og.status, 200);
+  assert.ok(/og:title[^>]*content="[^"]+"/.test(og.body), "og:title presente");
+
+  const desc = og.body.match(/og:description[^>]*content="([^"]+)"/);
+  assert.ok(desc, "og:description presente");
+  assert.ok(desc[1].includes("2 cities added"), `esperaba "2 cities added", got "${desc[1]}"`);
+
+  const img = og.body.match(/og:image[^>]*content="([^"]+)"/);
+  assert.ok(img, "og:image presente");
+  assert.ok(img[1].includes("/api/og?"), "og:image es la tarjeta dinámica de Vercel");
+  assert.ok(/mode=group/.test(img[1]), "og:image en modo group");
+  assert.ok(/n=2/.test(img[1]), "og:image lleva el nº de ciudades");
+
+  assert.ok(og.body.includes(`?group=${created.body.id}`), "redirige al SPA del grupo");
+  assert.ok(!/\/\/flyndme\.vercel\.app(\/|")/.test(og.body),
+    "no referencia el dominio muerto flyndme.vercel.app");
+});
+
+test("groups: /og de un id inexistente redirige (302), nunca 500", async () => {
+  const r = await fetch(`${BASE}/api/groups/doesnotexist/og`, { redirect: "manual" });
+  assert.ok([301, 302].includes(r.status), `esperaba un redirect, got ${r.status}`);
+});
+
 // ─── Startup config validation (production mode) ─────────────────────────
 // These spawn a separate backend process per test to assert exit behaviour,
 // so they don't share `server` with the main suite.

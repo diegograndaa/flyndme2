@@ -131,4 +131,63 @@ function storeBackends() {
   return { ..._backends };
 }
 
-module.exports = { createStore, createMemoryStore, storeBackends };
+// ─── Contadores monotónicos (métricas del loop de distribución) ─────────────
+// A diferencia de los stores con TTL, NO caducan: cuentan eventos acumulados
+// (enlaces share/grupo creados y abiertos). En Upstash usan INCR (ATÓMICO — sin
+// el read-modify-write racy de get+set, que perdería conteos en concurrencia);
+// en memoria, un objeto que se reinicia con el proceso (Render free reinicia,
+// pero sirve para leer la tendencia del loop entre deploys). incr() traga sus
+// propios errores: una métrica caída NUNCA debe añadir latencia ni tumbar la
+// petición que la dispara, así que las rutas la llaman fire-and-forget.
+function createCounters({ namespace = "metrics" } = {}) {
+  const hasUpstash =
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+  const key = (name) => `${namespace}:${name}`;
+
+  if (hasUpstash) {
+    try {
+      const { Redis } = require("@upstash/redis");
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+      return {
+        backend: "upstash",
+        async incr(name) {
+          try {
+            await redis.incr(key(name));
+          } catch (err) {
+            console.error(`[metrics] incr(${name}) falló: ${err.message}`);
+          }
+        },
+        async snapshot(names) {
+          try {
+            const vals = await redis.mget(...names.map(key));
+            const out = {};
+            names.forEach((n, i) => { out[n] = Number(vals[i]) || 0; });
+            return out;
+          } catch (err) {
+            console.error(`[metrics] snapshot falló: ${err.message}`);
+            return null;
+          }
+        },
+      };
+    } catch (err) {
+      console.error(`[metrics] init upstash falló (${err.message}) — usando memoria`);
+    }
+  }
+
+  const mem = Object.create(null);
+  return {
+    backend: "memory",
+    async incr(name) { mem[name] = (mem[name] || 0) + 1; },
+    async snapshot(names) {
+      const out = {};
+      for (const n of names) out[n] = mem[n] || 0;
+      return out;
+    },
+    _mem: mem, // solo tests
+  };
+}
+
+module.exports = { createStore, createMemoryStore, storeBackends, createCounters };

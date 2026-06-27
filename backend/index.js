@@ -11,6 +11,7 @@ const flightsRoutes = require("./routes/flights");
 const shareRoutes   = require("./routes/share");
 const groupsRoutes  = require("./routes/groups");
 const { storeBackends } = require("./utils/kvStore");
+const { counters, METRIC_NAMES } = require("./utils/metrics");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -212,7 +213,7 @@ app.get("/api/version", (_req, res) => {
 });
 
 // Health endpoint with more detailed info
-app.get("/api/health", (_req, res) => {
+app.get("/api/health", async (_req, res) => {
   const uptime = Math.floor((Date.now() - startTime) / 1000);
   const memUsage = process.memoryUsage();
 
@@ -232,6 +233,9 @@ app.get("/api/health", (_req, res) => {
     // "memory" = se pierde al reiniciar. Permite verificar la persistencia
     // desde fuera sin leer los logs de arranque de Render.
     stores: storeBackends(),
+    // Contadores del loop de distribución (share/grupo creados y abiertos).
+    // snapshot() nunca lanza (degrada a null si Upstash falla). Ver utils/metrics.
+    metrics: await counters.snapshot(METRIC_NAMES),
     commit: VERSION.commitShort,
     timestamp: Date.now(),
   });
