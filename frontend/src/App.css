@@ -3862,6 +3862,74 @@ html {
   .fm-cheaper-date-text { flex: 1 1 100%; order: 2; }
 }
 
+/* Nudge "plan de grupo": convierte la búsqueda en un plan colaborativo.
+   CTA más sustancial que los nudges inline: insignia de icono + título + texto
+   + botón. Soft tint granate theme-aware para integrarse sin gritar. */
+.fm-group-nudge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  background: rgba(var(--primary-rgb), .05);
+  border: 1px solid rgba(var(--primary-rgb), .18);
+  border-radius: var(--radius-md);
+}
+.fm-group-nudge-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--primary-rgb), .12);
+  color: var(--primary);
+}
+.fm-group-nudge-body { flex: 1 1 auto; min-width: 0; }
+.fm-group-nudge-title {
+  margin: 0 0 2px;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #16173B;
+}
+.fm-group-nudge-text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #4A4A6A;
+}
+.fm-group-nudge-btn {
+  flex: 0 0 auto;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
+}
+.fm-group-nudge-btn:hover { filter: brightness(1.08); }
+.fm-group-nudge-btn:active { transform: translateY(1px); }
+.fm-group-nudge-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fm-group-nudge-btn:disabled { opacity: .6; cursor: progress; transform: none; }
+[data-theme="dark"] .fm-group-nudge {
+  background: rgba(var(--primary-rgb), .08);
+  border-color: rgba(var(--primary-rgb), .22);
+}
+[data-theme="dark"] .fm-group-nudge-title { color: #E9E9F5; }
+[data-theme="dark"] .fm-group-nudge-text { color: #C3C4DA; }
+[data-theme="dark"] .fm-group-nudge-btn { color: #16173B; }
+@media (max-width: 600px) {
+  .fm-group-nudge { flex-wrap: wrap; }
+  .fm-group-nudge-btn { flex: 1 1 100%; width: 100%; }
+}
+
 /* ── Quick re-search section ────────────────────────────────── */
 
 .fm-quick-research {
