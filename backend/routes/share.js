@@ -2,6 +2,7 @@ const express = require("express");
 const crypto  = require("crypto");
 const rateLimit = require("express-rate-limit");
 const { createStore } = require("../utils/kvStore");
+const { counters } = require("../utils/metrics");
 const router  = express.Router();
 
 // Envuelve un handler async para que cualquier rechazo llegue al error handler
@@ -68,6 +69,7 @@ router.post("/", createShareLimiter, asyncH(async (req, res) => {
     const n = await store.size();
     console.log(`[share] Created ${id}${n != null ? ` (store: ${n}/${MAX_SHARES})` : ""}`);
 
+    counters.incr("share_created"); // fire-and-forget (loop metric)
     return res.json({ id, expiresIn: SHARE_TTL_MS });
   } catch (err) {
     console.error("[share] Error creating share:", err.message);
@@ -187,6 +189,9 @@ router.get("/:id", asyncH(async (req, res) => {
     return res.status(410).json({ code: "EXPIRED", message: "Share link has expired." });
   }
 
+  // Alguien abrió un ?share= y el SPA está cargando los datos = visita real.
+  // (Los crawlers piden /og, no /:id, así que esto no los cuenta.)
+  counters.incr("share_landing");
   return res.json({
     results:      entry.results,
     searchParams: entry.searchParams,

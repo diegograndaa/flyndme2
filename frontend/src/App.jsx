@@ -561,34 +561,48 @@ export default function App() {
     setUiCriterion(mode);
   };
 
-  // ── Share (generates a shareable link) ──────────────────────────────────────
+  // ── Share helpers ───────────────────────────────────────────────────────────
+  // Persist the current results to the backend once, and hand back both URLs a
+  // share button might need: the SPA link (?share=id, for copy-link) and the OG
+  // link (/api/share/:id/og), which serves the dynamic per-result preview card
+  // that chat apps (WhatsApp/Telegram/email) unfurl. Returns null on failure so
+  // every caller can fall back gracefully. Centralising this is what lets every
+  // share channel — not just WhatsApp — surface the rich result card.
+  const createShareLink = async () => {
+    const res = await fetch(`${API_BASE}/api/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        results: { flights, bestByCriterion },
+        searchParams: {
+          origins: cleanOrigins,
+          departureDate,
+          returnDate,
+          tripType,
+          optimizeBy,
+          uiCriterion,
+        },
+      }),
+    }).catch(() => null);
+    if (!res || !res.ok) return null;
+    const { id } = await res.json();
+    return {
+      id,
+      shareUrl: `${window.location.origin}${window.location.pathname}?share=${id}`,
+      ogUrl: `${API_BASE}/api/share/${id}/og`,
+    };
+  };
+
+  // ── Share (copies a shareable link) ─────────────────────────────────────────
 
   const handleShare = async () => {
     if (!bestDestination || !flights.length) return;
     setShareStatus("saving");
 
     try {
-      // Save results to backend
-      const res = await fetch(`${API_BASE}/api/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          results: { flights, bestByCriterion },
-          searchParams: {
-            origins: cleanOrigins,
-            departureDate,
-            returnDate,
-            tripType,
-            optimizeBy,
-            uiCriterion,
-          },
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      const { id } = await res.json();
-      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${id}`;
+      const link = await createShareLink();
+      if (!link) throw new Error("Failed to save");
+      const { shareUrl } = link;
 
       // Copy the link
       const ok = await copyText(shareUrl);
@@ -637,22 +651,8 @@ export default function App() {
     const code = normalizeCode(bd.destination);
     const destName = destLabel(code);
 
-    // Try to get a share link first
-    let shareUrl = "";
-    try {
-      const res = await fetch(`${API_BASE}/api/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          results: { flights, bestByCriterion },
-          searchParams: { origins: cleanOrigins, departureDate, returnDate, tripType, optimizeBy, uiCriterion },
-        }),
-      });
-      if (res.ok) {
-        const { id } = await res.json();
-        shareUrl = `${window.location.origin}${window.location.pathname}?share=${id}`;
-      }
-    } catch { /* fallback without link */ }
+    // Persist the result so the link unfurls the dynamic OG card.
+    const link = await createShareLink();
 
     const lines = [
       `✈ *FlyndMe* — ${destName}`,
@@ -661,39 +661,39 @@ export default function App() {
     if (Array.isArray(bd.flights) && bd.flights.length) {
       lines.push(bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
     }
-    // Use OG endpoint for rich social previews (WhatsApp, Telegram, Twitter)
-    if (shareUrl) {
-      const shareId = shareUrl.split("share=")[1];
-      const ogUrl = `${API_BASE}/api/share/${shareId}/og`;
-      lines.push(`\n🔗 ${ogUrl}`);
-    }
+    // Rich social preview (WhatsApp/Telegram/Twitter) comes from the OG link.
+    if (link) lines.push(`\n🔗 ${link.ogUrl}`);
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
     window.open(waUrl, "_blank");
     trackEvent("share_whatsapp", { destination: code });
   };
 
-  const handleShareTelegram = () => {
+  const handleShareTelegram = async () => {
     if (!bestDestination) return;
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
     const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}`;
-    const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+    // Share the OG link so Telegram unfurls the result card, not the bare SPA URL.
+    const link = await createShareLink();
+    const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : window.location.href)}&text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
     trackEvent("share_telegram", { destination: code });
   };
 
-  const handleShareEmail = () => {
+  const handleShareEmail = async () => {
     if (!bestDestination) return;
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
+    // Persist first so the emailed link previews the result card where supported.
+    const link = await createShareLink();
     const subject = `FlyndMe — ${t("results.eyebrow")}: ${destName}`;
     const body = [
       `✈ ${destName}`,
       `${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}`,
       `${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
       "",
-      window.location.href,
+      link ? link.ogUrl : window.location.href,
     ].join("\n");
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
     trackEvent("share_email", { destination: code });
@@ -999,6 +999,24 @@ export default function App() {
     [group]
   );
 
+  // Group invites share the backend OG link (not the bare ?group= SPA URL) so
+  // chat apps unfurl the "Where should we all meet?" invite card. The OG link is
+  // pure URL construction (no fetch), so native share stays inside the user
+  // gesture — no transient-activation problem.
+  const handleGroupShareWhatsApp = useCallback(() => {
+    if (!group) return;
+    const ogUrl = `${API_BASE}/api/groups/${group.id}/og`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${t("group.shareText")}\n${ogUrl}`)}`, "_blank");
+  }, [group, t]);
+
+  const handleGroupShareNative = useCallback(async () => {
+    if (!group || typeof navigator === "undefined" || !navigator.share) return;
+    const ogUrl = `${API_BASE}/api/groups/${group.id}/og`;
+    try {
+      await navigator.share({ title: "FlyndMe", text: t("group.shareText"), url: ogUrl });
+    } catch { /* user cancelled */ }
+  }, [group, t]);
+
   const createGroup = useCallback(async () => {
     if (!departureDate) { setToast({ message: t("group.needDate"), type: "error" }); return; }
     setGroupBusy(true);
@@ -1231,6 +1249,8 @@ export default function App() {
             onCopyLink={copyGroupLink}
             onRefresh={refreshGroup}
             onExit={exitGroup}
+            onShareWhatsApp={handleGroupShareWhatsApp}
+            onShareNative={handleGroupShareNative}
             loading={loading}
             busy={groupBusy}
           />

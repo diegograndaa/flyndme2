@@ -2,7 +2,7 @@
 // Sin red: el backend upstash solo se ejercita en prod con sus variables.
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createMemoryStore, createStore } = require("../utils/kvStore");
+const { createMemoryStore, createStore, createCounters } = require("../utils/kvStore");
 
 test("kvStore(memory): set/get/delete round-trip", async () => {
   const s = createMemoryStore({ namespace: "t", ttlMs: 10_000, maxSize: 100 });
@@ -48,6 +48,25 @@ test("kvStore: createStore cae a memoria sin variables de Upstash", async () => 
   try {
     const s = createStore({ namespace: "t", ttlMs: 1000 });
     assert.equal(s.backend, "memory");
+  } finally {
+    if (prevUrl !== undefined) process.env.UPSTASH_REDIS_REST_URL = prevUrl;
+    if (prevTok !== undefined) process.env.UPSTASH_REDIS_REST_TOKEN = prevTok;
+  }
+});
+
+test("createCounters(memory): incr acumula y snapshot lee solo los nombres pedidos", async () => {
+  const prevUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const prevTok = process.env.UPSTASH_REDIS_REST_TOKEN;
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  try {
+    const c = createCounters({ namespace: "t" });
+    assert.equal(c.backend, "memory");
+    await c.incr("a");
+    await c.incr("a");
+    await c.incr("b");
+    // 'c' nunca se incrementó → 0 (snapshot rellena los ausentes con 0, no undefined).
+    assert.deepEqual(await c.snapshot(["a", "b", "c"]), { a: 2, b: 1, c: 0 });
   } finally {
     if (prevUrl !== undefined) process.env.UPSTASH_REDIS_REST_URL = prevUrl;
     if (prevTok !== undefined) process.env.UPSTASH_REDIS_REST_TOKEN = prevTok;
