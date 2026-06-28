@@ -299,7 +299,7 @@ export default function App() {
   }, []);
 
   // Search params
-  const [origins,       setOrigins]       = useState([""]);
+  const [origins,       setOrigins]       = useState(["", ""]);
   const [tripType,      setTripType]      = useState("oneway");
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate,    setReturnDate]    = useState("");
@@ -312,7 +312,7 @@ export default function App() {
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
-  const [passengers,    setPassengers]    = useState([1]); // passengers per origin
+  const [passengers,    setPassengers]    = useState([1, 1]); // passengers per origin
   const [directOnly,    setDirectOnly]    = useState(false);
   const [cabinClass,    setCabinClass]    = useState("ECONOMY");
   const [currency,      setCurrency]      = useState("EUR");
