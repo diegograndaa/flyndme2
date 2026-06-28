@@ -3944,8 +3944,8 @@ html {
 
 /* Coordinación de llegadas del grupo: cuánto se separan la primera y la última
    llegada al destino ganador (datos reales; solo los directos informan hora).
-   Tres tonos: good = llegáis juntos (verde), neutral = info de marca (granate),
-   warn = días distintos (ámbar). Mismo lenguaje visual que los nudges de arriba,
+   Dos tonos: good = llegáis juntos (verde), neutral = info de marca / días
+   distintos (granate). Mismo lenguaje visual que los nudges de arriba,
    theme-aware. */
 .fm-arrival-spread {
   display: flex;
@@ -3971,11 +3971,6 @@ html {
   border-color: rgba(174,47,52,.18);
 }
 .fm-arrival-spread--neutral .fm-arrival-spread-icon { color: var(--primary); }
-.fm-arrival-spread--warn {
-  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-  border-color: #FDE68A;
-}
-.fm-arrival-spread--warn .fm-arrival-spread-icon { color: var(--warning); }
 [data-theme="dark"] .fm-arrival-spread-text { color: #E9E9F5; }
 [data-theme="dark"] .fm-arrival-spread-note { color: #A9AAC6; }
 [data-theme="dark"] .fm-arrival-spread--good {
@@ -3985,10 +3980,6 @@ html {
 [data-theme="dark"] .fm-arrival-spread--neutral {
   background: linear-gradient(135deg, rgba(255,179,176,.08) 0%, rgba(255,179,176,.16) 100%);
   border-color: rgba(255,179,176,.25);
-}
-[data-theme="dark"] .fm-arrival-spread--warn {
-  background: linear-gradient(135deg, rgba(217,119,6,.12) 0%, rgba(217,119,6,.22) 100%);
-  border-color: rgba(251,191,36,.28);
 }
 @media (max-width: 600px) {
   .fm-arrival-spread { padding: 12px 14px; }
