@@ -900,12 +900,26 @@ export default function App() {
 
   // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
+  // Traduce el `code` de un 400/429 del backend (es-only, técnico) a un mensaje
+  // propio, localizado y accionable bajo errors.codes.*. Fallback al message del
+  // backend y, en última instancia, al genérico. (t() devuelve la propia clave si
+  // no existe → así detectamos un code sin traducción.)
+  const errorMessageForCode = (code, fallbackMessage) => {
+    if (code) {
+      const key = `errors.codes.${code}`;
+      const msg = t(key);
+      if (msg && msg !== key) return msg;
+    }
+    return fallbackMessage || t("errors.unexpected");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     if (!cleanOrigins.length) { setError(t("errors.noOrigin")); return; }
     if (!departureDate)        { setError(t("errors.noDeparture")); return; }
+    if (departureDate < todayISO()) { setError(t("errors.departurePast")); return; }
     if (tripType === "roundtrip") {
       if (!returnDate)               { setError(t("errors.noReturn")); return; }
       if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
@@ -955,7 +969,6 @@ export default function App() {
 
       const MAX_RETRIES = 3;
       const RETRY_DELAY = 3000;
-      let lastErr = null;
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
@@ -976,15 +989,26 @@ export default function App() {
           }
 
           if (!res.ok) {
+            // 400/429 deterministas: no se reintentan. Mapeamos el code del
+            // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || data.error || `Error ${res.status}`);
+            setError(errorMessageForCode(data.code, data.message || data.error));
+            return;
           }
 
           const data = await res.json();
           const arr  = Array.isArray(data.flights) ? data.flights : [];
 
           if (!arr.length) {
-            setError(budgetEnabled ? t("errors.noBudgetResults") : t("errors.noResults"));
+            // Sin resultados: guía concreta. El multi-origen ida-y-vuelta es el
+            // caso más escaso (la caché roundtrip de varias ciudades es más fina),
+            // así que ahí explicamos por qué y qué probar.
+            const noResMsg = budgetEnabled
+              ? t("errors.noBudgetResults")
+              : (tripType === "roundtrip" && cleanOrigins.length >= 2)
+                ? t("errors.noResultsRoundtripMulti")
+                : t("errors.noResults");
+            setError(noResMsg);
             return;
           }
 
@@ -1031,7 +1055,6 @@ export default function App() {
           fetchCheaperDate(winner, searchGenRef.current);
           return;
         } catch (err) {
-          lastErr = err;
           const isTransient = err instanceof TypeError || err.name === "AbortError";
           if (isTransient && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
@@ -1041,7 +1064,10 @@ export default function App() {
         }
       }
 
-      setError(lastErr?.message || t("errors.unexpected"));
+      // Solo se llega aquí tras agotar reintentos por error de red/timeout
+      // (TypeError/AbortError), cuyo message sería técnico ("Failed to fetch")
+      // → mostramos un motivo de conexión claro en su lugar.
+      setError(t("errors.connection"));
     } finally {
       setLoading(false);
     }

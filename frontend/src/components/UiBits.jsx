@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
 import { useFocusTrap } from "../hooks/useFocusTrap";
-import { X, Frown } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 
 // Esqueleto de carga de la vista de resultados
 export function ResultsSkeleton() {
@@ -96,13 +96,15 @@ export function Breadcrumb({ current, onNavigate }) {
   );
 }
 
-// Estado de error amigable con botón de reintento
+// Estado de error: el MOTIVO específico lidera (es el heading), no un genérico.
+// `message` siempre llega con sentido (validación → específico; backend → mapeado;
+// inesperado → "Algo salió mal"), así que se muestra prominente. role="alert"
+// para que los lectores de pantalla lo anuncien.
 export const FriendlyError = React.memo(function FriendlyError({ message, onRetry }) {
   const { t } = useI18n();
   return (
-    <div className="fm-error-state">
-      <div className="fm-error-icon"><Frown size={32} aria-hidden="true" /></div>
-      <h3 className="fm-error-title">{t("errors.friendlyTitle")}</h3>
+    <div className="fm-error-state" role="alert">
+      <div className="fm-error-icon" aria-hidden="true"><AlertCircle size={26} /></div>
       <p className="fm-error-message">{message}</p>
       {onRetry && (
         <button type="button" className="btn-fm-primary" onClick={onRetry}>
