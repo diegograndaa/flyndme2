@@ -607,6 +607,17 @@
     "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
     "use": "Use this date"
   },
+  "arrivalCoord": {
+    "diffDays": "With the cheapest flights, you land on different days ({{time}} apart).",
+    "close": "You all land close together: {{time}} between the first and last arrival.",
+    "spread": "There's {{time}} between the first and last arrival.",
+    "partialNote": "One leg has a stopover and doesn't report its arrival time.",
+    "timeHours": "{{h}}h",
+    "timeUnder1h": "under 1h",
+    "dayOne": "1 day",
+    "dayMany": "{{d}} days",
+    "daysAndHours": "{{days}} {{h}}h"
+  },
   "stopover": {
     "title": "Stopovers",
     "allDirect": "All direct flights!",

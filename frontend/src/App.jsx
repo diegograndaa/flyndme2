@@ -15,6 +15,7 @@ import {
   countryFlag, scrollBehavior
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
+import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
@@ -28,7 +29,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users } from "lucide-react";
+import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -1515,6 +1516,50 @@ export default function App() {
           {cleanOrigins.length > 1 && (
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
           )}
+
+          {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
+              REALES: solo los vuelos directos informan la hora, los de escalas
+              no → se avisa. Solo mostramos la DIFERENCIA entre llegadas, nunca
+              horas locales: no tenemos la zona horaria del destino. Reacciona
+              al toggle de criterio porque se recalcula sobre bestDestination. */}
+          {cleanOrigins.length > 1 && (() => {
+            const sp = computeArrivalSpread(bestDestination.flights);
+            if (!sp || sp.legsWithTime < 2 || sp.spreadMs == null) return null; // no comparable
+            const parts = splitSpread(sp.spreadMs);
+            if (!parts) return null;
+            // Texto de tiempo legible ("~" salvo en "menos de 1 h").
+            let time;
+            if (parts.totalHours === 0) {
+              time = t("arrivalCoord.timeUnder1h");
+            } else if (parts.days === 0) {
+              time = "~" + t("arrivalCoord.timeHours", { h: parts.hours });
+            } else {
+              const dayStr = parts.days === 1
+                ? t("arrivalCoord.dayOne")
+                : t("arrivalCoord.dayMany", { d: parts.days });
+              time = "~" + (parts.hours === 0
+                ? dayStr
+                : t("arrivalCoord.daysAndHours", { days: dayStr, h: parts.hours }));
+            }
+            // Tono: días distintos = aviso; mismo día y ≤4h = positivo; resto = neutro.
+            const small = sp.spreadMs <= 4 * 3600000;
+            let tone, msg;
+            if (sp.differentDays) { tone = "neutral"; msg = t("arrivalCoord.diffDays", { time }); }
+            else if (small)       { tone = "good"; msg = t("arrivalCoord.close", { time }); }
+            else                  { tone = "neutral"; msg = t("arrivalCoord.spread", { time }); }
+            const Icon = sp.differentDays ? CalendarClock : PlaneLanding;
+            return (
+              <div className={`fm-arrival-spread fm-arrival-spread--${tone} view-enter`}>
+                <span className="fm-arrival-spread-icon" aria-hidden="true"><Icon size={18} /></span>
+                <div className="fm-arrival-spread-body">
+                  <span className="fm-arrival-spread-text">{msg}</span>
+                  {sp.partial && (
+                    <span className="fm-arrival-spread-note">{t("arrivalCoord.partialNote")}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── Share results with the group ── */}
           <ResultsShareLink origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
