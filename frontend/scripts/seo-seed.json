@@ -6,11 +6,23 @@
     {
       "slug": "madrid-barcelona",
       "type": "pair",
-      "origins": ["MAD", "BCN"],
-      "passengers": [1, 1],
+      "origins": [
+        "MAD",
+        "BCN"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
       "tripType": "oneway",
       "ctaOrigins": "MAD,BCN",
-      "related": ["madrid-londres", "madrid-berlin-lisboa", "despedida-soltero", "punto-medio"],
+      "related": [
+        "madrid-londres",
+        "barcelona-berlin",
+        "london-barcelona",
+        "madrid-berlin-lisboa",
+        "despedida-soltero"
+      ],
       "i18n": {
         "es": {
           "lang": "es",
@@ -25,9 +37,18 @@
             "Las fechas mandan. Entre semana y fuera de puentes los precios desde las dos ciudades bajan bastante; agosto y los fines de semana largos los disparan. Si tenéis margen, mover la quedada un par de días suele cambiar el destino ganador. La tabla de aquí abajo es una foto de los precios en caché de búsquedas recientes; antes de reservar, abrid el comparador y mirad el precio en vivo."
           ],
           "faq": [
-            { "q": "¿Por qué no buscar simplemente el vuelo más barato?", "a": "Porque el vuelo más barato lo es para una persona, no para el grupo. La ciudad que sale a cuenta desde Madrid puede ser cara desde Barcelona; lo que importa es el coste total entre todos y que el reparto sea justo." },
-            { "q": "¿Los precios son fiables?", "a": "Son una estimación a partir de una caché de búsquedas reales, fuerte en Europa. La mejor opción se puede comprobar contra precios en vivo desde la propia herramienta; mirad siempre el precio actual antes de reservar." },
-            { "q": "¿Y si somos más de dos ciudades?", "a": "Podéis añadir todas las ciudades de salida que necesitéis. Cuantos más orígenes, más sentido tiene comparar el coste total y la equidad en vez de ir uno por uno." }
+            {
+              "q": "¿Por qué no buscar simplemente el vuelo más barato?",
+              "a": "Porque el vuelo más barato lo es para una persona, no para el grupo. La ciudad que sale a cuenta desde Madrid puede ser cara desde Barcelona; lo que importa es el coste total entre todos y que el reparto sea justo."
+            },
+            {
+              "q": "¿Los precios son fiables?",
+              "a": "Son una estimación a partir de una caché de búsquedas reales, fuerte en Europa. La mejor opción se puede comprobar contra precios en vivo desde la propia herramienta; mirad siempre el precio actual antes de reservar."
+            },
+            {
+              "q": "¿Y si somos más de dos ciudades?",
+              "a": "Podéis añadir todas las ciudades de salida que necesitéis. Cuantos más orígenes, más sentido tiene comparar el coste total y la equidad en vez de ir uno por uno."
+            }
           ]
         },
         "en": {
@@ -43,9 +64,18 @@
             "Dates do most of the work. Midweek and outside long weekends, prices from both cities drop noticeably; August and weekends push them up. If you've got some flexibility, shifting the trip a couple of days often changes the winning destination. The table below is a snapshot from cached searches; before booking, open the comparison and check the live price."
           ],
           "faq": [
-            { "q": "Why not just search for the cheapest flight?", "a": "Because the cheapest flight is cheapest for one person, not the group. A city that's a bargain from Madrid can be pricey from Barcelona; what matters is the total cost across everyone and a fair split." },
-            { "q": "Are the prices reliable?", "a": "They're an estimate from a cache of real searches, strongest in Europe. The top option can be re-checked against live prices inside the tool; always check the current price before booking." },
-            { "q": "What if we're more than two cities?", "a": "You can add as many departure cities as you need. The more origins, the more it pays to compare total cost and fairness instead of guessing one by one." }
+            {
+              "q": "Why not just search for the cheapest flight?",
+              "a": "Because the cheapest flight is cheapest for one person, not the group. A city that's a bargain from Madrid can be pricey from Barcelona; what matters is the total cost across everyone and a fair split."
+            },
+            {
+              "q": "Are the prices reliable?",
+              "a": "They're an estimate from a cache of real searches, strongest in Europe. The top option can be re-checked against live prices inside the tool; always check the current price before booking."
+            },
+            {
+              "q": "What if we're more than two cities?",
+              "a": "You can add as many departure cities as you need. The more origins, the more it pays to compare total cost and fairness instead of guessing one by one."
+            }
           ]
         }
       }
@@ -53,11 +83,23 @@
     {
       "slug": "madrid-londres",
       "type": "pair",
-      "origins": ["MAD", "LON"],
-      "passengers": [1, 1],
+      "origins": [
+        "MAD",
+        "LON"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
       "tripType": "oneway",
       "ctaOrigins": "MAD,LON",
-      "related": ["madrid-barcelona", "madrid-berlin-lisboa", "punto-medio"],
+      "related": [
+        "madrid-barcelona",
+        "london-barcelona",
+        "dublin-madrid",
+        "madrid-london-berlin",
+        "punto-medio"
+      ],
       "i18n": {
         "es": {
           "lang": "es",
@@ -72,9 +114,18 @@
             "Ojo a la libra y a las temporadas: los puentes españoles y las vacaciones escolares británicas no caen igual, y eso mueve los precios. La tabla de abajo sale de búsquedas en caché; es orientativa. Para reservar de verdad, comprobad el precio en vivo desde la herramienta."
           ],
           "faq": [
-            { "q": "¿Londres no tiene siempre vuelos más baratos?", "a": "Suele tener más oferta, sí, pero eso no significa que el destino que le sale barato a Londres le salga barato a Madrid. Por eso se compara el total del grupo y no solo una ciudad." },
-            { "q": "¿Qué aeropuerto de Londres se usa?", "a": "Se compara contra el aeropuerto real del billete (Gatwick, Stansted, Luton, Heathrow…), no contra un código de ciudad genérico, para que el precio sea el de verdad." },
-            { "q": "¿Puedo verlo en libras?", "a": "La herramienta muestra el precio en euros por defecto y permite cambiar la divisa para hacerse una idea; el precio reservable real lo dais en la web del vuelo." }
+            {
+              "q": "¿Londres no tiene siempre vuelos más baratos?",
+              "a": "Suele tener más oferta, sí, pero eso no significa que el destino que le sale barato a Londres le salga barato a Madrid. Por eso se compara el total del grupo y no solo una ciudad."
+            },
+            {
+              "q": "¿Qué aeropuerto de Londres se usa?",
+              "a": "Se compara contra el aeropuerto real del billete (Gatwick, Stansted, Luton, Heathrow…), no contra un código de ciudad genérico, para que el precio sea el de verdad."
+            },
+            {
+              "q": "¿Puedo verlo en libras?",
+              "a": "La herramienta muestra el precio en euros por defecto y permite cambiar la divisa para hacerse una idea; el precio reservable real lo dais en la web del vuelo."
+            }
           ]
         },
         "en": {
@@ -90,9 +141,18 @@
             "Mind the pound and the calendars: Spanish bank holidays and UK school breaks don't line up, and that moves prices around. The table below comes from cached searches and is indicative. To actually book, check the live price from the tool."
           ],
           "faq": [
-            { "q": "Doesn't London always have cheaper flights?", "a": "It usually has more options, but that doesn't mean the city that's cheap from London is cheap from Madrid. That's why the total group cost is compared, not one city." },
-            { "q": "Which London airport is used?", "a": "It's compared against the real ticket airport (Gatwick, Stansted, Luton, Heathrow…), not a generic city code, so the price is the real one." },
-            { "q": "Can I see it in pounds?", "a": "The tool shows euros by default and lets you switch currency for a rough idea; the actual bookable price is on the flight site." }
+            {
+              "q": "Doesn't London always have cheaper flights?",
+              "a": "It usually has more options, but that doesn't mean the city that's cheap from London is cheap from Madrid. That's why the total group cost is compared, not one city."
+            },
+            {
+              "q": "Which London airport is used?",
+              "a": "It's compared against the real ticket airport (Gatwick, Stansted, Luton, Heathrow…), not a generic city code, so the price is the real one."
+            },
+            {
+              "q": "Can I see it in pounds?",
+              "a": "The tool shows euros by default and lets you switch currency for a rough idea; the actual bookable price is on the flight site."
+            }
           ]
         }
       }
@@ -100,11 +160,25 @@
     {
       "slug": "madrid-berlin-lisboa",
       "type": "pair",
-      "origins": ["MAD", "BER", "LIS"],
-      "passengers": [1, 1, 1],
+      "origins": [
+        "MAD",
+        "BER",
+        "LIS"
+      ],
+      "passengers": [
+        1,
+        1,
+        1
+      ],
       "tripType": "oneway",
       "ctaOrigins": "MAD,BER,LIS",
-      "related": ["madrid-barcelona", "madrid-londres", "punto-medio", "despedida-soltero"],
+      "related": [
+        "madrid-london-berlin",
+        "amsterdam-lisbon",
+        "barcelona-berlin",
+        "madrid-barcelona",
+        "punto-medio"
+      ],
       "i18n": {
         "es": {
           "lang": "es",
@@ -119,9 +193,18 @@
             "Tres orígenes tan separados también significan que las buenas combinaciones cambian mucho según la fecha. La tabla de abajo es una foto en caché para haceros una idea del orden de destinos; los números reales los confirmáis en vivo desde el comparador antes de reservar nada."
           ],
           "faq": [
-            { "q": "¿Por qué importa más la equidad con tres ciudades?", "a": "Porque con tres orígenes repartidos es casi imposible que un destino sea cómodo para todos. Sin mirar el reparto, uno acaba pagando bastante más que el resto sin que nadie se dé cuenta." },
-            { "q": "¿El más barato no es siempre el mejor?", "a": "No necesariamente. El más barato en total puede dejar a una ciudad pagando el doble. Por eso puedes ordenar por equidad y elegir el punto que reparte mejor el coste." },
-            { "q": "¿Hay límite de ciudades?", "a": "Puedes añadir varias ciudades de salida. El planteamiento es el mismo: coste total del grupo y reparto justo, no el vuelo barato de una persona." }
+            {
+              "q": "¿Por qué importa más la equidad con tres ciudades?",
+              "a": "Porque con tres orígenes repartidos es casi imposible que un destino sea cómodo para todos. Sin mirar el reparto, uno acaba pagando bastante más que el resto sin que nadie se dé cuenta."
+            },
+            {
+              "q": "¿El más barato no es siempre el mejor?",
+              "a": "No necesariamente. El más barato en total puede dejar a una ciudad pagando el doble. Por eso puedes ordenar por equidad y elegir el punto que reparte mejor el coste."
+            },
+            {
+              "q": "¿Hay límite de ciudades?",
+              "a": "Puedes añadir varias ciudades de salida. El planteamiento es el mismo: coste total del grupo y reparto justo, no el vuelo barato de una persona."
+            }
           ]
         },
         "en": {
@@ -137,9 +220,567 @@
             "Three origins this far apart also means the good combinations swing a lot with the date. The table below is a cached snapshot to give you a sense of the order of destinations; confirm the real numbers live from the comparison before booking anything."
           ],
           "faq": [
-            { "q": "Why does fairness matter more with three cities?", "a": "Because with three spread-out origins it's nearly impossible for one destination to be convenient for everyone. Without looking at the split, one person quietly pays a lot more than the rest." },
-            { "q": "Isn't the cheapest always best?", "a": "Not necessarily. The cheapest overall can leave one city paying double. That's why you can sort by fairness and pick the spot that splits the cost better." },
-            { "q": "Is there a limit on cities?", "a": "You can add several departure cities. The idea is the same: total group cost and a fair split, not one person's cheap flight." }
+            {
+              "q": "Why does fairness matter more with three cities?",
+              "a": "Because with three spread-out origins it's nearly impossible for one destination to be convenient for everyone. Without looking at the split, one person quietly pays a lot more than the rest."
+            },
+            {
+              "q": "Isn't the cheapest always best?",
+              "a": "Not necessarily. The cheapest overall can leave one city paying double. That's why you can sort by fairness and pick the spot that splits the cost better."
+            },
+            {
+              "q": "Is there a limit on cities?",
+              "a": "You can add several departure cities. The idea is the same: total group cost and a fair split, not one person's cheap flight."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "barcelona-berlin",
+      "type": "pair",
+      "origins": [
+        "BCN",
+        "BER"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "BCN,BER",
+      "related": [
+        "munich-barcelona",
+        "london-barcelona",
+        "madrid-barcelona",
+        "madrid-berlin-lisboa",
+        "despedida-soltero"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/barcelona-berlin/",
+          "title": "Destino más barato para grupo Barcelona-Berlín | FlyndMe",
+          "metaDescription": "Vivís repartidos entre Barcelona y Berlín y no sabéis dónde veros. FlyndMe encuentra el destino más barato y justo para el grupo, gratis y sin registro.",
+          "h1": "El plan de grupo cuando unos salís de Barcelona y otros de Berlín",
+          "lead": "Sumando lo que paga cada uno desde Barcelona y desde Berlín, el destino que sale más a cuenta y mejor repartido suele ser {dest}, por unos {pp} cada uno.",
+          "prose": [
+            "Barcelona y Berlín se han llenado de españoles que se fueron por un trabajo en tech o a estudiar algo creativo, y al final el grupo de siempre acaba partido entre las dos. Uno se quedó en El Prat, otro montó su vida cerca del Spree, y cuando toca veros nadie sabe muy bien dónde caer. La pregunta no es de dónde sale más barato cada uno por su lado, sino dónde os sale más barato a todos juntos.",
+            "Berlín se quedó con un solo aeropuerto, BER, conectadísimo a low-cost por media Europa, y El Prat va parecido. El problema es que casi nunca coinciden: el destino con plaza barata desde BER suele ser justo el que se pone por las nubes desde El Prat esa misma semana. Si elegís por el vuelo barato de uno, el otro acaba subvencionando el finde y pagando casi el triple sin enterarse hasta que mira el billete.",
+            "Luego está la temporada. Berlín en invierno es gris y salir de allí se pone barato, pero en cuanto aprieta el verano se llena y los precios se disparan. Como casi siempre esto es un city-break de finde, mirad también entre semana, que un jueves o un lunes cambia bastante la cuenta. FlyndMe le da la vuelta: en lugar del billete suelto de uno, pesa lo que se gasta el grupo entero y deja a la vista cuánto pone cada ciudad, así la distancia entre el que más suelta y el que menos se queda corta. Y hay un enlace para pasar al grupo y que cada uno meta su ciudad."
+          ],
+          "faq": [
+            {
+              "q": "¿De dónde salen los precios?",
+              "a": "De búsquedas reales que quedan guardadas un tiempo, no de una consulta en directo, por eso van marcados como estimación. Te valen para ver por dónde van los tiros entre destinos; el número fino lo confirmas en vivo justo antes de reservar, que un billete puede moverse de un día para otro."
+            },
+            {
+              "q": "¿Qué tiene en cuenta para que sea justo?",
+              "a": "Suma lo que costaría el viaje a todo el grupo en vez de premiar el chollo de uno, y vigila que el salto entre la cuenta más alta y la más baja se quede corto. Tienes delante lo que aporta cada ciudad, así que nadie subvenciona el plan sin enterarse."
+            },
+            {
+              "q": "¿Hace falta registrarse para juntar Barcelona y Berlín?",
+              "a": "No, es gratis y sin cuenta. Metes las dos ciudades de salida y listo. Si sois más, hay un enlace de grupo para pasarlo y que cada uno añada la suya, y el cálculo se rehace con todos dentro."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/barcelona-berlin/",
+          "title": "Cheapest group trip from Barcelona and Berlin | FlyndMe",
+          "metaDescription": "Half your crew flies from Barcelona, half from Berlin? FlyndMe finds the cheapest, fairest place to all meet up. Free, no sign-up, one group link.",
+          "h1": "Where to meet when some of you fly from Barcelona and some from Berlin",
+          "lead": "Add up what each of you pays from Barcelona and from Berlin and the destination that comes out cheapest and most evenly split is usually {dest}, at around {pp} each.",
+          "prose": [
+            "Barcelona and Berlin both pull in young Spaniards who left for a tech job or to study something creative, so the old crew ends up split across the two. One stayed near the beach, another built a life by the Spree, and every reunion starts with nobody knowing where to go. The real question isn't where each of you flies cheapest on your own, it's where the whole group pays the least together.",
+            "Berlin runs everything through one airport now, BER, wired into low-cost routes all over Europe, and El Prat is much the same. Trouble is they rarely line up: the route with cheap seats out of BER is often exactly the one that spikes from El Prat that same week. Pick the destination off one person's bargain flight and the other quietly ends up paying way over the odds.",
+            "Then there's the season. Berlin in winter is grey and cheap to leave, but once summer hits it fills up and fares climb. Since this is usually a weekend city break, check midweek too, because a Thursday or a Monday can shift the whole bill. FlyndMe flips it: instead of one stray flight it weighs what the whole group spends and lays out how much each city chips in, so the distance between the biggest and smallest bill stays short. There's also a link to pass round so everyone drops in their own city."
+          ],
+          "faq": [
+            {
+              "q": "Where do the prices come from?",
+              "a": "They come from real searches kept on file for a while, not a live lookup, which is why they're flagged as an estimate. They're handy for seeing roughly how destinations stack up; you confirm the exact figure live right before booking, since a fare can shift overnight."
+            },
+            {
+              "q": "How does it decide what's fair?",
+              "a": "It tallies what the trip would cost the whole group rather than rewarding one cheap flight, then watches that the jump between the highest and lowest bill stays short. You can see what each city chips in, so nobody ends up subsidising the trip without noticing."
+            },
+            {
+              "q": "Do we need to sign up to combine Barcelona and Berlin?",
+              "a": "No, it's free and account-free. Drop in both departure cities and you're set. If there are more of you, there's a group link to share so each person adds their own city, and the maths redoes itself with everyone included."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "dublin-madrid",
+      "type": "pair",
+      "origins": [
+        "DUB",
+        "MAD"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "DUB,MAD",
+      "related": [
+        "madrid-londres",
+        "madrid-barcelona",
+        "london-barcelona",
+        "amsterdam-lisbon",
+        "punto-medio"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/dublin-madrid/",
+          "title": "Destino más barato para grupos: Dublín y Madrid | FlyndMe",
+          "metaDescription": "Unos salís de Dublín y otros de Madrid. FlyndMe encuentra el destino más barato para todo el grupo y el más justo, viendo quién paga qué. Gratis, sin registro.",
+          "h1": "Adónde vais si unos salís de Dublín y otros de Madrid",
+          "lead": "Juntando las salidas de Dublín y de Madrid, lo que menos cuesta al grupo y deja la cuenta más pareja suele ser {dest}, rondando los {pp} por cabeza.",
+          "prose": [
+            "Va por los que se largaron a Dublín a currar o a pulir el inglés y siguen quedando con la peña de Madrid. El lío de siempre: cada uno mira su vuelo por su cuenta y cuadrar un finde acaba siendo un grupo de guasap infinito. Lo que a uno le sale tirado desde Barajas puede ser otra historia desde el aeropuerto de Dublín, y nadie tiene la foto completa de lo que paga el grupo entero cuando juntáis las dos salidas.",
+            "Dublín engaña. Como Ryanair tiene allí su base y Aer Lingus opera media Europa, parece que vuelas barato a cualquier parte, pero un fin de semana concreto los precios se disparan y la ciudad ya de por sí no es barata. Madrid juega en otra liga de conexiones: desde Barajas casi todo tiene hueco. Por eso conviene mirar las dos salidas a la vez y no fiarse de que desde Dublín siempre vas a pillar low-cost.",
+            "Y luego está el reparto. Si elegís el destino por lo que les viene bien a los de Madrid, el que sale de Dublín suele acabar poniendo bastante más, y eso escuece cuando ya vive en una ciudad cara. FlyndMe mira la factura del grupo al completo, no el chollo aislado de uno, y desglosa lo que pondría cada salida para que el de Dublín y el de Madrid no acaben con cuentas disparatadas. Por cierto, Irlanda va en euros, así que ni te preocupes por la libra.",
+            "Otro detalle: viniendo de la lluvia de Dublín, el reencuentro casi siempre tira a algún sitio con sol, y ahí la temporada manda. En verano y puentes los precios se animan, y un destino que un mes sale a cuenta otro se pone imposible. Los números que ves vienen de búsquedas ya hechas y guardadas, así que sirven para orientar el destino; el dato exacto lo miras en vivo justo antes de pagar."
+          ],
+          "faq": [
+            {
+              "q": "¿Por qué no buscamos cada uno nuestro vuelo y ya?",
+              "a": "Porque así optimizáis el vuelo de uno, no el plan del grupo. Un destino de oferta para los de Madrid puede dispararse desde Dublín según la semana. FlyndMe suma las dos salidas y te dice qué destino sale mejor para todos juntos."
+            },
+            {
+              "q": "¿Cómo metemos las dos ciudades de salida?",
+              "a": "Pones Dublín y Madrid como orígenes y la herramienta cruza las dos a la vez. Si sois más gente repartida, hay un enlace de grupo para que cada uno añada su ciudad sin que tú vayas preguntando uno por uno."
+            },
+            {
+              "q": "¿Los precios son de fiar?",
+              "a": "Te dan una orientación buena del orden de precios porque vienen de búsquedas reales archivadas, pero no son la tarifa definitiva. Un finde señalado o la temporada alta los mueve un montón, así que conviene mirar el dato en vivo antes de soltar la tarjeta."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/dublin-madrid/",
+          "title": "Cheapest group destination from Dublin and Madrid | FlyndMe",
+          "metaDescription": "Some fly from Dublin, others from Madrid. FlyndMe finds the cheapest, fairest destination for the whole group and shows who pays what. Free, no signup.",
+          "h1": "Where to meet when you're split between Dublin and Madrid",
+          "lead": "Once you line up the Dublin and Madrid departures, the destination that costs the group least and leaves the bill most even tends to be {dest}, around {pp} a head.",
+          "prose": [
+            "This one's for the crowd who moved to Dublin for work or to finally sort their English, and still try to meet up with the lot back in Madrid. It's the same tug-of-war every time: everyone checks their own flight, and pinning down a weekend turns into a group chat that never ends. What's cheap out of Barajas can be a different story from Dublin Airport, and nobody really sees what the whole group is paying once you line up both departures.",
+            "Dublin is deceptive. Ryanair is based there and Aer Lingus covers half of Europe, so it feels like you can fly anywhere on the cheap, yet for one specific weekend the fares jump and the city itself isn't kind to your wallet. Madrid plays in another league for connections, with Barajas linking almost everywhere. That's why it pays to look at both departure points together rather than trusting that there's always a low-cost going out of Dublin.",
+            "Then there's the split. If you pick the destination around what suits the Madrid lot, whoever flies from Dublin usually ends up paying noticeably more, which stings when you already live somewhere pricey. FlyndMe looks at the whole group's bill instead of one person's bargain, and breaks down what each departure chips in so the Dublin and Madrid sides don't end up with wildly different totals. And don't overthink the currency: Ireland is on the euro, same as home.",
+            "One more thing. Coming off Dublin's drizzle, the reunion nearly always leans towards somewhere with a bit of sun, and that's where the season calls the shots. Over summer and bank holidays the prices wake up, and a spot that's a steal one month can be hopeless the next. The figures you see are pulled from searches already run and stored, so they're there to steer the destination; check the exact one live right before you pay."
+          ],
+          "faq": [
+            {
+              "q": "Why not just have everyone book their own flight?",
+              "a": "Because that optimises one person's flight, not the group's trip. A destination on offer for the Madrid lot can spike from Dublin depending on the week. FlyndMe adds up both departures and tells you which destination comes out best for everyone together."
+            },
+            {
+              "q": "How do we enter both departure cities?",
+              "a": "You add Dublin and Madrid as origins and the tool checks both at once. If you're a bigger crowd spread around, there's a group link so each person drops in their own city instead of you chasing everyone."
+            },
+            {
+              "q": "Can we trust the prices?",
+              "a": "They give you a solid sense of the price range because they're drawn from archived real searches, but they aren't the final fare. A marquee weekend or peak season swings them a lot, so check the live number before you reach for your card."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "amsterdam-lisbon",
+      "type": "pair",
+      "origins": [
+        "AMS",
+        "LIS"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "AMS,LIS",
+      "related": [
+        "madrid-berlin-lisboa",
+        "munich-barcelona",
+        "milan-london",
+        "dublin-madrid",
+        "punto-medio"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/amsterdam-lisboa/",
+          "title": "Destino más barato para grupos: Ámsterdam y Lisboa | FlyndMe",
+          "metaDescription": "¿La peña sale de Ámsterdam y de Lisboa? FlyndMe compara el coste total del grupo y busca el destino más barato y más justo para todos. Gratis y sin registro.",
+          "h1": "Punto de encuentro más barato para un grupo entre Ámsterdam y Lisboa",
+          "lead": "Con una mitad en Ámsterdam y otra en Lisboa, el sitio donde el grupo gasta menos sin que nadie cargue de más acaba siendo casi siempre {dest}, sobre los {pp} por persona.",
+          "prose": [
+            "Si parte de la peña vive en Ámsterdam y la otra parte se ha mudado a Lisboa, ya sabes cómo va: el remoto se llevó a la gente al sur y el grupo cada vez está más repartido. Schiphol es de los aeropuertos mejor conectados de Europa y desde Lisboa también sale de todo, pero son los dos extremos del mapa. Quedar a medias en distancia no significa quedar a medias en precio, y ahí empieza el lío de siempre.",
+            "La trampa es pensar que el punto de encuentro tiene que caer geográficamente entre las dos. Una ciudad clavada en el centro puede tener vuelos carísimos desde Schiphol o desde Lisboa, mientras que un sitio que parece lejísimos sale tirado desde los dos según cómo estén las rutas. Comparar a ojo no sirve: la ruta barata desde Schiphol y la barata desde Lisboa casi nunca apuntan al mismo sitio, y el ganador rara vez es el punto obvio del mapa.",
+            "Lo que hace FlyndMe es juntar las dos salidas y sopesar el gasto del grupo en conjunto, no el vuelo barato de uno, con el desglose por ciudad delante para que ninguno termine cubriendo en silencio al resto. Los números salen de búsquedas ya guardadas y se refrescan en vivo antes de reservar. Hay un enlace de grupo para que cada uno meta su ciudad sin agobios."
+          ],
+          "faq": [
+            {
+              "q": "¿Tengo que registrarme o pagar algo?",
+              "a": "No. Metes las ciudades de salida del grupo, le das a buscar y ves el destino más barato para todos. Sin cuenta y sin tarjeta. Cuando alguien quiere reservar, va al final a la web de la aerolínea o la agencia."
+            },
+            {
+              "q": "¿De dónde salen los precios? ¿Son fiables?",
+              "a": "Vienen de un histórico de búsquedas, así que están pensados para comparar deprisa y decidir sin abrir veinte pestañas. No equivalen a una reserva cerrada: en cuanto alguien va a comprar, el precio se vuelve a mirar al momento, porque cambia continuamente."
+            },
+            {
+              "q": "Estamos repartidos, ¿cómo añade cada uno su ciudad?",
+              "a": "Hay un enlace de grupo que pasas por el chat. Cada uno lo abre y mete su ciudad de salida y cuántos sois desde ahí. Cuando está la lista, cualquiera lanza la búsqueda y sale el destino que mejor cuadra para el conjunto."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/amsterdam-lisbon/",
+          "title": "Cheapest group meetup from Amsterdam and Lisbon | FlyndMe",
+          "metaDescription": "Half your group flies from Amsterdam, half from Lisbon? FlyndMe compares the whole group's cost to find the cheapest, fairest place to meet. Free, no signup.",
+          "h1": "The cheapest place to meet for a group split between Amsterdam and Lisbon",
+          "lead": "With one half in Amsterdam and the other in Lisbon, the place where the group spends least without anyone carrying the extra usually turns out to be {dest}, about {pp} per person.",
+          "prose": [
+            "If half your crew lives in Amsterdam and the other half has moved to Lisbon, you know the drill: remote work pulled people south, and the group keeps drifting apart on the map. Schiphol is one of the best-connected airports in Europe and Lisbon flies just about everywhere too, but they sit at opposite ends of the continent. Meeting halfway in distance doesn't mean meeting halfway in price, and that's where it always gets messy.",
+            "The trap is assuming the meeting point has to land somewhere geographically between the two. A city smack in the middle can be pricey out of Schiphol or out of Lisbon, while somewhere that looks way off can come out cheap from both, depending on how the routes fall. Eyeballing a map just doesn't cut it: the cheap route from Schiphol and the cheap one from Lisbon almost never point at the same place, and the winner is rarely the obvious dot.",
+            "What FlyndMe does is pool both departures and weigh the group's spend as a whole, not one person's lucky fare, with the per-city breakdown in front of you so nobody ends up quietly covering everyone else. The numbers come from searches already stored and refresh live before you book. There's a group link so each person drops in their own city."
+          ],
+          "faq": [
+            {
+              "q": "Do I need to sign up or pay anything?",
+              "a": "No. Drop in everyone's departure cities, hit search, and see the cheapest place for the whole group. No account, no card. When someone's ready to book, they head off to the airline or agency at the end."
+            },
+            {
+              "q": "Where do the prices come from? Can I trust them?",
+              "a": "They come from a back catalogue of searches, so they're built for comparing fast and deciding without opening twenty tabs. They aren't a locked booking, though: the moment someone goes to buy, the price gets pulled again, since it shifts constantly."
+            },
+            {
+              "q": "We're spread out, how does everyone add their city?",
+              "a": "There's a group link you paste into the chat. Each person opens it and adds their departure city and how many are flying from there. Once the list is in, anyone can run the search and get the destination that works best for the whole group."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "london-barcelona",
+      "type": "pair",
+      "origins": [
+        "LON",
+        "BCN"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "LON,BCN",
+      "related": [
+        "madrid-londres",
+        "milan-london",
+        "barcelona-berlin",
+        "madrid-barcelona",
+        "despedida-soltero"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/londres-barcelona/",
+          "title": "El destino más barato para grupos: Londres y Barcelona | FlyndMe",
+          "metaDescription": "Sois un grupo y unos salís de Londres y otros de Barcelona. FlyndMe busca el destino más barato y justo para todos, gratis y sin registro.",
+          "h1": "El destino más barato para un grupo entre Londres y Barcelona",
+          "lead": "Cruzando lo que cuesta salir de Londres y de Barcelona, el punto de encuentro más asequible y mejor equilibrado suele caer en {dest}, por algo así como {pp} cada uno.",
+          "prose": [
+            "El reparto es el de siempre: media cuadrilla se fue a Londres a currar y los demás se quedaron en Barcelona, así que el reencuentro acaba siendo entre estas dos. El lío empieza cuando cada uno mira su propio vuelo. El que al de Londres le sale regalado puede obligar al de Barcelona a madrugar y pagar el doble, y tu chollo a él igual le cuadra fatal. Mirar solo tu billete no dice nada del plan de verdad.",
+            "Y aquí el calendario juega malas pasadas. Los puentes y festivos no caen igual en Reino Unido que en España: un finde que aquí parece de lo más normal allí es largo, o al revés, y eso dispara el precio para uno y deja al otro tranquilo. Súmale la libra bailando contra el euro y el mismo viaje cuesta distinto según quién saque la tarjeta. Por eso cuadrar una fecha que os sirva a los dos a la vez vale más que el chollo suelto de un día concreto que solo le encaja a uno.",
+            "Tampoco ayuda que «Londres» sean en realidad varios aeropuertos repartidos por la ciudad: el vuelo más barato puede salir de uno que le pilla a una hora larga de casa, así que el billete tirado en pantalla no siempre es el plan cómodo. Conviene mirar de qué aeropuerto sale de verdad antes de cantar victoria.",
+            "La tentación es clara: quedar donde le va bien al de Londres, que tiene más opciones, y que el de Barcelona se apañe. Así acaba pagando uno el triple y se come el viaje con resquemor. FlyndMe lo invierte: juntáis las dos salidas y calcula lo que paga el grupo en bloque, no el vuelo suelto de nadie, con el aporte de cada uno a la vista para que la brecha entre la cuenta más alta y la más baja no se dispare. Hay un enlace de grupo para que cada uno añada su ciudad."
+          ],
+          "faq": [
+            {
+              "q": "¿Por qué fijarse tanto en la fecha y en la libra?",
+              "a": "Porque los calendarios de Reino Unido y España no encajan: un puente español puede ser un día normal en Londres, y un festivo británico pillar a Barcelona currando, así que el mismo finde sale caro para uno y barato para otro. Y como la libra sube y baja contra el euro, lo que paga el de Londres no se traduce igual al bolsillo del de Barcelona. Cuadrar una fecha buena para los dos a la vez ahorra más que cualquier chollo suelto."
+            },
+            {
+              "q": "¿De dónde salen los precios? ¿Son fiables?",
+              "a": "Se apoyan en un archivo de búsquedas reales, ideal para ordenar destinos y ver rápido por dónde anda el grupo. No es una reserva: justo antes de pagar se refresca el dato, que con la libra subiendo y bajando y las plazas agotándose el número de ayer no siempre es el de hoy. La idea es orientarte, no colarte una cifra que en la pasarela ya no está."
+            },
+            {
+              "q": "¿Hace falta registrarse o pagar?",
+              "a": "No. Es gratis y sin cuenta. Abres la web, metes Londres y Barcelona como ciudades de salida, y si sois más gente hay un enlace de grupo para que cada uno sume la suya. No es la única herramienta de vuelos que existe, pero la mayoría busca para una persona; aquí lo que se mira es el bolsillo del grupo entero y que el reparto sea justo."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/london-barcelona/",
+          "title": "Cheapest group trip from London and Barcelona | FlyndMe",
+          "metaDescription": "Half your group is in London, the other half in Barcelona? FlyndMe finds the cheapest, fairest place for everyone to meet. Free, no sign-up.",
+          "h1": "Where to meet when half of you are in London and half in Barcelona",
+          "lead": "Cross what it costs to leave London against leaving Barcelona and the most affordable, best-balanced meeting point tends to land on {dest}, roughly {pp} each.",
+          "prose": [
+            "It's the usual setup: half the crew chased work in London while the others kept their lives in Barcelona, so any reunion ends up between those two. The trouble starts when everyone checks their own flight. The fare that's pocket money for the London lot can force the Barcelona one onto a dawn flight at double, and your bargain might suit them terribly. Your own ticket tells you nothing about the actual plan.",
+            "The calendar doesn't help either. Bank holidays and long weekends don't line up between the UK and Spain, so a weekend that looks ordinary here is a three-dayer over there or the other way round, and the price jumps for one of you and not the other. Throw in the pound wobbling against the euro and the same trip costs differently depending on whose card pays. A date that works for everyone at once beats a one-off bargain on a random day.",
+            "It doesn't help that 'London' is really several airports scattered round the city. The cheapest flight might leave from one that's a long haul from where your mate actually lives, so the bargain on screen isn't always the comfortable plan. Worth checking which airport it really departs from before anyone celebrates.",
+            "The temptation is obvious: meet wherever suits the London side, since they've got more options, and let the Barcelona one fend for themselves. That's how someone ends up paying triple and quietly resenting the whole thing. FlyndMe turns it around. You put both departure cities in together and it works out the group's TOTAL cost, not anyone's lone flight, with each person's share visible so the gap between the biggest and smallest bill doesn't blow out. There's a group link so everyone adds their own city."
+          ],
+          "faq": [
+            {
+              "q": "Why focus so much on the date and the pound?",
+              "a": "Because the UK and Spanish calendars don't match: a Spanish bank holiday can be an ordinary day in London, and a UK long weekend can catch Barcelona at their desks, so the same weekend runs dear for one side and cheap for the other. And with the pound rising and falling against the euro, what the London side pays doesn't translate evenly to the Barcelona wallet. Nailing a date that suits both at once saves more than any stray bargain."
+            },
+            {
+              "q": "Where do the prices come from? Can I trust them?",
+              "a": "They lean on an archive of real searches, great for ranking destinations and seeing where the group stands at a glance. It isn't a booking: right before you pay the figure refreshes, because with the pound bouncing and seats selling out yesterday's number isn't always today's. The aim is to point you the right way, not slip you a price that's gone by checkout."
+            },
+            {
+              "q": "Do I need to sign up or pay?",
+              "a": "No. It's free and there's no account. Open the site, put London and Barcelona in as departure cities, and if there are more of you there's a group link so everyone adds their own. It isn't the only flight tool out there, but most of them search for one person. This one looks at the whole group's spend and whether the split is actually fair."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "milan-london",
+      "type": "pair",
+      "origins": [
+        "MIL",
+        "LON"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "MIL,LON",
+      "related": [
+        "london-barcelona",
+        "munich-barcelona",
+        "madrid-londres",
+        "amsterdam-lisbon",
+        "punto-medio"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/milan-londres/",
+          "title": "Punto de encuentro barato desde Milán y Londres | FlyndMe",
+          "metaDescription": "Si el grupo sale de Milán y Londres, FlyndMe busca el destino más barato para todos y reparte el coste justo. Gratis y sin registro.",
+          "h1": "Vuelos de grupo desde Milán y Londres",
+          "lead": "Comparando lo que sale desde Milán con lo que sale desde Londres, lo más barato para el grupo —y sin que pague el triple nadie— suele ser {dest}, en torno a {pp} por persona.",
+          "prose": [
+            "Mucha gente de Milán acabó en Londres por trabajo, casi siempre la City o el mundo de la moda, y otros tantos se conocieron en el Erasmus y quedaron repartidos entre las dos ciudades. Por eso, cuando toca reencuentro, medio grupo sale del norte de Italia y la otra mitad de Londres. El lío de siempre: cada uno mira su vuelo, nadie mira lo que paga el grupo entero, y al final hay quien sale perdiendo.",
+            "Y aquí está el detalle que se pasa por alto: Milán no tiene un aeropuerto, tiene tres, y Londres anda parecido. Lo que sale tirado saliendo de Bergamo con una low cost no tiene nada que ver con lo que cuesta desde Heathrow, ni el de Linate se parece al de Stansted. Por eso comparar contra el aeropuerto de verdad de cada uno, y no contra «Milán» o «Londres» en abstracto, cambia bastante el resultado final.",
+            "Suele ser plan de finde o de puente, dos noches y para casa, así que el margen es estrecho y cualquier escala tonta te come medio día. FlyndMe mete todas las ciudades de salida a la vez y busca el destino donde el grupo, sumando, paga menos, no donde uno pilla un chollo y el resto se arruina. Además pone sobre la mesa lo que aporta cada salida, para que el salto entre el que más suelta y el que menos no sea una barbaridad."
+          ],
+          "faq": [
+            {
+              "q": "¿Por qué importa con qué aeropuerto de Milán comparáis?",
+              "a": "Porque Milán reparte sus vuelos entre Malpensa, Linate y Bergamo, y los precios bailan mucho según cuál uses. FlyndMe compara contra el aeropuerto real de cada persona, no contra la ciudad en abstracto, así que si tú vuelas desde Bergamo y otro desde Heathrow, cada uno ve su número de verdad y no una media que no le sirve a nadie."
+            },
+            {
+              "q": "¿De dónde salen los precios? ¿Son fiables?",
+              "a": "De búsquedas recientes guardadas, o sea una foto para situaros rápido sin mirar mil pestañas. Sirve sobre todo para ordenar qué destino conviene, no para clavar la cifra al céntimo: antes de reservar el precio se mira al momento, porque de un día para otro cambia. Tomadlo como brújula del destino, no como una cifra cerrada."
+            },
+            {
+              "q": "¿Cómo añadimos a todos los del grupo?",
+              "a": "Hay un enlace de grupo que pasas por el chat y cada uno mete su ciudad de salida, sin que tengas que ir preguntando aeropuerto por aeropuerto. Cuando estáis todos, FlyndMe calcula el destino donde el grupo en conjunto paga menos y desglosa lo que pondría cada uno, para que el reparto se vea claro y no acabe pagando uno el triple."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/milan-london/",
+          "title": "Cheapest group destination from Milan and London | FlyndMe",
+          "metaDescription": "When your group is split between Milan and London, FlyndMe finds the cheapest place for everyone and splits the cost fairly. Free, no signup.",
+          "h1": "Group flights from Milan and London",
+          "lead": "Comparing what leaves Milan against what leaves London, the cheapest option for the group, with nobody paying triple, is usually {dest}, somewhere near {pp} per person.",
+          "prose": [
+            "A lot of Milan people ended up in London for work, usually something in finance or fashion, and plenty more got scattered after Erasmus or uni and never quite landed in the same place. So when a reunion comes up, half the group is flying out of northern Italy and the other half out of London. Same old problem: everyone checks their own fare, nobody checks what the group pays together, and someone quietly ends up out of pocket.",
+            "Here's the bit people miss: Milan doesn't have one airport, it has three, and London is much the same. A cheap fare out of Bergamo on a budget airline has nothing to do with what the same trip costs from Heathrow, and Linate isn't Stansted either. That's why it matters to compare against each person's actual airport, not some vague idea of 'Milan' or 'London', because it genuinely shifts which destination comes out ahead.",
+            "This is usually a weekend or bank-holiday thing, two nights and back, so the margins are tight and one daft layover eats half a day. FlyndMe takes everyone's departure city at once and looks for the destination where the group, added up, pays the least, not where one person grabs a steal and the rest get clobbered. It also lays each departure's share on the table, so the jump between the priciest and cheapest seat stays sane."
+          ],
+          "faq": [
+            {
+              "q": "Why does it matter which Milan airport you compare?",
+              "a": "Because Milan splits its flights across Malpensa, Linate and Bergamo, and prices swing a lot depending on which one you use. FlyndMe compares against each person's real airport rather than the city in the abstract, so if you're flying from Bergamo and a mate's coming from Heathrow, you each see your own honest number instead of an average that helps nobody."
+            },
+            {
+              "q": "Where do the prices come from? Can I trust them?",
+              "a": "From recent saved searches, so it's a snapshot to get you oriented fast without a thousand tabs. It's mainly for ranking which destination wins, not pinning the figure to the cent: before booking the price is pulled live, since it changes day to day. Treat it as a compass for the destination, not a closed figure."
+            },
+            {
+              "q": "How do we add everyone in the group?",
+              "a": "There's a group link you drop into the chat, and each person adds their own departure city, so you're not chasing people for airport codes. Once everyone's in, FlyndMe works out the destination where the group as a whole pays least and breaks down what each person would put in, so the split is clear and one person doesn't end up covering triple."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "munich-barcelona",
+      "type": "pair",
+      "origins": [
+        "MUC",
+        "BCN"
+      ],
+      "passengers": [
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "MUC,BCN",
+      "related": [
+        "barcelona-berlin",
+        "milan-london",
+        "amsterdam-lisbon",
+        "madrid-barcelona",
+        "despedida-soltero"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/munich-barcelona/",
+          "title": "El destino más barato desde Múnich y Barcelona | FlyndMe",
+          "metaDescription": "Si la peña está repartida entre Múnich y Barcelona, FlyndMe busca el destino más barato para el grupo y enseña quién paga qué. Gratis y sin registro.",
+          "h1": "Dónde veros si unos salís de Múnich y otros de Barcelona",
+          "lead": "Entre los que salen de Múnich y los que salen de Barcelona, el destino que mejor cuadra de precio y de reparto suele ser {dest}, y se queda en unos {pp} por barba.",
+          "prose": [
+            "En este grupo casi siempre pasa lo mismo: media peña acabó en Múnich por trabajo, ingeniería o algo de tech, y el resto sigue en Barcelona, que es de donde erais. Cuando toca veros, el reencuentro se juega entre esas dos ciudades. Y ojo, no son simétricas: lo que sale tirado desde Barcelona, que tiene medio Mediterráneo a tiro, puede costar bastante más desde Múnich, sobre todo según la época del año.",
+            "Múnich tiene su truco. El aeropuerto grande, el MUC, está bien conectado casi todo el año, pero a finales de septiembre y principios de octubre llega el Oktoberfest y, encima, Múnich vive de las ferias, así que los precios se disparan justo cuando más gente quiere moverse. Memmingen, el de las low-cost, queda lejísimos del centro. Barcelona juega con ventaja: El Prat manda, y si aprieta tienes Girona o Reus para rascar algún vuelo más barato.",
+            "Aquí está el lío de siempre. Si elegís el destino mirando solo el vuelo barato del de Barcelona, el de Múnich acaba pagando el triple sin comerlo ni beberlo. Por eso conviene mirar dos cosas a la vez: cuánto paga el grupo entero y cómo de repartido queda. FlyndMe mete las dos ciudades de salida juntas, busca el sitio que sale mejor para todos y desglosa lo que pone cada uno, para que el sobrecoste no recaiga siempre en el mismo.",
+            "No hay que registrarse ni instalar nada. Metes Múnich y Barcelona (o las ciudades que sean, que siempre hay alguno suelto por otro lado), pones las fechas y te salen los destinos ordenados por lo que paga el grupo. Si sois varios decidiendo, hay un enlace para que cada uno añada su ciudad sin marearos por el chat. Los precios vienen de búsquedas ya hechas y guardadas, así que antes de reservar conviene confirmar el dato en directo."
+          ],
+          "faq": [
+            {
+              "q": "¿Quién acaba pagando más, el de Múnich o el de Barcelona?",
+              "a": "Depende del destino y la época, pero si elegís por la comodidad del de Barcelona, normalmente carga el de Múnich, sobre todo en temporada de Oktoberfest o ferias. Por eso FlyndMe pesa el coste total del grupo y muestra lo que aporta cada lado, para que podáis elegir un sitio donde la diferencia sea pequeña en vez de fiaros del vuelo más barato de una persona."
+            },
+            {
+              "q": "¿Cuándo es peor momento para salir de Múnich?",
+              "a": "Finales de septiembre y principios de octubre, con el Oktoberfest, y las semanas de ferias grandes, que en Múnich hay unas cuantas. En esos tramos los vuelos desde Múnich suben bastante. Si tenéis algo de flexibilidad, mover el viaje unos días suele cambiar el reparto, y la herramienta os deja ver cómo queda el grupo con otras fechas."
+            },
+            {
+              "q": "¿De dónde salen los precios y son fiables?",
+              "a": "Salen de un histórico de búsquedas reales, perfecto para enfrentar destinos y haceros una idea al vuelo. No es una reserva, y antes de comprar conviene confirmar en directo, que los vuelos no paran quietos. Lo útil es comparar opciones para el grupo, no aferrarse a una cifra que igual es de hace días."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/munich-barcelona/",
+          "title": "Cheapest place to meet from Munich & Barcelona | FlyndMe",
+          "metaDescription": "When your group is split between Munich and Barcelona, FlyndMe finds the cheapest destination for everyone and shows who pays what. Free, no signup.",
+          "h1": "Where to meet when some fly from Munich and others from Barcelona",
+          "lead": "Between the Munich side and the Barcelona side, the destination that lands best on price and on split is usually {dest}, about {pp} a person.",
+          "prose": [
+            "It's the usual story with this crew. Half of you moved to Munich for the engineering or tech work, and the rest stayed back in Barcelona where you all started out. When it's time to get together, the trip turns into a tug-of-war between those two cities. And they don't behave the same: what's dirt cheap out of Barcelona, with half the Mediterranean on its doorstep, can cost a fair bit more from Munich depending on the week.",
+            "Munich has a catch. The main airport, MUC, stays well connected most of the year, but late September into early October brings Oktoberfest, and Munich runs on trade fairs on top of that, so fares climb exactly when everyone wants to travel. Memmingen, the low-cost option, sits miles out of town. Barcelona has the easier hand: El Prat does the heavy lifting, with Girona or Reus as backups when you're hunting for something cheaper.",
+            "Here's where it goes sideways. Pick the destination off the Barcelona person's cheap flight alone and the Munich one quietly ends up paying way more for the same trip. So it's worth watching two things together: what the whole group pays, and how evenly it lands. FlyndMe takes both departure cities at once, finds the spot that works out best for everyone, and breaks down what each side puts in, so the same person isn't always the one footing the gap.",
+            "No signup, nothing to install. You drop in Munich and Barcelona (or wherever people actually are, since there's always a straggler somewhere), add the dates, and you get destinations ranked by what the group pays. If a few of you are deciding together, there's a link so everyone can add their own city instead of arguing in the group chat. Prices come from searches already run and stored, so it's worth confirming the figure live before you book."
+          ],
+          "faq": [
+            {
+              "q": "Who ends up paying more, the Munich crowd or the Barcelona one?",
+              "a": "It depends on the destination and the season, but if you choose around what's convenient for Barcelona, the Munich side usually carries the extra, especially during Oktoberfest or fair weeks. That's why FlyndMe weighs the total group cost and breaks down what each person pays, so you can pick somewhere the gap stays small instead of trusting one person's cheap flight."
+            },
+            {
+              "q": "When's the worst time to fly out of Munich?",
+              "a": "Late September and early October for Oktoberfest, plus the big trade fair weeks, and Munich has plenty of those. Fares out of Munich jump in those stretches. If your dates are flexible, shifting the trip by a few days often changes the split, and you can see how the group looks under different dates before committing."
+            },
+            {
+              "q": "Where do the prices come from, and can I trust them?",
+              "a": "They're drawn from a history of real searches, ideal for pitting destinations against each other and getting a quick read. It's not a booking, and before you buy it's worth a live check, since flights never sit still. The value is in comparing options for the group, not clinging to a figure that might be days old."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "slug": "madrid-london-berlin",
+      "type": "pair",
+      "origins": [
+        "MAD",
+        "LON",
+        "BER"
+      ],
+      "passengers": [
+        1,
+        1,
+        1
+      ],
+      "tripType": "oneway",
+      "ctaOrigins": "MAD,LON,BER",
+      "related": [
+        "madrid-berlin-lisboa",
+        "madrid-londres",
+        "barcelona-berlin",
+        "punto-medio",
+        "despedida-soltero"
+      ],
+      "i18n": {
+        "es": {
+          "lang": "es",
+          "path": "/quedar/madrid-londres-berlin/",
+          "title": "Vuelos de grupo desde Madrid, Londres y Berlín | FlyndMe",
+          "metaDescription": "Tres capitales, la peña repartida y el lío de cuadrar dónde veros. FlyndMe busca el destino más barato para el grupo y reparte el gasto con justicia.",
+          "h1": "Quedar a medio camino entre Madrid, Londres y Berlín",
+          "lead": "Con la peña repartida entre Madrid, Londres y Berlín, el punto que sale más barato sin dejar tirado a nadie suele ser {dest}, por unos {pp} por persona.",
+          "prose": [
+            "El reparto suele ser el de siempre: uno se quedó en Madrid, a otro lo mandó el curro a Londres y alguien tiró para Berlín por el alquiler y se quedó por la movida. Cada vez que toca veros, la misma conversación: que si quedamos en una de las tres, que si nos piramos fuera a algún sitio con sol. Y como salen vuelos para todos lados, da la sensación de que tanto da el destino.",
+            "Esa sensación es la trampa. Lo que sale tirado desde Barajas puede ser un sablazo desde Berlín, y el vuelo \"barato\" de Londres muchas veces sale de Stansted o Luton a las seis de la mañana, con el viajazo hasta el aeropuerto incluido. Tres hubs enormes no significan tres precios parecidos al mismo destino: casi siempre hay un sitio que le encanta a dos de vosotros y le clava al tercero.",
+            "Y ahí está el problema gordo: si elegís por el vuelo más barato de uno, el tercero acaba pagando el reencuentro de los demás sin que nadie se entere. Por eso FlyndMe pesa a la vez el total del grupo y el reparto, mantiene corta la diferencia entre el que más paga y el que menos, y te desglosa lo que pone cada ciudad. Los números vienen de búsquedas guardadas y se refrescan en vivo antes de reservar. Hay un enlace para que cada uno meta su ciudad.",
+            "Y la fecha lo retuerce todo. En verano, con medio mundo tirando para el sur, los precios desde Berlín y Londres se disparan de otra manera que desde Madrid, así que un mismo finde puede salir justo para unos y carísimo para otro. Por eso compensa comparar varias fechas y ordenar por lo más equitativo, y no por el vuelo suelto más barato de la lista. Mover el plan un par de días suele cuadrar mejor las tres carteras."
+          ],
+          "faq": [
+            {
+              "q": "¿Por qué con tres ciudades grandes pesa tanto la equidad?",
+              "a": "Porque casi cualquier destino le sale a cuenta a dos de vosotros y caro al tercero, y ese tercero acaba subvencionando el plan sin que se note. Ordenar por la opción más justa, en vez de por el total más bajo a secas, evita que pague de más siempre el mismo."
+            },
+            {
+              "q": "¿De dónde salen los precios?",
+              "a": "De un archivo de búsquedas reales, así que son una horquilla aproximada. Antes de reservar se refrescan en directo. Están para enfrentar destinos y ver cómo cae el reparto entre las tres carteras, no para fijar el billete al céntimo."
+            },
+            {
+              "q": "¿Cómo metemos las tres ciudades si no estamos juntos?",
+              "a": "Con el enlace de grupo. Lo abres, cada uno añade su ciudad de salida y FlyndMe recalcula el punto de encuentro más barato y más justo. Es gratis y sin registro."
+            }
+          ]
+        },
+        "en": {
+          "lang": "en",
+          "path": "/meet/madrid-london-berlin/",
+          "title": "Group flights from Madrid, London and Berlin | FlyndMe",
+          "metaDescription": "Three big hubs, everyone scattered, and the usual headache of where to meet. FlyndMe finds the cheapest group destination and keeps the split fair.",
+          "h1": "Meeting halfway between Madrid, London and Berlin",
+          "lead": "With the crew spread across Madrid, London and Berlin, the spot that comes out cheapest without leaving anyone stranded is usually {dest}, around {pp} per person.",
+          "prose": [
+            "It usually breaks down the same way. One of you stayed in Madrid, work shipped another off to London, and somebody landed in Berlin for the cheap rent and stuck around for the scene. Every time a reunion comes up, you have the same chat: meet in one of the three, or just clear off somewhere warmer. And since all three have flights to everywhere, it feels like the destination barely matters.",
+            "That feeling is the trap. What's dirt cheap out of Barajas can be a mugging from Berlin, and London's \"cheap\" flight often leaves from Stansted or Luton at six in the morning, schlep to the airport included. Three massive hubs don't mean three similar fares to the same place. There's nearly always a spot that two of you love and the third one quietly hates.",
+            "And that's the real catch. Pick by one person's cheapest flight and the third ends up bankrolling everyone else's reunion without anyone clocking it. So FlyndMe weighs the group total and the split together, keeps the gap between who pays most and least small, and breaks down what each city puts in. Prices come from stored searches and get checked live before you book. There's a link so each person drops in their own city.",
+            "Dates twist the whole thing. Come summer, with half of Europe chasing the sun, fares from Berlin and London spike differently than from Madrid, so one weekend can land fair for two of you and brutal for the other. Worth comparing a few dates and sorting by fairest rather than by whatever single flight happens to be cheapest. Shifting the plan a couple of days usually balances the three wallets better."
+          ],
+          "faq": [
+            {
+              "q": "Why does fairness matter so much with three big cities?",
+              "a": "Because almost any destination works out cheap for two of you and pricey for the third, and that third person ends up subsidising the trip without it being obvious. Sorting by the fairest option, rather than just the lowest total, stops the same mate paying over the odds every time."
+            },
+            {
+              "q": "Where do the prices come from?",
+              "a": "From an archive of real searches, so think ballpark. They refresh live before you actually book. They're there to pit destinations against each other and see how the split lands across the three wallets, not to fix the fare to the penny."
+            },
+            {
+              "q": "How do we add all three cities if we're not together?",
+              "a": "There's a group link. Open it, everyone adds their own departure city, and FlyndMe recalculates the cheapest and fairest meeting point. It's free and there's no sign-up."
+            }
           ]
         }
       }
@@ -147,7 +788,13 @@
     {
       "slug": "despedida-soltero",
       "type": "usecase",
-      "related": ["madrid-barcelona", "madrid-londres", "madrid-berlin-lisboa", "punto-medio"],
+      "related": [
+        "madrid-barcelona",
+        "barcelona-berlin",
+        "london-barcelona",
+        "munich-barcelona",
+        "punto-medio"
+      ],
       "exampleOrigins": "MAD,BCN,VLC,SVQ",
       "i18n": {
         "es": {
@@ -163,9 +810,18 @@
             "Otra cosa que ayuda con un grupo grande: hay un enlace que pasáis por el chat y cada uno mete su propia ciudad, así no andáis adivinando vosotros desde dónde vuela cada cual ni persiguiendo a nadie para que diga sus fechas. Cuando está el grupo completo, sale el destino que mejor reparte el coste entre todos."
           ],
           "faq": [
-            { "q": "¿Sirve para cualquier número de personas?", "a": "Sí. Cuanta más gente y más repartida esté, más sentido tiene, porque a mano es imposible cuadrar el coste total y que sea justo para todos." },
-            { "q": "¿Tengo que registrarme?", "a": "No. Metéis las ciudades y sale el destino; sin cuenta ni registro. Hay un enlace de grupo opcional para que cada uno añada la suya." },
-            { "q": "¿Los precios son de verdad?", "a": "Son una estimación a partir de búsquedas reales en caché, fuerte en Europa. Antes de reservar conviene comprobar el precio en vivo desde la propia herramienta." }
+            {
+              "q": "¿Sirve para cualquier número de personas?",
+              "a": "Sí. Cuanta más gente y más repartida esté, más sentido tiene, porque a mano es imposible cuadrar el coste total y que sea justo para todos."
+            },
+            {
+              "q": "¿Tengo que registrarme?",
+              "a": "No. Metéis las ciudades y sale el destino; sin cuenta ni registro. Hay un enlace de grupo opcional para que cada uno añada la suya."
+            },
+            {
+              "q": "¿Los precios son de verdad?",
+              "a": "Son una estimación a partir de búsquedas reales en caché, fuerte en Europa. Antes de reservar conviene comprobar el precio en vivo desde la propia herramienta."
+            }
           ]
         },
         "en": {
@@ -181,9 +837,18 @@
             "One more thing that helps with a big group: there's a link you share in the chat and each person adds their own city, so you're not guessing where everyone flies from or chasing people for their dates. Once the group is complete, out comes the destination that splits the cost best across everyone."
           ],
           "faq": [
-            { "q": "Does it work for any group size?", "a": "Yes. The bigger and more scattered the group, the more it helps, because doing the total cost and a fair split by hand is impossible." },
-            { "q": "Do I need to sign up?", "a": "No. Put in the cities and the destination comes out; no account needed. There's an optional group link so each person can add their own." },
-            { "q": "Are the prices real?", "a": "They're an estimate from cached real searches, strongest in Europe. Check the live price from the tool before booking." }
+            {
+              "q": "Does it work for any group size?",
+              "a": "Yes. The bigger and more scattered the group, the more it helps, because doing the total cost and a fair split by hand is impossible."
+            },
+            {
+              "q": "Do I need to sign up?",
+              "a": "No. Put in the cities and the destination comes out; no account needed. There's an optional group link so each person can add their own."
+            },
+            {
+              "q": "Are the prices real?",
+              "a": "They're an estimate from cached real searches, strongest in Europe. Check the live price from the tool before booking."
+            }
           ]
         }
       }
@@ -191,7 +856,13 @@
     {
       "slug": "punto-medio",
       "type": "usecase",
-      "related": ["madrid-barcelona", "madrid-londres", "madrid-berlin-lisboa", "despedida-soltero"],
+      "related": [
+        "madrid-berlin-lisboa",
+        "amsterdam-lisbon",
+        "madrid-london-berlin",
+        "dublin-madrid",
+        "despedida-soltero"
+      ],
       "exampleOrigins": "MAD,BCN,PAR",
       "i18n": {
         "es": {
@@ -207,9 +878,18 @@
             "Funciona mejor cuanto más repartido esté el grupo y con algo de flexibilidad en las fechas, que es lo que más mueve el precio. Los números que veréis salen de búsquedas en caché y son orientativos; la mejor opción se puede comprobar en vivo antes de reservar. Si queréis empezar por un caso concreto, abajo tenéis ejemplos de pares de ciudades."
           ],
           "faq": [
-            { "q": "¿El punto medio no es el centro del mapa?", "a": "No para volar. El centro geográfico puede tener vuelos caros; lo que importa es dónde sale más barato y justo en billetes para todo el grupo, que muchas veces no es el centro." },
-            { "q": "¿Cómo se calcula lo \"justo\"?", "a": "Mirando cuánto pagaría cada persona y reduciendo la diferencia entre el que más paga y el que menos. Puedes ordenar por coste total o por equidad." },
-            { "q": "¿Necesito saber las fechas exactas?", "a": "Ayuda, pero podéis probar fechas y ver cómo cambia el destino. La flexibilidad de fechas es lo que más baja el precio del grupo." }
+            {
+              "q": "¿El punto medio no es el centro del mapa?",
+              "a": "No para volar. El centro geográfico puede tener vuelos caros; lo que importa es dónde sale más barato y justo en billetes para todo el grupo, que muchas veces no es el centro."
+            },
+            {
+              "q": "¿Cómo se calcula lo \"justo\"?",
+              "a": "Mirando cuánto pagaría cada persona y reduciendo la diferencia entre el que más paga y el que menos. Puedes ordenar por coste total o por equidad."
+            },
+            {
+              "q": "¿Necesito saber las fechas exactas?",
+              "a": "Ayuda, pero podéis probar fechas y ver cómo cambia el destino. La flexibilidad de fechas es lo que más baja el precio del grupo."
+            }
           ]
         },
         "en": {
@@ -225,9 +905,18 @@
             "It works best the more scattered the group is and with some flexibility on dates, which is what moves price the most. The numbers you'll see come from cached searches and are indicative; the best option can be checked live before booking. If you'd rather start from a concrete case, there are city-pair examples below."
           ],
           "faq": [
-            { "q": "Isn't halfway just the centre of the map?", "a": "Not for flying. The geographic centre can have expensive flights; what matters is where it's cheapest and fairest in fares for the whole group, which often isn't the centre." },
-            { "q": "How is 'fair' worked out?", "a": "By looking at what each person would pay and shrinking the gap between the most and least expensive. You can sort by total cost or by fairness." },
-            { "q": "Do I need the exact dates?", "a": "It helps, but you can try dates and see how the destination changes. Date flexibility is what drops the group price the most." }
+            {
+              "q": "Isn't halfway just the centre of the map?",
+              "a": "Not for flying. The geographic centre can have expensive flights; what matters is where it's cheapest and fairest in fares for the whole group, which often isn't the centre."
+            },
+            {
+              "q": "How is 'fair' worked out?",
+              "a": "By looking at what each person would pay and shrinking the gap between the most and least expensive. You can sort by total cost or by fairness."
+            },
+            {
+              "q": "Do I need the exact dates?",
+              "a": "It helps, but you can try dates and see how the destination changes. Date flexibility is what drops the group price the most."
+            }
           ]
         }
       }
