@@ -216,6 +216,64 @@ const SearchPage = React.memo(function SearchPage({
               </div>
             )}
 
+            {/* Trip type + Dates combined */}
+            <div className="sf-section">
+              <div className="sf-label">{t("search.tripTypeLabel")}</div>
+              <div className="sf-pills" style={{ marginBottom: 16 }} role="group" aria-label={t("search.tripTypeLabel")}>
+                {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
+                  <button key={v} type="button"
+                    aria-pressed={tripType === v}
+                    className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
+                    onClick={() => {
+                      setTripType(v);
+                      // Auto-suggest return date when switching to roundtrip
+                      if (v === "roundtrip" && !returnDate && departureDate) {
+                        const d = new Date(departureDate + "T00:00:00");
+                        d.setDate(d.getDate() + 7);
+                        setReturnDate(d.toISOString().slice(0, 10));
+                      }
+                    }} disabled={loading}>{l}</button>
+                ))}
+              </div>
+
+              <div className="sf-label">{t("search.datesLabel")}</div>
+              <div className="row g-3">
+                <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
+                  <label className="sf-input-label" htmlFor="sf-date-dep">{t("search.departure")}</label>
+                  <div className="sf-date-wrap">
+                    <input type="date" id="sf-date-dep" className="form-control sf-input"
+                      value={departureDate} min={todayISO()}
+                      onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
+                    {departureDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(departureDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(departureDate)}</span>}
+                  </div>
+                </div>
+                {tripType === "roundtrip" && (
+                  <div className="col-sm-6">
+                    <label className="sf-input-label" htmlFor="sf-date-ret">{t("search.return")}</label>
+                    <div className="sf-date-wrap">
+                      <input type="date" id="sf-date-ret" className="form-control sf-input"
+                        value={returnDate} min={departureDate || todayISO()}
+                        onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
+                      {returnDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(returnDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(returnDate)}</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Date warnings */}
+              {dateWarnings.length > 0 && (
+                <div className="sf-date-warnings mt-2">
+                  {dateWarnings.map((w) => (
+                    <div key={w.key} className={`sf-date-warn sf-date-warn--${w.type}`}>
+                      <span className="sf-date-warn-icon">{w.type === "error" ? <AlertTriangle size={15} /> : w.type === "warn" ? <Zap size={15} /> : <Lightbulb size={15} />}</span>
+                      <span>{w.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+
             {/* Origins */}
             <div className="sf-section">
               <div className="sf-label">{t("search.originLabel")}</div>
@@ -377,64 +435,6 @@ const SearchPage = React.memo(function SearchPage({
                   </button>
                 )}
               </div>
-            </div>
-
-            {/* Trip type + Dates combined */}
-            <div className="sf-section">
-              <div className="sf-label">{t("search.tripTypeLabel")}</div>
-              <div className="sf-pills" style={{ marginBottom: 16 }} role="group" aria-label={t("search.tripTypeLabel")}>
-                {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
-                  <button key={v} type="button"
-                    aria-pressed={tripType === v}
-                    className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
-                    onClick={() => {
-                      setTripType(v);
-                      // Auto-suggest return date when switching to roundtrip
-                      if (v === "roundtrip" && !returnDate && departureDate) {
-                        const d = new Date(departureDate + "T00:00:00");
-                        d.setDate(d.getDate() + 7);
-                        setReturnDate(d.toISOString().slice(0, 10));
-                      }
-                    }} disabled={loading}>{l}</button>
-                ))}
-              </div>
-
-              <div className="sf-label">{t("search.datesLabel")}</div>
-              <div className="row g-3">
-                <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
-                  <label className="sf-input-label" htmlFor="sf-date-dep">{t("search.departure")}</label>
-                  <div className="sf-date-wrap">
-                    <input type="date" id="sf-date-dep" className="form-control sf-input"
-                      value={departureDate} min={todayISO()}
-                      onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
-                    {departureDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(departureDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(departureDate)}</span>}
-                  </div>
-                </div>
-                {tripType === "roundtrip" && (
-                  <div className="col-sm-6">
-                    <label className="sf-input-label" htmlFor="sf-date-ret">{t("search.return")}</label>
-                    <div className="sf-date-wrap">
-                      <input type="date" id="sf-date-ret" className="form-control sf-input"
-                        value={returnDate} min={departureDate || todayISO()}
-                        onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
-                      {returnDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(returnDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(returnDate)}</span>}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Date warnings */}
-              {dateWarnings.length > 0 && (
-                <div className="sf-date-warnings mt-2">
-                  {dateWarnings.map((w) => (
-                    <div key={w.key} className={`sf-date-warn sf-date-warn--${w.type}`}>
-                      <span className="sf-date-warn-icon">{w.type === "error" ? <AlertTriangle size={15} /> : w.type === "warn" ? <Zap size={15} /> : <Lightbulb size={15} />}</span>
-                      <span>{w.text}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
             </div>
 
             {/* Advanced options toggle */}
