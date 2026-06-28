@@ -7,10 +7,10 @@
     "serverWaking": "Servidor iniciándose…"
   },
   "landing": {
-    "eyebrow": "Muchas ciudades. Un punto de encuentro.",
-    "title": "¿Dónde quedáis todos?",
-    "titleAccent": "todos",
-    "lead": "FlyndMe compara los vuelos desde la ciudad de cada uno y encuentra el lugar más barato — y justo — para reuniros.",
+    "eyebrow": "Muchas ciudades. Una decisión.",
+    "title": "El punto de encuentro perfecto",
+    "titleAccent": "perfecto",
+    "lead": "FlyndMe compara los vuelos desde la ciudad de cada uno y encuentra el destino más barato — y más justo — para todos.",
     "diagramAlt": "Trayectos de vuelo desde varias ciudades de origen convergiendo en un único punto de encuentro",
     "diagramMeet": "Mejor punto de encuentro",
     "cta": "Empezar búsqueda",
@@ -184,7 +184,7 @@
     "budgetHintOff": "Sin límite de presupuesto",
     "budgetOn": "Sí",
     "budgetOff": "No",
-    "submit": "Buscar destino",
+    "submit": "Reuníos al mejor precio",
     "searching": "Buscando…",
     "footnoteTime": "Resultado en ~5 s",
     "footnotePrices": "Precios reales de vuelos",
