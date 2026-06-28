@@ -5109,6 +5109,57 @@ html {
 [data-theme="dark"] .app-footer-copy { color: #9B9AC6; }
 [data-theme="dark"] .app-footer-tagline { color: #9B9AC6; }
 
+/* ── Footer SEO links (descubrimiento de páginas estáticas desde "/") ───────
+   Tokens theme-aware (--slate-*, --primary, --primary-rgb) → adaptan a oscuro
+   sin overrides. Enlaces discretos de texto, fluyen y hacen wrap en móvil. */
+.app-footer-seo {
+  max-width: 760px;
+  margin: 0 auto 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--slate-200);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+.app-footer-seo-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.app-footer-seo-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--slate-500);
+}
+.app-footer-seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+}
+.app-footer-seo-link {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--slate-500);
+  text-decoration: none;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
+  transition: color .18s, background .18s;
+}
+.app-footer-seo-link:hover {
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), .07);
+}
+.app-footer-seo-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 /* ── Price Confidence Meter ────────────────────────────────── */
 
 /* ── Origin Savings Card ───────────────────────────────────── */

@@ -177,10 +177,32 @@ const SearchParamsSummary = React.memo(function SearchParamsSummary({
 
 // ─── Destination category tags ───────────────────────────────────────────────
 
+// ─── Footer SEO links ─────────────────────────────────────────────────────────
+// Enlaces a las páginas SEO estáticas (sirven HTML propio, FUERA de la SPA), para
+// que el crawler de Google las descubra desde "/" (no solo por el sitemap) y los
+// usuarios naveguen a ellas. Son <a href> reales → navegación normal del navegador
+// a la página estática; el idioma decide el slug (es → /quedar/…, en → /meet/…).
+const FOOTER_SEO_ROUTES = [
+  { labelEs: "Madrid · Barcelona",          labelEn: "Madrid · Barcelona",        es: "/quedar/madrid-barcelona/",       en: "/meet/madrid-barcelona/" },
+  { labelEs: "Madrid · Londres",            labelEn: "Madrid · London",           es: "/quedar/madrid-londres/",         en: "/meet/madrid-londres/" },
+  { labelEs: "Barcelona · Berlín",          labelEn: "Barcelona · Berlin",        es: "/quedar/barcelona-berlin/",       en: "/meet/barcelona-berlin/" },
+  { labelEs: "Dublín · Madrid",             labelEn: "Dublin · Madrid",           es: "/quedar/dublin-madrid/",          en: "/meet/dublin-madrid/" },
+  { labelEs: "Ámsterdam · Lisboa",          labelEn: "Amsterdam · Lisbon",        es: "/quedar/amsterdam-lisboa/",       en: "/meet/amsterdam-lisbon/" },
+  { labelEs: "Londres · Barcelona",         labelEn: "London · Barcelona",        es: "/quedar/londres-barcelona/",      en: "/meet/london-barcelona/" },
+  { labelEs: "Milán · Londres",             labelEn: "Milan · London",            es: "/quedar/milan-londres/",          en: "/meet/milan-london/" },
+  { labelEs: "Múnich · Barcelona",          labelEn: "Munich · Barcelona",        es: "/quedar/munich-barcelona/",       en: "/meet/munich-barcelona/" },
+  { labelEs: "Madrid · Berlín · Lisboa",    labelEn: "Madrid · Berlin · Lisbon",  es: "/quedar/madrid-berlin-lisboa/",   en: "/meet/madrid-berlin-lisbon/" },
+  { labelEs: "Madrid · Londres · Berlín",   labelEn: "Madrid · London · Berlin",  es: "/quedar/madrid-londres-berlin/",  en: "/meet/madrid-london-berlin/" },
+];
+const FOOTER_SEO_GUIDES = [
+  { labelEs: "Despedidas",  labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },
+  { labelEs: "Punto medio", labelEn: "Meet halfway",   es: "/quedar/punto-medio/",       en: "/meet/meet-halfway/" },
+];
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
   const { favs, toggle: toggleFav, isFav } = useFavorites();
   const backendStatus = useBackendStatus(API_BASE);
@@ -1645,6 +1667,26 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="container" style={{ maxWidth: 1080 }}>
+          {(view === "landing" || view === "search") && (
+            <nav className="app-footer-seo" aria-label={lang === "es" ? "Rutas populares y guías" : "Popular routes and guides"}>
+              <div className="app-footer-seo-group">
+                <h3 className="app-footer-seo-title">{t("footerRoutes")}</h3>
+                <div className="app-footer-seo-links">
+                  {FOOTER_SEO_ROUTES.map((r) => (
+                    <a key={r.en} className="app-footer-seo-link" href={lang === "es" ? r.es : r.en}>{lang === "es" ? r.labelEs : r.labelEn}</a>
+                  ))}
+                </div>
+              </div>
+              <div className="app-footer-seo-group">
+                <h3 className="app-footer-seo-title">{t("footerGuides")}</h3>
+                <div className="app-footer-seo-links">
+                  {FOOTER_SEO_GUIDES.map((r) => (
+                    <a key={r.en} className="app-footer-seo-link" href={lang === "es" ? r.es : r.en}>{lang === "es" ? r.labelEs : r.labelEn}</a>
+                  ))}
+                </div>
+              </div>
+            </nav>
+          )}
           <div className="app-footer-inner">
             <span className="app-footer-brand">{t("footerBrand")}</span>
             <span className="app-footer-tagline">{t("footerTagline")}</span>
