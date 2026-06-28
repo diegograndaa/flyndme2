@@ -334,6 +334,11 @@ export default function App() {
   const searchGenRef = useRef(0);
   const verifyAbortRef = useRef(null);
 
+  // Verificación bajo demanda (#5): estado del control "Comprobar precio en vivo"
+  // del ganador. phase ∈ "loading" | "unavailable" | null; code = destino al que
+  // aplica (verifyPhase se resetea solo al cambiar de ganador o de búsqueda).
+  const [liveCheck, setLiveCheck] = useState({ code: null, phase: null });
+
   // ── Recent searches (localStorage) ────────────────────────────────────────
   const RECENT_KEY = "flyndme_recent";
   const MAX_RECENT = 5;
@@ -793,11 +798,22 @@ export default function App() {
     setBestByCriterion((prev) => ({ ...prev, total: upd(prev.total), fairness: upd(prev.fairness) }));
   };
 
-  const verifyWinnerPrice = (winner, gen, searchCtx) => {
-    if (!shouldVerify(winner, { partial: searchCtx.partial })) return;
-    const payload = buildVerifyPayload(winner, searchCtx);
+  // Verificación capa 2 BAJO DEMANDA (#5). Ya NO se auto-dispara en cada
+  // búsqueda: con un pico de tráfico eso quema el cupo de SerpAPI (~250/mes) en
+  // minutos. Por defecto el ganador queda como "estimación en caché" (honesto);
+  // solo cuando el usuario pulsa "Comprobar precio en vivo" llamamos a /verify.
+  const handleVerifyWinner = (winner) => {
+    if (!winner || !shouldVerify(winner, { partial: partialResults })) return;
+    const code = normalizeCode(winner.destination);
+    const gen = searchGenRef.current;
+    trackEvent("verify_click", { dest: code });
+    setLiveCheck({ code, phase: "loading" });
+
+    const payload = buildVerifyPayload(winner, { departureDate, returnDate, tripType });
+    verifyAbortRef.current?.abort();
     const controller = new AbortController();
     verifyAbortRef.current = controller;
+
     fetch(`${API_BASE}/api/flights/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -806,11 +822,23 @@ export default function App() {
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data || searchGenRef.current !== gen) return; // búsqueda nueva: descartar
-        if (!data.verificationStatus || data.verificationStatus === "skipped") return;
-        applyVerification(winner.destination, data);
+        if (searchGenRef.current !== gen) return; // búsqueda nueva: descartar
+        const status = data?.verificationStatus;
+        if (status === "verified" || status === "changed") {
+          // Verificación COMPLETA: mergeVerification promociona el precio
+          // verificado a mostrado y el badge pasa a ✓/↑↓. Quitamos el transitorio.
+          applyVerification(winner.destination, data);
+          setLiveCheck({ code: null, phase: null });
+        } else {
+          // skipped/partial/failed/timeout: NO mergeamos (un total mezcla no es
+          // verificado). Seguimos en "estimación en caché" + aviso honesto.
+          setLiveCheck({ code, phase: "unavailable" });
+        }
       })
-      .catch(() => { /* silencioso: el badge "orientativo" ya cubre este estado */ });
+      .catch(() => {
+        if (searchGenRef.current !== gen) return; // abortada por búsqueda nueva
+        setLiveCheck({ code, phase: "unavailable" });
+      });
   };
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
@@ -873,6 +901,7 @@ export default function App() {
     searchGenRef.current += 1;
     verifyAbortRef.current?.abort();
     verifyAbortRef.current = null;
+    setLiveCheck({ code: null, phase: null });
     clearDraft();
 
     try {
@@ -971,15 +1000,11 @@ export default function App() {
             tripType,
             winner: arr[0]?.destination,
           });
-          // Capa 2: verificación asíncrona del ganador mostrado (una sola vez
-          // por búsqueda; la generación descarta respuestas tardías).
+          // Capa 2 (SerpAPI): ya NO se auto-verifica (#5) — quemaba el cupo en
+          // picos de tráfico. Ahora es bajo demanda desde la WinnerCard
+          // (handleVerifyWinner). El nudge de fecha SÍ sigue auto: usa el
+          // calendario de Travelpayouts (gratis/ilimitado), no SerpAPI.
           const winner = optimizeBy === "fairness" ? pickBest(adjusted, "fairness") : bestTotal;
-          verifyWinnerPrice(winner, searchGenRef.current, {
-            departureDate,
-            returnDate,
-            tripType,
-            partial: Boolean(data.partial),
-          });
           fetchCheaperDate(winner, searchGenRef.current);
           return;
         } catch (err) {
@@ -1368,6 +1393,8 @@ export default function App() {
             shareStatus={shareStatus}
             onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
             onChangeSearch={() => setView("search")}
+            onVerify={() => handleVerifyWinner(bestDestination)}
+            verifyPhase={liveCheck.code === normalizeCode(bestDestination.destination) ? liveCheck.phase : null}
             currency={currency}
             searchBadges={[
               cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),

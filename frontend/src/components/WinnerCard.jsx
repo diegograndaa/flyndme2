@@ -12,7 +12,7 @@ import { convertPrice } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail } from "lucide-react";
+import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
 
@@ -50,6 +50,7 @@ const WinnerCard = React.memo(function WinnerCard({
   flightsCount, allFlights = [], lastBestPrice = 0,
   onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, onCopySearchLink, shareStatus,
   onViewAlternatives, onChangeSearch,
+  onVerify, verifyPhase = null,
   currency = "EUR",
   searchBadges = [],
   isFav = false, onToggleFav,
@@ -208,6 +209,31 @@ const WinnerCard = React.memo(function WinnerCard({
           </>
         )}
       </div>
+
+      {/* On-demand live price check (#5). Default is the honest "cached estimate"
+          caveat + a button; we only call SerpAPI when the user asks (the cached
+          feed is an estimate, not a verified fare). Once confirmed, the ✓/↑↓
+          VerificationBadge over the hero takes over, so we hide this control. */}
+      {(verifyPhase === "loading" || verifyPhase === "unavailable" || dest.verificationStatus === "skipped") && (
+        <div className="wc-verify" aria-live="polite">
+          {verifyPhase === "loading" ? (
+            <span className="wc-verify-status">
+              <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
+            </span>
+          ) : verifyPhase === "unavailable" ? (
+            <span className="wc-verify-status">
+              <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
+            </span>
+          ) : (
+            <>
+              <span className="wc-verify-caption">{t("results.verifyCaption")}</span>
+              <button type="button" className="wc-verify-btn" onClick={onVerify}>
+                <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Who pays what — makes the per-person spread (fairness) legible */}
       {payRows && (
