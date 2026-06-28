@@ -607,6 +607,17 @@
     "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
     "use": "Usar esta fecha"
   },
+  "arrivalCoord": {
+    "diffDays": "Con los vuelos más baratos, llegáis en días distintos ({{time}} de diferencia).",
+    "close": "Llegáis casi a la vez: {{time}} entre la primera y la última llegada.",
+    "spread": "Hay {{time}} entre la primera y la última llegada.",
+    "partialNote": "Algún tramo hace escala y no informa de su hora de llegada.",
+    "timeHours": "{{h}} h",
+    "timeUnder1h": "menos de 1 h",
+    "dayOne": "1 día",
+    "dayMany": "{{d}} días",
+    "daysAndHours": "{{days}} y {{h}} h"
+  },
   "stopover": {
     "title": "Escalas",
     "allDirect": "¡Todos los vuelos son directos!",
