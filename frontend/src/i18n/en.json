@@ -382,8 +382,28 @@
     "noResults": "No results for those cities and dates. Try different dates.",
     "serverWaking": "Server is starting up. Retrying automatically…",
     "unexpected": "Something went wrong. Please try again.",
+    "connection": "Couldn't reach the server. Check your connection and try again.",
+    "departurePast": "The departure date has already passed. Pick a future one.",
+    "noResultsRoundtripMulti": "No round-trip results for those cities and dates. Round-trip data across several cities is thinner, so try flexible dates, fewer cities, or search one-way.",
     "friendlyTitle": "Oops, something went wrong",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "codes": {
+      "MISSING_ORIGINS": "Add at least one departure city.",
+      "INVALID_ORIGINS": "Some cities aren't valid airports. Pick them from the suggestions.",
+      "TOO_MANY_ORIGINS": "Too many departure cities. Remove a few and try again.",
+      "INVALID_PASSENGERS": "Check the number of travelers for each city.",
+      "TOO_MANY_PASSENGERS": "Too many travelers in total. Lower the headcount and try again.",
+      "INVALID_DEPARTURE_DATE": "That departure date isn't valid. Pick another.",
+      "INVALID_RETURN_DATE": "That return date isn't valid. Pick another.",
+      "DEPARTURE_DATE_IN_PAST": "The departure date has already passed. Pick a future one.",
+      "DATE_TOO_FAR": "That date is too far ahead. Search within the next few months.",
+      "NO_VALID_DESTINATIONS": "No destinations to search. Try removing filters.",
+      "INVALID_RETURN_DATE_ORDER": "The return date must be after the departure date.",
+      "TOO_MANY_COMBINATIONS": "Too many combinations. Use fewer cities, destinations, or less flexibility.",
+      "INVALID_TRAVEL_CLASS": "That cabin class isn't available. Pick another.",
+      "MONTHLY_BUDGET_EXCEEDED": "We've reached this month's free search limit. Please try again next month.",
+      "INTERNAL_ERROR": "Something went wrong on our side. Please try again."
+    }
   },
   "alt": {
     "recommended": "Recommended",

@@ -382,8 +382,28 @@
     "noResults": "Sin resultados para esas ciudades y fechas. Prueba con otras fechas.",
     "serverWaking": "El servidor se está iniciando. Reintentando automáticamente…",
     "unexpected": "Algo salió mal. Inténtalo de nuevo.",
+    "connection": "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    "departurePast": "La fecha de ida ya ha pasado. Elige una futura.",
+    "noResultsRoundtripMulti": "Sin resultados de ida y vuelta para esas ciudades y fechas. Los datos de ida y vuelta para varias ciudades son más limitados, así que prueba con fechas flexibles, menos ciudades o busca solo ida.",
     "friendlyTitle": "Vaya, algo salió mal",
-    "tryAgain": "Intentar de nuevo"
+    "tryAgain": "Intentar de nuevo",
+    "codes": {
+      "MISSING_ORIGINS": "Añade al menos una ciudad de salida.",
+      "INVALID_ORIGINS": "Algunas ciudades no son aeropuertos válidos. Elígelas de las sugerencias.",
+      "TOO_MANY_ORIGINS": "Demasiadas ciudades de salida. Quita algunas e inténtalo de nuevo.",
+      "INVALID_PASSENGERS": "Revisa el número de viajeros de cada ciudad.",
+      "TOO_MANY_PASSENGERS": "Demasiados viajeros en total. Reduce el grupo e inténtalo de nuevo.",
+      "INVALID_DEPARTURE_DATE": "La fecha de ida no es válida. Elige otra.",
+      "INVALID_RETURN_DATE": "La fecha de vuelta no es válida. Elige otra.",
+      "DEPARTURE_DATE_IN_PAST": "La fecha de ida ya ha pasado. Elige una futura.",
+      "DATE_TOO_FAR": "Esa fecha está muy lejos. Busca dentro de los próximos meses.",
+      "NO_VALID_DESTINATIONS": "No hay destinos que buscar. Prueba a quitar filtros.",
+      "INVALID_RETURN_DATE_ORDER": "La fecha de vuelta debe ser posterior a la de ida.",
+      "TOO_MANY_COMBINATIONS": "Demasiadas combinaciones. Usa menos ciudades, destinos o flexibilidad.",
+      "INVALID_TRAVEL_CLASS": "Esa clase de cabina no está disponible. Elige otra.",
+      "MONTHLY_BUDGET_EXCEEDED": "Hemos alcanzado el límite mensual de búsquedas gratuitas. Inténtalo el mes que viene.",
+      "INTERNAL_ERROR": "Algo ha fallado por nuestra parte. Inténtalo de nuevo."
+    }
   },
   "alt": {
     "recommended": "Recomendado",
