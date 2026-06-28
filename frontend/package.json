@@ -9,7 +9,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --import ./tests/_register.mjs --test"
+    "test": "node --import ./tests/_register.mjs --test",
+    "seo:build": "node scripts/build-seo-pages.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
