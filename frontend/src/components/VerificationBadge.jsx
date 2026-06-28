@@ -3,9 +3,12 @@ import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
 import { Check, ArrowUp, ArrowDown, Info } from "lucide-react";
 
-// Renders a trust chip for the winning destination based on whether the backend
-// successfully re-priced its offers via Amadeus Flight Offers Price.
-// Reads dest.verificationStatus + dest.priceChangePct + dest.verifiedAt.
+// Renders a trust chip for the winning destination based on its live-price check
+// (SerpAPI / Google Flights, on demand). Reads dest.verificationStatus +
+// dest.priceChangePct + dest.verifiedAt.
+//   verified/changed → confirmed ✓ / updated ↑↓ (the verified price is shown)
+//   skipped          → cached estimate (default; not yet checked) — honest caveat
+//   partial/failed/timeout → indicative (we tried, it didn't conclude)
 
 export default function VerificationBadge({ dest }) {
   const { t } = useI18n();
@@ -30,8 +33,15 @@ export default function VerificationBadge({ dest }) {
     if (Number.isFinite(wasAvg) && wasAvg > 0) {
       hint = t("verifyBadge.wasPrice", { price: formatEur(wasAvg, 0) });
     }
+  } else if (status === "skipped") {
+    // Default, not yet checked against Google Flights. Honest caveat: the shown
+    // price comes from a cached search feed, so it's an estimate, not verified.
+    kind = "estimate";
+    icon = <Info size={13} aria-hidden="true" />;
+    text = t("verifyBadge.estimate");
+    hint = t("verifyBadge.estimateHint");
   } else {
-    // partial / failed / timeout → low confidence
+    // partial / failed / timeout → we tried but it didn't conclude → low confidence
     kind = "indicative";
     icon = <Info size={13} aria-hidden="true" />;
     text = t("verifyBadge.indicative");
