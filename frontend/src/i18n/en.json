@@ -7,10 +7,10 @@
     "serverWaking": "Server waking up…"
   },
   "landing": {
-    "eyebrow": "Many cities. One meeting point.",
-    "title": "Where should you all meet?",
-    "titleAccent": "you all",
-    "lead": "FlyndMe compares flights from everyone's city at once — and finds the cheapest place to reunite, fairly.",
+    "eyebrow": "Many cities. One decision.",
+    "title": "The perfect meeting point",
+    "titleAccent": "perfect",
+    "lead": "FlyndMe compares flights from everyone's city and finds the cheapest — and fairest — destination for everyone.",
     "diagramAlt": "Flight paths from several origin cities converging on a single meeting point",
     "diagramMeet": "Best meeting point",
     "cta": "Start searching",
@@ -184,7 +184,7 @@
     "budgetHintOff": "No budget limit",
     "budgetOn": "On",
     "budgetOff": "Off",
-    "submit": "Find destination",
+    "submit": "Meet up for less",
     "searching": "Searching…",
     "footnoteTime": "Results in ~5 s",
     "footnotePrices": "Real flight prices",
