@@ -52,41 +52,55 @@ function useDateWarnings(departureDate, returnDate, tripType) {
   }, [departureDate, returnDate, tripType, t]);
 }
 
-function useTypingPlaceholder(active) {
-  const [text, setText] = useState("");
-  const [typing, setTyping] = useState(true);
-  const idxRef = useRef(0);
-  const charRef = useRef(0);
-  const dirRef = useRef(1); // 1 = typing, -1 = deleting
+// Carrusel de tecleo COMPARTIDO: un único reloj (un setInterval) avanza un
+// `base` (qué palabra empieza la fila 0) y un `char` (progreso de tecleo)
+// comunes a TODOS los inputs vacíos. Cada fila `idx` muestra
+// TYPING_EXAMPLES[(base + idx) % N] cortada a `char`, así escriben a la vez
+// ciudades DISTINTAS y rotan en sincronía. Como N=9 > 8 orígenes máx, dos
+// filas vacías nunca enseñan la misma ciudad simultáneamente.
+const TYPING_MAXLEN = Math.max(...TYPING_EXAMPLES.map((w) => w.length));
+const TYPING_TICK_MS = 120;      // ritmo del reloj (typewriter)
+const TYPING_HOLD_FULL = 7;      // pausa con la palabra completa (legible)
+const TYPING_HOLD_EMPTY = 2;     // pausa en blanco antes de la siguiente
+
+function useTypingCarousel(active) {
+  const [, force] = useState(0);
+  // base = índice de la palabra de la fila 0; char = letras visibles;
+  // typing = true mientras se TECLEA (cursor), false al borrar/en pausa;
+  // hold = ticks restantes de pausa.
+  const stateRef = useRef({ base: 0, char: 0, typing: true, hold: 0 });
 
   useEffect(() => {
-    if (!active) { setText(""); return; }
+    if (!active) return undefined;
+    stateRef.current = { base: 0, char: 0, typing: true, hold: 0 };
+    force((n) => n + 1);
     const id = setInterval(() => {
-      const word = TYPING_EXAMPLES[idxRef.current % TYPING_EXAMPLES.length];
-      if (dirRef.current === 1) {
-        charRef.current++;
-        if (charRef.current > word.length) {
-          dirRef.current = -1;
-          setTyping(false);
-          return;
+      const s = stateRef.current;
+      if (s.hold > 0) {
+        s.hold -= 1;
+      } else if (s.typing) {
+        s.char += 1;
+        if (s.char >= TYPING_MAXLEN) {
+          s.char = TYPING_MAXLEN;
+          s.typing = false;          // palabra completa → quita cursor y descansa
+          s.hold = TYPING_HOLD_FULL;
         }
-        setTyping(true);
       } else {
-        charRef.current--;
-        if (charRef.current <= 0) {
-          dirRef.current = 1;
-          idxRef.current++;
-          setTyping(true);
-          return;
+        s.char -= 1;
+        if (s.char <= 0) {
+          s.char = 0;
+          s.base = (s.base + 1) % TYPING_EXAMPLES.length; // rota a la siguiente
+          s.typing = true;
+          s.hold = TYPING_HOLD_EMPTY;
         }
-        setTyping(true);
       }
-      setText(word.slice(0, charRef.current));
-    }, dirRef.current === 1 ? 110 : 60);
+      force((n) => n + 1);
+    }, TYPING_TICK_MS);
     return () => clearInterval(id);
   }, [active]);
 
-  return { text, typing };
+  const s = stateRef.current;
+  return { base: s.base, char: s.char, typing: s.typing };
 }
 
 const SearchPage = React.memo(function SearchPage({
@@ -122,9 +136,14 @@ const SearchPage = React.memo(function SearchPage({
   const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
   const [dragOver, setDragOver] = useState(-1);
 
-  // Animated typing placeholder for empty first origin
-  const showTyping = origins.length >= 1 && !origins[0]?.trim() && !loading;
-  const { text: typingText, typing: typingActive } = useTypingPlaceholder(showTyping);
+  // Animated typing placeholder for ALL empty origin inputs, coordinated by a
+  // single shared clock (every empty input shows a different rotating city).
+  // El reloj se PAUSA mientras un input de origen está enfocado (acFocus >= 0):
+  // así no compite por re-renders con el typing del usuario (el update del
+  // input usa startTransition) y no distrae mientras escribe. Los spans siguen
+  // visibles (congelados) en los inputs vacíos no enfocados.
+  const showTyping = !loading && origins.some((o) => !o?.trim());
+  const { base: typingBase, char: typingChar, typing: typingActive } = useTypingCarousel(showTyping && acFocus < 0);
 
   const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
 
@@ -281,6 +300,12 @@ const SearchPage = React.memo(function SearchPage({
                 const code = normalizeCode(origin);
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
+                const empty = !origin.trim();
+                // Cada fila vacía teclea una ciudad distinta, desfasada por idx
+                // sobre el mismo reloj compartido (base 0 → Madrid/London/Berlin).
+                const typingSlice = empty && showTyping
+                  ? TYPING_EXAMPLES[(typingBase + idx) % TYPING_EXAMPLES.length].slice(0, typingChar)
+                  : "";
                 return (
                   <div key={idx}
                     className={`sf-origin-row${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
@@ -303,16 +328,16 @@ const SearchPage = React.memo(function SearchPage({
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
-                      {/* Typing placeholder animation */}
-                      {idx === 0 && showTyping && typingText && (
+                      {/* Typing placeholder animation (coordinated across all empty inputs) */}
+                      {empty && showTyping && typingSlice && (
                         <span className={`sf-typing-placeholder${typingActive ? " sf-typing-placeholder--active" : ""}`}>
-                          {typingText}
+                          {typingSlice}
                         </span>
                       )}
                       <input
                         type="text"
                         className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
-                        placeholder={idx === 0 && showTyping ? "" : t("search.placeholder")}
+                        placeholder={empty && showTyping ? "" : t("search.placeholder")}
                         aria-label={t("search.originAria", { n: idx + 1 })}
                         role="combobox"
                         aria-autocomplete="list"
