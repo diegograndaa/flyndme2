@@ -29,7 +29,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding } from "lucide-react";
+import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding, ChevronRight } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -1211,6 +1211,24 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Abre un favorito guardado: si ese destino está en los resultados actuales,
+  // lo selecciona como ganador (mismo patrón que el podio) y lleva a la vista de
+  // resultados; si no está (favorito de otra búsqueda/sesión, solo guardamos un
+  // snapshot code/ciudad/precio), avisa con un toast en vez de inventar datos.
+  const openFavorite = (f) => {
+    setShowFavPanel(false);
+    const code = normalizeCode(f.code);
+    const match = (flights || []).find((x) => normalizeCode(x.destination) === code);
+    if (match) {
+      setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: match }));
+      setShowAlt(false);
+      setView("results");
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
+    } else {
+      setToast({ message: t("favorites.notInResults", { city: f.city || f.code }), type: "info" });
+    }
+  };
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -1263,14 +1281,19 @@ export default function App() {
               <div className="fm-fav-panel-list">
                 {favs.map((f) => (
                   <div key={f.code} className="fm-fav-panel-item">
-                    <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
-                    <div className="fm-fav-panel-info">
-                      <span className="fm-fav-panel-code">{f.code}</span>
-                      <span className="fm-fav-panel-city">{f.city}</span>
-                    </div>
-                    <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
+                    <button type="button" className="fm-fav-panel-open"
+                      onClick={() => openFavorite(f)}
+                      aria-label={t("favorites.open", { city: f.city || f.code })}>
+                      <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
+                      <span className="fm-fav-panel-info">
+                        <span className="fm-fav-panel-code">{f.code}</span>
+                        <span className="fm-fav-panel-city">{f.city}</span>
+                      </span>
+                      <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
+                      <ChevronRight size={16} className="fm-fav-panel-chevron lucide" aria-hidden="true" />
+                    </button>
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: f.city || f.code })}
-                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })} aria-label={t("a11y.close")}><X size={14} aria-hidden="true" /></button>
+                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
               </div>

@@ -2,14 +2,16 @@
 // Strategy: Cache app shell (HTML, CSS, JS, fonts) for offline display.
 // API calls are always network-first (never cache flight prices).
 
-// v2: el logo (asset precacheado sin hash) pasó de azul a granate de marca; subir
-// la versión purga el cache viejo (ver 'activate') y re-precachea el shell nuevo.
-const CACHE_NAME = "flyndme-v2";
+// v3: los favicons de pestaña (.ico/.png) pasaron de azul a coral de marca. Se
+// cachean on-demand (cache-first), así que un usuario recurrente seguiría viendo
+// el azul; subir la versión purga el cache viejo (ver 'activate') y re-precachea.
+const CACHE_NAME = "flyndme-v3";
 
 const APP_SHELL = [
   "/",
   "/index.html",
   "/logo-flyndme.svg",
+  "/favicon.svg",
   "/manifest.json",
 ];
 

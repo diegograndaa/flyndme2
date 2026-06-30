@@ -295,7 +295,7 @@
     "savingsPct": "{{pct}}% cheaper than average",
     "tripDays": "{{n}}-day trip",
     "shareNative": "Share",
-    "cheapestOrigin": "Cheapest route",
+    "bestRouteTitle": "Your cheapest route to {{city}}",
     "vsLastCheaper": "{{pct}}% cheaper than last search",
     "vsLastPricier": "{{pct}}% pricier than last search",
     "copyFlight": "Copy flight info",
@@ -509,7 +509,9 @@
   "favorites": {
     "title": "Saved destinations",
     "empty": "No favorites yet. Tap the heart on any destination to save it here.",
-    "remove": "Remove {{city}} from saved destinations"
+    "remove": "Remove {{city}} from saved destinations",
+    "open": "View {{city}} details",
+    "notInResults": "{{city}} isn't in the current results. Run a search to see its details."
   },
   "breadcrumb": {
     "home": "Home",

@@ -295,7 +295,7 @@
     "savingsPct": "{{pct}}% más barato que la media",
     "tripDays": "Viaje de {{n}} días",
     "shareNative": "Compartir",
-    "cheapestOrigin": "Ruta más barata",
+    "bestRouteTitle": "Vuestra ruta más barata a {{city}}",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
     "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
     "copyFlight": "Copiar info del vuelo",
@@ -509,6 +509,8 @@
   "favorites": {
     "title": "Destinos guardados",
     "remove": "Quitar {{city}} de destinos guardados",
+    "open": "Ver detalles de {{city}}",
+    "notInResults": "{{city}} no está en los resultados actuales. Haz una búsqueda para ver sus detalles.",
     "empty": "Aún no tienes favoritos. Pulsa el corazón en cualquier destino para guardarlo aquí."
   },
   "breadcrumb": {

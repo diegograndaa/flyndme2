@@ -92,14 +92,6 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
-.wc-card .wc-flight-card--cheapest.wc-flight-card--cheapest {
-  border-color: var(--primary);
-}
-.wc-card .wc-cheapest-label.wc-cheapest-label {
-  background: var(--primary);
-  color: #fff;
-  border-radius: var(--radius-full);
-}
 .wc-card .wc-flight-code  { color: var(--navy); }
 .wc-card .wc-flight-city  { color: var(--slate-500); }
 .wc-card .wc-flight-price-tag.wc-flight-price-tag {
@@ -305,7 +297,6 @@
    botones primarios deja de contrastar. Mismo tratamiento que el coral del
    CTA: tinta #16173B encima. */
 [data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
-[data-theme="dark"] .wc-card .wc-cheapest-label.wc-cheapest-label,
 [data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
 [data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary,
 [data-theme="dark"] .altl-link {

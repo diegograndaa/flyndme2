@@ -78,12 +78,6 @@ const WinnerCard = React.memo(function WinnerCard({
 
   const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
 
-  // Cheapest origin (for highlighting in booking cards)
-  const cheapestOrigin = useMemo(() => {
-    if (!breakdown.length) return "";
-    return breakdown.reduce((best, f) => (!best || (f.price < best.price)) ? f : best, null)?.origin?.toUpperCase() || "";
-  }, [breakdown]);
-
   // Savings vs average of all destinations
   const savingsPct = useMemo(() => {
     if (!allFlights || allFlights.length < 2 || !dest?.averageCostPerTraveler) return 0;
@@ -292,7 +286,19 @@ const WinnerCard = React.memo(function WinnerCard({
             </button>
 
             <div className={`wc-booking-collapse${bookingOpen ? " wc-booking-collapse--open" : ""}`}>
-            <div className="wc-booking-cards">
+            {/* Marco único: ambos orígenes se presentan como UN resultado (la
+                ruta más barata del grupo al destino), no como tarjetas sueltas
+                con una resaltada. */}
+            <div className={`wc-route-result${cleanOrigins.length > 1 ? " wc-route-result--framed" : ""}`}>
+              {cleanOrigins.length > 1 && (
+                <div className="wc-route-result-head">
+                  <span className="wc-route-result-label">{t("results.bestRouteTitle", { city: city || code })}</span>
+                  <span className="wc-route-result-total">
+                    {currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}
+                  </span>
+                </div>
+              )}
+              <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];
                 const offer = offerMap[origin];
@@ -338,10 +344,7 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retArrName = airportName(retArrAirport);
 
                 return (
-                  <div key={origin} className={`wc-flight-card${cleanOrigins.length > 1 && origin === cheapestOrigin ? " wc-flight-card--cheapest" : ""}`}>
-                    {cleanOrigins.length > 1 && origin === cheapestOrigin && (
-                      <div className="wc-cheapest-label">{t("results.cheapestOrigin")}</div>
-                    )}
+                  <div key={origin} className="wc-flight-card">
                     {finfo.dateFallback && (
                       <div className="wc-flight-meta" title={t("results.dateFallbackHint")}>
                         <span className="wc-flight-meta-item wc-flight-meta--stops">
@@ -441,6 +444,7 @@ const WinnerCard = React.memo(function WinnerCard({
                 );
               })}
             </div>
+            </div>{/* /wc-route-result */}
 
             </div>{/* /wc-booking-collapse */}
           </div>

@@ -1381,27 +1381,36 @@ body {
   border-color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
-.wc-flight-card--cheapest {
-  border-color: #16a34a;
-  background: #f0fdf4;
-  position: relative;
+/* ── Marco único del resultado: ambos orígenes se presentan como UN solo
+   resultado (la ruta más barata del grupo al destino), en vez de resaltar
+   una tarjeta suelta con una etiqueta flotante que se recortaba. ── */
+.wc-route-result--framed {
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: rgba(var(--primary-rgb), .04);
+  padding: 12px;
 }
-[data-theme="dark"] .wc-flight-card--cheapest {
-  background: rgba(22,163,74,.08);
-  border-color: rgba(22,163,74,.4);
+.wc-route-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 0 2px;
 }
-.wc-cheapest-label {
-  position: absolute;
-  top: -8px;
-  right: 14px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  background: #16a34a;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: .3px;
+.wc-route-result-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: .2px;
+  line-height: 1.25;
+}
+.wc-route-result-total {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .wc-flight-route {
@@ -4251,15 +4260,42 @@ html {
 .fm-fav-panel-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 2px;
   border-radius: var(--radius-sm);
+}
+/* Toda la fila (bandera/código/ciudad/precio) es ahora un botón que abre el
+   destino guardado en los resultados. El botón de quitar queda aparte. */
+.fm-fav-panel-open {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   transition: background .15s;
 }
-.fm-fav-panel-item:hover {
-  background: #F8FAFC;
+.fm-fav-panel-open:hover { background: #F8FAFC; }
+[data-theme="dark"] .fm-fav-panel-open:hover { background: #2C2D52; }
+.fm-fav-panel-open:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
-[data-theme="dark"] .fm-fav-panel-item:hover { background: #2C2D52; }
+.fm-fav-panel-chevron {
+  color: #94A3B8;
+  flex-shrink: 0;
+  transition: transform .15s, color .15s;
+}
+.fm-fav-panel-open:hover .fm-fav-panel-chevron {
+  color: var(--primary);
+  transform: translateX(2px);
+}
 
 .fm-fav-panel-flag {
   font-size: 22px;
