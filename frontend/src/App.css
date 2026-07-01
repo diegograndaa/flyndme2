@@ -1383,32 +1383,18 @@ body {
 }
 /* ── Marco único del resultado: ambos orígenes se presentan como UN solo
    resultado (la ruta más barata del grupo al destino), en vez de resaltar
-   una tarjeta suelta con una etiqueta flotante que se recortaba. ── */
+   una tarjeta suelta con una etiqueta flotante que se recortaba. Su
+   encabezado va fundido en el toggle (.wc-booking-title + .wc-booking-total). ── */
 .wc-route-result--framed {
   border: 1.5px solid var(--primary);
   border-radius: var(--radius-md);
   background: rgba(var(--primary-rgb), .04);
   padding: 12px;
 }
-.wc-route-result-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding: 0 2px;
-}
-.wc-route-result-label {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: .2px;
-  line-height: 1.25;
-}
-.wc-route-result-total {
-  font-size: 17px;
+.wc-booking-total {
+  margin-left: 2px;
   font-weight: 900;
-  color: var(--navy);
+  color: var(--primary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
