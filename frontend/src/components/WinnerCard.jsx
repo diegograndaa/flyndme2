@@ -270,7 +270,7 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
           )}
           <div className="wc-stats-mini">
-            {t("results.destsAnalyzed")}: <strong>{flightsCount}</strong>
+            {t("results.destsFound")}: <strong>{flightsCount}</strong>
           </div>
         </div>
 
@@ -279,7 +279,19 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-booking">
             <button type="button" className="wc-booking-toggle" onClick={() => setBookingOpen((v) => !v)} aria-expanded={bookingOpen}>
               <div>
-                <div className="wc-booking-title">{t("results.bookTitle")}</div>
+                {/* Encabezado único: en multi-origen el propio toggle enmarca el
+                    resultado ("Vuestra ruta más barata a X · total") en vez de
+                    apilar dos títulos ("Reserva tus vuelos" + cabecera interna). */}
+                <div className="wc-booking-title">
+                  {singleOrigin ? t("results.bookTitle") : (
+                    <>
+                      {t("results.bestRouteTitle", { city: city || code })}
+                      <span className="wc-booking-total">
+                        · {currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}
+                      </span>
+                    </>
+                  )}
+                </div>
                 <div className="wc-booking-sub">{t("results.bookSub")}</div>
               </div>
               <span className={`wc-booking-chevron${bookingOpen ? " wc-booking-chevron--open" : ""}`} aria-hidden="true">▾</span>
@@ -288,16 +300,8 @@ const WinnerCard = React.memo(function WinnerCard({
             <div className={`wc-booking-collapse${bookingOpen ? " wc-booking-collapse--open" : ""}`}>
             {/* Marco único: ambos orígenes se presentan como UN resultado (la
                 ruta más barata del grupo al destino), no como tarjetas sueltas
-                con una resaltada. */}
-            <div className={`wc-route-result${cleanOrigins.length > 1 ? " wc-route-result--framed" : ""}`}>
-              {cleanOrigins.length > 1 && (
-                <div className="wc-route-result-head">
-                  <span className="wc-route-result-label">{t("results.bestRouteTitle", { city: city || code })}</span>
-                  <span className="wc-route-result-total">
-                    {currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}
-                  </span>
-                </div>
-              )}
+                con una resaltada. Su encabezado vive en el toggle de arriba. */}
+            <div className={`wc-route-result${singleOrigin ? "" : " wc-route-result--framed"}`}>
               <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];

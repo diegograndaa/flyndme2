@@ -1523,7 +1523,7 @@ export default function App() {
           {/* ── CORE: Stats bar ── */}
           <div className="fm-stats-bar view-enter">
             <span className="fm-stats-item">
-              <AnimatedStat value={flights.length} /> {t("results.destsAnalyzed")}
+              <AnimatedStat value={flights.length} /> {t("results.destsFound")}
             </span>
             <span className="fm-stats-sep" aria-hidden="true">·</span>
             <span className="fm-stats-item">
