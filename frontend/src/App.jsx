@@ -881,7 +881,9 @@ export default function App() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data || searchGenRef.current !== gen) return; // búsqueda nueva: descartar
-        if (data.betterDate) setCheaperDate(data.betterDate);
+        // Se guarda el destino: el aviso solo vale para ESE destino (si el
+        // usuario cambia de criterio o elige otro en el panel, no se muestra).
+        if (data.betterDate) setCheaperDate({ ...data.betterDate, destination: normalizeCode(winner.destination) });
       })
       .catch(() => { /* silencioso: el nudge es opcional */ });
   };
@@ -1469,7 +1471,7 @@ export default function App() {
             currency={currency}
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
-            dateHint={cheaperDate ? {
+            dateHint={cheaperDate && cheaperDate.destination === normalizeCode(bestDestination.destination) ? {
               text: t("cheaperDate.text", {
                 date: formatDate(cheaperDate.date),
                 total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),

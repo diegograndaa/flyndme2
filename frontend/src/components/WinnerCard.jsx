@@ -12,9 +12,10 @@ import { convertPrice } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
+import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
-import { useCountUp } from "./UiBits";
+import { Odometer } from "./Odometer";
+import { tapHaptic } from "../utils/haptics";
 import { FlapText } from "./FlapBoard";
 
 function useFairnessLabel(score) {
@@ -35,14 +36,23 @@ function payColor(price, avg) {
   return "var(--fair-bad, #DC2626)";
 }
 
+// "HH:MM" de un instante ISO del proveedor (hora local de ese aeropuerto)
+function hhmm(at) {
+  const m = typeof at === "string" ? /T(\d{2}:\d{2})/.exec(at) : null;
+  return m ? m[1] : "";
+}
+
 function airlineLogo(iata) {
   if (!iata || iata.length < 2) return null;
   return `https://images.kiwi.com/airlines/64/${iata}.png`;
 }
 
-function AnimatedPrice({ value, decimals = 2, className = "" }) {
-  const formatted = useCountUp(value, 800, decimals);
-  return <div className={`${className} price-animate`}>{formatted}</div>;
+// Frase traducida con la cifra dentro ("Media €52 por persona"): se traduce con
+// un marcador y la cifra va en odómetro, conservando el orden de cada idioma.
+const SLOT = "\u0000";
+function WithOdometer({ text, value }) {
+  const [pre, post = ""] = String(text).split(SLOT);
+  return <>{pre}<Odometer value={value} />{post}</>;
 }
 
 const WinnerCard = React.memo(function WinnerCard({
@@ -59,6 +69,7 @@ const WinnerCard = React.memo(function WinnerCard({
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
+  const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
 
   useEffect(() => {
     if (dest) {
@@ -181,9 +192,9 @@ const WinnerCard = React.memo(function WinnerCard({
             <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
               {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
                 <button key={v} type="button"
-                  className={`wc-criterion-pill${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
+                  className={`wc-criterion-pill fm-switch${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
                   aria-pressed={uiCriterion === v}
-                  onClick={() => onChangeCriterion(v)}>{l}</button>
+                  onClick={() => { tapHaptic(); onChangeCriterion(v); }}><span className="fm-led" aria-hidden="true" />{l}</button>
               ))}
             </div>
           )}
@@ -191,7 +202,7 @@ const WinnerCard = React.memo(function WinnerCard({
 
         {cleanOrigins.length > 0 && dep && (
           <div className="wc-booking-cards">
-              {cleanOrigins.map((origin) => {
+              {cleanOrigins.map((origin, cardIdx) => {
                 const price = priceMap[origin];
                 const offer = offerMap[origin];
                 const finfo = flightInfoMap[origin] || {};
@@ -235,6 +246,14 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retDepName = airportName(retDepAirport);
                 const retArrName = airportName(retArrAirport);
 
+                // Detalle al abrir la ruta (datos del billete, nada inventado)
+                const routeOpen = openRoute === origin;
+                const depTime = hhmm(segments[0]?.departure?.at);
+                const retTime = hhmm(retSegments[0]?.departure?.at);
+                const flightNo = segments[0]?.carrierCode && segments[0]?.number ? `${segments[0].carrierCode} ${segments[0].number}` : "";
+                const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
+                const legTotal = Number(finfo.totalForOrigin) || (typeof price === "number" ? price * pax : 0);
+
                 return (
                   <div key={origin} className="wc-flight-card">
                     {finfo.dateFallback && (
@@ -244,27 +263,69 @@ const WinnerCard = React.memo(function WinnerCard({
                         </span>
                       </div>
                     )}
-                    <div className="wc-flight-route">
-                      <div className="wc-flight-endpoint">
+                    {/* Ruta pulsable: abre el detalle del vuelo. Cerrada, un
+                        destello de navegación recorre la línea cada 2,5 s;
+                        al abrirla la línea se dibuja y el avión despega. */}
+                    <button type="button"
+                      className={`wc-flight-route${routeOpen ? " wc-flight-route--open" : ""}`}
+                      aria-expanded={routeOpen} aria-controls={`wc-fd-${origin}`}
+                      onClick={() => setOpenRoute((r) => (r === origin ? null : origin))}>
+                      <span className="wc-flight-endpoint">
                         <span className="wc-flight-code">{countryFlag(origin)} {origin}</span>
                         <span className="wc-flight-city">{originCity}</span>
-                      </div>
-                      <div className="wc-flight-arrow-wrap">
-                        <div className="wc-flight-line" />
+                      </span>
+                      <span className="wc-flight-arrow-wrap" style={{ "--k": cardIdx }}>
+                        <span className="wc-flight-line" />
                         <span className="wc-flight-plane"><Plane size={14} aria-hidden="true" /></span>
-                        <div className="wc-flight-line" />
-                      </div>
-                      <div className="wc-flight-endpoint wc-flight-endpoint--right">
+                        <span className="wc-flight-line" />
+                        <span className="wc-strobe-lane" aria-hidden="true"><span className="wc-strobe"><i /></span></span>
+                        <span className="wc-route-draw" aria-hidden="true" />
+                        <span className="wc-takeoff" aria-hidden="true"><span className="wc-takeoff-plane"><Plane size={14} /></span></span>
+                      </span>
+                      <span className="wc-flight-endpoint wc-flight-endpoint--right">
                         <span className="wc-flight-code">{code}</span>
                         <span className="wc-flight-city">{destCity}</span>
-                      </div>
-                      <div className="wc-flight-price-tag">
-                        {typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}
+                      </span>
+                      <span className="wc-flight-price-tag">
+                        {typeof price === "number" ? <Odometer value={money(price)} /> : "—"}
                         {(offer?.passengers || 0) > 1 && (
                           <span className="wc-flight-pax-badge">×{offer.passengers}</span>
                         )}
-                      </div>
-                    </div>
+                      </span>
+                      <ChevronDown size={16} className="wc-flight-chev" aria-hidden="true" />
+                      <span className="flap-sr">{routeOpen ? t("results.fdClose") : t("results.fdOpen")}</span>
+                    </button>
+                    {/* Detalle del vuelo: solo datos reales del billete (hora de
+                        salida local tal cual la da el proveedor; la de llegada
+                        no, porque no conocemos la zona horaria del destino). */}
+                    {routeOpen && (
+                      <dl id={`wc-fd-${origin}`} className="wc-fd">
+                        {effDep && (
+                          <div className="wc-fd-item">
+                            <dt>{t("results.fdDeparture")}</dt>
+                            <dd>{formatDate(effDep)}{depTime ? ` · ${depTime} ${t("results.fdLocal")}` : ""}</dd>
+                          </div>
+                        )}
+                        {tripType === "roundtrip" && effRet && (
+                          <div className="wc-fd-item">
+                            <dt>{t("results.fdReturn")}</dt>
+                            <dd>{formatDate(effRet)}{retTime ? ` · ${retTime} ${t("results.fdLocal")}` : ""}</dd>
+                          </div>
+                        )}
+                        {flightNo && (
+                          <div className="wc-fd-item">
+                            <dt>{t("results.fdFlight")}</dt>
+                            <dd>{flightNo}</dd>
+                          </div>
+                        )}
+                        {typeof price === "number" && (
+                          <div className="wc-fd-item">
+                            <dt>{t("results.fdTravelers")}</dt>
+                            <dd>{pax} × {money(price)} = <strong>{money(legTotal)}</strong></dd>
+                          </div>
+                        )}
+                      </dl>
+                    )}
                     {/* Outbound itinerary */}
                     {(airline || stops !== null || durationText) && (
                       <div className="wc-flight-meta">
@@ -343,9 +404,9 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-total">
           <div className="wc-total-main">
             <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
-            {currency === "EUR"
-              ? <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-total-price" />
-              : <div className="wc-total-price">{convertPrice(dest.totalCostEUR, currency)}</div>}
+            {/* Cifras de odómetro: al cambiar de fecha, destino o criterio los
+                dígitos se deslizan hasta el valor real (≤300 ms) */}
+            <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
           </div>
           {sumParts && (
             <div className="wc-total-sum" aria-hidden="true">
@@ -356,7 +417,7 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-total-meta">
             {!singleOrigin && <span>{t("results.flightsCount", { n: cleanOrigins.length })}</span>}
             <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
-            {!singleOrigin && <span>{t("results.whoPaysAvg", { amount: money(dest.averageCostPerTraveler) })}</span>}
+            {!singleOrigin && <span><WithOdometer text={t("results.whoPaysAvg", { amount: SLOT })} value={money(dest.averageCostPerTraveler)} /></span>}
             {dep && <span>{tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")} · {tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
           </div>
 
@@ -474,40 +535,85 @@ const WinnerCard = React.memo(function WinnerCard({
 
 export default WinnerCard;
 
-// "Quién paga qué": precio real por persona de cada origen, escalado al más
-// caro, con la media del grupo marcada. Vive en el bloque plegable del reparto
-// (la tarjeta se centra en los vuelos a comprar y el total).
+// "Quién paga qué" como indicador ILS (sep-2026): la media del grupo es el eje
+// de pista (localizador) y un diamante por origen marca cuánto se desvía de
+// ella su precio real por persona (izquierda = paga menos, derecha = paga
+// más). Al tocar una fila, la torre lo traduce a lenguaje de amigos: quien
+// paga menos que la media pone la diferencia en el bote común; quien paga más
+// la toma. Mismo criterio que el reparto "a partes iguales" de CostSplitCard.
+const ILS_EVEN = 2; // |desvío| < 2 € = centrado (igual que CostSplitCard)
+
 export function WhoPaysStrip({ dest, currency = "EUR" }) {
   const { t } = useI18n();
   const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
+  const [sel, setSel] = useState(null);
   const rows = (Array.isArray(dest?.flights) ? dest.flights : [])
-    .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0 }))
+    .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0, pax: Number(f.passengers) || 1 }))
     .filter((r) => r.price > 0);
   if (rows.length < 2) return null;
-  const maxP = Math.max(...rows.map((r) => r.price));
   const avg = dest.averageCostPerTraveler || rows.reduce((a, r) => a + r.price, 0) / rows.length;
+  const maxDev = Math.max(ILS_EVEN, ...rows.map((r) => Math.abs(r.price - avg)));
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
+
+  const tower = (r) => {
+    const dev = r.price - avg;
+    const abs = Math.abs(dev);
+    if (abs < ILS_EVEN) return { read: `${r.origin}: ±${money(0)}`, say: t("results.ilsEven"), kind: "even" };
+    const amount = money(abs);
+    const say = dev < 0 ? t("results.ilsPuts", { amount }) : t("results.ilsTakes", { amount });
+    const each = r.pax > 1 ? t("results.ilsEach", { n: r.pax, total: money(abs * r.pax) }) : "";
+    return { read: `${r.origin}: ${dev < 0 ? "\u2212" : "+"}${amount}`, say, each, kind: dev < 0 ? "puts" : "takes" };
+  };
+
   return (
-    <div className="wc-fs">
+    <div className="wc-fs wc-ils">
       <div className="wc-fs-head">
         <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
         <span className="wc-fs-verdict" style={{ color: fairness.color }}>
           {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
         </span>
       </div>
-      {rows.map((r, i) => (
-        <div key={r.origin} className="wc-fs-row" style={{ "--i": i }}>
-          <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
-          <div className="wc-fs-track">
-            <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / maxP) * 100)}%`, background: payColor(r.price, avg) }} />
-            <div className="wc-fs-avg" style={{ left: `${Math.min(100, (avg / maxP) * 100)}%` }} title={t("results.whoPaysAvg", { amount: formatEur(avg, 0) })} />
-          </div>
-          <span className="wc-fs-price">{money(r.price)}</span>
-        </div>
-      ))}
-      <div className="wc-fs-avglabel">
-        <span className="wc-fs-avgtick" aria-hidden="true" /> {t("results.whoPaysAvg", { amount: money(avg) })}
+      {/* Escala del localizador: paga menos ← media → paga más */}
+      <div className="wc-ils-scale" aria-hidden="true">
+        <span>{t("results.ilsLess")}</span>
+        <span className="wc-ils-scale-mid">{t("results.whoPaysAvg", { amount: money(avg) })}</span>
+        <span>{t("results.ilsMore")}</span>
       </div>
+      <div className="wc-ils-rows">
+        {rows.map((r, i) => {
+          const dev = r.price - avg;
+          const k = Math.max(-1, Math.min(1, dev / maxDev));
+          const centered = Math.abs(dev) < ILS_EVEN;
+          const color = payColor(r.price, avg);
+          const open = sel === r.origin;
+          const tw = open ? tower(r) : null;
+          return (
+            <React.Fragment key={r.origin}>
+              <button type="button" className={`wc-fs-row wc-ils-row${open ? " wc-ils-row--sel" : ""}`}
+                style={{ "--i": i }} aria-expanded={open} aria-controls={`wc-twr-${r.origin}`}
+                onClick={() => setSel((s) => (s === r.origin ? null : r.origin))}>
+                <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
+                <span className="wc-ils-track" aria-hidden="true">
+                  <span className="wc-ils-bar" style={{ transform: `scaleX(${k.toFixed(3)})`, background: color }} />
+                  <span className="wc-ils-pos" style={{ transform: `translateX(${(k * 42).toFixed(2)}%)` }}>
+                    <span className={`wc-ils-diamond${centered ? " wc-ils-diamond--on" : ""}`} style={{ background: color }} />
+                  </span>
+                </span>
+                <span className="wc-fs-price"><Odometer value={money(r.price)} /></span>
+              </button>
+              {open && (
+                <div id={`wc-twr-${r.origin}`} className={`wc-twr wc-twr--${tw.kind}`} role="status">
+                  <span className="wc-twr-tag">TWR</span>
+                  <span className="wc-twr-read">[ {tw.read} ]</span>
+                  <span className="wc-twr-arrow" aria-hidden="true">→</span>
+                  <span className="wc-twr-say">{tw.say}{tw.each ? <span className="wc-twr-each"> {tw.each}</span> : null}</span>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      {!sel && <div className="wc-ils-hint">{t("results.ilsHint")}</div>}
     </div>
   );
 }

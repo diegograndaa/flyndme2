@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cityOf, formatEur, countryFlag } from "../utils/helpers";
 import { BedDouble, Target, Map as MapIcon } from "lucide-react";
 import { convertPrice } from "../utils/resultsLogic";
+import { tapHaptic } from "../utils/haptics";
 
 export function CostSplitCard({ bestDest, origins, currency, t }) {
   const [splitMode, setSplitMode] = useState("equal"); // equal | actual
@@ -31,8 +32,8 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
           {[["equal", t("results.splitEqual")], ["actual", t("results.splitActual")]].map(([v, l]) => (
             <button key={v} type="button"
               aria-pressed={splitMode === v}
-              className={`fm-split-pill${splitMode === v ? " fm-split-pill--active" : ""}`}
-              onClick={() => setSplitMode(v)}>{l}</button>
+              className={`fm-split-pill fm-switch${splitMode === v ? " fm-split-pill--active" : ""}`}
+              onClick={() => { tapHaptic(); setSplitMode(v); }}><span className="fm-led" aria-hidden="true" />{l}</button>
           ))}
         </div>
       </div>
