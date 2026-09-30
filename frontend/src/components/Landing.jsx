@@ -73,7 +73,7 @@ const Landing = React.memo(function Landing({ searchForm }) {
       {/* Firma de convergencia como remate visual BAJO el formulario (solo móvil,
           ver .lp-hero-visual-m). En desktop la firma vive a la derecha del hero;
           en móvil la acción (el form) va primero y el diagrama es el payoff. */}
-      <div className="lp-hero-visual-m" aria-hidden="true">
+      <div className="lp-hero-visual-m">
         <ConvergenceHero idSuffix="-m" />
       </div>
 

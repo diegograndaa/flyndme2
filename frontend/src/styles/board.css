@@ -215,7 +215,6 @@
   to   { opacity: 1; transform: none; }
 }
 @keyframes board-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes board-grow-x { from { transform: scaleX(0); } to { transform: none; } }
 @keyframes board-sweep { to { background-size: 100% 100%; } }
 @keyframes board-taxi {
   from { opacity: 0; transform: translateX(-38px); }
@@ -487,31 +486,11 @@
 }
 
 /* Cifras de la matriz en mono (panel) */
-.wc-card .wc-summary-label {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: .12em;
-}
-.wc-card .wc-summary-price,
-.wc-card .wc-summary-date,
-.wc-card .wc-fs-price,
-.wc-card .wc-fs-code,
 .wc-card .wc-flight-code,
-.wc-card .wc-flight-price-tag,
-.wc-card .wc-booking-total {
+.wc-card .wc-flight-price-tag {
   font-family: var(--font-mono);
   letter-spacing: -.02em;
 }
-.wc-card .wc-fs-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
-
-/* "Quién paga qué": las barras crecen escalonadas, luego aparece la media */
-.wc-card .wc-fs-fill {
-  transform-origin: left center;
-  animation: board-grow-x 1s var(--ease-out-expo) backwards;
-  animation-delay: calc(.45s + var(--i, 0) * .13s);
-}
-.wc-card .wc-fs-avg { animation: board-fade .4s ease backwards; animation-delay: 1.05s; }
-.wc-card .wc-fs-row { animation: board-fade .4s ease backwards; animation-delay: calc(.35s + var(--i, 0) * .13s); }
 
 /* Troquel: muescas del color de la página + línea perforada + código de barras */
 .wc-perf {
@@ -626,9 +605,6 @@
   .lp-search-section,
   .fm-searching-board,
   .fm-searching-board-dot,
-  .wc-card .wc-fs-fill,
-  .wc-card .wc-fs-avg,
-  .wc-card .wc-fs-row,
   .wc-card .wc-booking-cards > .wc-flight-card,
   .wc-card .wc-flight-plane,
   .lp-legs.lp-legs::after,
@@ -999,33 +975,10 @@
 /* ══ 14. Tema coherente: la tarjeta y los paneles siguen al tema ════════ */
 /* Matriz de la tarjeta de embarque (precio · comprobar · quién paga qué):
    papel en claro, navy en oscuro. Antes era navy fijo en ambos temas. */
-.wc-card .wc-summary.wc-summary {
-  background: var(--panel-stub);
-  color: var(--panel-ink);
-  border-top: 1px solid var(--panel-line);
-}
-:root:not([data-theme="dark"]) .wc-card .wc-summary.wc-summary {
-  --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #B45309; --fair-bad: #DC2626;
-}
-.wc-card .wc-summary-divider.wc-summary-divider { background: var(--panel-line); }
-.wc-card .wc-summary-label.wc-summary-label { color: var(--panel-muted); opacity: 1; }
-.wc-card .wc-verify.wc-verify {
-  background: var(--panel-stub);
-  border-top: 1px solid var(--panel-line);
-  color: var(--panel-muted);
-}
 .wc-card .wc-verify-status.wc-verify-status { color: var(--panel-muted); }
 .wc-card .wc-verify-btn.wc-verify-btn { color: var(--panel-ink); background: transparent; border-color: var(--slate-300); }
 .wc-card .wc-verify-btn.wc-verify-btn:hover { background: var(--panel-hover); border-color: var(--panel-ink); }
 .wc-card .wc-verify-btn.wc-verify-btn:focus-visible { outline-color: var(--panel-ink); }
-.wc-card .wc-fs.wc-fs { background: var(--panel-stub); color: var(--panel-ink); border-top: 1px dashed var(--panel-line); }
-.wc-card .wc-fs-title.wc-fs-title,
-.wc-card .wc-fs-code.wc-fs-code,
-.wc-card .wc-fs-price.wc-fs-price { color: var(--panel-ink); }
-.wc-card .wc-fs-track.wc-fs-track { background: var(--panel-track); }
-.wc-card .wc-fs-avg.wc-fs-avg,
-.wc-card .wc-fs-avgtick.wc-fs-avgtick { background: var(--panel-ink); }
-.wc-card .wc-fs-avglabel.wc-fs-avglabel { color: var(--panel-muted); }
 
 /* Paneles en claro: borde fino de papel en vez de bloque oscuro */
 .fm-board.fm-board,
@@ -1234,8 +1187,6 @@ button,
 .cv-dest-ring.cv-dest-ring { stroke: var(--sign-line); }
 /* Anillos de alcance de radar alrededor del punto de encuentro (estáticos) */
 .cv-range { fill: none; stroke: rgba(var(--primary-rgb), .16); stroke-width: 1; stroke-dasharray: 2 4; }
-.cv-radar path { fill: rgba(var(--sign-rgb), .22); }
-[data-theme="dark"] .cv-radar path { fill: rgba(var(--sign-rgb), .14); }
 
 /* Luces de aterrizaje: al aparecer la tarjeta de embarque su marco se
    enciende en amarillo y se apaga (antes: degradado animado estilo IA). */
@@ -1491,7 +1442,6 @@ button,
   .fm-windsock-sock,
   .wc-card.wc-card--entered::before { animation: none !important; }
   .fm-rabbit i:nth-child(odd) { background: var(--sign); }
-  .cv-radar { display: none; }
   .fm-board-row::after { transition: none; }
 }
 
@@ -1861,4 +1811,628 @@ button,
   .fm-zone-title { font-size: 13.5px; letter-spacing: .12em; }
   .fm-notice-btn { width: 100%; }
   .fm-zone-perf { margin: 24px 6px 20px; }
+}
+
+/* ══ 23. La decisión = lo que hay que comprar + el total ═════════════════
+   La tarjeta empieza, tras la foto, por los vuelos a reservar (un billete
+   por viajero) y cierra con el cómputo global como un ticket de caja:
+   la suma de los vuelos = total del grupo. El reparto va aparte, plegado. */
+.wc-card .wc-buy { padding: 22px 28px 20px; background: var(--white); }
+.wc-buy-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; margin-bottom: 14px; }
+.wc-buy-heading { min-width: 0; }
+.wc-buy-kicker {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .14em; color: var(--slate-500);
+}
+.wc-buy-title { margin: 4px 0 2px; font-size: 22px; font-weight: 700; letter-spacing: -.015em; color: var(--navy); }
+.wc-buy-sub { margin: 0; font-size: 13px; color: var(--slate-500); }
+.wc-buy .wc-criterion-pills { flex: 0 0 auto; }
+.wc-card .wc-buy .wc-booking-cards { display: flex; flex-direction: column; gap: 10px; overflow: visible; }
+
+/* Ticket del total */
+.wc-total {
+  position: relative;
+  margin-top: 14px;
+  padding: 14px 18px 12px;
+  background: var(--panel-stub);
+  border: 2px solid var(--navy);
+  border-radius: 8px;
+}
+[data-theme="dark"] .wc-total { border-color: rgba(var(--sign-rgb), .7); }
+.wc-total-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wc-total-label {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .16em; color: var(--navy);
+}
+.wc-card .wc-total-price.wc-total-price {
+  font-family: var(--font-mono); font-size: 34px; font-weight: 800; line-height: 1;
+  letter-spacing: -.03em; color: var(--navy); font-variant-numeric: tabular-nums;
+}
+.wc-total-sum {
+  margin-top: 6px;
+  font-family: var(--font-mono); font-size: 14px; color: var(--slate-700);
+  font-variant-numeric: tabular-nums;
+}
+.wc-total-sum b { font-weight: 500; color: var(--slate-400); }
+.wc-total-sum strong { color: var(--navy); }
+.wc-total-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 0;
+  margin-top: 8px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--slate-500);
+}
+.wc-total-meta > span + span::before { content: "·"; margin: 0 8px; color: var(--slate-300); }
+.wc-total-hint {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 12px;
+  background: rgba(var(--sign-rgb), .16);
+  border-left: 3px solid var(--sign);
+  border-radius: 4px;
+  font-size: 13.5px; font-weight: 600; color: var(--navy);
+}
+.wc-total-hint svg { flex: 0 0 auto; color: var(--navy); }
+.wc-total-hint-text { flex: 1 1 220px; min-width: 0; }
+.wc-total-hint-btn {
+  flex: 0 0 auto; padding: 7px 12px;
+  background: var(--primary); color: var(--on-primary);
+  border: none; border-radius: 4px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+}
+:root:not([data-theme="dark"]) .wc-total-hint-btn { color: #FFFFFF; }
+.wc-total-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px dashed var(--slate-300);
+}
+.wc-total-foot .wc-verify-caption { font-size: 12px; color: var(--slate-500); }
+.wc-total-foot .wc-verify-status { font-size: 12.5px; color: var(--slate-700); display: inline-flex; align-items: center; gap: 6px; }
+.wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; font-size: 12.5px; font-weight: 700;
+  color: var(--navy); background: transparent;
+  border: 1px solid var(--slate-300); border-radius: 4px;
+}
+.wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn:hover { border-color: var(--navy); }
+@media (max-width: 600px) {
+  .wc-card .wc-buy { padding: 16px 14px 16px; }
+  .wc-buy-title { font-size: 19px; }
+  .wc-buy .wc-criterion-pills { width: 100%; }
+  .wc-total { padding: 12px 14px 10px; }
+  .wc-card .wc-total-price.wc-total-price { font-size: 28px; }
+  .wc-total-hint-btn { width: 100%; }
+}
+
+/* Reparto del grupo, plegado con resumen de una línea */
+.fm-split-details {
+  margin: 14px 0 0;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.fm-split-summary {
+  display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
+  padding: 12px 14px;
+  list-style: none; cursor: pointer;
+}
+.fm-split-summary::-webkit-details-marker { display: none; }
+.fm-split-summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+.fm-split-summary-tag {
+  flex: 0 0 auto; padding: 3px 8px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--navy); border: 1.5px solid var(--navy); border-radius: 4px;
+}
+.fm-split-summary-text { flex: 1 1 260px; min-width: 0; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--navy); }
+.fm-split-summary-sep { color: var(--slate-400); }
+.fm-split-summary-more {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--slate-700);
+}
+.fm-split-summary-more::after {
+  content: ""; width: 7px; height: 7px;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform .25s var(--ease-out-expo);
+}
+.fm-split-details[open] .fm-split-summary-more::after { transform: rotate(-135deg) translateY(-2px); }
+.fm-split-summary-close { display: none; }
+.fm-split-details[open] .fm-split-summary-open { display: none; }
+.fm-split-details[open] .fm-split-summary-close { display: inline; }
+.fm-split-body { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px; animation: board-fade .25s ease; }
+.fm-split-body .fm-split-card, .fm-split-body .fm-arrival-spread { margin: 0; }
+/* "Quién paga qué" fuera de la tarjeta: mismos tonos de panel que dentro */
+.fm-split-details .wc-fs { margin: 0; padding: 14px 16px; background: var(--panel-stub); color: var(--panel-ink); border: 1px solid var(--line); border-radius: 6px; }
+.fm-split-details .wc-fs-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--panel-ink); }
+.fm-split-details .wc-fs-code,
+.fm-split-details .wc-fs-price { font-family: var(--font-mono); color: var(--panel-ink); }
+:root:not([data-theme="dark"]) .fm-split-details .wc-fs { --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #B45309; --fair-bad: #DC2626; }
+@media (prefers-reduced-motion: reduce) {
+  .fm-split-body { animation: none; }
+  .fm-split-summary-more::after { transition: none; }
+}
+
+/* Foto más baja: los vuelos a comprar entran antes en pantalla */
+.wc-card.wc-card .wc-image-wrap { height: 220px; min-height: 0; }
+@media (min-width: 768px) { .wc-card.wc-card .wc-image-wrap { height: 250px; } }
+.wc-total-foot .wc-verify-caption--ok { display: inline-flex; align-items: center; gap: 6px; color: var(--fair-high); font-weight: 600; }
+[data-theme="dark"] .wc-total-foot .wc-verify-caption--ok { color: #52DEA2; }
+
+/* Botones de cada vuelo: Reservar manda, el resto compacto en una fila */
+.wc-buy .wc-flight-ctas { display: flex; flex-wrap: wrap; gap: 8px; }
+.wc-card .wc-buy .wc-cta.wc-cta { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+.wc-card .wc-buy .wc-cta--book.wc-cta--book { flex: 1.5 1 0; }
+.wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 44px; padding: 0; }
+@media (max-width: 600px) {
+  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 10px; font-size: 12.5px; }
+  .wc-card .wc-buy .wc-cta--book.wc-cta--book { flex: 1 1 100%; padding: 11px 12px; font-size: 14px; }
+  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 40px; }
+  .wc-total-meta > span + span::before { content: none; }
+  .wc-total-meta { gap: 2px 14px; }
+}
+@media (max-width: 400px) {
+  .wc-card .wc-buy .wc-cta:not(.wc-cta--book):not(.wc-cta--copy) .wc-cta-icon { display: none; }
+}
+
+/* ══ 24. Instrumentos lúdicos (HUD de cabina) ════════════════════════════
+   Cinco microinteracciones de aviónica que explican la información mejor
+   que el texto: radar del hero, cifras de odómetro, ILS de equidad, estrobo
+   en las rutas y conmutadores de cabina. Solo transform/opacity (compositor),
+   sin mover el layout; todo se apaga con prefers-reduced-motion.        */
+
+/* ── 24.1 Radar vivo en el hero ───────────────────────────────────────── */
+.cv-stage { position: relative; }
+/* Disco cónico que gira alrededor del punto de encuentro (89,4 % · 50 % de
+   la carta), recortado a la carta y desvanecido hacia los bordes. */
+.cv-sweep-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image:
+    radial-gradient(ellipse 105% 82% at 89.4% 50%, #000 46%, rgba(0,0,0,.55) 86%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(ellipse 105% 82% at 89.4% 50%, #000 46%, rgba(0,0,0,.55) 86%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-composite: intersect;
+}
+.cv-sweep {
+  position: absolute;
+  top: 50%;
+  width: 183.4%;           /* radio 330 de 360 unidades: llega a las tres ciudades */
+  aspect-ratio: 1;
+  margin: -91.7% 0 0 -91.7%; /* los márgenes en % van sobre el ANCHO → centrado */
+  border-radius: 50%;
+  /* Borde de ataque al norte (0°) y estela hacia atrás; gira en sentido horario */
+  background: conic-gradient(from -40deg,
+    rgba(var(--sign-rgb), 0) 0deg,
+    rgba(var(--sign-rgb), .06) 16deg,
+    rgba(var(--sign-rgb), .30) 39.3deg,
+    rgba(var(--sign-rgb), .8) 39.6deg,
+    rgba(var(--sign-rgb), 0) 40deg);
+  animation: cv-sweep 6s linear infinite; /* = SWEEP_S en ConvergenceHero */
+  will-change: transform;
+}
+[data-theme="dark"] .cv-sweep { opacity: .62; }
+@keyframes cv-sweep { to { transform: rotate(360deg); } }
+
+/* Ping: onda en la ciudad cuando el haz pasa por ella (retardo por ángulo) */
+.cv-ping {
+  position: absolute;
+  width: 4.4%;
+  aspect-ratio: 1;
+  margin: -2.2% 0 0 -2.2%;
+  border-radius: 50%;
+  border: 2px solid var(--sign-line);
+  background: rgba(var(--sign-rgb), .22);
+  opacity: 0;
+  pointer-events: none;
+  animation: cv-ping 6s linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes cv-ping {
+  0%   { transform: scale(1);   opacity: .8; }
+  14%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Aeropuertos pulsables: botones transparentes sobre nodo + código */
+.cv-hit {
+  position: absolute;
+  z-index: 2;
+  width: 64px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.cv-hit:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 1px; }
+
+/* Ruta encendida en amarillo terminal; las demás se atenúan */
+.cv-arc { transition: opacity .2s ease; }
+.cv-arc.cv-arc--dim { opacity: .26; }
+.cv-lit { opacity: 0; transition: opacity .2s ease; pointer-events: none; }
+.cv-lit--on { opacity: 1; }
+.cv-lit-halo { stroke: rgba(var(--sign-rgb), .42); stroke-width: 10; stroke-linecap: round; }
+.cv-lit-line { stroke: var(--sign-line); stroke-width: 3.2; stroke-linecap: round; }
+.cv-origin-lit { fill: var(--sign); stroke: #1A1A1A; stroke-width: 2; opacity: 0; transition: opacity .2s ease; }
+.cv-origin--on .cv-origin-lit { opacity: 1; }
+
+/* Ficha de la ruta: cartel de posición (tinta + amarillo) con puntero */
+.cv-route-tag {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px 7px;
+  border: 1px solid var(--sign);
+  border-radius: 4px;
+  background: #1A1A1A;
+  color: var(--sign);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  animation: cv-tag-in .22s cubic-bezier(.2,.9,.25,1) both;
+}
+.cv-route-tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  background: #1A1A1A;
+  border-right: 1px solid var(--sign);
+  border-bottom: 1px solid var(--sign);
+  transform: translateX(-50%) rotate(45deg);
+}
+.cv-route-tag-k { font-size: 10px; font-weight: 600; letter-spacing: .12em; color: rgba(230,232,236,.72); }
+.cv-route-tag-v { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; line-height: 1.15; }
+.cv-route-tag-v i { font-style: normal; opacity: .55; }
+@keyframes cv-tag-in { from { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); } }
+
+/* Pista discreta: los aeropuertos se pueden tocar */
+.cv-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 3%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--slate-500);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.cv-stage--focus .cv-hint { opacity: 0; }
+
+/* ── 24.2 Odómetro de cabina (cifras que se deslizan como una cinta) ───── */
+.odo {
+  display: inline-flex;
+  align-items: flex-end;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.odo-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.odo-c,
+.odo-d { display: inline-block; height: 1.15em; line-height: 1.15; }
+.odo-d { overflow: hidden; }
+.odo-tape {
+  display: flex;
+  flex-direction: column;
+  transition: transform .26s cubic-bezier(.2,.9,.25,1);
+  will-change: transform;
+}
+.odo-tape > span { display: block; height: 1.15em; line-height: 1.15; text-align: center; }
+
+/* ── 24.3 ILS de equidad ("Quién paga qué") ──────────────────────────────
+   La media es el eje de pista (línea discontinua vertical que cruza todas
+   las filas); los puntos de la escala son los "dots" del localizador y el
+   diamante de cada origen marca su desvío. Tocar una fila → torre.      */
+.wc-ils { --ils-code: 64px; --ils-price: 64px; --ils-gap: 12px; }
+.wc-ils-scale {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px calc(var(--ils-price) + var(--ils-gap) + 6px) 4px calc(var(--ils-code) + var(--ils-gap) + 6px);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+}
+.wc-ils-scale-mid { font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--panel-ink); }
+.wc-fs .wc-ils-row {
+  display: grid;
+  grid-template-columns: var(--ils-code) 1fr var(--ils-price);
+  gap: var(--ils-gap);
+  align-items: center;
+  width: 100%;
+  margin: 2px 0;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: board-fade .4s ease backwards;
+  animation-delay: calc(.1s + var(--i, 0) * .1s);
+}
+.wc-fs .wc-ils-row:hover { background: var(--panel-hover); }
+.wc-fs .wc-ils-row--sel { background: var(--panel-hover); border-color: var(--panel-line); }
+.wc-fs .wc-ils-row:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 1px; }
+.wc-ils-row .wc-fs-price { text-align: right; }
+.wc-ils-track {
+  position: relative;
+  display: block;
+  height: 22px;
+  background:
+    radial-gradient(circle at 8% 50%, var(--panel-faint) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 29% 50%, var(--panel-faint) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 71% 50%, var(--panel-faint) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 92% 50%, var(--panel-faint) 0 2px, transparent 2.5px),
+    linear-gradient(var(--panel-line), var(--panel-line)) center / 100% 1px no-repeat;
+}
+/* Eje de pista = la media del grupo */
+.wc-ils-track::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  bottom: -9px;
+  border-left: 2px dashed var(--panel-ink);
+  opacity: .5;
+  transform: translateX(-1px);
+}
+.wc-ils-bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  opacity: .5;
+  transform-origin: left center;
+  transition: transform .3s cubic-bezier(.2,.9,.25,1);
+  animation: ils-bar-in .6s cubic-bezier(.2,.9,.25,1) backwards;
+  animation-delay: calc(.25s + var(--i, 0) * .1s);
+}
+.wc-ils-pos {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transition: transform .3s cubic-bezier(.2,.9,.25,1);
+  animation: ils-pos-in .6s cubic-bezier(.2,.9,.25,1) backwards;
+  animation-delay: calc(.25s + var(--i, 0) * .1s);
+}
+.wc-ils-diamond {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border: 2px solid var(--panel-stub);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+/* Centrado en la senda: el diamante "respira" (bucle de opacidad/escala) */
+.wc-ils-diamond--on::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1.5px solid var(--fair-high);
+  border-radius: 3px;
+  animation: ils-on 2.4s ease-out infinite;
+}
+@keyframes ils-bar-in { from { transform: scaleX(0); } }
+@keyframes ils-pos-in { from { transform: translateX(0); } }
+@keyframes ils-on {
+  0%   { transform: scale(.8); opacity: .9; }
+  70%  { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Torre de control: traduce el desvío a "pone / toma del bote" */
+.wc-twr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 2px 0 6px calc(var(--ils-code) + var(--ils-gap) + 6px);
+  padding: 7px 10px;
+  border: 1px solid #25282F;
+  border-left: 3px solid var(--sign);
+  border-radius: 4px;
+  background: #1A1A1A;
+  color: #E6E8EC;
+  font-size: 13px;
+  animation: twr-in .22s cubic-bezier(.2,.9,.25,1) both;
+}
+.wc-twr-tag {
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sign);
+  color: #1A1A1A;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.wc-twr-read { font-family: var(--font-mono); font-weight: 600; color: var(--sign); white-space: nowrap; }
+.wc-twr-arrow { color: rgba(230,232,236,.5); }
+.wc-twr-say { font-weight: 600; }
+.wc-twr-each { font-weight: 400; color: rgba(230,232,236,.7); }
+@keyframes twr-in { from { opacity: 0; transform: translateY(-4px); } }
+.wc-ils-hint { margin-top: 8px; font-size: 12px; color: var(--panel-muted); }
+@media (max-width: 600px) {
+  .wc-ils { --ils-code: 58px; --ils-price: 58px; --ils-gap: 8px; }
+  .wc-ils-scale { flex-wrap: wrap; margin-left: 0; margin-right: 0; font-size: 9.5px; }
+  .wc-ils-scale-mid { order: -1; flex-basis: 100%; text-align: center; }
+  .wc-twr { margin-left: 0; }
+}
+
+/* ── 24.4 Estrobo de navegación en las rutas + despegue al abrir ────────
+   Cerrada: un destello recorre la línea discontinua cada 2,5 s (luz de
+   navegación). Abierta: la línea se dibuja de izquierda a derecha y un
+   micro-avión despega hacia el destino mientras aparece el detalle.   */
+.wc-card .wc-flight-route {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.wc-card .wc-flight-route:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 4px; }
+.wc-card .wc-flight-arrow-wrap { position: relative; }
+.wc-card .wc-flight-plane { position: relative; z-index: 2; }
+.wc-strobe-lane { position: absolute; inset: -5px 0; overflow: hidden; pointer-events: none; transition: opacity .15s ease; }
+.wc-strobe {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: wc-strobe 2.5s linear infinite;
+  animation-delay: calc(var(--k, 0) * .45s);
+  will-change: transform, opacity;
+}
+.wc-strobe i {
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  width: 24px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(var(--sign-rgb), 0), rgba(var(--sign-rgb), .9));
+}
+.wc-strobe i::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: #FFF6D1;
+  box-shadow: 0 0 0 2px rgba(var(--sign-rgb), .55), 0 0 8px 2px rgba(var(--sign-rgb), .7);
+}
+@keyframes wc-strobe {
+  0%        { transform: translateX(0); opacity: 0; }
+  4%        { opacity: 1; }
+  40%       { transform: translateX(calc(100% + 24px)); opacity: 1; }
+  41%, 100% { transform: translateX(calc(100% + 24px)); opacity: 0; }
+}
+.wc-route-draw {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--sign-line);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+.wc-takeoff { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.wc-takeoff-plane { position: absolute; left: -7px; top: 50%; margin-top: -8px; display: inline-flex; color: var(--primary); }
+.wc-flight-route--open .wc-route-draw { transform: scaleX(1); transition: transform .45s cubic-bezier(.2,.9,.25,1); }
+.wc-flight-route--open .wc-strobe-lane,
+.wc-flight-route--open .wc-flight-plane { opacity: 0; }
+.wc-flight-route--open .wc-takeoff { animation: wc-takeoff-run .8s cubic-bezier(.45,0,.25,1) .12s both; }
+.wc-flight-route--open .wc-takeoff-plane { animation: wc-takeoff-climb .8s cubic-bezier(.45,0,.25,1) .12s both; }
+@keyframes wc-takeoff-run {
+  0%   { transform: translateX(50%); opacity: 1; }
+  78%  { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes wc-takeoff-climb {
+  0%, 30% { transform: none; }
+  100%    { transform: translateY(-12px) rotate(-18deg); }
+}
+.wc-card .wc-flight-route .wc-flight-code { white-space: nowrap; }
+@media (max-width: 600px) {
+  .wc-card .wc-flight-route { gap: 8px; }
+  .wc-card .wc-flight-route .wc-flight-arrow-wrap { min-width: 40px; }
+  .wc-card .wc-flight-route .wc-flight-price-tag { padding-left: 0; }
+}
+.wc-flight-chev { flex-shrink: 0; color: var(--slate-400); transition: transform .25s cubic-bezier(.2,.9,.25,1); }
+.wc-flight-route--open .wc-flight-chev { transform: rotate(180deg); color: var(--primary); }
+.wc-fd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: -4px 0 12px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--sign-line);
+  border-radius: 0 4px 4px 0;
+  background: rgba(var(--sign-rgb), .09);
+  animation: twr-in .25s cubic-bezier(.2,.9,.25,1) both;
+}
+.wc-fd-item { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wc-fd dt { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--slate-500); }
+.wc-fd dd { margin: 0; font-family: var(--font-mono); font-size: 13px; color: var(--navy); font-variant-numeric: tabular-nums; }
+
+/* ── 24.5 Conmutadores de cabina ─────────────────────────────────────────
+   Tipo de billete, criterio del ganador, criterio del formulario y reparto:
+   se hunden al pulsar como un interruptor físico (50 ms), vibran 10 ms en
+   Android (utils/haptics) y un micro-LED se enciende con un parpadeo.   */
+.fm-switch.fm-switch { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.fm-switch.fm-switch:active:not(:disabled) { transform: scale(.96) translateY(1px); transition-duration: 50ms; }
+.fm-led { position: relative; flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; }
+.fm-led::before,
+.fm-led::after { content: ""; position: absolute; inset: 0; border-radius: 50%; }
+.fm-led::before { background: currentColor; opacity: .3; }
+.fm-led::after {
+  background: var(--sign);
+  box-shadow: 0 0 0 1px rgba(26,26,26,.3), 0 0 6px 1px rgba(var(--sign-rgb), .85);
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+:is(.sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) > .fm-led::after {
+  opacity: 1;
+  animation: fm-led-on .32s steps(1, end) both;
+}
+@keyframes fm-led-on {
+  0%        { opacity: 0; }
+  25%       { opacity: 1; }
+  50%       { opacity: .25; }
+  75%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-led::after { animation: none !important; }
+  .wc-strobe-lane, .wc-takeoff { display: none; }
+  .wc-flight-route--open .wc-route-draw { transition: none; }
+  .wc-fd { animation: none; }
+  .cv-sweep, .cv-ping { display: none; }
+  .cv-route-tag { animation: none; }
+  .odo-tape { transition: none; }
+  .wc-ils-bar, .wc-ils-pos { transition: none; animation: none; }
+  .wc-ils-diamond--on::after, .wc-twr, .wc-fs .wc-ils-row { animation: none; }
 }

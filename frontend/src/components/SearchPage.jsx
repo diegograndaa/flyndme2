@@ -10,6 +10,7 @@ import {
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { tapHaptic } from "../utils/haptics";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
 // único consumidor es este componente).
@@ -242,8 +243,9 @@ const SearchPage = React.memo(function SearchPage({
                 {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                   <button key={v} type="button"
                     aria-pressed={tripType === v}
-                    className={`sf-pill ${tripType === v ? "sf-pill--active" : ""}`}
+                    className={`sf-pill fm-switch ${tripType === v ? "sf-pill--active" : ""}`}
                     onClick={() => {
+                      tapHaptic();
                       setTripType(v);
                       // Auto-suggest return date when switching to roundtrip
                       if (v === "roundtrip" && !returnDate && departureDate) {
@@ -251,7 +253,7 @@ const SearchPage = React.memo(function SearchPage({
                         d.setDate(d.getDate() + 7);
                         setReturnDate(d.toISOString().slice(0, 10));
                       }
-                    }} disabled={loading}>{l}</button>
+                    }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                 ))}
               </div>
 
@@ -517,8 +519,8 @@ const SearchPage = React.memo(function SearchPage({
                     {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
                       <button key={v} type="button"
                         aria-pressed={optimizeBy === v}
-                        className={`sf-pill ${optimizeBy === v ? "sf-pill--active" : ""}`}
-                        onClick={() => setOptimizeBy(v)} disabled={loading}>{l}</button>
+                        className={`sf-pill fm-switch ${optimizeBy === v ? "sf-pill--active" : ""}`}
+                        onClick={() => { tapHaptic(); setOptimizeBy(v); }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}
                   </div>
                   <div className="sf-hint mt-1">{t("search.optimizeHint")}</div>

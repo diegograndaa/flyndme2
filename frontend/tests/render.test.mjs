@@ -138,6 +138,37 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   assert.ok(html.includes("Rome") || html.includes("ROM"));
 });
 
+test("render: instrumentos de cabina (odómetro, ILS, radar, conmutadores)", async () => {
+  const { Odometer } = await import("../src/components/Odometer.jsx");
+  const { WhoPaysStrip } = await import("../src/components/WinnerCard.jsx");
+  const { default: ConvergenceHero } = await import("../src/components/ConvergenceHero.jsx");
+  const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
+  // Odómetro: el texto accesible es SIEMPRE el valor real (las cintas arrancan
+  // en 0 en el primer frame de cliente y suben hasta él)
+  const odo = renderWithI18n(React.createElement(Odometer, { value: "€104" }));
+  assert.ok(odo.includes('class="odo-sr">€104<'), "texto accesible con el valor real");
+  assert.equal((odo.match(/class="odo-d"/g) || []).length, 3, "una cinta por dígito");
+  assert.ok(odo.includes('aria-hidden="true">€<'), "el símbolo no es una cinta");
+  // ILS: un diamante por origen, eje en la media, sin torre hasta tocar
+  const ils = renderWithI18n(React.createElement(WhoPaysStrip, { dest: FIXTURE_DEST, currency: "EUR" }));
+  assert.equal((ils.match(/wc-ils-diamond/g) || []).length, 2);
+  assert.ok(ils.includes("translateX(-42.00%)") && ils.includes("translateX(42.00%)"), "MAD por debajo y LON por encima de la media");
+  assert.ok(!ils.includes('class="wc-twr'), "la torre solo aparece al tocar una fila");
+  // Radar: tres aeropuertos pulsables con distancia y tiempo estimado
+  const hero = renderWithI18n(React.createElement(ConvergenceHero, { idSuffix: "-t" }));
+  assert.equal((hero.match(/class="cv-hit"/g) || []).length, 3);
+  assert.ok(hero.includes("cv-sweep") && (hero.match(/cv-ping/g) || []).length === 3);
+  assert.ok(/km/.test(hero), "la etiqueta accesible incluye los km");
+  // Conmutadores: criterio con micro-LED y ruta pulsable (cerrada) con estrobo
+  const noop = () => {};
+  const card = renderWithI18n(React.createElement(WinnerCard, {
+    dest: FIXTURE_DEST, origins: ["MAD", "LON"], departureDate: "2026-09-15", tripType: "oneway",
+    currency: "EUR", uiCriterion: "total", onChangeCriterion: noop, flightsCount: 2,
+  }));
+  assert.equal((card.match(/class="fm-led"/g) || []).length, 2);
+  assert.ok(card.includes('aria-expanded="false"') && card.includes("wc-strobe"));
+});
+
 test("render: Landing extraída renderiza con CTAs", async () => {
   const { default: Landing } = await import("../src/components/Landing.jsx");
   const html = renderWithI18n(React.createElement(Landing, {

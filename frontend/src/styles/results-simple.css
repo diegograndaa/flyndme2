@@ -49,7 +49,6 @@
 }
 
 /* Franja resumen: navy del sistema (gradiente definido en App.css) */
-.wc-card .wc-summary.wc-summary { border-radius: 0; }
 
 /* Cuerpo en superficie */
 .wc-card .wc-body.wc-body {
@@ -78,8 +77,6 @@
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
 }
-.wc-card .wc-booking-title { color: var(--navy); }
-.wc-card .wc-booking-sub   { color: var(--slate-500); }
 
 .wc-card .wc-flight-card.wc-flight-card {
   background: var(--white);

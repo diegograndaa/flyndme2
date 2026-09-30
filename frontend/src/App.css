@@ -1248,76 +1248,10 @@ body {
 
 /* ── Summary strip (dark) ──────────────────────────────────────── */
 
-.wc-summary {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: linear-gradient(135deg, #1A1A1A 0%, #25282F 100%);
-  /* Fondo navy fijo en ambos temas: el texto debe ser blanco literal
-     (var(--white) se invierte en dark y dejaba el total ilegible) */
-  color: #fff;
-  /* La franja es navy SIEMPRE: el anillo de equidad usa los tonos claros
-     de --fair-* en ambos temas (los oscuros AA-sobre-blanco no contrastan) */
-  --fair-high: #52DEA2;
-  --fair-mid:  #7FE0C0;
-  --fair-low:  #FF9F5A;
-  --fair-bad:  #FFB4AB;
-  overflow-x: auto;
-}
-.wc-summary-item {
-  flex: 1;
-  padding: 16px 20px;
-  min-width: 0;
-}
-.wc-summary-divider {
-  width: 1px;
-  align-self: stretch;
-  background: rgba(255,255,255,.15);
-  flex-shrink: 0;
-}
-.wc-summary-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  opacity: .6;
-  margin-bottom: 4px;
-  white-space: nowrap;
-}
-.wc-summary-price {
-  font-size: 24px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: -.3px;
-}
-.wc-summary-price--secondary { font-size: 20px; }
-.wc-summary-date {
-  font-size: 13px;
-  font-weight: 600;
-  opacity: .85;
-  white-space: nowrap;
-}
-
-@media (max-width: 600px) {
-  .wc-summary { flex-wrap: wrap; }
-  .wc-summary-item { flex: 1 1 45%; }
-  .wc-summary-divider { display: none; }
-  .wc-summary-price { font-size: 20px; }
-}
-
 /* ── Body (white background) ── */
 
 .wc-body { padding: 24px 28px 20px; }
 @media (min-width: 768px) { .wc-body { padding: 28px 36px 24px; } }
-
-.wc-criterion-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
 .wc-criterion-pills { display: flex; gap: 6px; }
 .wc-criterion-pill {
   border: 1.5px solid var(--slate-200);
@@ -1352,17 +1286,6 @@ body {
 .wc-booking {
   margin-bottom: 20px;
 }
-.wc-booking-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--navy);
-  margin-bottom: 4px;
-}
-.wc-booking-sub {
-  font-size: 13px;
-  color: var(--slate-500);
-  margin-bottom: 16px;
-}
 .wc-booking-cards {
   display: flex;
   flex-direction: column;
@@ -1386,19 +1309,6 @@ body {
    resultado (la ruta más barata del grupo al destino), en vez de resaltar
    una tarjeta suelta con una etiqueta flotante que se recortaba. Su
    encabezado va fundido en el toggle (.wc-booking-title + .wc-booking-total). ── */
-.wc-route-result--framed {
-  border: 1.5px solid var(--primary);
-  border-radius: var(--radius-md);
-  background: rgba(var(--primary-rgb), .04);
-  padding: 12px;
-}
-.wc-booking-total {
-  margin-left: 2px;
-  font-weight: 900;
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
 
 .wc-flight-route {
   display: flex;
@@ -2007,15 +1917,10 @@ body {
 }
 
 /* Winner card staggered children */
-.wc-summary        { animation: fadeInUp .4s ease .1s both; }
-.wc-criterion-row  { animation: fadeIn   .4s ease .15s both; }
 .wc-booking        { animation: fadeInUp .4s ease .2s both; }
 .wc-actions        { animation: fadeIn   .3s ease .35s both; }
 
 /* Price count-up animation */
-.wc-summary-price.price-animate {
-  animation: countUp .5s ease .2s both;
-}
 
 /* Smooth collapse for breakdown details */
 
@@ -2456,10 +2361,6 @@ html {
   outline-color: var(--white);
 }
 /* Elementos enfocables sobre la franja navy del resumen */
-.wc-summary :focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
 
 /* ── Selection / highlight color ─────────────────────────────── */
 
@@ -2890,17 +2791,6 @@ html {
    Sits in the navy data band between the price summary and "who pays what".
    We only hit SerpAPI when the user clicks, so the default state is a caveat
    + a button, not an auto-verified claim. */
-.wc-verify {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 14px;
-  padding: 11px 26px;
-  background: linear-gradient(135deg, #17191D 0%, #25282F 100%);
-  border-top: 1px solid rgba(255,255,255,.08);
-  color: rgba(255,255,255,.82);
-}
 .wc-verify-caption {
   font-size: 12.5px;
   font-weight: 600;
@@ -2942,9 +2832,6 @@ html {
 .wc-verify-btn:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
-}
-@media (max-width: 600px) {
-  .wc-verify { padding: 11px 16px; }
 }
 
 /* ── CSV export button in stats bar ───────────────────────────── */
@@ -3060,58 +2947,6 @@ html {
 
 /* ── Price breakdown tooltip ──────────────────────────────────── */
 
-.wc-summary-item--tooltip {
-  position: relative;
-  cursor: help;
-}
-.wc-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background: var(--navy);
-  color: white;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s, transform .2s;
-  z-index: 100;
-  box-shadow: var(--shadow-lg);
-}
-.wc-summary-item--tooltip:hover .wc-tooltip,
-.wc-summary-item--tooltip:focus-within .wc-tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-4px);
-  pointer-events: auto;
-}
-.wc-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: var(--navy);
-}
-.wc-tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 2px 0;
-}
-.wc-tooltip-row span:last-child {
-  font-weight: 700;
-}
-[data-theme="dark"] .wc-tooltip {
-  background: #353A43;
-}
-[data-theme="dark"] .wc-tooltip::after {
-  border-top-color: #353A43;
-}
-
 /* ── Traveler summary bar (above submit) ────────────────────── */
 
 .sf-summary-bar {
@@ -3208,48 +3043,8 @@ html {
 }
 
 /* ── Collapsible booking section ────────────────────────────── */
-
-.wc-booking-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 10px 0;
-  background: none;
-  border: none;
-  border-top: 1px solid rgba(255,255,255,.1);
-  color: rgba(255,255,255,.85);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color .2s;
-  margin-top: 8px;
-}
-.wc-booking-toggle:hover {
-  color: white;
-}
-.wc-booking-chevron {
-  display: inline-block;
-  transition: transform .3s ease;
-  font-size: 12px;
-}
 /* OJO: el JSX emite modificadores BEM (--open); el selector compuesto
    ".open" dejó la sección de compra plegada para siempre en prod. */
-.wc-booking-chevron--open {
-  transform: rotate(180deg);
-}
-.wc-booking-collapse {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows .35s ease;
-}
-.wc-booking-collapse--open {
-  grid-template-rows: 1fr;
-}
-.wc-booking-collapse > div {
-  overflow: hidden;
-}
 
 /* ── Alt card chips row ─────────────────────────────────────── */
 
@@ -4342,7 +4137,7 @@ html {
 }
 
 /* Cifras tabulares para los precios (alinean en columnas) */
-.wc-summary-price, .wc-flight-price-tag, .cmp-price {
+.wc-flight-price-tag, .cmp-price {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -4471,22 +4266,6 @@ html {
 }
 
 /* ── Gradient shimmer on summary strip ─────────────────────── */
-
-.wc-summary {
-  position: relative;
-  overflow: hidden;
-}
-.wc-summary::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
-  animation: wc-shimmer 4s ease-in-out infinite;
-  pointer-events: none;
-}
 @keyframes wc-shimmer {
   0%   { left: -50%; }
   50%  { left: 100%; }
@@ -5502,52 +5281,12 @@ html {
   color: rgba(255,255,255,.92);
   white-space: nowrap;
 }
-.wc-fs-track {
-  position: relative;
-  height: 14px;
-  background: rgba(255,255,255,.10);
-  border-radius: 4px;
-}
-.wc-fs-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width .5s cubic-bezier(.16,1,.3,1);
-}
-.wc-fs-avg {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  width: 2px;
-  background: #fff;
-  opacity: .85;
-  transform: translateX(-1px);
-  border-radius: 1px;
-}
 .wc-fs-price {
   font-size: 13px;
   font-weight: 800;
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: #fff;
-}
-.wc-fs-avglabel {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 9px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: rgba(255,255,255,.65);
-}
-.wc-fs-avgtick {
-  display: inline-block;
-  width: 2px;
-  height: 11px;
-  background: rgba(255,255,255,.85);
-  border-radius: 1px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .wc-fs-fill { transition: none; }
 }
 @media (max-width: 600px) {
   .wc-fs { padding: 14px 16px; }

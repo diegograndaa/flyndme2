@@ -1,8 +1,7 @@
 // ─── Componentes presentacionales pequeños ───────────────────────────────────
 // Extraídos de App.jsx (Mejora 17): sin estado de negocio, sin llamadas a red.
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { formatEur } from "../utils/helpers";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { X, AlertCircle } from "lucide-react";
 
@@ -89,30 +88,3 @@ export const FriendlyError = React.memo(function FriendlyError({ message, onRetr
   );
 });
 
-// Contador animado (lo usa AnimatedPrice en WinnerCard)
-export function useCountUp(target, duration = 800, decimals = 0) {
-  const [display, setDisplay] = useState(0);
-  const rafRef = useRef(null);
-  const prevTarget = useRef(0);
-
-  useEffect(() => {
-    const from = prevTarget.current;
-    const to = typeof target === "number" ? target : Number(target || 0);
-    prevTarget.current = to;
-    if (from === to) { setDisplay(to); return; }
-
-    const start = performance.now();
-    const animate = (now) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(from + (to - from) * eased);
-      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [target, duration]);
-
-  return formatEur(display, decimals);
-}
