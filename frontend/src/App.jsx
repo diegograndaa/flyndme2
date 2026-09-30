@@ -25,7 +25,7 @@ import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
-import { FlightHeader, Announcements, DeparturesBoard } from "./components/BoardPanels";
+import { FlightHeader, ZoneHead, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
@@ -468,17 +468,29 @@ export default function App() {
   useEffect(() => {
     const gid = new URLSearchParams(window.location.search).get("group");
     if (!gid) return;
-    fetch(`${API_BASE}/api/groups/${gid}`)
-      .then((res) => { if (!res.ok) throw new Error("Group not found"); return res.json(); })
+    // Con el backend dormido el enlace de invitación decía «caducado» y se
+    // borraba de la URL: ahora se despierta y reintenta, y solo un 404 real
+    // cuenta como caducado (un fallo de red conserva ?group= para recargar).
+    groupFetch(`${API_BASE}/api/groups/${gid}`)
+      .then((res) => {
+        if (res.status === 404) { const e = new Error("Group not found"); e.expired = true; throw e; }
+        if (!res.ok) throw new Error("Group load failed");
+        return res.json();
+      })
       .then((g) => {
         setGroup(g);
         if (g.departureDate) setDepartureDate(g.departureDate);
         if (g.tripType) setTripType(g.tripType);
+        if (g.returnDate) setReturnDate(g.returnDate);
         setView("group");
       })
-      .catch(() => {
-        setToast({ message: t("group.expired"), type: "error" });
-        window.history.replaceState({}, "", window.location.pathname);
+      .catch((err) => {
+        if (err && err.expired) {
+          setToast({ message: t("group.expired"), type: "error" });
+          window.history.replaceState({}, "", window.location.pathname);
+        } else {
+          setToast({ message: t("errors.connection"), type: "error" });
+        }
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -768,6 +780,28 @@ export default function App() {
       await new Promise((r) => setTimeout(r, WAKE_DELAY));
     }
     return false;                    // gave up
+  }
+
+  // Peticiones del plan de grupo: el backend (Render free) se duerme tras unos
+  // minutos sin uso y la primera petición fallaba → «no se pudo crear el
+  // grupo» / «el grupo ha caducado» (falso). Igual que la búsqueda: despertarlo
+  // primero y reintentar ante 502/503/504 o error de red.
+  async function groupFetch(url, opts = {}) {
+    await ensureBackendAwake();
+    let last = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 20000);
+        const res = await fetch(url, { ...opts, signal: ctrl.signal });
+        clearTimeout(timer);
+        if (![502, 503, 504].includes(res.status)) return res;
+        last = res;
+      } catch (err) { last = err; }
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+    if (last instanceof Response) return last;
+    throw last || new Error("network");
   }
 
   // ── Verificación de precio del ganador (capa 2, en segundo plano) ──────────
@@ -1089,10 +1123,11 @@ export default function App() {
     setGroupBusy(true);
     try {
       const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
-      const res = await fetch(`${API_BASE}/api/groups`, {
+      const res = await groupFetch(`${API_BASE}/api/groups`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departureDate, returnDate, tripType, members }),
+        body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
       });
+      if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
       if (!res.ok) throw new Error("create failed");
       const { id } = await res.json();
       setGroup({ id, departureDate, returnDate, tripType, members });
@@ -1112,7 +1147,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members`, {
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(member),
       });
@@ -1130,7 +1165,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
       if (!res.ok) throw new Error("remove failed");
       setGroup(await res.json());
     } catch {
@@ -1145,7 +1180,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}`);
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}`);
       if (res.ok) setGroup(await res.json());
     } catch { /* keep current roster */ }
     finally { setGroupBusy(false); }
@@ -1405,6 +1440,12 @@ export default function App() {
             </div>
           </div>
 
+          {/* ══ 01 · DECISIÓN FINAL ══ Lo que os conviene reservar, separado de
+              la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
+              decisión) + reparto del grupo + siguiente paso. */}
+          <section className="fm-decision" aria-labelledby="fm-decision-title">
+          <ZoneHead id="fm-decision-title" variant="decision" num="01"
+            title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -1432,46 +1473,17 @@ export default function App() {
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
-          {/* ── Avisos: sugerencias accionables en un solo panel (antes: 2-3
-              tarjetas sueltas). Fecha más barata solo si el backend la encontró. */}
-          <Announcements items={[
-            partialResults && { key: "partial", tag: t("board.tagNotice"), text: t("results.partialNotice") },
-            cheaperDate && {
-              key: "date",
-              tag: t("board.tagDate"),
-              text: t("cheaperDate.text", {
+          {/* Fecha más barata para ESTE destino (solo si el backend la encontró) */}
+          {cheaperDate && (
+            <Notice variant="date" tag={t("board.tagDate")}
+              text={t("cheaperDate.text", {
                 date: formatDate(cheaperDate.date),
                 total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
                 saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
-              }),
-              actionLabel: t("cheaperDate.use"),
-              onAction: () => useCheaperDate(cheaperDate.date),
-            },
-            {
-              key: "group",
-              tag: t("board.tagGroup"),
-              text: t("results.groupNudge.title"),
-              actionLabel: t("results.groupNudge.cta"),
-              onAction: createGroup,
-              disabled: groupBusy,
-            },
-          ].filter(Boolean)} />
-
-          {/* ── Salidas: todos los destinos encontrados en un panel de salidas
-              (sustituye podio Top 3 + barra de stats + lista "otras opciones").
-              Pulsar uno lo pone en la tarjeta de embarque y sube a ella. */}
-          <DeparturesBoard
-            flights={flights}
-            current={bestDestination}
-            criterion={uiCriterion}
-            singleOrigin={cleanOrigins.length <= 1}
-            currency={currency}
-            savings={flights.length >= 2 ? Math.max(...flights.map(f => f.totalCostEUR || 0)) - bestDestination.totalCostEUR : 0}
-            onSelect={(dest) => {
-              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
-              setTimeout(() => document.querySelector(".wc-card")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
-            }}
-          />
+              })}
+              actionLabel={t("cheaperDate.use")}
+              onAction={() => useCheaperDate(cheaperDate.date)} />
+          )}
 
           {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
               en un mismo bloque (sin sentido con un solo origen: todos salen de
@@ -1527,6 +1539,43 @@ export default function App() {
           </div>
           )}
 
+          {/* Siguiente paso: convertirlo en plan de grupo (cada uno añade su ciudad) */}
+          <Notice variant="next" tag={t("results.nextStep")}
+            text={t("results.groupNudge.title")}
+            detail={t("results.groupNudge.text")}
+            actionLabel={groupBusy ? t("group.creating") : t("results.groupNudge.cta")}
+            onAction={createGroup}
+            disabled={groupBusy} />
+          </section>
+
+          {/* Troquel: aquí termina la decisión y empieza la exploración */}
+          <div className="fm-zone-perf" aria-hidden="true" />
+
+          {/* ══ 02 · EXPLORAR ALTERNATIVAS ══ Otros destinos, mapa y comparación */}
+          <section className="fm-explore" aria-labelledby="fm-explore-title">
+          <ZoneHead id="fm-explore-title" variant="explore" num="02"
+            title={t("results.exploreTitle")}
+            sub={flights.length > 1 ? t("results.exploreSub") : t("results.exploreSubOne")} />
+          {partialResults && (
+            <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
+          )}
+
+          {/* ── Salidas: todos los destinos encontrados en un panel de salidas
+              (sustituye podio Top 3 + barra de stats + lista "otras opciones").
+              Pulsar uno lo pone en la tarjeta de embarque y sube a ella. */}
+          <DeparturesBoard
+            flights={flights}
+            current={bestDestination}
+            criterion={uiCriterion}
+            singleOrigin={cleanOrigins.length <= 1}
+            currency={currency}
+            savings={flights.length >= 2 ? Math.max(...flights.map(f => f.totalCostEUR || 0)) - bestDestination.totalCostEUR : 0}
+            onSelect={(dest) => {
+              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
+              setTimeout(() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
+            }}
+          />
+
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -1574,7 +1623,7 @@ export default function App() {
                   <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
                     currency={currency}
                     onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))}
-                    onShowCard={() => document.querySelector(".wc-card")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })} />
+                    onShowCard={() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })} />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -1630,6 +1679,7 @@ export default function App() {
               </button>
             </div>
           )}
+          </section>
         </main>
       )}
       </div>{/* /main-content */}

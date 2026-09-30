@@ -298,6 +298,12 @@
     "boardingPass": "Tarjeta de embarque del grupo",
     "boardingMeta": "{{n}} ciudades · 1 punto de encuentro",
     "stampLabel": "Punto de encuentro",
+    "decisionTitle": "Decisión final",
+    "decisionSub": "El destino que más os conviene y todo lo necesario para cerrarlo.",
+    "exploreTitle": "Explorar alternativas",
+    "exploreSub": "Otros destinos, mapa y comparación. Tu tarjeta solo cambia si eliges otro.",
+    "exploreSubOne": "Solo este destino tiene datos para todas vuestras ciudades.",
+    "nextStep": "Siguiente paso",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
     "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
     "copyFlight": "Copiar info del vuelo",
@@ -849,6 +855,8 @@
     "exit": "Volver a la búsqueda individual",
     "needDate": "Elige primero una fecha de salida.",
     "createError": "No se pudo crear el enlace del grupo. Inténtalo de nuevo.",
+    "creating": "Preparando el embarque…",
+    "rateLimited": "Has creado muchos grupos seguidos. Espera unos minutos y vuelve a intentarlo.",
     "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
     "expired": "Este enlace de grupo ha caducado."
   }

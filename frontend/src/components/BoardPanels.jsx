@@ -1,8 +1,11 @@
 // ─── BoardPanels ─────────────────────────────────────────────────────────────
 // Bloques de la vista de resultados con la identidad "terminal de aeropuerto"
-// (sep-2026). Sustituyen a la pila de paneles sueltos por 3 piezas claras:
+// (sep-2026). La vista se ordena en DOS zonas (01 Decisión · 02 Explorar):
 //   · FlightHeader     → cabecera del vuelo del grupo (antes: migas + resumen)
-//   · Announcements    → "Avisos": fecha más barata, plan de grupo, parciales
+//   · ZoneHead         → cabecera de cada zona (01 decisión final / 02 explorar)
+//   · Notice           → aviso en línea donde importa: fecha más barata bajo la
+//                        tarjeta, plan de grupo como "siguiente paso",
+//                        resultados parciales sobre las alternativas
 //   · DeparturesBoard  → "Salidas": todos los destinos encontrados, clicables
 //                        (antes: podio Top 3 + barra de stats + lista aparte)
 // Presentacionales puros (reciben props, emiten eventos). Datos 100% reales:
@@ -63,35 +66,42 @@ export const FlightHeader = React.memo(function FlightHeader({
   );
 });
 
-/**
- * Avisos: un solo panel con las sugerencias accionables.
- * items: [{ key, tag, text, actionLabel?, onAction?, disabled? }]
- */
-export const Announcements = React.memo(function Announcements({ items = [] }) {
-  const { t } = useI18n();
-  if (!items.length) return null;
+/** Cabecera de zona: 01 Decisión final · 02 Explorar alternativas */
+export function ZoneHead({ id, num, title, sub, variant = "explore" }) {
   return (
-    <section className="fm-announce" aria-label={t("board.announcements")}>
-      <div className="fm-announce-head">
-        <span className="fm-announce-dot" aria-hidden="true" />
-        <span className="fm-board-label">{t("board.announcements")}</span>
+    <div className={`fm-zone-head fm-zone-head--${variant}`}>
+      <span className="fm-zone-num" aria-hidden="true">{num}</span>
+      <div className="fm-zone-text">
+        <h2 id={id} className="fm-zone-title">{title}</h2>
+        {sub && <p className="fm-zone-sub">{sub}</p>}
       </div>
-      <ul className="fm-announce-list">
-        {items.map((it) => (
-          <li key={it.key} className="fm-announce-item">
-            <span className="fm-announce-tag">{it.tag}</span>
-            <span className="fm-announce-text">{it.text}</span>
-            {it.actionLabel && it.onAction && (
-              <button type="button" className="fm-announce-btn" onClick={it.onAction} disabled={it.disabled}>
-                {it.actionLabel}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </section>
+    </div>
   );
-});
+}
+
+/**
+ * Aviso en línea, colocado junto a lo que afecta (no en un panel aparte).
+ * variant: date | next | partial
+ */
+export function Notice({ tag, text, detail, actionLabel, onAction, disabled, variant = "date" }) {
+  return (
+    <div className={`fm-notice fm-notice--${variant}`} role={variant === "partial" ? "status" : undefined}>
+      <span className="fm-notice-tag">
+        <span className="fm-announce-dot" aria-hidden="true" />
+        {tag}
+      </span>
+      <div className="fm-notice-body">
+        <span className="fm-notice-text">{text}</span>
+        {detail && <span className="fm-notice-detail">{detail}</span>}
+      </div>
+      {actionLabel && onAction && (
+        <button type="button" className="fm-notice-btn" onClick={onAction} disabled={disabled}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
 
 /**
  * Panel de salidas: todos los destinos encontrados, ordenados por el criterio

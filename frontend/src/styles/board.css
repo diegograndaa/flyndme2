@@ -767,69 +767,13 @@
 .fm-flight-head-btn:hover { background: var(--panel-hover); border-color: var(--panel-line); transform: translateY(-1px); }
 .fm-flight-head-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Avisos: un único panel con etiqueta ámbar tipo "información de vuelo" */
-.fm-announce {
-  margin: 18px 0;
-  padding: 14px 18px 6px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-left: 4px solid var(--sign);
-  border-radius: var(--radius-md);
-}
-.fm-announce-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.fm-announce .fm-board-label { color: var(--slate-500); }
+/* Punto de aviso (baliza): lo usan los avisos en línea (.fm-notice) */
 .fm-announce-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--sign);
   box-shadow: none;
   animation: board-blink 1.4s steps(2, jump-none) infinite;
-}
-.fm-announce-list { list-style: none; margin: 0; padding: 0; }
-.fm-announce-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-top: 1px dashed var(--slate-200);
-}
-.fm-announce-item:first-child { border-top: none; }
-.fm-announce-tag {
-  flex: 0 0 auto;
-  min-width: 58px;
-  padding: 3px 8px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--sign);
-  background: #1A1A1A;
-  border-radius: 4px;
-}
-[data-theme="dark"] .fm-announce-tag { color: var(--sign); background: rgba(var(--sign-rgb),.12); box-shadow: inset 0 0 0 1px rgba(var(--sign-rgb),.35); }
-.fm-announce-text { flex: 1 1 auto; min-width: 0; font-size: 14px; color: var(--navy); line-height: 1.45; }
-.fm-announce-btn {
-  flex: 0 0 auto;
-  padding: 7px 14px;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: transform .18s var(--ease-out-expo), opacity .2s ease;
-}
-[data-theme="dark"] .fm-announce-btn { color: #1A1A1A; }
-.fm-announce-btn:hover:not(:disabled) { transform: translateY(-1px); }
-.fm-announce-btn:active:not(:disabled) { transform: scale(.97); }
-.fm-announce-btn:disabled { opacity: .55; }
-@media (max-width: 600px) {
-  .fm-announce-item { flex-wrap: wrap; row-gap: 8px; }
-  .fm-announce-text { flex-basis: calc(100% - 70px); }
-  .fm-announce-btn { margin-left: 70px; }
 }
 
 /* Panel de salidas (la pieza estrella: navy fijo, tinta blanca/ámbar) */
@@ -1060,7 +1004,7 @@
 [data-theme="dark"] .fm-error-state.fm-error-state { background: var(--panel-bg); }
 
 @media (prefers-reduced-motion: reduce) {
-  .fm-flight-head, .fm-board-rows > li, .fm-announce-dot, .gp .gp-member { animation: none !important; }
+  .fm-flight-head, .fm-board-rows > li, .fm-announce-dot, .gp .gp-member, .fm-decision { animation: none !important; }
 }
 
 /* ══ 14. Tema coherente: la tarjeta y los paneles siguen al tema ════════ */
@@ -1178,9 +1122,7 @@
 .fm-split-card.fm-split-card,
 .fm-quick-research.fm-quick-research,
 .fm-plan-trip.fm-plan-trip,
-.fm-announce.fm-announce,
 .gp.gp { border: 1px solid var(--line); box-shadow: none; }
-.fm-announce.fm-announce { border-left: 4px solid var(--sign); }
 .sf-section.sf-section { border: 1px solid var(--line); }
 .wc-card .wc-booking.wc-booking,
 .wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
@@ -1219,7 +1161,7 @@ button,
 .fm-board-row,
 .fm-currency-btn,
 .fm-split-pill,
-.fm-announce-btn,
+.fm-notice-btn,
 .fm-flight-head-origins,
 .gp-ac-item,
 .lp-faq-q,
@@ -1275,12 +1217,12 @@ button,
   border-color: var(--sign) !important;
   box-shadow: none !important;
 }
-[data-theme="dark"] :is(.fm-announce-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
   background: transparent;
   color: var(--sign);
   border: 1px solid rgba(var(--sign-rgb), .7);
 }
-[data-theme="dark"] :is(.fm-announce-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
   background: rgba(var(--sign-rgb), .12);
   color: var(--sign);
   filter: none;
@@ -1815,4 +1757,121 @@ button,
 .fm-pwa-card-cta:focus-visible, .fm-pwa-card-close:focus-visible { outline: 2px solid var(--sign); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .fm-pwa-card, .fm-offline { animation: none; }
+}
+
+/* ══ 22. Resultados en dos zonas: 01 DECISIÓN FINAL · 02 EXPLORAR ════════
+   La decisión va en un "mostrador" propio (fondo y marco más marcados, el
+   01 en cartel amarillo) y se separa de la exploración con un troquel de
+   billete. La exploración queda en segundo plano: cabecera en contorno.   */
+.fm-decision {
+  --decision-bg: #ECE7DD;
+  --decision-line: #1A1A1A;
+  position: relative;
+  margin: 4px 0 0;
+  padding: 16px 16px 16px;
+  background: var(--decision-bg);
+  border: 2px solid var(--decision-line);
+  border-radius: 10px;
+  scroll-margin-top: 76px;
+  animation: board-rise .55s var(--ease-out-expo) backwards;
+}
+[data-theme="dark"] .fm-decision {
+  --decision-bg: #0D0E11;
+  --decision-line: rgba(255,194,14,.7);
+}
+.fm-decision .wc-card.wc-card { margin: 0; }
+.fm-decision .fm-group-block { margin: 14px 0 0; }
+.fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 14px; }
+.fm-zone-num {
+  flex: 0 0 auto;
+  display: inline-grid; place-items: center;
+  min-width: 38px; height: 30px; padding: 0 7px;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 800; letter-spacing: .02em;
+  border-radius: 4px;
+}
+.fm-zone-head--decision .fm-zone-num { background: var(--sign); color: #1A1A1A; box-shadow: inset 0 0 0 1.5px #1A1A1A; }
+.fm-zone-head--explore .fm-zone-num { background: transparent; color: var(--slate-500); box-shadow: inset 0 0 0 1.5px var(--slate-300); }
+.fm-zone-text { min-width: 0; }
+.fm-zone-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  line-height: 1.3;
+}
+.fm-zone-head--decision .fm-zone-title { color: var(--navy); }
+.fm-zone-head--explore .fm-zone-title { color: var(--slate-500); }
+.fm-zone-sub { margin: 3px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--slate-500); }
+.fm-zone-head--decision .fm-zone-sub { color: var(--slate-700); }
+
+/* Troquel entre zonas: línea perforada con muescas del color de página */
+.fm-zone-perf {
+  position: relative;
+  height: 2px;
+  margin: 30px 8px 26px;
+  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
+  background-size: 12px 2px;
+}
+.fm-zone-perf::before,
+.fm-zone-perf::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--slate-300);
+}
+.fm-zone-perf::before { left: -16px; }
+.fm-zone-perf::after { right: -16px; }
+
+.fm-explore .fm-board { margin-top: 12px; }
+.fm-explore > .fm-notice { margin-bottom: 12px; }
+
+/* Avisos en línea (junto a lo que afectan) */
+.fm-notice {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--sign);
+  border-radius: var(--radius-md);
+}
+.fm-notice-tag {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 8px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--sign); background: #1A1A1A;
+  border-radius: 4px;
+}
+.fm-notice-tag .fm-announce-dot { width: 6px; height: 6px; box-shadow: none; }
+[data-theme="dark"] .fm-notice-tag { background: rgba(var(--sign-rgb), .12); box-shadow: inset 0 0 0 1px rgba(var(--sign-rgb), .35); }
+.fm-notice-body { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fm-notice-text { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+.fm-notice-detail { font-size: 12.5px; color: var(--slate-500); line-height: 1.45; }
+.fm-notice-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: var(--primary); color: var(--on-primary);
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+  transition: transform .18s var(--ease-out-expo), opacity .2s ease;
+}
+:root:not([data-theme="dark"]) .fm-notice-btn { color: #FFFFFF; }
+.fm-notice-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.fm-notice-btn:active:not(:disabled) { transform: scale(.97); }
+.fm-notice-btn:disabled { opacity: .6; cursor: progress; }
+.fm-notice--partial { border-left-color: var(--slate-400); }
+.fm-notice--partial .fm-notice-text { font-weight: 500; font-size: 13px; }
+@media (max-width: 600px) {
+  .fm-decision { padding: 12px 10px 12px; border-radius: 8px; }
+  .fm-zone-head { gap: 10px; }
+  .fm-zone-title { font-size: 13.5px; letter-spacing: .12em; }
+  .fm-notice-btn { width: 100%; }
+  .fm-zone-perf { margin: 24px 6px 20px; }
 }

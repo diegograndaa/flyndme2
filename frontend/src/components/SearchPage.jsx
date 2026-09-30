@@ -710,7 +710,7 @@ const SearchPage = React.memo(function SearchPage({
               </button>
               {onCreateGroup && (
                 <button type="button" className="sf-group-cta" onClick={onCreateGroup} disabled={loading || groupBusy}>
-                  <Users size={16} className="lucide" /> {t("group.cta")}
+                  <Users size={16} className="lucide" /> {groupBusy ? t("group.creating") : t("group.cta")}
                 </button>
               )}
             </div>

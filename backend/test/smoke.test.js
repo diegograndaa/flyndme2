@@ -11,6 +11,14 @@ const assert = require("node:assert/strict");
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 
+// Fechas relativas a HOY: la API rechaza fechas pasadas (y a más de 360 días),
+// así que las fechas fijas caducaban con el calendario (en sep-2026 fallaban
+// varios tests solo por eso). Los offsets conservan las diferencias originales.
+const DAY_MS = 86_400_000;
+function futureDate(days) {
+  return new Date(Date.now() + days * DAY_MS).toISOString().slice(0, 10);
+}
+
 const PORT = 5099;
 const BASE = `http://localhost:${PORT}`;
 
@@ -93,7 +101,7 @@ test("search: multi-pax math is coherent", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON", "BER"],
     passengers: [1, 2, 1],
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     tripType: "oneway",
     optimizeBy: "total",
   });
@@ -127,7 +135,7 @@ test("search: verification fields are populated on winner", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON"],
     passengers: [1, 1],
-    departureDate: "2026-09-20",
+    departureDate: futureDate(49),
     tripType: "oneway",
   });
   assert.equal(r.status, 200);
@@ -141,10 +149,10 @@ test("search: verification fields are populated on winner", async () => {
 
 test("search: validation errors return proper codes", async () => {
   const cases = [
-    { body: { departureDate: "2026-09-15" },                                                    code: "MISSING_ORIGINS" },
-    { body: { origins: ["WRONG"], departureDate: "2026-09-15" },                                code: "INVALID_ORIGINS" },
-    { body: { origins: ["MAD","LON"], passengers: "bad", departureDate: "2026-09-15" },         code: "INVALID_PASSENGERS" },
-    { body: { origins: ["MAD","LON","BER"], passengers: [9,9,9], departureDate: "2026-09-15" }, code: "TOO_MANY_PASSENGERS" },
+    { body: { departureDate: futureDate(44) },                                                    code: "MISSING_ORIGINS" },
+    { body: { origins: ["WRONG"], departureDate: futureDate(44) },                                code: "INVALID_ORIGINS" },
+    { body: { origins: ["MAD","LON"], passengers: "bad", departureDate: futureDate(44) },         code: "INVALID_PASSENGERS" },
+    { body: { origins: ["MAD","LON","BER"], passengers: [9,9,9], departureDate: futureDate(44) }, code: "TOO_MANY_PASSENGERS" },
     { body: { origins: ["MAD"], departureDate: "not-a-date" },                                  code: "INVALID_DEPARTURE_DATE" },
   ];
   for (const c of cases) {
@@ -157,7 +165,7 @@ test("search: validation errors return proper codes", async () => {
 test("search: missing passengers defaults to 1 per origin", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "BCN"],
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     tripType: "oneway",
   });
   assert.equal(r.status, 200);
@@ -170,7 +178,7 @@ test("cache: identical request returns identical payload", async () => {
   const body = {
     origins: ["MAD", "LON"],
     passengers: [1, 1],
-    departureDate: "2026-10-20",
+    departureDate: futureDate(79),
     tripType: "oneway",
     optimizeBy: "total",
   };
@@ -182,7 +190,7 @@ test("cache: identical request returns identical payload", async () => {
 test("cache key includes pax: different pax → different totals", async () => {
   const base = {
     origins: ["MAD", "LON"],
-    departureDate: "2026-10-22",
+    departureDate: futureDate(81),
     tripType: "oneway",
     optimizeBy: "total",
   };
@@ -198,7 +206,7 @@ test("share: roundtrip preserves pax-aware totals", async () => {
   const search = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON", "BER"],
     passengers: [1, 2, 1],
-    departureDate: "2026-11-10",
+    departureDate: futureDate(100),
     tripType: "oneway",
   });
   assert.equal(search.status, 200);
@@ -208,7 +216,7 @@ test("share: roundtrip preserves pax-aware totals", async () => {
     searchParams: {
       origins: ["MAD","LON","BER"],
       passengers: [1,2,1],
-      departureDate: "2026-11-10",
+      departureDate: futureDate(100),
       tripType: "oneway",
     },
   });
@@ -225,7 +233,7 @@ test("OG meta tags count actual pax, not origins", async () => {
   const search = await post("/api/flights/multi-origin", {
     origins: ["MAD","LON","BER"],
     passengers: [1, 2, 1],
-    departureDate: "2026-11-12",
+    departureDate: futureDate(102),
     tripType: "oneway",
   });
   const created = await post("/api/share", {
@@ -233,7 +241,7 @@ test("OG meta tags count actual pax, not origins", async () => {
     searchParams: {
       origins: ["MAD","LON","BER"],
       passengers: [1,2,1],
-      departureDate: "2026-11-12",
+      departureDate: futureDate(102),
       tripType: "oneway",
     },
   });
@@ -263,7 +271,7 @@ test("OG meta tags count actual pax, not origins", async () => {
 test("groups: create → read → add member → remove member round-trip", async () => {
   // create with the organizer as the first member
   const created = await post("/api/groups", {
-    departureDate: "2026-11-12",
+    departureDate: futureDate(102),
     tripType: "oneway",
     members: [{ origin: "MAD", passengers: 1, name: "Org" }],
   });
@@ -274,7 +282,7 @@ test("groups: create → read → add member → remove member round-trip", asyn
   // read reflects the seed
   let read = await get(`/api/groups/${id}`);
   assert.equal(read.status, 200);
-  assert.equal(read.body.departureDate, "2026-11-12");
+  assert.equal(read.body.departureDate, futureDate(102));
   assert.equal(read.body.tripType, "oneway");
   assert.equal(read.body.members.length, 1);
   assert.equal(read.body.members[0].origin, "MAD");
@@ -294,6 +302,20 @@ test("groups: create → read → add member → remove member round-trip", asyn
   assert.equal(delBody.members[0].origin, "LON");
 });
 
+test("CORS: el preflight permite DELETE (quitar un pasajero del grupo)", async () => {
+  const r = await fetch(`${BASE}/api/groups/abcd1234/members/0`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://flyndme2.vercel.app",
+      "Access-Control-Request-Method": "DELETE",
+      "Access-Control-Request-Headers": "content-type",
+    },
+  });
+  assert.ok(r.status === 204 || r.status === 200, `preflight status ${r.status}`);
+  const allowed = (r.headers.get("access-control-allow-methods") || "").toUpperCase();
+  assert.ok(allowed.includes("DELETE"), `allow-methods: ${allowed}`);
+});
+
 test("groups: rejects a bad date on create", async () => {
   const r = await post("/api/groups", { departureDate: "12/11/2026", tripType: "oneway" });
   assert.equal(r.status, 400);
@@ -308,14 +330,14 @@ test("groups: unknown id is 404 on read and on join", async () => {
 });
 
 test("groups: member without an origin is rejected", async () => {
-  const created = await post("/api/groups", { departureDate: "2026-11-12" });
+  const created = await post("/api/groups", { departureDate: futureDate(102) });
   const r = await post(`/api/groups/${created.body.id}/members`, { passengers: 2 });
   assert.equal(r.status, 400);
   assert.equal(r.body.code, "INVALID_MEMBER");
 });
 
 test("groups: enforces the 9-traveler ceiling", async () => {
-  const created = await post("/api/groups", { departureDate: "2026-11-12" });
+  const created = await post("/api/groups", { departureDate: futureDate(102) });
   const id = created.body.id;
   for (let i = 0; i < 9; i++) {
     const r = await post(`/api/groups/${id}/members`, { origin: `C${i}` });
@@ -339,11 +361,11 @@ test("metrics: el loop de distribución se contabiliza en /api/health", async ()
 
   // share_created + share_landing
   const search = await post("/api/flights/multi-origin", {
-    origins: ["MAD", "LON"], passengers: [1, 1], departureDate: "2026-11-15", tripType: "oneway",
+    origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(105), tripType: "oneway",
   });
   const created = await post("/api/share", {
     results: search.body,
-    searchParams: { origins: ["MAD", "LON"], passengers: [1, 1], departureDate: "2026-11-15", tripType: "oneway" },
+    searchParams: { origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(105), tripType: "oneway" },
   });
   assert.equal(created.status, 200);
   const land = await get(`/api/share/${created.body.id}`); // un landing real
@@ -351,7 +373,7 @@ test("metrics: el loop de distribución se contabiliza en /api/health", async ()
 
   // group_created + group_landing + group_member_added
   const g = await post("/api/groups", {
-    departureDate: "2026-11-15", tripType: "oneway", members: [{ origin: "MAD" }],
+    departureDate: futureDate(105), tripType: "oneway", members: [{ origin: "MAD" }],
   });
   assert.equal(g.status, 200);
   await get(`/api/groups/${g.body.id}`);                          // un landing
@@ -367,7 +389,7 @@ test("metrics: el loop de distribución se contabiliza en /api/health", async ()
 
 test("groups: /og expone meta de invitación que apuntan a la tarjeta dinámica de grupo", async () => {
   const created = await post("/api/groups", {
-    departureDate: "2026-11-20", tripType: "oneway",
+    departureDate: futureDate(110), tripType: "oneway",
     members: [{ origin: "MAD" }, { origin: "LON" }],
   });
   assert.equal(created.status, 200);
@@ -451,7 +473,7 @@ test("tiering: custom destinations bypass tier fallback", async () => {
     origins: ["MAD", "BCN"],
     passengers: [1, 1],
     destinations: ["ROM", "LIS", "ATH"],
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     tripType: "oneway",
   });
   assert.equal(r.status, 200);
@@ -486,7 +508,7 @@ test("share: id con formato invalido → 404 sin tocar el store", async () => {
 test("share: la creacion esta rate-limited (RATE_LIMITED tras el limite)", async () => {
   const payload = {
     results: { flights: [] },
-    searchParams: { origins: ["MAD"], departureDate: "2026-12-01" },
+    searchParams: { origins: ["MAD"], departureDate: futureDate(121) },
   };
   let limited = null;
   // El limite por defecto es 20/10min/IP y los tests anteriores ya crearon
@@ -503,7 +525,7 @@ test("share: la creacion esta rate-limited (RATE_LIMITED tras el limite)", async
 test("validacion: travelClass invalida → 400 INVALID_TRAVEL_CLASS", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON"],
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     travelClass: "LUXURY",
   });
   assert.equal(r.status, 400);
@@ -513,7 +535,7 @@ test("validacion: travelClass invalida → 400 INVALID_TRAVEL_CLASS", async () =
 test("validacion: travelClass valida en minusculas se acepta", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON"],
-    departureDate: "2026-09-16",
+    departureDate: futureDate(45),
     travelClass: "business",
   });
   assert.equal(r.status, 200);
@@ -552,7 +574,7 @@ test("validacion: rango flex no genera fechas pasadas (salida hoy + flex)", asyn
 test("cache: destinos equivalentes sin normalizar comparten entrada de cache", async () => {
   const base = {
     origins: ["MAD", "LON"],
-    departureDate: "2026-10-25",
+    departureDate: futureDate(84),
     tripType: "oneway",
   };
   const r1 = await post("/api/flights/multi-origin", { ...base, destinations: ["ROM", "LIS"] });
@@ -612,7 +634,7 @@ test("presupuesto temporal: busqueda lenta devuelve 200 con partial=true sin cac
     }
     const body = {
       origins: ["MAD", "LON"],
-      departureDate: "2026-09-22",
+      departureDate: futureDate(51),
       tripType: "oneway",
     };
     const res = await fetch("http://localhost:5096/api/flights/multi-origin", {
@@ -641,7 +663,7 @@ test("presupuesto temporal: busqueda lenta devuelve 200 con partial=true sin cac
 test("presupuesto temporal: busqueda normal lleva partial=false", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "LON"],
-    departureDate: "2026-09-23",
+    departureDate: futureDate(52),
     tripType: "oneway",
   });
   assert.equal(r.status, 200);
@@ -653,14 +675,14 @@ test("cheaper-date: devuelve una fecha mas barata con forma valida (total forzad
     origins: ["MAD", "LON", "BER"],
     passengers: [1, 1, 1],
     destination: "PAR",
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     tripType: "oneway",
     currentTotalEUR: 99999, // fuerza que cualquier fecha de la ventana ahorre
   });
   assert.equal(r.status, 200);
   const b = r.body.betterDate;
   assert.ok(b, "deberia sugerir una fecha mas barata");
-  assert.notEqual(b.date, "2026-09-15", "no sugiere la misma fecha");
+  assert.notEqual(b.date, futureDate(44), "no sugiere la misma fecha");
   assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(b.date), "fecha ISO");
   assert.ok(b.savingEUR > 0 && b.totalEUR > 0, "ahorro y total positivos");
   assert.equal(b.perOrigin.length, 3, "desglose por los 3 origenes");
@@ -674,7 +696,7 @@ test("cheaper-date: roundtrip no soportado en v1 (betterDate=null)", async () =>
   const r = await post("/api/flights/cheaper-date", {
     origins: ["MAD", "LON"],
     destination: "PAR",
-    departureDate: "2026-09-15",
+    departureDate: futureDate(44),
     tripType: "roundtrip",
     currentTotalEUR: 400,
   });

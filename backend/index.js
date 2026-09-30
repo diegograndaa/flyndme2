@@ -164,7 +164,10 @@ app.use(
           }
           cb(new Error(`CORS: origin '${origin}' not allowed`));
         },
-    methods: ["GET", "POST", "OPTIONS"],
+    // DELETE: quitar un pasajero de un grupo (DELETE /api/groups/:id/members/:i).
+    // Sin él, el preflight del navegador lo bloqueaba en prod (Node no hace
+    // preflight, por eso el smoke test no lo veía).
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
 );

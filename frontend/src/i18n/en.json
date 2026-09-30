@@ -298,6 +298,12 @@
     "boardingPass": "Group boarding pass",
     "boardingMeta": "{{n}} cities · 1 meeting point",
     "stampLabel": "Meeting point",
+    "decisionTitle": "Final decision",
+    "decisionSub": "The destination that suits you best and everything you need to close it.",
+    "exploreTitle": "Explore alternatives",
+    "exploreSub": "Other destinations, map and comparison. Your pass only changes if you pick another.",
+    "exploreSubOne": "Only this destination has data for all your cities.",
+    "nextStep": "Next step",
     "vsLastCheaper": "{{pct}}% cheaper than last search",
     "vsLastPricier": "{{pct}}% pricier than last search",
     "copyFlight": "Copy flight info",
@@ -849,6 +855,8 @@
     "exit": "Back to single search",
     "needDate": "Pick a departure date first.",
     "createError": "Couldn't create the group link. Try again.",
+    "creating": "Preparing boarding…",
+    "rateLimited": "You've created several groups in a row. Wait a few minutes and try again.",
     "addError": "Couldn't update the group. Try again.",
     "expired": "This group link has expired."
   }
