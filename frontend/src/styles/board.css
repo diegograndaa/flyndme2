@@ -1172,3 +1172,52 @@
 .fm-split-grid .fm-split-row.fm-split-row:last-child { border-bottom: none; }
 /* Iconos circulares puntuales se mantienen redondos (avatares, puntos) */
 .fm-split-avatar, .fm-announce-dot, .fm-searching-board-dot, .cv-dest-dot { border-radius: 50%; }
+
+/* ══ 17. PWA: pulido táctil nativo ═══════════════════════════════════════
+   Sin rebote de scroll, sin resaltado azul al tocar, sin selección de texto
+   en controles de navegación y márgenes seguros del dispositivo (notch,
+   barra de gestos; requiere viewport-fit=cover en index.html). */
+html, body { overscroll-behavior-y: contain; }
+html { -webkit-tap-highlight-color: transparent; }
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+button,
+[role="button"],
+.app-logo,
+.sf-pill,
+.sf-pills,
+.sf-airport-item,
+.sf-airport-code,
+.sf-summary-chip,
+.sf-recent-chip,
+.wc-criterion-pill,
+.wc-action-btn,
+.wc-cta,
+.rv-tab,
+.fm-board-row,
+.fm-currency-btn,
+.fm-split-pill,
+.fm-announce-btn,
+.fm-flight-head-origins,
+.gp-ac-item,
+.lp-faq-q,
+.flap {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Márgenes seguros */
+.app-header.app-header { padding-top: calc(12px + env(safe-area-inset-top)); }
+.app-footer.app-footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.pwa-banner { padding-bottom: env(safe-area-inset-bottom); }
+.fm-searching-dock { bottom: calc(18px + env(safe-area-inset-bottom)); }
+.fm-toast { bottom: calc(28px + env(safe-area-inset-bottom)); }
+.scroll-top-btn { bottom: calc(24px + env(safe-area-inset-bottom)); }
+.fm-fav-panel { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+@media (max-width: 767.98px) {
+  .sf-airports.sf-airports { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+/* Cabecera en papel (antes blanco puro) */
+:root:not([data-theme="dark"]) .app-header.app-header { background: rgba(251,249,245,.94); }

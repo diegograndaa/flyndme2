@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="google" content="notranslate" />
     <meta name="theme-color" content="#F5F3EF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)" />
@@ -48,7 +48,10 @@
 
     <!-- PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "default": barra de estado opaca con texto oscuro (con black-translucent el
+         texto blanco del sistema no se leía sobre el crema del tema claro). -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="FlyndMe" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="/manifest.json" />
 
