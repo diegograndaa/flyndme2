@@ -138,8 +138,6 @@ export const LoadingTips = React.memo(function LoadingTips() {
   );
 });
 
-export const AIRLINE_LOGOS = {};
-
 export const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] }) {
   const { t } = useI18n();
   const steps = t("loading.steps") || ["Searching", "Comparing", "Preparing"];

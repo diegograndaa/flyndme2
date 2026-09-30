@@ -2,7 +2,7 @@
    Tema Stitch de la vista de resultados: tarjetas blancas sobre fondo
    lavanda, primario granate (--primary), CTA coral (--coral), azul
    secundario (--secondary) y verde (--accent) para scores de equidad.
-   Importado desde WinnerCard.jsx y FlightResults.jsx; sobreescribe
+   Importado desde WinnerCard.jsx; sobreescribe
    App.css con selectores doblados (sin !important). Usa los tokens de
    :root, así que el modo oscuro hereda automáticamente.               */
 
@@ -141,179 +141,12 @@
 }
 .wc-card .wc-disclaimer { color: var(--slate-500); }
 
-/* ─── Lista de alternativas (altl-*) ─────────────────────────────────────── */
-
-.altl-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.altl-row {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  transition: border-color .15s ease, box-shadow .2s ease;
-  /* Entrada escalonada al pintar la lista (reveal de resultados) */
-  animation: altl-in .34s cubic-bezier(.22,1,.36,1) both;
-}
-.altl-row:hover {
-  border-color: var(--slate-300);
-  box-shadow: var(--shadow-md);
-}
-.altl-row--open { border-color: var(--primary); box-shadow: var(--shadow-sm); }
-.altl-main:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: -2px;
-  border-radius: var(--radius-md);
-}
-
-/* Stagger: cada fila entra un pelín después que la anterior (tope a la 8ª) */
-.altl-row:nth-child(1) { animation-delay: .03s; }
-.altl-row:nth-child(2) { animation-delay: .07s; }
-.altl-row:nth-child(3) { animation-delay: .11s; }
-.altl-row:nth-child(4) { animation-delay: .15s; }
-.altl-row:nth-child(5) { animation-delay: .19s; }
-.altl-row:nth-child(6) { animation-delay: .23s; }
-.altl-row:nth-child(7) { animation-delay: .27s; }
-.altl-row:nth-child(n+8) { animation-delay: .3s; }
-@keyframes altl-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .altl-row { animation: none; }
-}
-
-.altl-main {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 12px 16px 12px 12px;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: var(--navy);
-}
-
-/* Miniatura de ciudad */
-.altl-thumb {
-  flex: 0 0 auto;
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  background: var(--slate-100);
-  display: block;
-  /* borde interior sutil: define la miniatura sobre fondos claros */
-  box-shadow: inset 0 0 0 1px rgba(0,0,0, .06);
-}
-/* Sin foto → bloque con gradiente de marca + código (se ve intencionado) */
-.altl-thumb--placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  color: var(--primary);
-  font-size: .82rem;
-  letter-spacing: .04em;
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--slate-100) 100%);
-}
-
-.altl-rank {
-  flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--slate-100);
-  border: none;
-  color: var(--slate-700); /* AA sobre lavanda */
-  font-size: .78rem;
-  font-weight: 700;
-}
-
-.altl-dest { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.altl-city { font-weight: 700; font-size: .98rem; }
-.altl-sub  { color: var(--slate-500); font-size: .78rem; }
-
-.altl-fair { flex: 0 0 auto; font-weight: 800; font-size: .88rem; color: var(--accent-dark); }
-.altl-fair small { font-weight: 400; color: var(--slate-500); }
-
-.altl-prices { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.altl-pp     { font-weight: 800; font-size: 1.08rem; color: var(--navy); }
-.altl-pp small { font-weight: 400; color: var(--slate-500); font-size: .7rem; }
-.altl-total  { color: var(--slate-500); font-size: .75rem; }
-
-.altl-chevron { flex: 0 0 auto; color: var(--slate-500); transition: transform .15s ease; }
-.altl-row--open .altl-chevron { transform: rotate(180deg); }
-
-.altl-detail {
-  border-top: 1px solid var(--slate-200);
-  background: var(--slate-50);
-  padding: 6px 16px;
-}
-
-.altl-detail-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 0;
-}
-.altl-detail-row + .altl-detail-row { border-top: 1px solid var(--slate-200); }
-
-.altl-detail-origin { flex: 1 1 auto; font-weight: 600; font-size: .85rem; }
-.altl-detail-city   { color: var(--slate-500); font-weight: 400; }
-.altl-date-note     { color: var(--slate-500); font-size: .75rem; margin-left: 6px; }
-.altl-detail-price  { flex: 0 0 auto; font-weight: 700; font-size: .9rem; }
-
-.altl-detail-links { flex: 0 0 auto; display: flex; gap: 6px; }
-.altl-link {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: var(--radius-xs);
-  background: var(--primary);
-  color: #fff;
-  font-size: .75rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.altl-link--muted {
-  background: var(--white);
-  color: var(--navy);
-  border: 1px solid var(--slate-200);
-}
-.altl-link:hover { opacity: .9; color: #fff; }
-.altl-link--muted:hover { color: var(--navy); }
-
 /* ─── Modo oscuro: tinta sobre --primary ─────────────────────────────────────
    En oscuro --primary pasa a rosa claro (#FF7A45): el texto blanco de los
    botones primarios deja de contrastar. Mismo tratamiento que el coral del
    CTA: tinta #1A1A1A encima. */
 [data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
 [data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
-[data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary,
-[data-theme="dark"] .altl-link {
+[data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary {
   color: #1A1A1A;
-}
-[data-theme="dark"] .altl-link:hover { color: #1A1A1A; }
-/* La variante muted tiene fondo oscuro, no rosa: la regla genérica de arriba
-   la dejaba con tinta sobre oscuro (~1:1, ilegible). Texto claro encima. */
-[data-theme="dark"] .altl-link--muted {
-  background: #25282F;
-  color: #E6E8EC;
-  border-color: #353A43;
-}
-[data-theme="dark"] .altl-link--muted:hover { color: #E6E8EC; }
-
-@media (max-width: 600px) {
-  .altl-fair { display: none; }
-  .altl-thumb { width: 48px; height: 48px; }
-  .altl-main { gap: 10px; padding: 10px 12px; }
 }

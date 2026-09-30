@@ -1915,40 +1915,6 @@ body {
   font-weight: 500;
 }
 
-/* ── Alternative cards ────────────────────────────────────────── */
-
-/* Main booking CTA on alt cards */
-
-.alt-empty {
-  text-align: center;
-  padding: 48px 20px;
-  background: var(--white);
-  border-radius: var(--radius-lg);
-  border: 2px dashed var(--slate-200);
-}
-.alt-empty-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-  opacity: .7;
-}
-.alt-empty-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--navy);
-  margin-bottom: 8px;
-}
-.alt-empty-sub {
-  font-size: 14px;
-  color: var(--slate-500);
-  max-width: 360px;
-  margin: 0 auto;
-  line-height: 1.5;
-}
-[data-theme="dark"] .alt-empty {
-  background: var(--dark-card);
-  border-color: rgba(255,255,255,.1);
-}
-
 /* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
@@ -2051,8 +2017,6 @@ body {
   animation: countUp .5s ease .2s both;
 }
 
-/* Alternative cards staggered */
-
 /* Smooth collapse for breakdown details */
 
 /* Toast notification */
@@ -2140,8 +2104,6 @@ body {
 [data-theme="dark"] .rv-tab--active .rv-tab-badge {
   background: rgba(0,0,0,.25); /* #FFB08A sobre el chip: 10.57:1 */
 }
-
-/* ── Destination map: estilos en styles/board.css (sección 20, carta de rutas) ── */
 
 /* ── Compare: ranking de barras horizontales ── */
 /* Usa los tokens del sistema (--white, --navy, --slate-*, --primary, --fair-*),
@@ -2450,12 +2412,10 @@ body {
   .fm-currency-btn { padding: 8px 12px; font-size: 13px; }
   .fm-sticky-btn   { padding: 8px 14px; }
   .rv-tab          { padding: 12px 20px; }
-  .altl-link       { padding: 8px 12px; }
   .fm-quick-research-btn { padding: 10px 16px; }
   .fm-split-pill   { padding: 8px 14px; }
   .wc-criterion-pill { padding: 10px 18px; }
   .app-footer-link { padding: 8px 4px; }
-  .fm-breadcrumb-item { padding: 8px 8px; }
 
   /* Active state instead of hover on touch */
   .sf-airport-item:active {
@@ -2755,8 +2715,6 @@ html {
   background: linear-gradient(135deg, #17191D 0%, #25282F 100%);
   border-color: #353A43;
 }
-
-/* ── Share button variants ────────────────────────────────────── */
 
 /* ── Search badges (active filters in results) ────────────────── */
 
@@ -3154,8 +3112,6 @@ html {
   border-top-color: #353A43;
 }
 
-/* ── Summary copy button ──────────────────────────────────────── */
-
 /* ── Traveler summary bar (above submit) ────────────────────── */
 
 .sf-summary-bar {
@@ -3294,8 +3250,6 @@ html {
 .wc-booking-collapse > div {
   overflow: hidden;
 }
-
-/* ── Price vs last search chip ──────────────────────────────── */
 
 /* ── Alt card chips row ─────────────────────────────────────── */
 
@@ -3540,8 +3494,6 @@ html {
 }
 
 /* ═══════════════ Round 14 ═══════════════════════════════════ */
-
-/* ── Medal badges on alt cards ──────────────────────────────── */
 
 /* ── Sticky results bar ─────────────────────────────────────── */
 
@@ -4115,50 +4067,6 @@ html {
   color: #DC2626;
 }
 
-/* ── Breadcrumb trail ─────────────────────────────────────── */
-
-.fm-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 0 4px;
-  font-size: 13px;
-  color: #9AA0AA;
-}
-.fm-breadcrumb-item {
-  background: none;
-  border: none;
-  padding: 2px 6px;
-  font-size: 13px;
-  color: #6B6F78;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all .15s;
-}
-.fm-breadcrumb-item:hover {
-  color: var(--primary);
-  background: rgba(var(--primary-rgb),.06);
-}
-.fm-breadcrumb-item--active {
-  color: var(--navy);
-  font-weight: 600;
-  cursor: default;
-}
-.fm-breadcrumb-item--active:hover {
-  background: transparent;
-  color: var(--navy);
-}
-.fm-breadcrumb-sep {
-  font-size: 11px;
-  color: #CBD5E1;
-  user-select: none;
-}
-[data-theme="dark"] .fm-breadcrumb-item { color: #C9CDD4; }
-[data-theme="dark"] .fm-breadcrumb-item:hover { color: #FFC20E; background: rgba(255,255,255,.08); }
-[data-theme="dark"] .fm-breadcrumb-item--active { color: #E6E8EC; }
-[data-theme="dark"] .fm-breadcrumb-item--active:hover { color: #E6E8EC; background: transparent; }
-[data-theme="dark"] .fm-breadcrumb-sep { color: #7C828E; }
-
 /* ── Animated typing placeholder ──────────────────────────── */
 
 .sf-typing-placeholder {
@@ -4181,10 +4089,6 @@ html {
   0%, 50% { border-right-color: #9AA0AA; }
   51%, 100% { border-right-color: transparent; }
 }
-
-/* ── Price-per-km badge ───────────────────────────────────── */
-
-/* ── Share-as-image button ────────────────────────────────── */
 
 /* ── Drag handle for origin reorder ───────────────────────── */
 
@@ -4237,12 +4141,6 @@ html {
   line-height: 1;
 }
 
-/* ── Destination quick info strip ─────────────────────────── */
-
-/* ── Price sparkline ──────────────────────────────────────── */
-
-/* ── Origin summary chips ─────────────────────────────────── */
-
 /* ── Results skeleton ─────────────────────────────────────── */
 
 .fm-results-skeleton {
@@ -4288,12 +4186,6 @@ html {
   0%, 100% { opacity: 1; }
   50% { opacity: .7; }
 }
-
-/* ── Duration comparison bar ──────────────────────────────── */
-
-/* ── Landing live stats ───────────────────────────────────── */
-
-/* ── Price alert hint ─────────────────────────────────────── */
 
 /* ── Total distance summary ───────────────────────────────── */
 
@@ -4472,8 +4364,6 @@ html {
   .cv-meet { position: static; display: block; transform: none; text-align: center; margin-top: 2px; }
 }
 
-/* ── Flight time comparison bar (mini-table in booking) ───── */
-
 /* ── Hover micro-interactions ─────────────────────────────── */
 
 .wc-flight-card {
@@ -4563,8 +4453,6 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Weather badge styling in quick-info ──────────────────── */
-
 /* ── Staggered animation for booking cards ─────────────────── */
 
 .wc-booking-cards .wc-flight-card {
@@ -4648,10 +4536,6 @@ html {
 .fm-sticky-bar {
   backdrop-filter: blur(10px);
 }
-
-/* ── Enhanced confetti with more variation ──────────────────── */
-
-/* ── Trip comparison summary card ──────────────────────────── */
 
 /* ── Responsive adjustments for trip summary ───────────────── */
 
@@ -4738,124 +4622,6 @@ html {
   border-color: #25282F;
   color: #C9CDD4;
 }
-
-/* ── Destination category tags ─────────────────────────────── */
-
-/* ── Best weekday insight ──────────────────────────────────── */
-
-/* ── Top Destinations Podium ─────────────────────────────────── */
-
-.fm-podium {
-  margin: 16px 0 20px;
-}
-.fm-podium-title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--slate-700);
-  margin-bottom: 12px;
-}
-.fm-podium-cards {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 10px;
-}
-.fm-podium-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 16px 12px;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
-  min-width: 100px;
-}
-.fm-podium-card:hover {
-  transform: translateY(-3px);
-  box-shadow: none;
-}
-.fm-podium-card--pos1 {
-  background: linear-gradient(145deg, #FFFBEB, #FEF3C7);
-  border-color: #FCD34D;
-  transform: scale(1.08);
-  box-shadow: none;
-}
-.fm-podium-card--pos1:hover {
-  transform: scale(1.08) translateY(-3px);
-}
-.fm-podium-card--pos2 {
-  background: linear-gradient(145deg, #F9FAFB, #F2EFE8);
-  border-color: #CBD5E1;
-}
-.fm-podium-card--pos3 {
-  background: linear-gradient(145deg, #FFF7ED, #FFEDD5);
-  border-color: #FDBA74;
-}
-.fm-podium-medal {
-  font-size: 26px;
-  margin-bottom: 4px;
-}
-.fm-podium-city {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-800);
-  line-height: 1.2;
-}
-.fm-podium-code {
-  font-size: 11px;
-  color: var(--slate-400);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-bottom: 6px;
-}
-.fm-podium-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--blue-600);
-}
-.fm-podium-pp {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--slate-400);
-  margin-left: 2px;
-}
-.fm-podium-fairness {
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 4px;
-}
-[data-theme="dark"] .fm-podium-title { color: #E6E8EC; }
-[data-theme="dark"] .fm-podium-card {
-  background: #25282F;
-  border-color: #353A43;
-}
-[data-theme="dark"] .fm-podium-card--pos1 {
-  background: linear-gradient(145deg, #292524, #1C1917);
-  border-color: #92400E;
-  box-shadow: none;
-}
-[data-theme="dark"] .fm-podium-card--pos2 {
-  background: linear-gradient(145deg, #25282F, #1A1A1A);
-  border-color: #7C828E;
-}
-[data-theme="dark"] .fm-podium-card--pos3 {
-  background: linear-gradient(145deg, #1C1917, #171717);
-  border-color: #9A3412;
-}
-[data-theme="dark"] .fm-podium-city { color: #E6E8EC; }
-[data-theme="dark"] .fm-podium-code { color: #9AA0AA; }
-[data-theme="dark"] .fm-podium-price { color: #FFC20E; }
-@media (max-width: 600px) {
-  .fm-podium-cards { gap: 6px; }
-  .fm-podium-card { min-width: 80px; padding: 10px 10px 8px; }
-  .fm-podium-medal { font-size: 22px; }
-  .fm-podium-price { font-size: 14px; }
-}
-
-/* ── Price Donut Chart ──────────────────────────────────────── */
 
 /* ── Backend Status Dot ─────────────────────────────────────── */
 
@@ -5002,10 +4768,6 @@ html {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
-
-/* ── Price Confidence Meter ────────────────────────────────── */
-
-/* ── Origin Savings Card ───────────────────────────────────── */
 
 /* ── Airline Logo in Booking Cards ─────────────────────────── */
 
@@ -5156,8 +4918,6 @@ html {
   color: #C9CDD4;
 }
 [data-theme="dark"] .fm-shortcuts-desc { color: #C9CDD4; }
-
-/* ── Trust Badges ──────────────────────────────────────────── */
 
 /* ── Cost Split Calculator ─────────────────────────────────── */
 
@@ -5334,127 +5094,6 @@ html {
   .fm-plan-trip-link { width: 100%; justify-content: center; }
 }
 
-/* ── Travel Checklist ───────────────────────────────────────── */
-
-/* ── Destination Radar Chart ───────────────────────────────── */
-
-/* ── Flight Timeline ──────────────────────────────────────── */
-
-/* ── Search History Panel ────────────────────────────────── */
-
-.fm-history {
-  margin: 16px 0 20px;
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  overflow: hidden;
-}
-.fm-history-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background .15s;
-}
-.fm-history-toggle:hover { background: var(--slate-50); }
-.fm-history-toggle-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.fm-history-icon { font-size: 16px; }
-.fm-history-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--slate-700);
-}
-.fm-history-count {
-  font-size: 11px;
-  background: var(--blue-50);
-  color: var(--blue-600);
-  border-radius: var(--radius-sm);
-  padding: 1px 8px;
-  font-weight: 600;
-}
-.fm-history-chevron {
-  font-size: 14px;
-  color: var(--slate-400);
-  transition: transform .2s;
-}
-.fm-history-chevron--open { transform: rotate(180deg); }
-.fm-history-body {
-  padding: 0 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fm-history-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: none;
-  background: var(--slate-50);
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  text-align: left;
-  transition: background .15s;
-  width: 100%;
-}
-.fm-history-item:hover { background: var(--blue-50); }
-.fm-history-item-origins {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-  flex-shrink: 0;
-}
-.fm-history-item-date {
-  font-size: 12px;
-  color: var(--slate-500);
-}
-.fm-history-item-dest {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--blue-600);
-}
-.fm-history-item-price {
-  font-size: 12px;
-  font-weight: 700;
-  color: #059669;
-  margin-left: auto;
-}
-.fm-history-clear {
-  margin-top: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
-  border: none;
-  background: transparent;
-  color: var(--slate-400);
-  cursor: pointer;
-  align-self: flex-end;
-}
-.fm-history-clear:hover { color: #EF4444; }
-[data-theme="dark"] .fm-history {
-  background: #1A1A1A;
-  border-color: #25282F;
-}
-[data-theme="dark"] .fm-history-toggle:hover { background: #1A1A1A; }
-[data-theme="dark"] .fm-history-title { color: #E6E8EC; }
-[data-theme="dark"] .fm-history-count { background: rgba(255,255,255,.15); color: #FFC20E; }
-[data-theme="dark"] .fm-history-item { background: #1A1A1A; }
-[data-theme="dark"] .fm-history-item:hover { background: #25282F; }
-[data-theme="dark"] .fm-history-item-origins { color: #E6E8EC; }
-[data-theme="dark"] .fm-history-item-date { color: #C9CDD4; }
-[data-theme="dark"] .fm-history-item-dest { color: #FFC20E; }
-
-/* ── Weather Badge ────────────────────────────────────────── */
-
-/* ── Results Summary Card ─────────────────────────────────── */
-
 /* ── Reduced Motion Accessibility ─────────────────────────── */
 
 [data-reduced-motion="true"] *,
@@ -5480,9 +5119,7 @@ html {
   --slate-500: #1C1F24;
   --slate-400: #334155;
 }
-[data-high-contrast="true"] .fm-podium-card,
-[data-high-contrast="true"] .fm-split-card,
-[data-high-contrast="true"] .fm-history {
+[data-high-contrast="true"] .fm-split-card {
   border-width: 2px;
   border-color: #1C1F24;
 }
@@ -5492,14 +5129,6 @@ html {
 [data-high-contrast="true"] .fm-sticky-bar {
   border-bottom: 2px solid #1C1F24;
 }
-
-/* ── Price per km ranking ──────────────────────────────────── */
-
-/* ── Group Arrival Sync ──────────────────────────────────── */
-
-/* ── Share as Story Button ───────────────────────────────── */
-
-/* ── Destination Quick Facts ─────────────────────────────── */
 
 /* ── Scroll Progress Bar ─────────────────────────────────── */
 
@@ -5514,191 +5143,21 @@ html {
   pointer-events: none;
 }
 
-/* ── Trip Countdown ───────────────────────────────────────── */
-
-/* ── CO2 Estimate Badge ──────────────────────────────────── */
-
-/* ── Destination Popularity Meter ────────────────────────── */
-
-/* ── Group Chat Link ─────────────────────────────────────── */
-
-/* ── Baggage Reminder ─────────────────────────────────────── */
-
-/* ── Origin Ranking Table ────────────────────────────────── */
-
-/* ── Trip Type Insight ───────────────────────────────────── */
-
-/* ── Destination Image Banner ────────────────────────────── */
-
-.fm-dest-banner {
-  position: relative;
-  margin: -16px -12px 12px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  height: 160px;
-  background: var(--slate-100);
-  opacity: 0;
-  transition: opacity .4s ease;
-}
-.fm-dest-banner--loaded { opacity: 1; }
-.fm-dest-banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.fm-dest-banner-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 20px;
-  background: linear-gradient(transparent, rgba(0,0,0,.55));
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.fm-dest-banner-city {
-  font-size: 22px;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,.3);
-}
-.fm-dest-banner-code {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255,255,255,.7);
-}
-@media (max-width: 600px) {
-  .fm-dest-banner { height: 120px; margin: -12px -8px 10px; }
-  .fm-dest-banner-city { font-size: 18px; }
-}
-
-/* ── Alternative Dates Hint (Round 29) ────────────────────── */
-
-/* ── Flight Duration Comparison (Round 29) ────────────────── */
-
-/* ── Destination Currency Converter (Round 29) ────────────── */
-
-/* ── Booking Window Tip (Round 29) ────────────────────────── */
-
-/* ── Results Share Link (Round 29) ────────────────────────── */
-
-.fm-sharelink {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: linear-gradient(135deg, #F2EFE8, #EEE9E0);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  padding: 12px 18px;
-  margin-bottom: 14px;
-}
-.fm-sharelink-icon { font-size: 20px; }
-.fm-sharelink-text {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--navy);
-}
-.fm-sharelink-btn {
-  background: var(--primary);
-  color: var(--on-primary, #fff);
-  border: none;
-  border-radius: var(--radius-xs);
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .2s;
-}
-/* hover: ver board.css (sin azul del tema viejo) */
-[data-theme="dark"] .fm-sharelink {
-  background: linear-gradient(135deg, #17191D, #1C1F24);
-  border-color: #353A43;
-}
-[data-theme="dark"] .fm-sharelink-text { color: #FFC20E; }
-/* En oscuro el botón es amarillo de señal con tinta encima (var(--on-primary)) */
-
-@media (max-width: 600px) {
-  .fm-sharelink { padding: 10px 14px; flex-wrap: wrap; }
-}
-
-/* ── Stopover Info (Round 30) ─────────────────────────────── */
-
-/* ── Airline Logos (Round 30) ─────────────────────────────── */
-
-/* ── Price History Hint (Round 30) ────────────────────────── */
-
-/* ── Group Budget Gauge (Round 30) ────────────────────────── */
-
-/* ── Destination Visa Hint (Round 30) ─────────────────────── */
-
-/* ── Return Flight Preview (Round 31) ─────────────────────── */
-
-/* ── Destination Event Hint (Round 31) ────────────────────── */
-
-/* ── Price Breakdown Accordion (Round 31) ─────────────────── */
-
-/* ── Group Size Indicator (Round 31) ──────────────────────── */
-
-/* ── Search Duration Badge (Round 31) ─────────────────────── */
-
-/* ── Nearby Airports Hint (Round 32) ──────────────────────── */
-
-/* ── Destination Timezone Compare (Round 32) ──────────────── */
-
-/* ── Flight Class Badge (Round 32) ────────────────────────── */
-
-/* ── Trip Summary Export (Round 32) ───────────────────────── */
-
-/* ── Price Compare External (Round 32) ────────────────────── */
-
-/* ── Destination Safety Rating (Round 33) ─────────────────── */
-
-/* ── Flight Connection Warning (Round 33) ─────────────────── */
-
-/* ── Seasonal Demand Indicator (Round 33) ─────────────────── */
-
-/* ── Origin Distance Map (Round 33) ──────────────────────── */
-
-/* ── Quick Bookmark Button (Round 33) ─────────────────────── */
-
 /* ── Departure Countdown 24h (Round 34) ───────────────────── */
 @keyframes fm-dep24-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.3); }
   50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
 }
 
-/* ── Price Savings vs Solo (Round 34) ─────────────────────── */
-
-/* ── Destination Local Transport (Round 34) ───────────────── */
-
-/* ── Multi-City Badge (Round 34) ──────────────────────────── */
-
-/* ── Flight Operator Note (Round 34) ──────────────────────── */
-
-/* ── More Details Toggle & Section ───────────────────────── */
-
-/* ── Round 35: Destination Food Culture ──────────────────── */
-
-/* ── Round 35: WiFi Availability Hint ───────────────────── */
-
-/* ── Round 35: Price Per Day Calculator ─────────────────── */
-
-/* ── Round 35: Early Morning Warning ────────────────────── */
-
-/* ── Round 35: Destination Language Phrase ───────────────── */
-
 /* ── Print Styles (Round 35 updated) ──────────────────────── */
 
 @media print {
-  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-breadcrumb, .fm-history, .fm-scroll-progress, .fm-dest-banner, .fm-sharelink, .sf-recent { display: none !important; }
+  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-scroll-progress, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
   .wc-image { max-height: 200px; }
-  .fm-podium-card, .fm-split-card {
+  .fm-split-card {
     break-inside: avoid;
     box-shadow: none !important;
     border: 1px solid #ddd;

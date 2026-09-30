@@ -590,15 +590,9 @@
 .wc-card .wc-cta:active { transform: translateY(0) scale(.97); }
 
 /* ══ 8. Resto de resultados: cifras de panel + podio vivo ════════════════ */
-.fm-podium .fm-podium-price,
 .fm-stats-bar strong,
 .fm-split-amount,
 .cmp-price { font-family: var(--font-mono); letter-spacing: -.02em; }
-.fm-podium .fm-podium-card.fm-podium-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
-.fm-podium .fm-podium-card:nth-child(2) { animation-delay: .08s; }
-.fm-podium .fm-podium-card:nth-child(3) { animation-delay: .16s; }
-.fm-podium .fm-podium-thumb { transition: transform .5s var(--ease-out-expo); }
-.fm-podium .fm-podium-card:hover .fm-podium-thumb { transform: scale(1.06) rotate(-1.5deg); }
 .rv-tab.rv-tab { transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .18s var(--ease-out-expo); }
 .rv-tab.rv-tab:hover { transform: translateY(-1px); }
 
@@ -611,12 +605,10 @@
   .lp-faq .lp-faq-item,
   .app-footer-seo,
   .fm-group-nudge,
-  .fm-podium,
   .fm-group-savings,
   .fm-stats-bar,
   .fm-split-card,
   .fm-arrival-spread,
-  .fm-sharelink,
   .fm-plan-trip,
   .fm-quick-research {
     animation: board-rise linear backwards;
@@ -639,15 +631,12 @@
   .wc-card .wc-fs-row,
   .wc-card .wc-booking-cards > .wc-flight-card,
   .wc-card .wc-flight-plane,
-  .fm-podium .fm-podium-card.fm-podium-card,
   .lp-legs.lp-legs::after,
   .btn-fm-primary.btn-fm-primary::after { animation: none !important; }
   .lp-h1-accent.lp-h1-accent { animation: none; background-size: 100% 100%; }
   .lp-legs.lp-legs::after { display: none; }
   .cv-plane { display: none; }
-  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo,
-  .fm-group-nudge, .fm-podium, .fm-group-savings, .fm-stats-bar, .fm-split-card,
-  .fm-arrival-spread, .fm-sharelink, .fm-plan-trip, .fm-quick-research { animation: none !important; }
+  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo, .fm-group-nudge, .fm-group-savings, .fm-stats-bar, .fm-split-card, .fm-arrival-spread, .fm-plan-trip, .fm-quick-research { animation: none !important; }
 }
 
 /* Fix (previo a este rediseño): el stepper del skeleton de búsqueda
@@ -1127,8 +1116,7 @@
 .wc-card .wc-booking.wc-booking,
 .wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
 .wc-card .wc-flight-card.wc-flight-card:hover,
-.wc-card.wc-card:hover,
-.fm-podium .fm-podium-card.fm-podium-card:hover { box-shadow: none; transform: none; }
+.wc-card.wc-card:hover { box-shadow: none; transform: none; }
 /* Listas densas: filas separadas por divisor, sin tarjeta por fila */
 .fm-split-grid .fm-split-row.fm-split-row { border-radius: 0; background: transparent; border-bottom: 1px solid var(--line); }
 .fm-split-grid .fm-split-row.fm-split-row:last-child { border-bottom: none; }
@@ -1217,12 +1205,12 @@ button,
   border-color: var(--sign) !important;
   box-shadow: none !important;
 }
-[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
   background: transparent;
   color: var(--sign);
   border: 1px solid rgba(var(--sign-rgb), .7);
 }
-[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
   background: rgba(var(--sign-rgb), .12);
   color: var(--sign);
   filter: none;
@@ -1230,7 +1218,6 @@ button,
 /* Reservar = cartel de dirección en ambos temas (la acción que importa) */
 .wc-card .wc-cta--book.wc-cta--book { background: var(--sign); border-color: var(--sign); color: var(--on-sign); }
 .btn-fm-primary.btn-fm-primary:hover:not(:disabled) { background: var(--coral-dark); }
-.fm-sharelink-btn:hover { filter: brightness(1.15); }
 /* Oscuro: tinta sobre amarillo donde quedaba blanco */
 [data-theme="dark"] .sf-pill--active,
 [data-theme="dark"] .fm-stats-export:hover { color: #1A1A1A; }
