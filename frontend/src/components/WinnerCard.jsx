@@ -271,8 +271,9 @@ const WinnerCard = React.memo(function WinnerCard({
       <div className="wc-body">
         {/* Criterion toggle: control único que gobierna ganador Y lista de
             alternativas (uiCriterion en App.jsx). */}
+        {/* (El nº de destinos encontrados vive ahora en el panel de salidas.) */}
+        {!singleOrigin && (
         <div className="wc-criterion-row">
-          {!singleOrigin && (
           <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
             {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
@@ -281,11 +282,8 @@ const WinnerCard = React.memo(function WinnerCard({
                 onClick={() => onChangeCriterion(v)}>{l}</button>
             ))}
           </div>
-          )}
-          <div className="wc-stats-mini">
-            {t("results.destsFound")}: <strong>{flightsCount}</strong>
-          </div>
         </div>
+        )}
 
         {/* ── Booking section (collapsible) ── */}
         {cleanOrigins.length > 0 && dep && (
@@ -469,9 +467,13 @@ const WinnerCard = React.memo(function WinnerCard({
 
         {/* Actions */}
         <div className="wc-actions">
-          <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
-            {t("results.viewAlternatives")}
-          </button>
+          {/* Baja al panel de salidas (solo si hay más de un destino). "Cambiar
+              búsqueda" ya está en la cabecera del vuelo y en la barra fija. */}
+          {flightsCount > 1 && (
+            <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
+              {t("results.viewAlternatives")}
+            </button>
+          )}
           {/* Mobile: one "Share" → native OS sheet (covers WhatsApp/Telegram/Email/…).
               Desktop (no Web Share API): copy-link + explicit Telegram/Email so those
               channels stay reachable. */}
@@ -502,9 +504,6 @@ const WinnerCard = React.memo(function WinnerCard({
               <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}
             </button>
           )}
-          <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
-            {t("results.changeSearch")}
-          </button>
         </div>
 
         {/* Search badges */}

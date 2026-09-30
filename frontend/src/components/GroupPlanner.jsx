@@ -6,6 +6,7 @@
 // owns the group state and the API calls; this component only collects input.
 import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { FlapText } from "./FlapBoard";
 import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2 } from "lucide-react";
 import { AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, formatDate, weekdayOf, countryFlag } from "../utils/helpers";
 
@@ -127,10 +128,11 @@ function GroupPlanner({
           <ul className="gp-member-list">
             {members.map((m, i) => (
               <li key={i} className="gp-member">
-                <span className="gp-member-flag" aria-hidden="true">{countryFlag(m.origin)}</span>
+                {/* Lista de pasajeros tipo terminal: código de origen en celdas de panel */}
+                <span className="gp-member-code"><FlapText text={m.origin} size="sm" delay={i * 90} /></span>
                 <span className="gp-member-main">
                   <span className="gp-member-name">{m.name || t("group.travelerN", { n: i + 1 })}</span>
-                  <span className="gp-member-origin">{m.origin}{cityOf(m.origin) ? ` · ${cityOf(m.origin)}` : ""}</span>
+                  <span className="gp-member-origin">{countryFlag(m.origin)} {cityOf(m.origin) || m.origin}</span>
                 </span>
                 {m.passengers > 1 && <span className="gp-member-pax">×{m.passengers}</span>}
                 <button type="button" className="gp-member-remove" onClick={() => onRemoveMember(i)}

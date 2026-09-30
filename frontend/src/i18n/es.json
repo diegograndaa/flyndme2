@@ -366,6 +366,23 @@
     "avgPerPerson": "Media por persona",
     "fairness": "Puntuación de equidad"
   },
+  "board": {
+    "flightHead": "Vuelo del grupo",
+    "travelers": "{{n}} viajeros",
+    "announcements": "Avisos",
+    "tagDate": "Fecha",
+    "tagGroup": "Grupo",
+    "tagNotice": "Aviso",
+    "departures": "Salidas",
+    "departuresSub": "{{n}} destinos para vuestro grupo · pulsa uno para verlo",
+    "colDest": "Destino",
+    "colPrice": "Por persona",
+    "colFair": "Equidad",
+    "selected": "En pantalla",
+    "select": "Ver {{city}}",
+    "more": "Más opciones",
+    "exportCsv": "Descargar CSV"
+  },
   "fairness": {
     "veryBalanced": "Muy equilibrado",
     "fairlyBalanced": "Bastante equilibrado",

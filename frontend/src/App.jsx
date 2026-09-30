@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } fr
 import "./styles/bootstrap-custom.scss";
 import "./App.css";
 import "./styles/theme-stitch.css";
-import FlightResults from "./components/FlightResults";
 import { SearchProgress } from "./components/SearchUX";
 
 // Lazy-load heavy visual components (map SVG + chart) for smaller initial bundle
@@ -19,18 +18,19 @@ import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, AnimatedStat } from "./components/UiBits";
+import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
-import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
+import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
+import { FlightHeader, Announcements, DeparturesBoard } from "./components/BoardPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
 import "./styles/board.css";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding, ChevronRight } from "lucide-react";
+import { Heart, X, Plane, Download, Map as MapIcon, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -136,46 +136,6 @@ class ErrorBoundary extends React.Component {
 // ─── Search form ──────────────────────────────────────────────────────────────
 
 // ─── Winner card ──────────────────────────────────────────────────────────────
-
-// ─── Search params summary (results page) ────────────────────────────────────
-
-const SearchParamsSummary = React.memo(function SearchParamsSummary({
-  origins, departureDate, returnDate, tripType, flexEnabled, flexDays,
-  cabinClass, directOnly, budgetEnabled, maxBudget, currency,
-}) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-
-  const tags = [
-    tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway"),
-    departureDate && formatDate(departureDate),
-    tripType === "roundtrip" && returnDate && `→ ${formatDate(returnDate)}`,
-    flexEnabled && `±${flexDays}d`,
-    cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
-    directOnly && t("search.directOnly"),
-    budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
-  ].filter(Boolean);
-
-  return (
-    <div className="fm-search-summary">
-      <button type="button" className="fm-search-summary-toggle" onClick={() => setOpen(v => !v)} aria-expanded={open}>
-        <div className="fm-search-summary-origins">
-          {origins.map(o => (
-            <span key={o} className="fm-search-summary-chip">{countryFlag(o)} {o}</span>
-          ))}
-        </div>
-        <span className={`fm-search-summary-chevron${open ? " fm-search-summary-chevron--open" : ""}`} aria-hidden="true">▾</span>
-      </button>
-      {open && (
-        <div className="fm-search-summary-tags">
-          {tags.map((tag, i) => (
-            <span key={i} className="fm-search-summary-tag">{tag}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});
 
 // ─── Destination category tags ───────────────────────────────────────────────
 
@@ -578,6 +538,12 @@ export default function App() {
   const cleanOrigins = useMemo(
     () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
     [origins]
+  );
+  // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
+  // cabecera de vuelo de resultados.
+  const totalTravelers = useMemo(
+    () => origins.reduce((sum, o, i) => (String(o || "").trim() ? sum + (passengers[i] || 1) : sum), 0),
+    [origins, passengers]
   );
 
   // ── Compute best for each criterion ────────────────────────────────────────
@@ -1402,28 +1368,21 @@ export default function App() {
           <h1 className="sr-only">
             {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
           </h1>
-          <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
-
-          {/* Aviso de resultados parciales (la búsqueda agotó su presupuesto de tiempo) */}
-          {partialResults && (
-            <div className="alert alert-warning py-2 mb-3" role="status">
-              <Clock size={14} aria-hidden="true" /> {t("results.partialNotice")}
-            </div>
-          )}
-
-          {/* Search params summary (collapsible) */}
-          <SearchParamsSummary
+          {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
+              orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
+          <FlightHeader
             origins={cleanOrigins}
             departureDate={departureDate}
             returnDate={returnDate}
             tripType={tripType}
-            flexEnabled={flexEnabled}
-            flexDays={flexDays}
-            cabinClass={cabinClass}
-            directOnly={directOnly}
-            budgetEnabled={budgetEnabled}
-            maxBudget={maxBudget}
-            currency={currency}
+            travelers={totalTravelers}
+            badges={[
+              flexEnabled && `±${flexDays}d`,
+              cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
+              directOnly && t("search.directOnly"),
+              budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
+            ].filter(Boolean)}
+            onChange={() => setView("search")}
           />
 
           {/* Sticky results mini-bar */}
@@ -1464,115 +1423,69 @@ export default function App() {
             onShareNative={handleShareNative}
             onCopySearchLink={handleCopySearchLink}
             shareStatus={shareStatus}
-            onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
+            onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
             onChangeSearch={() => setView("search")}
             onVerify={() => handleVerifyWinner(bestDestination)}
             verifyPhase={liveCheck.code === normalizeCode(bestDestination.destination) ? liveCheck.phase : null}
             currency={currency}
-            searchBadges={[
-              cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
-              directOnly && t("search.directOnly"),
-              flexEnabled && `± ${flexDays} ${t("search.flexDaysUnit")}`,
-              tripType === "roundtrip" && t("search.roundtrip"),
-            ].filter(Boolean)}
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
-          {/* ── Nudge: convierte esta búsqueda en un plan de grupo colaborativo ── */}
-          <div className="fm-group-nudge view-enter">
-            <span className="fm-group-nudge-icon" aria-hidden="true"><Users size={20} /></span>
-            <div className="fm-group-nudge-body">
-              <p className="fm-group-nudge-title">{t("results.groupNudge.title")}</p>
-              <p className="fm-group-nudge-text">{t("results.groupNudge.text")}</p>
-            </div>
-            <button
-              type="button"
-              className="fm-group-nudge-btn"
-              onClick={createGroup}
-              disabled={groupBusy}
-            >
-              {t("results.groupNudge.cta")}
-            </button>
-          </div>
+          {/* ── Avisos: sugerencias accionables en un solo panel (antes: 2-3
+              tarjetas sueltas). Fecha más barata solo si el backend la encontró. */}
+          <Announcements items={[
+            partialResults && { key: "partial", tag: t("board.tagNotice"), text: t("results.partialNotice") },
+            cheaperDate && {
+              key: "date",
+              tag: t("board.tagDate"),
+              text: t("cheaperDate.text", {
+                date: formatDate(cheaperDate.date),
+                total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
+                saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
+              }),
+              actionLabel: t("cheaperDate.use"),
+              onAction: () => useCheaperDate(cheaperDate.date),
+            },
+            {
+              key: "group",
+              tag: t("board.tagGroup"),
+              text: t("results.groupNudge.title"),
+              actionLabel: t("results.groupNudge.cta"),
+              onAction: createGroup,
+              disabled: groupBusy,
+            },
+          ].filter(Boolean)} />
 
-          {/* ── Nudge: fecha cercana más barata para el grupo ── */}
-          {cheaperDate && (
-            <div className="fm-cheaper-date view-enter">
-              <span className="fm-cheaper-date-icon" aria-hidden="true"><CalendarClock size={18} /></span>
-              <span className="fm-cheaper-date-text">
-                {t("cheaperDate.text", {
-                  date: formatDate(cheaperDate.date),
-                  total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
-                  saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
-                })}
-              </span>
-              <button type="button" className="fm-cheaper-date-btn" onClick={() => useCheaperDate(cheaperDate.date)}>
-                {t("cheaperDate.use")}
-              </button>
-            </div>
-          )}
-
-          {/* ── CORE: Top 3 destinations podium ── */}
-          <TopDestinationsPodium flights={flights} currency={currency} singleOrigin={cleanOrigins.length <= 1} onSelect={(dest) => {
-            const idx = flights.findIndex(f => f.destination === dest.destination);
-            if (idx >= 0) {
+          {/* ── Salidas: todos los destinos encontrados en un panel de salidas
+              (sustituye podio Top 3 + barra de stats + lista "otras opciones").
+              Pulsar uno lo pone en la tarjeta de embarque y sube a ella. */}
+          <DeparturesBoard
+            flights={flights}
+            current={bestDestination}
+            criterion={uiCriterion}
+            singleOrigin={cleanOrigins.length <= 1}
+            currency={currency}
+            savings={flights.length >= 2 ? Math.max(...flights.map(f => f.totalCostEUR || 0)) - bestDestination.totalCostEUR : 0}
+            onSelect={(dest) => {
               setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
-            }
-          }} />
+              setTimeout(() => document.querySelector(".wc-card")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
+            }}
+          />
 
-          {/* ── CORE: Stats bar ── */}
-          <div className="fm-stats-bar view-enter">
-            <span className="fm-stats-item">
-              <AnimatedStat value={flights.length} /> {t("results.destsFound")}
-            </span>
-            <span className="fm-stats-sep" aria-hidden="true">·</span>
-            <span className="fm-stats-item">
-              <AnimatedStat value={cleanOrigins.length} /> {t("results.originsUsed")}
-            </span>
-            <span className="fm-stats-sep" aria-hidden="true">·</span>
-            <span className="fm-stats-item">
-              <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
-            </span>
-            {searchDuration > 0 && (
-              <>
-                <span className="fm-stats-sep" aria-hidden="true">·</span>
-                <span className="fm-stats-item fm-stats-item--time">
-                  <Clock size={13} aria-hidden="true" /> {searchDuration}s
-                </span>
-              </>
-            )}
-            <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
-              <Download size={14} aria-hidden="true" /> CSV
-            </button>
-          </div>
-
-
-          {/* ── Group savings vs the most expensive option ── */}
-          {flights.length >= 2 && (() => {
-            const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
-            const saved = maxTotal - bestDestination.totalCostEUR;
-            if (saved > 10) return (
-              <div className="fm-group-savings view-enter">
-                <span className="fm-group-savings-icon"><Wallet size={16} aria-hidden="true" /></span>
-                <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
-              </div>
-            );
-            return null;
-          })()}
-
-          {/* ── Cost split between travelers ── (sin sentido con un solo origen:
-              todos salen de la misma ciudad y pagan lo mismo) */}
+          {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
+              en un mismo bloque (sin sentido con un solo origen: todos salen de
+              la misma ciudad y pagan lo mismo) */}
           {cleanOrigins.length > 1 && (
+          <div className="fm-group-block">
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
-          )}
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
               REALES: solo los vuelos directos informan la hora, los de escalas
               no → se avisa. Solo mostramos la DIFERENCIA entre llegadas, nunca
               horas locales: no tenemos la zona horaria del destino. Reacciona
               al toggle de criterio porque se recalcula sobre bestDestination. */}
-          {cleanOrigins.length > 1 && (() => {
+          {(() => {
             const sp = computeArrivalSpread(bestDestination.flights);
             if (!sp || sp.legsWithTime < 2 || sp.spreadMs == null) return null; // no comparable
             const parts = splitSpread(sp.spreadMs);
@@ -1611,11 +1524,8 @@ export default function App() {
             );
           })()}
 
-          {/* ── Share results with the group ── */}
-          <ResultsShareLink origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
-
-          {/* ── Booking CTA ── */}
-          <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+          </div>
+          )}
 
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -1630,9 +1540,11 @@ export default function App() {
             }
           }) }} />
 
-          {/* Visual tabs: Map & Compare */}
-          {flights.length > 1 && (
-            <div className="rv-tabs mt-4" ref={tabContentRef}>
+          {/* Pestañas: Mapa · Comparar · Más opciones (la lista "otras opciones"
+              ya no hace falta: el panel de salidas muestra todos los destinos). */}
+          <div className="rv-tabs mt-4" ref={tabContentRef}>
+            {flights.length > 1 && (
+            <>
               <button type="button"
                 className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "map"} aria-controls="rv-panel-map"
@@ -1645,14 +1557,15 @@ export default function App() {
                 onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
                 <BarChart3 size={15} aria-hidden="true" /> {t("results.showCompare")}
               </button>
+            </>
+            )}
               <button type="button"
-                className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
-                aria-expanded={showAlt === "list"} aria-controls="rv-panel-list"
-                onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                <List size={15} aria-hidden="true" /> {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
+                className={`rv-tab${showAlt === "more" ? " rv-tab--active" : ""}`}
+                aria-expanded={showAlt === "more"} aria-controls="rv-panel-more"
+                onClick={() => { setShowAlt(showAlt === "more" ? false : "more"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
+                <SlidersHorizontal size={15} aria-hidden="true" /> {t("board.more")}
               </button>
-            </div>
-          )}
+          </div>
 
           {showAlt === "map" && flights.length > 1 && (
             <div className="mt-3 view-enter" id="rv-panel-map">
@@ -1674,65 +1587,46 @@ export default function App() {
             </div>
           )}
 
-          {showAlt === "list" && flights.length > 1 && (
-            <div className="mt-4" id="rv-panel-list">
-              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <h2 className="h5 fw-bold mb-0" style={{ color: "var(--navy)" }}>{t("results.otherOptions")}</h2>
-                <div className="d-flex align-items-center gap-2">
-                  {/* La lista sigue al criterio único (toggle de la WinnerCard):
-                      antes había aquí dos controles de orden que se pisaban. */}
-                  <span className="small" style={{ color: "var(--slate-700)" }}>
-                    {uiCriterion === "fairness" ? t("results.sortedByFairness") : t("results.sortedByPrice")}
-                  </span>
-                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
+          {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
+          {showAlt === "more" && (
+            <div className="mt-3 view-enter fm-more" id="rv-panel-more">
+              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+
+              {/* Quick re-search: try nearby dates */}
+              <div className="fm-quick-research">
+                <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
+                <div className="fm-quick-research-btns">
+                  {[-1, 1, -2, 2].map((offset) => {
+                    const d = new Date((departureDate || todayISO()) + "T00:00:00");
+                    d.setDate(d.getDate() + offset);
+                    const iso = d.toISOString().slice(0, 10);
+                    const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
+                    return (
+                      <button key={offset} type="button" className="fm-quick-research-btn"
+                        onClick={() => {
+                          setDepartureDate(iso);
+                          if (tripType === "roundtrip" && returnDate) {
+                            const r = new Date(returnDate + "T00:00:00");
+                            r.setDate(r.getDate() + offset);
+                            setReturnDate(r.toISOString().slice(0, 10));
+                          }
+                          setView("search");
+                          setTimeout(() => {
+                            document.querySelector(".sf-form form")?.requestSubmit?.();
+                          }, 200);
+                        }}>
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
-                <FlightResults
-                  flights={flights}
-                  optimizeBy={uiCriterion}
-                  bestDestination={bestDestination}
-                  origins={cleanOrigins}
-                  departureDate={departureDate}
-                  returnDate={returnDate}
-                  tripType={tripType}
-                  budgetEnabled={budgetEnabled}
-                  maxBudgetPerTraveler={maxBudget}
-                />
-              </ErrorBoundary>
+
+              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)}>
+                <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}
+              </button>
             </div>
           )}
-
-
-          {/* Quick re-search: try nearby dates */}
-          <div className="fm-quick-research view-enter">
-            <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
-            <div className="fm-quick-research-btns">
-              {[-1, 1, -2, 2].map((offset) => {
-                const d = new Date((departureDate || todayISO()) + "T00:00:00");
-                d.setDate(d.getDate() + offset);
-                const iso = d.toISOString().slice(0, 10);
-                const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
-                return (
-                  <button key={offset} type="button" className="fm-quick-research-btn"
-                    onClick={() => {
-                      setDepartureDate(iso);
-                      if (tripType === "roundtrip" && returnDate) {
-                        const r = new Date(returnDate + "T00:00:00");
-                        r.setDate(r.getDate() + offset);
-                        setReturnDate(r.toISOString().slice(0, 10));
-                      }
-                      setView("search");
-                      setTimeout(() => {
-                        document.querySelector(".sf-form form")?.requestSubmit?.();
-                      }, 200);
-                    }}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </main>
       )}
       </div>{/* /main-content */}
