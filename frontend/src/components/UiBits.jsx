@@ -70,32 +70,6 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
   );
 }
 
-// Miga de pan de navegación entre vistas
-export function Breadcrumb({ current, onNavigate }) {
-  const { t } = useI18n();
-  // Dos pantallas (rediseño jun-2026): Inicio › Resultados
-  const crumbs = [
-    { key: "landing", label: t("breadcrumb.home") },
-    ...(current === "results" ? [{ key: "results", label: t("breadcrumb.results") }] : []),
-  ];
-  return (
-    <nav className="fm-breadcrumb" aria-label="breadcrumb">
-      {crumbs.map((c, i) => (
-        <React.Fragment key={c.key}>
-          {i > 0 && <span className="fm-breadcrumb-sep" aria-hidden="true">›</span>}
-          <button type="button"
-            className={`fm-breadcrumb-item${c.key === current ? " fm-breadcrumb-item--active" : ""}`}
-            onClick={() => c.key !== current && onNavigate(c.key)}
-            aria-current={c.key === current ? "page" : undefined}
-            disabled={c.key === current}>
-            {c.label}
-          </button>
-        </React.Fragment>
-      ))}
-    </nav>
-  );
-}
-
 // Estado de error: el MOTIVO específico lidera (es el heading), no un genérico.
 // `message` siempre llega con sentido (validación → específico; backend → mapeado;
 // inesperado → "Algo salió mal"), así que se muestra prominente. role="alert"
@@ -115,7 +89,7 @@ export const FriendlyError = React.memo(function FriendlyError({ message, onRetr
   );
 });
 
-// Contador animado (compartido por AnimatedStat aquí y AnimatedPrice en WinnerCard)
+// Contador animado (lo usa AnimatedPrice en WinnerCard)
 export function useCountUp(target, duration = 800, decimals = 0) {
   const [display, setDisplay] = useState(0);
   const rafRef = useRef(null);
@@ -141,24 +115,4 @@ export function useCountUp(target, duration = 800, decimals = 0) {
   }, [target, duration]);
 
   return formatEur(display, decimals);
-}
-
-// Número animado para estadísticas
-export function AnimatedStat({ value }) {
-  const [display, setDisplay] = useState(0);
-  const rafRef = useRef(null);
-  useEffect(() => {
-    const to = typeof value === "number" ? value : 0;
-    const start = performance.now();
-    const duration = 600;
-    const animate = (now) => {
-      const p = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(eased * to));
-      if (p < 1) rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [value]);
-  return <strong>{display}</strong>;
 }

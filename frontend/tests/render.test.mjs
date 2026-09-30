@@ -38,22 +38,23 @@ const FIXTURE_DEST = {
   ],
 };
 
-test("render: FlightResults con datos de fixture", async () => {
-  const { default: FlightResults } = await import("../src/components/FlightResults.jsx");
-  const html = renderWithI18n(React.createElement(FlightResults, {
-    flights: [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS", totalCostEUR: 280 }],
-    bestDestination: FIXTURE_DEST,
-    origins: ["MAD", "LON"],
-    departureDate: "2026-09-15",
-    tripType: "oneway",
+test("render: DeparturesBoard lista los destinos y marca el de la tarjeta", async () => {
+  const { DeparturesBoard } = await import("../src/components/BoardPanels.jsx");
+  const html = renderWithI18n(React.createElement(DeparturesBoard, {
+    flights: [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS", totalCostEUR: 280, averageCostPerTraveler: 140 }],
+    current: FIXTURE_DEST,
+    criterion: "total",
+    currency: "EUR",
+    onSelect: () => {},
   }));
   assert.ok(html.includes("LIS") || html.includes("Lisbon"));
+  assert.ok(html.includes("fm-board-row--current"), "el destino de la tarjeta va marcado");
 });
 
-test("render: FlightResults vacío muestra estado vacío", async () => {
-  const { default: FlightResults } = await import("../src/components/FlightResults.jsx");
-  const html = renderWithI18n(React.createElement(FlightResults, { flights: [], origins: [] }));
-  assert.ok(html.length > 50);
+test("render: DeparturesBoard con un solo destino no pinta nada", async () => {
+  const { DeparturesBoard } = await import("../src/components/BoardPanels.jsx");
+  const html = renderWithI18n(React.createElement(DeparturesBoard, { flights: [FIXTURE_DEST], current: FIXTURE_DEST }));
+  assert.equal(html, "");
 });
 
 test("render: VerificationBadge en todos los estados", async () => {
@@ -69,10 +70,9 @@ test("render: VerificationBadge en todos los estados", async () => {
   assert.equal(empty, "");
 });
 
-test("render: UiBits (skeleton, breadcrumb, error, shortcuts)", async () => {
-  const { ResultsSkeleton, Breadcrumb, FriendlyError, KeyboardShortcutsOverlay } = await import("../src/components/UiBits.jsx");
+test("render: UiBits (skeleton, error, shortcuts)", async () => {
+  const { ResultsSkeleton, FriendlyError, KeyboardShortcutsOverlay } = await import("../src/components/UiBits.jsx");
   assert.ok(renderWithI18n(React.createElement(ResultsSkeleton)).includes("fm-skel"));
-  assert.ok(renderWithI18n(React.createElement(Breadcrumb, { current: "search", onNavigate: () => {} })).includes("fm-breadcrumb"));
   assert.ok(renderWithI18n(React.createElement(FriendlyError, { message: "boom", onRetry: () => {} })).includes("boom"));
   const t = (k) => k;
   assert.ok(renderWithI18n(React.createElement(KeyboardShortcutsOverlay, { show: true, onClose: () => {}, t })).includes("kbd"));
@@ -148,7 +148,9 @@ test("render: Landing extraída renderiza con CTAs", async () => {
 
 test("render: ChromeBits y ResultsPanels extraídos", async () => {
   const { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, LoadingTips, SearchSkeleton } = await import("../src/components/ChromeBits.jsx");
-  const { CostSplitCard, PlanYourTripCTA, SearchHistoryPanel, DestImageBanner, ResultsShareLink, TopDestinationsPodium } = await import("../src/components/ResultsPanels.jsx");
+  const { CostSplitCard, PlanYourTripCTA } = await import("../src/components/ResultsPanels.jsx");
+  const { ZoneHead, Notice } = await import("../src/components/BoardPanels.jsx");
+  const { OfflineStrip, UpdateBanner, InstallBanner } = await import("../src/components/PwaBits.jsx");
   const t = (k) => k;
   const noop = () => {};
   // Shell
@@ -161,12 +163,15 @@ test("render: ChromeBits y ResultsPanels extraídos", async () => {
   // Paneles de resultados
   assert.ok(renderWithI18n(React.createElement(CostSplitCard, { bestDest: FIXTURE_DEST, origins: ["MAD", "LON"], currency: "EUR", t })).length > 100);
   assert.ok(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "", t })).length > 50);
-  assert.ok(renderWithI18n(React.createElement(SearchHistoryPanel, { searches: [{ origins: ["MAD"], departureDate: "2026-09-15", tripType: "oneway", ts: Date.now() }], onLoad: noop, onClear: noop, t })).length > 50);
-  assert.ok(renderWithI18n(React.createElement(DestImageBanner, { destCode: "ROM" })).length > 50);
-  assert.ok(renderWithI18n(React.createElement(ResultsShareLink, { origins: ["MAD"], departureDate: "2026-09-15", returnDate: "", tripType: "oneway", t })).length > 50);
-  // El podio necesita al menos 3 destinos
-  const podium = [FIXTURE_DEST, { ...FIXTURE_DEST, destination: "LIS" }, { ...FIXTURE_DEST, destination: "PAR" }];
-  assert.ok(renderWithI18n(React.createElement(TopDestinationsPodium, { flights: podium, currency: "EUR", onSelect: noop })).length > 50);
+  // Zonas de resultados y avisos en línea
+  assert.ok(renderWithI18n(React.createElement(ZoneHead, { id: "z", num: "01", title: "Decisión final", variant: "decision" })).includes("fm-zone-head--decision"));
+  const notice = renderWithI18n(React.createElement(Notice, { variant: "next", tag: "Siguiente paso", text: "Plan", actionLabel: "Crear", onAction: noop }));
+  assert.ok(notice.includes("fm-notice--next") && notice.includes("Crear"));
+  // Avisos de la PWA
+  assert.ok(renderWithI18n(React.createElement(OfflineStrip)).includes("fm-offline"));
+  assert.ok(renderWithI18n(React.createElement(UpdateBanner, { onUpdate: noop, onDismiss: noop })).includes("fm-pwa-card--update"));
+  const ios = renderWithI18n(React.createElement(InstallBanner, { mode: "ios", onInstall: noop, onDismiss: noop }));
+  assert.ok(ios.includes("fm-pwa-card--install") && !ios.includes("fm-pwa-card-cta"), "en iOS no hay botón de instalar");
 });
 
 test("render: ThemeToggle expone aria-pressed según el tema resuelto", async () => {

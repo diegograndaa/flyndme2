@@ -1,12 +1,9 @@
 // ─── Paneles de la vista de resultados ───────────────────────────────────────
-// Extraídos de App.jsx (Mejora 27): reparto de costes, CTA de planificación,
-// historial, banner de destino, enlace compartible y podio de destinos.
-import { useCallback, useEffect, useState } from "react";
-import { useI18n } from "../i18n/useI18n";
-import { normalizeCode, cityOf, formatEur, getBaseUrl, countryFlag, fairnessColor } from "../utils/helpers";
-import { BedDouble, Target, Map as MapIcon, History, Link2, Check } from "lucide-react";
+// Extraídos de App.jsx (Mejora 27): reparto de costes y CTA de planificación.
+import { useState } from "react";
+import { cityOf, formatEur, countryFlag } from "../utils/helpers";
+import { BedDouble, Target, Map as MapIcon } from "lucide-react";
 import { convertPrice } from "../utils/resultsLogic";
-import { getCityImage } from "../utils/cityImages";
 
 export function CostSplitCard({ bestDest, origins, currency, t }) {
   const [splitMode, setSplitMode] = useState("equal"); // equal | actual
@@ -96,141 +93,6 @@ export function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
           <span className="fm-plan-trip-link-icon"><MapIcon size={18} aria-hidden="true" /></span>
           <span>{t("results.planMap")}</span>
         </a>
-      </div>
-    </div>
-  );
-}
-
-export function SearchHistoryPanel({ searches, onLoad, onClear, t }) {
-  const [expanded, setExpanded] = useState(false);
-  if (!searches || !searches.length) return null;
-
-  return (
-    <div className="fm-history view-enter">
-      <button type="button" className="fm-history-toggle" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
-        <span className="fm-history-toggle-left">
-          <span className="fm-history-icon"><History size={16} aria-hidden="true" /></span>
-          <span className="fm-history-title">{t("history.title")}</span>
-          <span className="fm-history-count">{searches.length}</span>
-        </span>
-        <span className={`fm-history-chevron${expanded ? " fm-history-chevron--open" : ""}`}>▾</span>
-      </button>
-      {expanded && (
-        <div className="fm-history-body">
-          {searches.slice(0, 10).map((s, i) => (
-            <button key={i} type="button" className="fm-history-item" onClick={() => { onLoad(s); setExpanded(false); }}>
-              <span className="fm-history-item-origins">{(s.origins || []).join(" · ")}</span>
-              <span className="fm-history-item-date">{s.departureDate || "—"}</span>
-              {s.bestDest && <span className="fm-history-item-dest">→ {s.bestDest}</span>}
-              {s.bestPrice != null && <span className="fm-history-item-price">{formatEur(s.bestPrice, 0)}</span>}
-            </button>
-          ))}
-          <button type="button" className="fm-history-clear" onClick={onClear}>{t("history.clear")}</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function DestImageBanner({ destCode }) {
-  const imgUrl = getCityImage(destCode, getBaseUrl(), { w: 1200, h: 300 });
-  const city = cityOf(destCode) || destCode;
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-
-  if (error || !imgUrl) return null;
-
-  return (
-    <div className={`fm-dest-banner${loaded ? " fm-dest-banner--loaded" : ""}`}>
-      <img
-        src={imgUrl}
-        alt={city}
-        className="fm-dest-banner-img"
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        loading="lazy"
-      />
-      <div className="fm-dest-banner-overlay">
-        <span className="fm-dest-banner-city">{city}</span>
-        <span className="fm-dest-banner-code">{destCode}</span>
-      </div>
-    </div>
-  );
-}
-
-export function ResultsShareLink({ origins, departureDate, returnDate, tripType, t }) {
-  const [copied, setCopied] = useState(false);
-
-  const buildLink = useCallback(() => {
-    const params = new URLSearchParams();
-    if (origins?.length) params.set("origins", origins.join(","));
-    if (departureDate) params.set("dep", departureDate);
-    if (returnDate) params.set("ret", returnDate);
-    if (tripType) params.set("trip", tripType);
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-  }, [origins, departureDate, returnDate, tripType]);
-
-  const handleCopy = useCallback(() => {
-    const link = buildLink();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(link).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-  }, [buildLink]);
-
-  return (
-    <div className="fm-sharelink view-enter">
-      <span className="fm-sharelink-icon"><Link2 size={16} aria-hidden="true" /></span>
-      <span className="fm-sharelink-text">{t("shareLink.label")}</span>
-      <button type="button" className="fm-sharelink-btn" onClick={handleCopy}>
-        {copied ? <><Check size={14} aria-hidden="true" /> {t("shareLink.copied")}</> : t("shareLink.copy")}
-      </button>
-    </div>
-  );
-}
-
-export function TopDestinationsPodium({ flights, currency, onSelect, singleOrigin = false }) {
-  const { t } = useI18n();
-  if (!flights || flights.length < 3) return null;
-
-  const sorted = [...flights].sort((a, b) => a.totalCostEUR - b.totalCostEUR).slice(0, 3);
-
-  return (
-    <div className="fm-podium view-enter">
-      <h2 className="fm-podium-title">{t("results.topDestinations")}</h2>
-      <div className="fm-podium-cards">
-        {sorted.map((dest, pos) => {
-          const code = normalizeCode(dest.destination);
-          const city = cityOf(code);
-          const imgUrl = getCityImage(code, getBaseUrl(), { w: 160, h: 160 });
-          return (
-            <button key={code} type="button"
-              className={`fm-podium-card fm-podium-card--pos${pos + 1}`}
-              onClick={() => onSelect?.(dest)}>
-              {imgUrl && (
-                <img className="fm-podium-thumb" src={imgUrl} alt={city || code} loading="lazy"
-                  onError={(e) => { e.currentTarget.style.display = "none"; }} />
-              )}
-              <span className="fm-podium-info">
-                <span className="fm-podium-city">{city || code}</span>
-                <span className="fm-podium-code">{code}</span>
-              </span>
-              <span className="fm-podium-info" style={{ alignItems: "flex-end", flex: "0 0 auto" }}>
-                <span className="fm-podium-price">
-                  {currency === "EUR" ? formatEur(dest.averageCostPerTraveler, 0) : convertPrice(dest.averageCostPerTraveler, currency)}
-                  <span className="fm-podium-pp">/pp</span>
-                </span>
-                {!singleOrigin && (
-                  <span className="fm-podium-fairness" style={{ color: fairnessColor(dest.fairnessScore ?? 0) }}>
-                    {(dest.fairnessScore ?? 0).toFixed(0)}/100
-                  </span>
-                )}
-              </span>
-            </button>
-          );
-        })}
       </div>
     </div>
   );

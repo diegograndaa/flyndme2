@@ -146,9 +146,7 @@
 
 /* ── Paneles de resultados (fm-*) ──────────────────────────────── */
 .fm-card.fm-card,
-.fm-split-card.fm-split-card,
-.fm-sharelink.fm-sharelink,
-.fm-history.fm-history {
+.fm-split-card.fm-split-card {
   background: var(--white);
   border: none;
   border-radius: var(--radius-md);
@@ -156,52 +154,8 @@
 }
 
 /* Podio → "Top alternativas" con miniaturas */
-.fm-podium.fm-podium {
-  background: var(--slate-100);
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 20px;
-}
-.fm-podium .fm-podium-title { color: var(--navy); font-weight: 800; font-size: 1.15rem; text-align: left; }
-.fm-podium .fm-podium-cards { align-items: stretch; }
-.fm-podium .fm-podium-card.fm-podium-card {
-  background: var(--white);
-  background-image: none;
-  border: none;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-xs);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-  padding: 10px;
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.fm-podium .fm-podium-card.fm-podium-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-.fm-podium .fm-podium-card--pos1.fm-podium-card--pos1 { border: 1px solid var(--primary-light); }
-.fm-podium .fm-podium-medal { display: none; }
-.fm-podium-thumb {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-xs);
-  object-fit: cover;
-  background: var(--slate-100);
-  flex: 0 0 auto;
-}
-.fm-podium-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 /* Móvil: las 3 tarjetas-fila no caben en horizontal (quedaban a ~95px con
    miniatura de 72px); se apilan a ancho completo */
-@media (max-width: 640px) {
-  .fm-podium .fm-podium-cards { flex-direction: column; align-items: stretch; }
-}
-.fm-podium .fm-podium-city  { color: var(--navy); font-weight: 700; }
-.fm-podium .fm-podium-code  { color: var(--slate-500); }
-.fm-podium .fm-podium-price { color: var(--navy); font-weight: 800; }
-.fm-podium .fm-podium-pp    { color: var(--slate-500); font-weight: 400; }
 
 /* Ahorro del grupo: tinte coral suave */
 .fm-group-savings.fm-group-savings {
@@ -263,7 +217,6 @@
 }
 
 /* Banner de destino */
-.fm-dest-banner.fm-dest-banner { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
 
 /* Pestañas mapa/comparar/lista */
 .rv-tab.rv-tab {

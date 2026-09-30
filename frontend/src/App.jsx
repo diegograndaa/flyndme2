@@ -126,8 +126,6 @@ class ErrorBoundary extends React.Component {
 
 // ─── Animated mini-demo for landing ──────────────────────────────────────────
 
-// ─── Breadcrumb ──────────────────────────────────────────────────────────────
-
 // ─── Keyboard shortcuts overlay ──────────────────────────────────────────────
 
 

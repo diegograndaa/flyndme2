@@ -110,10 +110,3 @@ export function SearchProgress({ loading, origins = [] }) {
     </>
   );
 }
-
-/**
- * Legacy named export — kept so existing imports don't break.
- */
-export function LoadingOverlay({ loading }) {
-  return <SearchProgress loading={loading} />;
-}
