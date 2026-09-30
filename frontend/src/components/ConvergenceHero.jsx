@@ -1,5 +1,6 @@
 import React from "react";
 import { useI18n } from "../i18n/useI18n";
+import { FlapCycle } from "./FlapBoard";
 
 /**
  * Firma visual de FlyndMe: varios orígenes que CONVERGEN en un punto de
@@ -7,9 +8,17 @@ import { useI18n } from "../i18n/useI18n";
  * imagen. Honesto: los nodos son ejemplos de origen y el destino es un
  * marcador — sin precios inventados (regla 1).
  *
- * Animación de trazado (los arcos "viajan" hacia el destino) con
- * `prefers-reduced-motion` respetado en CSS.
+ * Los arcos son ESTÁTICOS (una animación de entrada del SVG repintaba mal de
+ * forma intermitente en Chromium, ver CLAUDE.md 22-jun). Lo que se mueve son
+ * bucles infinitos, que sí repintan fiables: el pulso del destino y un avión
+ * por arco (SMIL <animateMotion>, oculto con prefers-reduced-motion en CSS).
+ * El código del destino gira en un panel de salidas con destinos de EJEMPLO
+ * (ilustrativo, sin precios).
  */
+const EXAMPLE_DESTS = ["PAR", "ROM", "LIS", "PRG", "BCN", "AMS"];
+
+// Avión de 14px apuntando a +x (animateMotion rotate="auto" lo orienta al arco)
+const PLANE_D = "M7 0 L-3 -5.5 L-1.5 -1.2 L-6 -1.2 L-7.5 -3.5 L-8.5 -3.5 L-7.4 0 L-8.5 3.5 L-7.5 3.5 L-6 1.2 L-1.5 1.2 L-3 5.5 Z";
 const ORIGINS = [
   { code: "MAD", x: 36, y: 54 },
   { code: "LON", x: 24, y: 150 },
@@ -38,10 +47,22 @@ export default function ConvergenceHero({ idSuffix = "" }) {
           </radialGradient>
         </defs>
 
-        {/* Arcos de convergencia (draw-in vía stroke-dashoffset, ver .cv-arc) */}
+        {/* Arcos de convergencia (estáticos, ver .cv-arc) */}
+        {ORIGINS.map((o) => (
+          <path key={o.code} id={`cv-arc-${o.code}${idSuffix}`} className="cv-arc" d={arcPath(o)} fill="none" />
+        ))}
+
+        {/* Un avión por arco, en bucle hacia el punto de encuentro */}
         {ORIGINS.map((o, i) => (
-          <path key={o.code} className="cv-arc" d={arcPath(o)}
-            fill="none" style={{ animationDelay: `${0.15 + i * 0.22}s` }} />
+          <g key={`p-${o.code}`} className="cv-plane" opacity="0">
+            <path d={PLANE_D} />
+            <animateMotion dur="3.6s" begin={`${i * 1.1}s`} repeatCount="indefinite" rotate="auto"
+              keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.45 0 0.25 1">
+              <mpath href={`#cv-arc-${o.code}${idSuffix}`} />
+            </animateMotion>
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.82;1"
+              dur="3.6s" begin={`${i * 1.1}s`} repeatCount="indefinite" />
+          </g>
         ))}
 
         {/* Nodos de origen */}
@@ -59,7 +80,10 @@ export default function ConvergenceHero({ idSuffix = "" }) {
         {/* glifo de "pin" (marcador) en blanco dentro del punto */}
         <circle cx={DEST.x} cy={DEST.y - 1} r="3.4" className="cv-dest-pin" />
       </svg>
-      <span className="cv-meet">{t("landing.diagramMeet")}</span>
+      <span className="cv-meet">
+        <span className="cv-meet-label">{t("landing.diagramMeet")}</span>
+        <FlapCycle words={EXAMPLE_DESTS} size="sm" interval={3300} className="cv-meet-flap" />
+      </span>
     </div>
   );
 }

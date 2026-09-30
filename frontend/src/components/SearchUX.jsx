@@ -1,12 +1,42 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { FlapText, FlapCycle } from "./FlapBoard";
+
+// Códigos que el panel "baraja" mientras dura la búsqueda. Es un indicador de
+// actividad, no un resultado: nunca se asienta en ninguno ni muestra precios.
+const SHUFFLE_CODES = ["PAR", "ROM", "LIS", "PRG", "BCN", "AMS", "VIE", "BUD", "MIL", "DUB"];
+
+/**
+ * Panel de salidas mientras se busca: los orígenes REALES del usuario →
+ * destino que baraja códigos. Sustituye al "spinner genérico" encima del
+ * skeleton de resultados.
+ */
+export function SearchingBoard({ origins = [], title, className = "" }) {
+  const { t } = useI18n();
+  const codes = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean).slice(0, 8);
+  return (
+    <div className={`fm-searching-board ${className}`.trim()} role="status" aria-live="polite">
+      <div className="fm-searching-board-head">
+        <span className="fm-searching-board-dot" aria-hidden="true" />
+        {title || t("loading.boardTitle")}
+      </div>
+      <div className="fm-searching-board-row">
+        <span className="fm-searching-board-origins">
+          {codes.map((c, i) => <FlapText key={c + i} text={c} size="md" delay={i * 120} />)}
+        </span>
+        <span className="fm-searching-board-arrow" aria-hidden="true">→</span>
+        <span aria-hidden="true"><FlapCycle words={SHUFFLE_CODES} interval={650} size="md" /></span>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Thin animated progress bar at the top of the page — non-blocking.
  * Replaces the old full-screen overlay so the user can keep reading
  * while the search runs.
  */
-export function SearchProgress({ loading }) {
+export function SearchProgress({ loading, origins = [] }) {
   const { t } = useI18n();
   const messages = t("loading.messages");
   const ariaLabel = t("loading.ariaLabel");
@@ -63,41 +93,12 @@ export function SearchProgress({ loading }) {
         }}
       />
 
-      {/* Status chip */}
+      {/* Panel de salidas acoplado abajo: orígenes reales → destino que baraja,
+          con el mensaje de estado rotando como cabecera (antes: chip genérico
+          con spinner). */}
       {loading && (
-        <div
-          style={{
-            position:   "fixed",
-            bottom:     24,
-            left:       "50%",
-            transform:  "translateX(-50%)",
-            background: "#16173B", /* tinta Stitch, no gris genérico */
-            color:      "#E1E0FF",
-            borderRadius: 999,
-            padding:    "10px 20px",
-            display:    "flex",
-            alignItems: "center",
-            gap:        12,
-            fontSize:   14,
-            fontWeight: 500,
-            boxShadow:  "0 8px 32px rgba(0,0,0,0.35)",
-            zIndex:     9998,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <span
-            style={{
-              width:         14,
-              height:        14,
-              border:        "2px solid rgba(255,255,255,0.3)",
-              borderTopColor:"#FF6B6B",
-              borderRadius:  "50%",
-              display:       "inline-block",
-              animation:     "spin 0.7s linear infinite",
-              flexShrink:    0,
-            }}
-          />
-          {currentMessage}
+        <div className="fm-searching-dock">
+          <SearchingBoard origins={origins} title={currentMessage} />
         </div>
       )}
 

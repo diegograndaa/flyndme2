@@ -15,6 +15,7 @@ import { getCityImage } from "../utils/cityImages";
 import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
+import { FlapText } from "./FlapBoard";
 
 function useFairnessLabel(score) {
   const { t } = useI18n();
@@ -135,7 +136,9 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>
-          <span className="wc-dest-code">{city || code}</span>
+          {/* Nombre del destino en panel de salidas: gira y se asienta en el
+              valor REAL (el SSR/primer render ya pinta el nombre final). */}
+          <span className="wc-dest-code wc-dest-code--flap"><FlapText text={city || code} size="lg" delay={250} /></span>
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
@@ -238,8 +241,8 @@ const WinnerCard = React.memo(function WinnerCard({
               {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
             </span>
           </div>
-          {payRows.rows.map((r) => (
-            <div key={r.origin} className="wc-fs-row">
+          {payRows.rows.map((r, i) => (
+            <div key={r.origin} className="wc-fs-row" style={{ "--i": i }}>
               <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
               <div className="wc-fs-track">
                 <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / payRows.maxP) * 100)}%`, background: payColor(r.price, payRows.avg) }} />
@@ -253,6 +256,16 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
         </div>
       )}
+
+      {/* Troquel de tarjeta de embarque: separa la "matriz" (precio y reparto)
+          del cuerpo (reserva). Decorativo salvo la línea de datos reales. */}
+      <div className="wc-perf">
+        <span className="wc-perf-text">
+          {t("results.boardingPass")}
+          {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
+        </span>
+        <span className="wc-perf-barcode" aria-hidden="true" />
+      </div>
 
       {/* Body */}
       <div className="wc-body">

@@ -295,6 +295,8 @@
     "tripDays": "Viaje de {{n}} días",
     "shareNative": "Compartir",
     "bestRouteTitle": "Vuestra ruta más barata a {{city}}",
+    "boardingPass": "Tarjeta de embarque del grupo",
+    "boardingMeta": "{{n}} ciudades · 1 punto de encuentro",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
     "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
     "copyFlight": "Copiar info del vuelo",
@@ -424,6 +426,7 @@
     "season.autumn": "Otoño"
   },
   "loading": {
+    "boardTitle": "Buscando vuestro punto de encuentro",
     "messages": [
       "Despertando el servidor…",
       "Conectando con aerolíneas…",

@@ -29,6 +29,7 @@ import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { getCityImage } from "./utils/cityImages";
+import "./styles/board.css";
 import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding, ChevronRight } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
@@ -1303,7 +1304,7 @@ export default function App() {
       )}
 
       {/* Loading bar */}
-      <SearchProgress loading={loading} />
+      <SearchProgress loading={loading} origins={cleanOrigins} />
 
       {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}

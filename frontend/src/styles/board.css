@@ -1,0 +1,569 @@
+/* ─── board.css ──────────────────────────────────────────────────────────────
+   Identidad "panel de aeropuerto" (sep-2026): tipografía split-flap para
+   códigos/destinos, tarjeta ganadora como tarjeta de embarque (troquel +
+   código de barras), aviones que recorren los arcos del hero, pasos como
+   tramos de un itinerario y entradas al hacer scroll.
+   Se importa en App.jsx DESPUÉS de App.css / theme-stitch / results-simple.
+   Reglas de la casa:
+   · Solo tokens (--primary, --primary-rgb, --bg…) → claro/oscuro heredan.
+   · Animaciones de entrada en contenedores con fill `backwards` (no `both`):
+     un transform residual crearía containing block y rompería los
+     position:fixed de dentro (drawer de aeropuertos, tooltips).
+   · NADA de animaciones de entrada sobre el SVG del hero (repintado
+     intermitente en Chromium, ver CLAUDE.md 22-jun): solo bucles infinitos.
+   · prefers-reduced-motion lo apaga todo al final del archivo.            */
+
+:root {
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
+  --board-cell-top: #2A2B5E;
+  --board-cell-bot: #1B1C40;
+  --board-ink: #FFFFFF;
+}
+
+/* ══ 1. Split-flap ═══════════════════════════════════════════════════════ */
+.flap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .09em;
+  row-gap: .12em;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: middle;
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+.flap-cell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: .9em;
+  height: 1.26em;
+  padding-top: .02em;
+  color: var(--board-ink);
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  border-radius: .12em;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 1px 0 rgba(0,0,0,.35),
+    0 3px 8px rgba(10,10,35,.22);
+  overflow: hidden;
+  animation: flap-tick .11s ease-out;
+  transform-origin: 50% 50%;
+}
+/* bisagra central de la paleta */
+.flap-cell::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: rgba(0,0,0,.55);
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+.flap-gap { display: inline-block; width: .38em; }
+.flap--sm { font-size: 12px; }
+.flap--md { font-size: 20px; }
+.flap--lg { font-size: clamp(28px, 7vw, 44px); }
+.flap-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@keyframes flap-tick {
+  from { transform: perspective(200px) rotateX(-65deg); filter: brightness(1.35); }
+  to   { transform: none; filter: none; }
+}
+
+/* ══ 2. Keyframes compartidos ════════════════════════════════════════════ */
+@keyframes board-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes board-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes board-grow-x { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes board-sweep { to { background-size: 100% 100%; } }
+@keyframes board-taxi {
+  from { opacity: 0; transform: translateX(-38px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes board-shine {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to   { transform: translateX(320%) skewX(-18deg); }
+}
+@keyframes board-fly {
+  0%   { left: 10%; opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { left: 88%; opacity: 0; }
+}
+@keyframes board-blink { 50% { opacity: .25; } }
+
+/* ══ 3. Hero ═════════════════════════════════════════════════════════════ */
+/* Fuera los orbes difuminados genéricos: retícula de puntos tipo carta
+   aeronáutica que se desvanece hacia los bordes. */
+.lp-hero.lp-hero--merged {
+  background: var(--bg);
+  border-bottom: none;
+}
+.lp-hero.lp-hero--merged::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: 0; right: 0; left: 0; bottom: 0;
+  width: auto; height: auto;
+  border-radius: 0;
+  background-image: radial-gradient(rgba(var(--primary-rgb), .20) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
+          mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
+  animation: none;
+  pointer-events: none;
+}
+.lp-hero.lp-hero--merged::after { display: none; }
+.lp-hero--merged > .container { position: relative; z-index: 1; }
+
+/* Eyebrow como etiqueta de billete */
+.lp-hero--merged .lp-eyebrow.lp-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+/* Entrada escalonada del texto del hero (HTML, no SVG) */
+.lp-hero--merged .lp-eyebrow { animation: board-rise .7s var(--ease-out-expo) .05s backwards; }
+.lp-hero--merged .lp-h1      { animation: board-rise .8s var(--ease-out-expo) .14s backwards; }
+.lp-hero--merged .lp-lead    { animation: board-rise .8s var(--ease-out-expo) .26s backwards; }
+.lp-search-section           { animation: board-rise .8s var(--ease-out-expo) .36s backwards; }
+
+/* Palabra acento: subrayado de rotulador coral que se traza tras la entrada */
+.lp-h1-accent.lp-h1-accent {
+  background-image: linear-gradient(transparent 64%, rgba(255,107,107,.32) 64%, rgba(255,107,107,.32) 90%, transparent 90%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  animation: board-sweep .9s var(--ease-out-expo) .75s forwards;
+  padding: 0 .04em;
+}
+
+/* Aviones sobre los arcos (bucle SMIL, ver ConvergenceHero) */
+.cv-plane path { fill: var(--primary); transform: scale(1.35); }
+.cv-plane { filter: drop-shadow(0 2px 3px rgba(var(--primary-rgb), .35)); }
+
+/* Etiqueta del destino: texto + panel que gira con destinos de ejemplo */
+.cv-meet.cv-meet {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  right: 0;
+  transform: translateY(26px);
+}
+.cv-meet-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.cv-meet-flap.flap--sm { font-size: 22px; }
+@media (max-width: 860px) {
+  .cv-meet.cv-meet { display: flex; right: auto; transform: none; }
+}
+
+/* ══ 4. Botón principal: brillo que cruza + avión ═══════════════════════ */
+.btn-fm-primary.btn-fm-primary { position: relative; overflow: hidden; isolation: isolate; }
+.btn-fm-primary.btn-fm-primary::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-fm-primary.btn-fm-primary:hover:not(:disabled)::after { animation: board-shine .75s ease-out; }
+.btn-fm-primary.btn-fm-primary:hover:not(:disabled) { transform: translateY(-1px); opacity: 1; }
+.btn-fm-primary.btn-fm-primary:active:not(:disabled) { transform: translateY(0) scale(.98); }
+
+/* ══ 5. Cómo funciona → tramos de itinerario ═════════════════════════════ */
+.lp-how .lp-card.lp-card {
+  box-shadow: none;
+  border: 1px solid rgba(var(--primary-rgb), .14);
+  border-radius: var(--radius-lg);
+  padding-top: 28px;
+}
+.lp-how .lp-card.lp-card::before { display: none; }
+.lp-legs.lp-legs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin: 8px 0 26px;
+}
+/* ruta punteada que une los iconos (altura = puerta 34 + gap 10 + ½ icono 14) */
+.lp-legs.lp-legs::before {
+  content: "";
+  position: absolute;
+  top: 57px;
+  left: 14px;
+  right: 14%;
+  border-top: 2px dashed rgba(var(--primary-rgb), .32);
+}
+/* avión que recorre la ruta en bucle */
+.lp-legs.lp-legs::after {
+  content: "";
+  position: absolute;
+  top: 49px;
+  left: 10%;
+  width: 18px;
+  height: 18px;
+  background: var(--primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: rotate(90deg);
+  animation: board-fly 7s ease-in-out infinite;
+}
+.lp-leg.lp-leg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+}
+.lp-leg-gate {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.3px rgba(var(--primary-rgb), .6);
+  letter-spacing: -.02em;
+}
+.lp-leg .lp-step-num.lp-step-num {
+  position: relative;
+  z-index: 1;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 0 6px var(--white);
+}
+[data-theme="dark"] .lp-leg .lp-step-num.lp-step-num { color: #16173B; }
+.lp-leg-text { color: var(--slate-700); line-height: 1.5; }
+.lp-how .lp-card-meta { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+@media (max-width: 600px) {
+  .lp-legs.lp-legs { grid-template-columns: 1fr; gap: 14px; }
+  .lp-legs.lp-legs::before, .lp-legs.lp-legs::after { display: none; }
+  .lp-leg.lp-leg { display: grid; grid-template-columns: 44px 28px 1fr; align-items: center; gap: 12px; }
+  .lp-leg-gate { font-size: 26px; }
+}
+
+/* FAQ editorial: lista con reglas finas, sin "tarjetas flotantes" */
+.lp-faq .lp-faq-item.lp-faq-item {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--slate-200);
+}
+.lp-faq .lp-faq-item.lp-faq-item:hover { transform: none; box-shadow: none; }
+.lp-faq .lp-faq-q { padding: 20px 4px; font-size: 16px; }
+.lp-faq .lp-faq-chevron {
+  display: inline-grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--slate-300);
+  font-size: 16px;
+  transition: transform .35s var(--ease-out-expo), background .2s ease, color .2s ease, border-color .2s ease;
+}
+.lp-faq .lp-faq-item--open .lp-faq-chevron {
+  transform: rotate(180deg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+[data-theme="dark"] .lp-faq .lp-faq-item--open .lp-faq-chevron { color: #16173B; }
+.lp-faq .lp-faq-a { padding-left: 4px; padding-right: 40px; }
+
+/* ══ 6. Panel "buscando…" ════════════════════════════════════════════════ */
+.fm-searching-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 9998;
+  width: min(560px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.fm-searching-dock .fm-searching-board { margin: 0; max-width: none; padding: 14px 18px 16px; gap: 10px; }
+.fm-searching-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 8px auto 22px;
+  padding: 20px 22px 22px;
+  max-width: 620px;
+  background: #16173B;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 40px rgba(22,23,59,.28);
+  animation: board-rise .6s var(--ease-out-expo) backwards;
+}
+.fm-searching-board-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #C9C8F0;
+}
+.fm-searching-board-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #FFB020;
+  box-shadow: 0 0 10px #FFB020;
+  animation: board-blink 1s steps(2, jump-none) infinite;
+}
+.fm-searching-board-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.fm-searching-board-arrow { color: var(--coral); font-size: 22px; font-weight: 800; }
+.fm-searching-board .flap-cell { --board-cell-top: #33346B; --board-cell-bot: #25264F; }
+
+/* ══ 7. Tarjeta ganadora → tarjeta de embarque ═══════════════════════════ */
+/* Nombre del destino en panel sobre la foto */
+.wc-card .wc-dest-code--flap.wc-dest-code--flap { font-size: inherit; line-height: 1; margin: 2px 0 2px; }
+.wc-card .wc-dest-code--flap .flap-cell {
+  --board-cell-top: rgba(34,35,80,.94);
+  --board-cell-bot: rgba(22,23,59,.96);
+}
+
+/* Cifras de la matriz en mono (panel) */
+.wc-card .wc-summary-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .12em;
+}
+.wc-card .wc-summary-price,
+.wc-card .wc-summary-date,
+.wc-card .wc-fs-price,
+.wc-card .wc-fs-code,
+.wc-card .wc-flight-code,
+.wc-card .wc-flight-price-tag,
+.wc-card .wc-booking-total {
+  font-family: var(--font-mono);
+  letter-spacing: -.02em;
+}
+.wc-card .wc-fs-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
+
+/* "Quién paga qué": las barras crecen escalonadas, luego aparece la media */
+.wc-card .wc-fs-fill {
+  transform-origin: left center;
+  animation: board-grow-x 1s var(--ease-out-expo) backwards;
+  animation-delay: calc(.45s + var(--i, 0) * .13s);
+}
+.wc-card .wc-fs-avg { animation: board-fade .4s ease backwards; animation-delay: 1.05s; }
+.wc-card .wc-fs-row { animation: board-fade .4s ease backwards; animation-delay: calc(.35s + var(--i, 0) * .13s); }
+
+/* Troquel: muescas del color de la página + línea perforada + código de barras */
+.wc-perf {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 32px 4px;
+  background-color: var(--white);
+  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
+  background-size: 12px 2px;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+}
+.wc-perf::before,
+.wc-perf::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.wc-perf::before { left: -13px; }
+.wc-perf::after  { right: -13px; }
+.wc-perf-text {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--slate-500);
+}
+.wc-perf-barcode {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 20px;
+  opacity: .7;
+  background: repeating-linear-gradient(90deg,
+    var(--navy) 0 2px, transparent 2px 4px,
+    var(--navy) 4px 5px, transparent 5px 8px,
+    var(--navy) 8px 11px, transparent 11px 12px,
+    var(--navy) 12px 13px, transparent 13px 16px);
+}
+.wc-card .wc-body.wc-body { padding-top: 16px; }
+@media (max-width: 480px) {
+  .wc-perf { padding: 14px 22px 2px; }
+  .wc-perf-text { font-size: 9.5px; letter-spacing: .08em; }
+  .wc-perf-barcode { display: none; }
+}
+
+/* Tarjetas por origen: entran escalonadas y el avión "rueda" por la pista */
+.wc-card .wc-booking-cards > .wc-flight-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(1) { animation-delay: .25s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(2) { animation-delay: .33s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(3) { animation-delay: .41s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(n+4) { animation-delay: .49s; }
+.wc-card .wc-flight-plane {
+  display: inline-flex;
+  transition: transform .45s var(--ease-out-expo);
+  animation: board-taxi 1.1s var(--ease-out-expo) .45s backwards;
+}
+.wc-card .wc-flight-card:hover .wc-flight-plane { transform: translateX(10px); }
+.wc-card .wc-flight-line { background-image: linear-gradient(90deg, var(--slate-300) 60%, transparent 0); background-color: transparent; background-size: 7px 1.5px; }
+
+/* Botones de acción y CTAs: respuesta táctil coherente */
+.wc-card .wc-action-btn,
+.wc-card .wc-cta {
+  transition: transform .18s var(--ease-out-expo), box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+}
+.wc-card .wc-action-btn:hover,
+.wc-card .wc-cta:hover { transform: translateY(-2px); }
+.wc-card .wc-action-btn:active,
+.wc-card .wc-cta:active { transform: translateY(0) scale(.97); }
+
+/* ══ 8. Resto de resultados: cifras de panel + podio vivo ════════════════ */
+.fm-podium .fm-podium-price,
+.fm-stats-bar strong,
+.fm-split-amount,
+.cmp-price { font-family: var(--font-mono); letter-spacing: -.02em; }
+.fm-podium .fm-podium-card.fm-podium-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
+.fm-podium .fm-podium-card:nth-child(2) { animation-delay: .08s; }
+.fm-podium .fm-podium-card:nth-child(3) { animation-delay: .16s; }
+.fm-podium .fm-podium-thumb { transition: transform .5s var(--ease-out-expo); }
+.fm-podium .fm-podium-card:hover .fm-podium-thumb { transform: scale(1.06) rotate(-1.5deg); }
+.rv-tab.rv-tab { transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .18s var(--ease-out-expo); }
+.rv-tab.rv-tab:hover { transform: translateY(-1px); }
+
+/* ══ 9. Entradas al hacer scroll (CSS scroll-driven, cero JS) ════════════
+   Solo donde el navegador lo soporta; si no, el contenido se ve sin más. */
+@supports (animation-timeline: view()) {
+  .lp-how .lp-card,
+  .lp-leg.lp-leg,
+  .lp-faq-title,
+  .lp-faq .lp-faq-item,
+  .app-footer-seo,
+  .fm-group-nudge,
+  .fm-podium,
+  .fm-group-savings,
+  .fm-stats-bar,
+  .fm-split-card,
+  .fm-arrival-spread,
+  .fm-sharelink,
+  .fm-plan-trip,
+  .fm-quick-research {
+    animation: board-rise linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+/* ══ 10. Movimiento reducido: todo quieto ═════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .flap-cell,
+  .lp-hero--merged .lp-eyebrow,
+  .lp-hero--merged .lp-h1,
+  .lp-hero--merged .lp-lead,
+  .lp-search-section,
+  .fm-searching-board,
+  .fm-searching-board-dot,
+  .wc-card .wc-fs-fill,
+  .wc-card .wc-fs-avg,
+  .wc-card .wc-fs-row,
+  .wc-card .wc-booking-cards > .wc-flight-card,
+  .wc-card .wc-flight-plane,
+  .fm-podium .fm-podium-card.fm-podium-card,
+  .lp-legs.lp-legs::after,
+  .btn-fm-primary.btn-fm-primary::after { animation: none !important; }
+  .lp-h1-accent.lp-h1-accent { animation: none; background-size: 100% 100%; }
+  .lp-legs.lp-legs::after { display: none; }
+  .cv-plane { display: none; }
+  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo,
+  .fm-group-nudge, .fm-podium, .fm-group-savings, .fm-stats-bar, .fm-split-card,
+  .fm-arrival-spread, .fm-sharelink, .fm-plan-trip, .fm-quick-research { animation: none !important; }
+}
+
+/* Fix (previo a este rediseño): el stepper del skeleton de búsqueda
+   desbordaba 40px en móvil (390px) → el layout viewport se ensanchaba y los
+   position:fixed (panel "buscando") quedaban medio fuera de pantalla. */
+@media (max-width: 600px) {
+  .sk-stepper { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+  .sk-step-line { width: 14px; margin: 0 2px; }
+  .sk-step:not(.sk-step--active) .sk-step-label,
+  .sk-step--done .sk-step-label { display: none; }
+}
+
+/* ══ 11. Formulario: la barra resumen como "mini panel de salidas" ═══════
+   Última confirmación antes del CTA: orígenes en celdas de panel (mono) y
+   fecha/viajeros en tinta lavanda. Navy fijo en ambos temas. */
+.sf-summary-bar.sf-summary-bar {
+  background: #16173B;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--radius-md);
+  color: #C9C8F0;
+  box-shadow: 0 10px 24px rgba(22,23,59,.18);
+}
+.sf-summary-bar .sf-summary-chip.sf-summary-chip {
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: .08em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.25);
+  animation: flap-tick .25s ease-out;
+}
+.sf-summary-bar .sf-summary-meta,
+.sf-summary-bar .sf-summary-meta span,
+.sf-summary-bar .sf-summary-pax-total.sf-summary-pax-total {
+  color: #C9C8F0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: transparent;
+}
+.sf-summary-bar .sf-summary-pax { color: var(--coral); }
+.sf-summary-bar .sf-summary-flex.sf-summary-flex { color: #FFB020; background: rgba(255,176,32,.12); }
+[data-theme="dark"] .sf-summary-bar.sf-summary-bar { background: #0E0F2A; }
+
+/* Número de viajero como puerta de embarque */
+.sf-origin-row .sf-badge.sf-badge { font-family: var(--font-mono); }
+/* Filas de origen: entran deslizando (también al añadir un viajero) */
+.sf-origin-row.sf-origin-row { animation: board-rise .45s var(--ease-out-expo) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-summary-bar .sf-summary-chip.sf-summary-chip,
+  .sf-origin-row.sf-origin-row { animation: none; }
+}
+[data-theme="dark"] .fm-searching-board { border: 1px solid rgba(255,255,255,.1); box-shadow: 0 18px 40px rgba(0,0,0,.45); }

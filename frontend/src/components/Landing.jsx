@@ -82,17 +82,20 @@ const Landing = React.memo(function Landing({ searchForm }) {
         <div className="container" style={{ maxWidth: 720 }}>
           <div className="lp-card">
             <h2 className="lp-card-title">{t("landing.howTitle")}</h2>
-            <ul className="lp-steps">
+            {/* Pasos como "tramos" de un itinerario: puerta 01/02/03 en tipografía
+                de panel, unidos por una ruta punteada por la que cruza un avión */}
+            <ol className="lp-steps lp-legs">
               {Array.isArray(steps) && steps.map((s, i) => {
                 const StepIcon = STEP_ICONS[i];
                 return (
-                  <li key={i}>
+                  <li key={i} className="lp-leg" style={{ "--i": i }}>
+                    <span className="lp-leg-gate" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
                     <span className="lp-step-num">{StepIcon ? <StepIcon size={15} aria-hidden="true" /> : i + 1}</span>
-                    {s}
+                    <span className="lp-leg-text">{s}</span>
                   </li>
                 );
               })}
-            </ul>
+            </ol>
             <div className="lp-card-meta">
               <span>{t("landing.metaSource")}</span>
               <span>{t("landing.metaTime")}</span>
