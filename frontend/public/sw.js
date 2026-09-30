@@ -2,10 +2,11 @@
 // Strategy: Cache app shell (HTML, CSS, JS, fonts) for offline display.
 // API calls are always network-first (never cache flight prices).
 
-// v3: los favicons de pestaña (.ico/.png) pasaron de azul a coral de marca. Se
-// cachean on-demand (cache-first), así que un usuario recurrente seguiría viendo
-// el azul; subir la versión purga el cache viejo (ver 'activate') y re-precachea.
-const CACHE_NAME = "flyndme-v3";
+// v4 (sep-2026): logo nuevo «Convergencia» (logo-flyndme.svg, favicon.svg,
+// .ico/.png y apple-touch-icon). Se cachean on-demand (cache-first), así que un
+// usuario recurrente seguiría viendo el logo viejo; subir la versión purga el
+// cache viejo (ver 'activate') y re-precachea.
+const CACHE_NAME = "flyndme-v4";
 
 const APP_SHELL = [
   "/",

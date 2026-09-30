@@ -30,6 +30,9 @@ const C = {
   warn: "#B45309",
   bad: "#DC2626",
 };
+// Logo «Convergencia» (mismo SVG que public/logo-flyndme.svg), embebido para
+// no depender de un fetch en el Edge.
+const LOGO_URI = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjQUUyRjM0Ii8+CiAgPHBhdGggZD0iTTYgOC41QzEzIDguOCAxOS41IDExLjUgMjMuNSAxNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTUgMTZIMjMuNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTYgMjMuNUMxMyAyMy4yIDE5LjUgMjAuNSAyMy41IDE2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjE2IiByPSIzLjgiIGZpbGw9IiNGRkIwMjAiLz4KPC9zdmc+Cg==";
 const SANS = "Plex";
 const MONO = "PlexMono";
 
@@ -138,9 +141,7 @@ function passShell({ kicker, main, stub, seed }) {
       el("div", { width: 780, height: "100%", flexDirection: "column", justifyContent: "space-between", padding: "40px 46px" }, [
         el("div", { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, [
           el("div", { flexDirection: "row", alignItems: "center" }, [
-            el("div", { width: 34, height: 34, borderRadius: 9, background: C.ink, alignItems: "center", justifyContent: "center", marginRight: 14 }, [
-              el("div", { width: 12, height: 12, borderRadius: 6, background: C.amber }, []),
-            ]),
+            { type: "img", props: { src: LOGO_URI, width: 38, height: 38, style: { marginRight: 14 } } },
             el("div", { fontSize: 32, color: C.ink, letterSpacing: -0.5 }, "FlyndMe"),
           ]),
           label(kicker),
