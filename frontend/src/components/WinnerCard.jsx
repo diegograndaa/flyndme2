@@ -133,6 +133,9 @@ const WinnerCard = React.memo(function WinnerCard({
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
+        {/* Duotono de marca (tinta → ámbar): capa que tiñe las luces de la foto
+            para que todas las ciudades compartan el mismo tratamiento. */}
+        <div className="wc-image-duo" aria-hidden="true" />
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>

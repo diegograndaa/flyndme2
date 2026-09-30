@@ -1067,3 +1067,39 @@
 .lp-card-title.lp-card-title,
 .lp-faq-title.lp-faq-title,
 .gp-title.gp-title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
+
+/* ══ 15. Fotos de destino en duotono (tinta → ámbar) ═════════════════════
+   Técnica de dos capas sin JS: fondo tinta + foto en gris con "screen"
+   (las sombras se vuelven tinta) + capa ámbar con "multiply" (las luces se
+   vuelven ámbar). Todas las fotos de Unsplash quedan con el mismo tono de
+   cartel de viaje en vez de parecer de banco de imágenes. */
+.wc-card .wc-image-wrap.wc-image-wrap {
+  --duo-dark: #15172A;
+  --duo-light: #FFC766;
+  background: var(--duo-dark);
+  isolation: isolate;
+}
+.wc-card .wc-image.wc-image {
+  filter: grayscale(1) contrast(1.12) brightness(1.04);
+  mix-blend-mode: screen;
+}
+.wc-image-duo {
+  position: absolute;
+  inset: 0;
+  background: var(--duo-light);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+/* Degradado inferior en tinta (antes azul del tema viejo) para leer el nombre */
+.wc-card .wc-image-overlay.wc-image-overlay {
+  background: linear-gradient(to top, rgba(21,23,42,.88) 0%, rgba(21,23,42,.35) 42%, transparent 72%);
+}
+/* Nombre + código del destino por encima de las pastillas (antes el código
+   quedaba tapado por "Precio confirmado / X% más barato"). */
+.wc-card .wc-image-label.wc-image-label { bottom: 56px; }
+.wc-card .wc-chips-overlay.wc-chips-overlay { left: 28px; bottom: 18px; right: 70px; flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .wc-card .wc-image-label.wc-image-label { left: 18px; bottom: 50px; }
+  .wc-card .wc-chips-overlay.wc-chips-overlay { left: 18px; bottom: 14px; right: 18px; }
+}
+.wc-card .wc-dest-city.wc-dest-city { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: .16em; opacity: .85; }
