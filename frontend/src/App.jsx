@@ -21,7 +21,7 @@ import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/ver
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
-import WinnerCard from "./components/WinnerCard";
+import WinnerCard, { WhoPaysStrip } from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
@@ -1469,25 +1469,38 @@ export default function App() {
             currency={currency}
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
-          />
-
-          {/* Fecha más barata para ESTE destino (solo si el backend la encontró) */}
-          {cheaperDate && (
-            <Notice variant="date" tag={t("board.tagDate")}
-              text={t("cheaperDate.text", {
+            dateHint={cheaperDate ? {
+              text: t("cheaperDate.text", {
                 date: formatDate(cheaperDate.date),
                 total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
                 saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
-              })}
-              actionLabel={t("cheaperDate.use")}
-              onAction={() => useCheaperDate(cheaperDate.date)} />
-          )}
+              }),
+              actionLabel: t("cheaperDate.use"),
+              onAction: () => useCheaperDate(cheaperDate.date),
+            } : null}
+          />
 
           {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
               en un mismo bloque (sin sentido con un solo origen: todos salen de
               la misma ciudad y pagan lo mismo) */}
           {cleanOrigins.length > 1 && (
-          <div className="fm-group-block">
+          <details className="fm-split-details">
+            {/* Plegado por defecto: la decisión es la compra y el total; el
+                reparto queda a un toque con un resumen de una línea. */}
+            <summary className="fm-split-summary">
+              <span className="fm-split-summary-tag">{t("results.splitSummaryTag")}</span>
+              <span className="fm-split-summary-text">
+                {(bestDestination.flights || []).map((f) => `${String(f.origin).toUpperCase()} ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`).join(" · ")}
+                <span className="fm-split-summary-sep"> — </span>
+                {t("results.splitSummaryEqual", { amount: currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency) })}
+              </span>
+              <span className="fm-split-summary-more">
+                <span className="fm-split-summary-open">{t("results.splitSummaryMore")}</span>
+                <span className="fm-split-summary-close">{t("results.splitSummaryLess")}</span>
+              </span>
+            </summary>
+            <div className="fm-split-body">
+            <WhoPaysStrip dest={bestDestination} currency={currency} />
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
@@ -1534,7 +1547,8 @@ export default function App() {
             );
           })()}
 
-          </div>
+            </div>
+          </details>
           )}
 
           {/* Siguiente paso: convertirlo en plan de grupo (cada uno añade su ciudad) */}

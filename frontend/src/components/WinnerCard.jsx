@@ -12,7 +12,7 @@ import { convertPrice } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
+import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
 import { FlapText } from "./FlapBoard";
@@ -55,10 +55,10 @@ const WinnerCard = React.memo(function WinnerCard({
   currency = "EUR",
   searchBadges = [],
   isFav = false, onToggleFav,
+  dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(true);
 
   useEffect(() => {
     if (dest) {
@@ -77,7 +77,6 @@ const WinnerCard = React.memo(function WinnerCard({
   // (anillo, toggle precio/equidad y barra) para no mostrar métricas triviales.
   const singleOrigin = cleanOrigins.length <= 1;
 
-  const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
 
   // Savings vs average of all destinations
   const savingsPct = useMemo(() => {
@@ -86,21 +85,6 @@ const WinnerCard = React.memo(function WinnerCard({
     if (avgAll <= 0) return 0;
     return Math.round(((avgAll - dest.averageCostPerTraveler) / avgAll) * 100);
   }, [allFlights, dest]);
-
-  // "Who pays what": real per-person fare for each origin, scaled to the
-  // priciest, with the group average marked. Makes the fairness/spread legible
-  // (replaces the abstract 0-100 ring). Hidden for single-origin (no spread).
-  const payRows = useMemo(() => {
-    if (singleOrigin || breakdown.length < 2) return null;
-    const rows = breakdown
-      .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0 }))
-      .filter((r) => r.price > 0);
-    if (rows.length < 2) return null;
-    const maxP = Math.max(...rows.map((r) => r.price));
-    const sum = rows.reduce((s, r) => s + r.price, 0);
-    const avg = dest?.averageCostPerTraveler || (sum / rows.length);
-    return { rows, maxP, avg };
-  }, [breakdown, singleOrigin, dest]);
 
   // Todos los hooks ya se han llamado de forma incondicional → early return seguro.
   if (!dest) return null;
@@ -126,6 +110,19 @@ const WinnerCard = React.memo(function WinnerCard({
     offerMap[k] = f.offer || null;
     flightInfoMap[k] = f;
   });
+
+  const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
+  const travelers = dest.totalPassengers
+    || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
+    || cleanOrigins.length;
+  // Suma de lo que paga cada origen (precio × pasajeros) → total del grupo.
+  // Solo se enseña si cuadra con el total del backend (nunca un total propio).
+  const sumParts = (() => {
+    if (singleOrigin || breakdown.length < 2 || breakdown.length > 6) return null;
+    const parts = breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1));
+    const sum = parts.reduce((a2, v) => a2 + v, 0);
+    return Math.abs(sum - (dest.totalCostEUR || 0)) <= 1 ? parts : null;
+  })();
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
@@ -165,165 +162,35 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
       </div>
 
-      {/* Summary strip */}
-      <div className="wc-summary">
-        <div className="wc-summary-item wc-summary-item--tooltip">
-          <div className="wc-summary-label">{t("results.groupTotal")}</div>
-          {currency === "EUR"
-            ? <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-summary-price" />
-            : <div className="wc-summary-price price-animate">{convertPrice(dest.totalCostEUR, currency)}</div>
-          }
-          {/* Per-origin breakdown tooltip */}
-          {breakdown.length > 0 && (
-            <div className="wc-tooltip">
-              {breakdown.map((f, i) => (
-                <div key={i} className="wc-tooltip-row">
-                  <span>{f.origin}</span>
-                  <span>{currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}</span>
-                </div>
+      {/* ══ Vuestros vuelos: lo que hay que comprar + el total del grupo ══
+          Es el centro de la decisión (antes iba debajo de la matriz de precios,
+          el reparto y el troquel, y además plegable). */}
+      <div className="wc-buy">
+        <div className="wc-buy-head">
+          <div className="wc-buy-heading">
+            <span className="wc-buy-kicker">
+              {singleOrigin ? t("results.buyKickerOne") : t("results.buyKicker", { n: cleanOrigins.length })}
+            </span>
+            <h3 className="wc-buy-title">
+              {singleOrigin ? t("results.buyTitleOne", { city: city || code }) : t("results.buyTitle", { city: city || code })}
+            </h3>
+            <p className="wc-buy-sub">{t("results.bookSub")}</p>
+          </div>
+          {/* Criterio: control único que gobierna ganador Y alternativas */}
+          {!singleOrigin && (
+            <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
+              {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
+                <button key={v} type="button"
+                  className={`wc-criterion-pill${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
+                  aria-pressed={uiCriterion === v}
+                  onClick={() => onChangeCriterion(v)}>{l}</button>
               ))}
             </div>
           )}
         </div>
-        <div className="wc-summary-divider" />
-        <div className="wc-summary-item">
-          <div className="wc-summary-label">{t("results.avgPerPerson")}</div>
-          {currency === "EUR"
-            ? <AnimatedPrice value={dest.averageCostPerTraveler} decimals={0} className="wc-summary-price wc-summary-price--secondary" />
-            : <div className="wc-summary-price wc-summary-price--secondary price-animate">{convertPrice(dest.averageCostPerTraveler, currency)}</div>
-          }
-        </div>
-        {dep && (
-          <>
-            <div className="wc-summary-divider" />
-            <div className="wc-summary-item">
-              <div className="wc-summary-label">
-                {tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")}
-              </div>
-              <div className="wc-summary-date">
-                {tripType === "roundtrip"
-                  ? `${formatDate(dep)} → ${formatDate(ret)}`
-                  : formatDate(dep)}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* On-demand live price check (#5). Default is the honest "cached estimate"
-          caveat + a button; we only call SerpAPI when the user asks (the cached
-          feed is an estimate, not a verified fare). Once confirmed, the ✓/↑↓
-          VerificationBadge over the hero takes over, so we hide this control. */}
-      {(verifyPhase === "loading" || verifyPhase === "unavailable" || dest.verificationStatus === "skipped") && (
-        <div className="wc-verify" aria-live="polite">
-          {verifyPhase === "loading" ? (
-            <span className="wc-verify-status">
-              <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
-            </span>
-          ) : verifyPhase === "unavailable" ? (
-            <span className="wc-verify-status">
-              <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
-            </span>
-          ) : (
-            <>
-              <span className="wc-verify-caption">{t("results.verifyCaption")}</span>
-              <button type="button" className="wc-verify-btn" onClick={onVerify}>
-                <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Who pays what — makes the per-person spread (fairness) legible */}
-      {payRows && (
-        <div className="wc-fs" key={code}>
-          <div className="wc-fs-head">
-            <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
-            <span className="wc-fs-verdict" style={{ color: fairness.color }}>
-              {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
-            </span>
-          </div>
-          {payRows.rows.map((r, i) => (
-            <div key={r.origin} className="wc-fs-row" style={{ "--i": i }}>
-              <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
-              <div className="wc-fs-track">
-                <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / payRows.maxP) * 100)}%`, background: payColor(r.price, payRows.avg) }} />
-                <div className="wc-fs-avg" style={{ left: `${Math.min(100, (payRows.avg / payRows.maxP) * 100)}%` }} title={t("results.whoPaysAvg", { amount: formatEur(payRows.avg, 0) })} />
-              </div>
-              <span className="wc-fs-price">{currency === "EUR" ? formatEur(r.price, 0) : convertPrice(r.price, currency)}</span>
-            </div>
-          ))}
-          <div className="wc-fs-avglabel">
-            <span className="wc-fs-avgtick" aria-hidden="true" /> {t("results.whoPaysAvg", { amount: currency === "EUR" ? formatEur(payRows.avg, 0) : convertPrice(payRows.avg, currency) })}
-          </div>
-        </div>
-      )}
-
-      {/* Troquel de tarjeta de embarque: separa la "matriz" (precio y reparto)
-          del cuerpo (reserva). Decorativo salvo la línea de datos reales. */}
-      <div className="wc-perf">
-        <span className="wc-perf-text">
-          {t("results.boardingPass")}
-          {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
-        </span>
-        {/* Sello de embarque: se estampa al aparecer la tarjeta y otra vez al
-            cambiar de destino (key). Solo datos reales: código y fecha. */}
-        <span key={code} className="wc-stamp" aria-hidden="true">
-          <span className="wc-stamp-label">{t("results.stampLabel")}</span>
-          <span className="wc-stamp-code">{code}</span>
-          {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
-        </span>
-        <span className="wc-perf-barcode" aria-hidden="true" />
-      </div>
-
-      {/* Body */}
-      <div className="wc-body">
-        {/* Criterion toggle: control único que gobierna ganador Y lista de
-            alternativas (uiCriterion en App.jsx). */}
-        {/* (El nº de destinos encontrados vive ahora en el panel de salidas.) */}
-        {!singleOrigin && (
-        <div className="wc-criterion-row">
-          <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
-            {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
-              <button key={v} type="button"
-                className={`wc-criterion-pill${uiCriterion === v ? " wc-criterion-pill--active" : ""}`}
-                aria-pressed={uiCriterion === v}
-                onClick={() => onChangeCriterion(v)}>{l}</button>
-            ))}
-          </div>
-        </div>
-        )}
-
-        {/* ── Booking section (collapsible) ── */}
         {cleanOrigins.length > 0 && dep && (
-          <div className="wc-booking">
-            <button type="button" className="wc-booking-toggle" onClick={() => setBookingOpen((v) => !v)} aria-expanded={bookingOpen}>
-              <div>
-                {/* Encabezado único: en multi-origen el propio toggle enmarca el
-                    resultado ("Vuestra ruta más barata a X · total") en vez de
-                    apilar dos títulos ("Reserva tus vuelos" + cabecera interna). */}
-                <div className="wc-booking-title">
-                  {singleOrigin ? t("results.bookTitle") : (
-                    <>
-                      {t("results.bestRouteTitle", { city: city || code })}
-                      <span className="wc-booking-total">
-                        · {currency === "EUR" ? formatEur(dest.totalCostEUR, 0) : convertPrice(dest.totalCostEUR, currency)}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="wc-booking-sub">{t("results.bookSub")}</div>
-              </div>
-              <span className={`wc-booking-chevron${bookingOpen ? " wc-booking-chevron--open" : ""}`} aria-hidden="true">▾</span>
-            </button>
-
-            <div className={`wc-booking-collapse${bookingOpen ? " wc-booking-collapse--open" : ""}`}>
-            {/* Marco único: ambos orígenes se presentan como UN resultado (la
-                ruta más barata del grupo al destino), no como tarjetas sueltas
-                con una resaltada. Su encabezado vive en el toggle de arriba. */}
-            <div className={`wc-route-result${singleOrigin ? "" : " wc-route-result--framed"}`}>
-              <div className="wc-booking-cards">
+          <div className="wc-booking-cards">
               {cleanOrigins.map((origin) => {
                 const price = priceMap[origin];
                 const offer = offerMap[origin];
@@ -468,13 +335,87 @@ const WinnerCard = React.memo(function WinnerCard({
                   </div>
                 );
               })}
-            </div>
-            </div>{/* /wc-route-result */}
-
-            </div>{/* /wc-booking-collapse */}
           </div>
         )}
 
+        {/* Cómputo global: la suma de los vuelos = total del grupo (datos del
+            backend; la suma solo se muestra si cuadra con su total). */}
+        <div className="wc-total">
+          <div className="wc-total-main">
+            <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
+            {currency === "EUR"
+              ? <AnimatedPrice value={dest.totalCostEUR} decimals={0} className="wc-total-price" />
+              : <div className="wc-total-price">{convertPrice(dest.totalCostEUR, currency)}</div>}
+          </div>
+          {sumParts && (
+            <div className="wc-total-sum" aria-hidden="true">
+              {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
+              <b> = </b><strong>{money(dest.totalCostEUR)}</strong>
+            </div>
+          )}
+          <div className="wc-total-meta">
+            {!singleOrigin && <span>{t("results.flightsCount", { n: cleanOrigins.length })}</span>}
+            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
+            {!singleOrigin && <span>{t("results.whoPaysAvg", { amount: money(dest.averageCostPerTraveler) })}</span>}
+            {dep && <span>{tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")} · {tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
+          </div>
+
+          {/* Fecha más barata para ESTE destino: cambia el total, así que va aquí */}
+          {dateHint && (
+            <div className="wc-total-hint">
+              <CalendarClock size={16} aria-hidden="true" />
+              <span className="wc-total-hint-text">{dateHint.text}</span>
+              <button type="button" className="wc-total-hint-btn" onClick={dateHint.onAction}>{dateHint.actionLabel}</button>
+            </div>
+          )}
+
+          {/* Estimación honesta + comprobación en vivo bajo demanda (#5) */}
+          <div className="wc-total-foot" aria-live="polite">
+            {verifyPhase === "loading" ? (
+              <span className="wc-verify-status">
+                <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
+              </span>
+            ) : verifyPhase === "unavailable" ? (
+              <span className="wc-verify-status">
+                <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
+              </span>
+            ) : dest.verificationStatus === "skipped" ? (
+              <>
+                <span className="wc-verify-caption">{t("results.verifyCaption")}</span>
+                <button type="button" className="wc-verify-btn" onClick={onVerify}>
+                  <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
+                </button>
+              </>
+            ) : dest.verificationStatus === "verified" || dest.verificationStatus === "changed" ? (
+              <span className="wc-verify-caption wc-verify-caption--ok">
+                <ShieldCheck size={14} aria-hidden="true" /> {dest.verificationStatus === "changed" ? t("results.totalChanged") : t("results.totalVerified")}
+              </span>
+            ) : (
+              <span className="wc-verify-caption">{t("board.estimateNote")}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Troquel de tarjeta de embarque: separa la compra del resto. Decorativo
+          salvo la línea de datos reales. */}
+      <div className="wc-perf">
+        <span className="wc-perf-text">
+          {t("results.boardingPass")}
+          {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
+        </span>
+        {/* Sello de embarque: se estampa al aparecer la tarjeta y otra vez al
+            cambiar de destino (key). Solo datos reales: código y fecha. */}
+        <span key={code} className="wc-stamp" aria-hidden="true">
+          <span className="wc-stamp-label">{t("results.stampLabel")}</span>
+          <span className="wc-stamp-code">{code}</span>
+          {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
+        </span>
+        <span className="wc-perf-barcode" aria-hidden="true" />
+      </div>
+
+      {/* Body */}
+      <div className="wc-body">
         {/* Actions */}
         <div className="wc-actions">
           {/* Baja al panel de salidas (solo si hay más de un destino). "Cambiar
@@ -532,3 +473,41 @@ const WinnerCard = React.memo(function WinnerCard({
 });
 
 export default WinnerCard;
+
+// "Quién paga qué": precio real por persona de cada origen, escalado al más
+// caro, con la media del grupo marcada. Vive en el bloque plegable del reparto
+// (la tarjeta se centra en los vuelos a comprar y el total).
+export function WhoPaysStrip({ dest, currency = "EUR" }) {
+  const { t } = useI18n();
+  const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
+  const rows = (Array.isArray(dest?.flights) ? dest.flights : [])
+    .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0 }))
+    .filter((r) => r.price > 0);
+  if (rows.length < 2) return null;
+  const maxP = Math.max(...rows.map((r) => r.price));
+  const avg = dest.averageCostPerTraveler || rows.reduce((a, r) => a + r.price, 0) / rows.length;
+  const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
+  return (
+    <div className="wc-fs">
+      <div className="wc-fs-head">
+        <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
+        <span className="wc-fs-verdict" style={{ color: fairness.color }}>
+          {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
+        </span>
+      </div>
+      {rows.map((r, i) => (
+        <div key={r.origin} className="wc-fs-row" style={{ "--i": i }}>
+          <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
+          <div className="wc-fs-track">
+            <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / maxP) * 100)}%`, background: payColor(r.price, avg) }} />
+            <div className="wc-fs-avg" style={{ left: `${Math.min(100, (avg / maxP) * 100)}%` }} title={t("results.whoPaysAvg", { amount: formatEur(avg, 0) })} />
+          </div>
+          <span className="wc-fs-price">{money(r.price)}</span>
+        </div>
+      ))}
+      <div className="wc-fs-avglabel">
+        <span className="wc-fs-avgtick" aria-hidden="true" /> {t("results.whoPaysAvg", { amount: money(avg) })}
+      </div>
+    </div>
+  );
+}
