@@ -44,11 +44,17 @@ export default function handler(req) {
     const dest = get("dest", 40);
     const pp = get("pp", 24);
     const total = get("total", 24);
+    // "Quién paga qué" real por origen (MAD:135,LON:300…); solo si viene bien
+    // formado — la imagen lo pinta como barras en la tarjeta de embarque.
+    const legsRaw = get("legs", 120);
+    const legs = /^[A-Z]{3}:\d{1,5}(,[A-Z]{3}:\d{1,5}){1,7}$/.test(legsRaw) ? legsRaw : "";
     ogTitle = `FlyndMe: ${from} → ${dest}`;
     ogDesc = total
       ? `Best destination for ${n} travelers. Group total: ${total} · ${pp}/person.`
       : "Find the cheapest place to meet your group.";
-    ogImage = `${origin}/api/og?${new URLSearchParams({ dest, pp, from, total, n }).toString()}`;
+    const imgParams = { dest, pp, from, total, n };
+    if (legs) imgParams.legs = legs;
+    ogImage = `${origin}/api/og?${new URLSearchParams(imgParams).toString()}`;
   }
 
   const html = `<!DOCTYPE html>

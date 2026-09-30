@@ -595,6 +595,13 @@ export default function App() {
       from: cleanOrigins.map((o) => cityOf(normalizeCode(o)) || normalizeCode(o)).join(", "),
       n: String(bestDestination.totalPassengers || cleanOrigins.length),
     });
+    // "Quién paga qué" real (precio por persona de cada origen) para las barras
+    // de la tarjeta de embarque que se ve al compartir. Solo multi-origen.
+    const legs = (bestDestination.flights || [])
+      .map((f) => ({ code: normalizeCode(f.origin), price: Math.round(Number(f.price) || 0) }))
+      .filter((l) => /^[A-Z]{3}$/.test(l.code) && l.price > 0)
+      .slice(0, 8);
+    if (legs.length >= 2) ogParams.set("legs", legs.map((l) => `${l.code}:${l.price}`).join(","));
     return {
       id,
       shareUrl: `${window.location.origin}${window.location.pathname}?share=${id}`,
