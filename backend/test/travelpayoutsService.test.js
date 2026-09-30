@@ -250,69 +250,73 @@ test("makeCacheKey: distingue fechas, divisa y direct", () => {
 });
 
 // ─── Fallback de fechas vecinas ──────────────────────────────────────────────
+// Fechas relativas a HOY: pickNeighbor descarta fechas ya pasadas (caché
+// obsoleta), así que con fechas fijas estos tests caducaban con el calendario.
+const addDays = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+const D0 = addDays(new Date().toISOString().slice(0, 10), 60);
 
 test("getCheapestOffer: sin precio en fecha exacta → fallback a fecha vecina etiquetada", async () => {
   setTransport(async (url, config) => {
-    if (config.params.departure_at === "2026-08-10") return okResponse([]); // exacta: vacía
+    if (config.params.departure_at === D0) return okResponse([]); // exacta: vacía
     // consulta de mes: billetes en fechas vecinas
     return okResponse([
-      ticket({ price: 70, departure_at: "2026-08-08T08:30:00+02:00" }), // a 2 días
-      ticket({ price: 90, departure_at: "2026-08-11T08:30:00+02:00" }), // a 1 día → gana
+      ticket({ price: 70, departure_at: `${addDays(D0, -2)}T08:30:00+02:00` }), // a 2 días
+      ticket({ price: 90, departure_at: `${addDays(D0, 1)}T08:30:00+02:00` }), // a 1 día → gana
     ]);
   });
 
-  const r = await tp.getCheapestOffer("MAD", "FAO", "2026-08-10", {});
+  const r = await tp.getCheapestOffer("MAD", "FAO", D0, {});
   assert.equal(r.price, 90, "elige la fecha más cercana, no la más barata");
-  assert.equal(r.offer.dateFallback.departureDate, "2026-08-11");
-  assert.equal(r.offer.dateFallback.requestedDepartureDate, "2026-08-10");
+  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
+  assert.equal(r.offer.dateFallback.requestedDepartureDate, D0);
   assert.equal(r.offer.dateFallback.offsetDays, 1);
-  assert.equal(r.offer.tp.departureDate, "2026-08-11", "tp lleva la fecha real para re-consultas");
+  assert.equal(r.offer.tp.departureDate, addDays(D0, 1), "tp lleva la fecha real para re-consultas");
 });
 
 test("getCheapestOffer: fallback respeta la ventana de ±N días", async () => {
   setTransport(async (url, config) => {
-    if (config.params.departure_at === "2026-08-10") return okResponse([]);
-    return okResponse([ticket({ price: 50, departure_at: "2026-08-20T08:30:00+02:00" })]); // a 10 días
+    if (config.params.departure_at === D0) return okResponse([]);
+    return okResponse([ticket({ price: 50, departure_at: `${addDays(D0, 10)}T08:30:00+02:00` })]); // a 10 días
   });
-  assert.equal(await tp.getCheapestOffer("MAD", "FNC", "2026-08-10", {}), null);
+  assert.equal(await tp.getCheapestOffer("MAD", "FNC", D0, {}), null);
 });
 
 test("getCheapestOffer: con precio en fecha exacta no consulta el mes", async () => {
   setTransport(async (url, config) => {
-    if (config.params.departure_at === "2026-08-10") return okResponse([ticket({ price: 95 })]);
+    if (config.params.departure_at === D0) return okResponse([ticket({ price: 95, departure_at: `${D0}T08:30:00+02:00` })]);
     throw new Error("no debería consultar el mes");
   });
-  const r = await tp.getCheapestOffer("MAD", "PXO", "2026-08-10", {});
+  const r = await tp.getCheapestOffer("MAD", "PXO", D0, {});
   assert.equal(r.price, 95);
   assert.equal(r.offer.dateFallback, undefined);
 });
 
 test("getCheapestOffer: fallback ida y vuelta con fechas reales en ambos tramos", async () => {
   setTransport(async (url, config) => {
-    if (config.params.departure_at === "2026-08-10") return okResponse([]);
+    if (config.params.departure_at === D0) return okResponse([]);
     return okResponse([
       ticket({
         price: 180,
-        departure_at: "2026-08-11T08:30:00+02:00",
-        return_at:    "2026-08-18T19:00:00+01:00",
+        departure_at: `${addDays(D0, 1)}T08:30:00+02:00`,
+        return_at:    `${addDays(D0, 8)}T19:00:00+01:00`,
         duration_back: 85,
       }),
     ]);
   });
 
-  const r = await tp.getCheapestOffer("MAD", "SVQ", "2026-08-10", { returnDate: "2026-08-17" });
+  const r = await tp.getCheapestOffer("MAD", "SVQ", D0, { returnDate: addDays(D0, 7) });
   assert.equal(r.price, 180);
-  assert.equal(r.offer.dateFallback.departureDate, "2026-08-11");
-  assert.equal(r.offer.dateFallback.returnDate, "2026-08-18");
+  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
+  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
   assert.equal(r.offer.itineraries.length, 2);
 });
 
 test("pickNeighbor: empate de distancia → el más barato", () => {
   const { pickNeighbor } = tp.__test;
   const best = pickNeighbor([
-    ticket({ price: 120, departure_at: "2026-08-09T08:00:00+02:00" }),
-    ticket({ price: 80,  departure_at: "2026-08-11T08:00:00+02:00" }),
-  ], "2026-08-10", undefined, 2);
+    ticket({ price: 120, departure_at: `${addDays(D0, -1)}T08:00:00+02:00` }),
+    ticket({ price: 80,  departure_at: `${addDays(D0, 1)}T08:00:00+02:00` }),
+  ], D0, undefined, 2);
   assert.equal(best.price, 80);
 });
 

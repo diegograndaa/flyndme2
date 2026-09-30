@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#AE2F34" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#131434" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F5F3EF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
 
   <title>Destino más barato para grupos: Dublín y Madrid | FlyndMe</title>
   <meta name="description" content="Unos salís de Dublín y otros de Madrid. FlyndMe encuentra el destino más barato para todo el grupo y el más justo, viendo quién paga qué. Gratis, sin registro.">
@@ -26,35 +26,41 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
 
-  <link rel="icon" href="/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/svg+xml" href="/logo-flyndme.svg">
+  <link rel="icon" href="/favicon.ico?v=6">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=6">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=6">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"¿Por qué no buscamos cada uno nuestro vuelo y ya?","acceptedAnswer":{"@type":"Answer","text":"Porque así optimizáis el vuelo de uno, no el plan del grupo. Un destino de oferta para los de Madrid puede dispararse desde Dublín según la semana. FlyndMe suma las dos salidas y te dice qué destino sale mejor para todos juntos."}},{"@type":"Question","name":"¿Cómo metemos las dos ciudades de salida?","acceptedAnswer":{"@type":"Answer","text":"Pones Dublín y Madrid como orígenes y la herramienta cruza las dos a la vez. Si sois más gente repartida, hay un enlace de grupo para que cada uno añada su ciudad sin que tú vayas preguntando uno por uno."}},{"@type":"Question","name":"¿Los precios son de fiar?","acceptedAnswer":{"@type":"Answer","text":"Te dan una orientación buena del orden de precios porque vienen de búsquedas reales archivadas, pero no son la tarifa definitiva. Un finde señalado o la temporada alta los mueve un montón, así que conviene mirar el dato en vivo antes de soltar la tarjeta."}}]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://flyndme2.vercel.app/"},{"@type":"ListItem","position":2,"name":"Adónde vais si unos salís de Dublín y otros de Madrid","item":"https://flyndme2.vercel.app/quedar/dublin-madrid/"}]}</script>
 
   <style>:root{
-  --maroon:#AE2F34; --coral:#FF6B6B; --bg:#FCF8FF; --panel:#EEECFF; --card:#FFFFFF;
-  --ink:#16173B; --muted:#5B5C7A; --line:#E4DEF6;
+  /* Identidad «terminal de aeropuerto» (sep-2026): crema + tinta + amarillo de
+     señalética. --maroon se conserva como nombre del token de acento (tinta en
+     claro, amarillo en oscuro) para no reescribir todas las reglas. */
+  --maroon:#1A1A1A; --coral:#FFC20E; --bg:#F5F3EF; --panel:#EEEAE2; --card:#FBF9F5;
+  --ink:#1A1A1A; --muted:#6B6860; --line:#E5E0D8;
   --good:#15803D; --warn:#B45309; --bad:#DC2626;
-  --cta-bg:#AE2F34; --cta-fg:#FFFFFF; --pill-bg:#AE2F34; --pill-fg:#FFFFFF;
-  --radius:16px; --shadow:0 2px 14px rgba(174,47,52,.08);
-  --display:"Bricolage Grotesque",Georgia,serif;
-  --body:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --sign:#FFC20E; --sign-line:#E0A300;
+  --cta-bg:#FFC20E; --cta-fg:#1A1A1A; --pill-bg:#1A1A1A; --pill-fg:#FFC20E;
+  --radius:8px; --shadow:none;
+  --display:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --maroon:#FFB3B0; --coral:#FF8E8C; --bg:#131434; --panel:#1B1C40; --card:#22234C;
-    --ink:#ECEBFF; --muted:#A9AAD2; --line:#2C2D52;
-    --good:#5BD08C; --warn:#E0A85B; --bad:#FF8A8A;
-    --cta-bg:#FFB3B0; --cta-fg:#16173B; --pill-bg:#FFB3B0; --pill-fg:#16173B;
-    --shadow:0 2px 16px rgba(0,0,0,.4);
+    --maroon:#FFC20E; --coral:#FFC20E; --bg:#121316; --panel:#1C1F24; --card:#17191D;
+    --ink:#E6E8EC; --muted:#9AA0AA; --line:#25282F;
+    --good:#52DEA2; --warn:#FF9F5A; --bad:#FF8A8A;
+    --sign-line:#FFC20E;
+    --cta-bg:#FFC20E; --cta-fg:#1A1A1A; --pill-bg:#FFC20E; --pill-fg:#1A1A1A;
+    --shadow:none;
   }
 }
 *{box-sizing:border-box}
@@ -170,14 +176,37 @@ h1{font-family:var(--display);font-weight:700;font-size:2.15rem;line-height:1.12
 }
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
-}</style>
+}
+
+/* Terminal: jerarquía plana, mono para códigos/precios/etiquetas */
+html{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
+.brand-name{font-weight:700;letter-spacing:-.015em}
+.brand-name b{color:inherit}
+.brand-tag{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em}
+.eyebrow,.est-title,.est-table th[scope=col],.dest-code,.pill,.who-avg{font-family:var(--mono);letter-spacing:.1em}
+h1,.faq h2,.related h2,.who-title{font-weight:700;letter-spacing:-.02em}
+.num,.leg-price{font-family:var(--mono);font-weight:700}
+.est{box-shadow:none}
+.est-table tbody tr.win{background:rgba(255,194,14,.14);box-shadow:inset 3px 0 0 var(--sign)}
+.pill{border-radius:3px}
+.leg-bar,.leg-fill{border-radius:2px}
+.cta{border-radius:4px;box-shadow:none;border:1px solid #1A1A1A}
+.cta:hover{filter:brightness(.96)}
+.related a{border-radius:6px}
+.related a:hover{border-color:var(--ink)}
+.cv-o{stroke:var(--ink)}
+.cv-d{fill:var(--sign)}
+.cv-dot{fill:#1A1A1A}
+.cv-ring{stroke:var(--sign-line);opacity:.6}</style>
 </head>
 <body>
   <div class="wrap">
     <header class="site-head">
       <a class="brand" href="/" aria-label="FlyndMe — inicio">
-        <svg class="brand-mark" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M3 13l8-2 4-7 2 1-2 7 6 2-1 2-6-1-3 5-2-1 1-5-5-1z" fill="#AE2F34"/>
+        <svg class="brand-mark" width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+          <rect width="32" height="32" rx="8" fill="#FFC20E"/>
+          <path d="M6 8.5C13 8.8 19.5 11.5 23.5 16M5 16H23.5M6 23.5C13 23.2 19.5 20.5 23.5 16" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="24" cy="16" r="3.8" fill="#1A1A1A"/>
         </svg>
         <span class="brand-name">Flynd<b>Me</b></span>
         <span class="brand-tag">vuelos de grupo</span>

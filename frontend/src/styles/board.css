@@ -1,0 +1,1877 @@
+/* ─── board.css ──────────────────────────────────────────────────────────────
+   Identidad "panel de aeropuerto" (sep-2026): tipografía split-flap para
+   códigos/destinos, tarjeta ganadora como tarjeta de embarque (troquel +
+   código de barras), aviones que recorren los arcos del hero, pasos como
+   tramos de un itinerario y entradas al hacer scroll.
+   Se importa en App.jsx DESPUÉS de App.css / theme-stitch / results-simple.
+   Reglas de la casa:
+   · Solo tokens (--primary, --primary-rgb, --bg…) → claro/oscuro heredan.
+   · Animaciones de entrada en contenedores con fill `backwards` (no `both`):
+     un transform residual crearía containing block y rompería los
+     position:fixed de dentro (drawer de aeropuertos, tooltips).
+   · NADA de animaciones de entrada sobre el SVG del hero (repintado
+     intermitente en Chromium, ver CLAUDE.md 22-jun): solo bucles infinitos.
+   · prefers-reduced-motion lo apaga todo al final del archivo.            */
+
+:root {
+  /* Tipografía (sep-2026): IBM Plex Sans + Plex Mono, una sola familia con aire
+     de señalética técnica. Sustituye a Plus Jakarta / Bricolage / JetBrains. */
+  --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
+  --amber: #FFC20E;
+  --board-ink: #FFFFFF;
+}
+
+/* Paleta TERMINAL v3 en CLARO (sep-2026): billete impreso — crema/hueso,
+   tinta carbón, bordes nítidos de 1px y UN acento: AMARILLO DE SEÑALÉTICA
+   aeroportuaria (#FFC20E), siempre con tinta encima. Gramática de carteles
+   OACI: amarillo con texto negro = "hacia dónde ir" (CTA, acciones);
+   negro con texto amarillo = "dónde estás" (pestaña/opción activa).
+   En claro --primary es la TINTA (el amarillo no se lee como texto sobre
+   crema); el amarillo vive en --sign / --coral como relleno y marcador.
+   Scope :not(dark) para no pisar los tokens oscuros (mismo peso de selector
+   que [data-theme="dark"] y este archivo va después). */
+:root:not([data-theme="dark"]) {
+  --bg:            #F5F3EF;
+  --white:         #FBF9F5;
+  --navy:          #1A1A1A;
+  --slate-900:     #2B2B2B;
+  --slate-700:     #45433E;
+  --slate-500:     #6B6860;
+  --slate-400:     #9C988E;
+  --slate-300:     #D6D0C4;
+  --slate-200:     #E5E0D8;
+  --slate-100:     #EEEAE2;
+  --slate-50:      #F2EFE8;
+  --primary:       #1A1A1A;   /* tinta: texto de acento y estados activos */
+  --primary-rgb:   26, 26, 26;
+  --primary-dark:  #000000;
+  --primary-deep:  #1A1A1A;
+  --primary-light: #FFF1C2;   /* tinte amarillo pálido (resaltador) */
+  --primary-50:    #FFF8E1;
+  --secondary:       #1A1A1A;
+  --secondary-light: #FFF1C2;
+  --coral:         #FFC20E;   /* amarillo señalética: relleno del CTA */
+  --coral-dark:    #F2B200;
+  --info:          #1A1A1A;
+  --fair-high:     #15803D;
+  --fair-mid:      #1F7A5C;
+  --fair-low:      #B45309;
+  --fair-bad:      #DC2626;
+  --amber:         #FFC20E;
+  --amber-ink:     #8A6100;   /* ocre legible sobre crema (AA 5:1) */
+  --sign:          #FFC20E;   /* amarillo de cartel */
+  --sign-rgb:      255, 194, 14;
+  --sign-line:     #E0A300;   /* línea de rodadura pintada (algo más densa sobre crema) */
+  --on-sign:       #1A1A1A;
+  --on-primary:    #FFC20E;   /* texto sobre --primary: cartel de posición */
+  --line:          #E5E0D8;
+  --shadow-xs:     none;
+  --shadow-sm:     none;
+  --shadow-md:     none;
+  --shadow-lg:     none;
+  --shadow-xl:     none;
+  --shadow-primary: none;
+
+  /* Paneles "terminal de día": papel + tinta; las celdas split-flap siguen
+     siendo fichas de carbón (como las paletas físicas de un panel real). */
+  --panel-bg:      #FBF9F5;
+  --panel-stub:    #F7F4EE;
+  --panel-ink:     #1A1A1A;
+  --panel-muted:   #5F5C55;
+  --panel-faint:   #85817A;
+  --panel-line:    #E5E0D8;
+  --panel-hover:   rgba(26,26,26,.04);
+  --panel-track:   #ECE7DD;
+  --panel-accent:  #1A1A1A;
+  --panel-good:    #0F7A4A;
+  --panel-mid:     #9A5B00;
+  --panel-bad:     #B42318;
+  --panel-shadow:  none;
+  --board-cell-top: #2A2B30;
+  --board-cell-bot: #18191C;
+}
+
+/* Terminal de NOCHE: pantalla FIDS/radar neutra (#121316), divisores
+   precisos (#25282F), texto hueso (#E6E8EC) y el amarillo de señal como
+   acento (aquí sí se lee como texto: amarillo sobre negro = cartel OACI). */
+[data-theme="dark"] {
+  --bg:            #121316;
+  --white:         #17191D;
+  --navy:          #E6E8EC;
+  --slate-900:     #E6E8EC;
+  --slate-700:     #C9CDD4;
+  --slate-500:     #9AA0AA;
+  --slate-400:     #9AA0AA;
+  --slate-300:     #353A43;
+  --slate-200:     #2C3038;
+  --slate-100:     #25282F;
+  --slate-50:      #1C1F24;
+  --primary:       #FFC20E;
+  --primary-rgb:   255, 194, 14;
+  --primary-dark:  #FFD24D;
+  --primary-deep:  #FFE08A;
+  --primary-light: #332A0A;
+  --primary-50:    #262008;
+  --secondary:       #FFC20E;
+  --secondary-light: #332A0A;
+  --coral:         #FFC20E;
+  --coral-dark:    #FFD24D;
+  --info:          #FFE08A;
+  --fair-mid:      #7FE0C0;
+  --amber:         #FFC20E;
+  --amber-ink:     #FFC20E;
+  --sign:          #FFC20E;
+  --sign-rgb:      255, 194, 14;
+  --sign-line:     #FFC20E;
+  --on-sign:       #1A1A1A;
+  --on-primary:    #1A1A1A;
+  --line:          #25282F;
+  --shadow-xs:     none;
+  --shadow-sm:     none;
+  --shadow-md:     none;
+  --shadow-lg:     none;
+  --shadow-xl:     none;
+  --shadow-primary: none;
+
+  --panel-bg:      #16181C;
+  --panel-stub:    #1A1C21;
+  --panel-ink:     #E6E8EC;
+  --panel-muted:   #9AA0AA;
+  --panel-faint:   #7C828E;
+  --panel-line:    #25282F;
+  --panel-hover:   rgba(255,255,255,.04);
+  --panel-track:   #25282F;
+  --panel-accent:  #FFC20E;
+  --panel-good:    #52DEA2;
+  --panel-mid:     #FF9F5A;   /* naranja, distinto del amarillo de marca */
+  --panel-bad:     #FF8A8A;
+  --panel-shadow:  none;
+  --board-cell-top: #2A2D34;
+  --board-cell-bot: #1E2025;
+  background: #121316;
+}
+[data-theme="dark"] body,
+[data-theme="dark"] .app-root { background: #121316; color: #C9CDD4; }
+
+/* ══ 1. Split-flap ═══════════════════════════════════════════════════════ */
+.flap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .09em;
+  row-gap: .12em;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: middle;
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+.flap-cell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: .9em;
+  height: 1.26em;
+  padding-top: .02em;
+  color: var(--board-ink);
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  border-radius: .12em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  overflow: hidden;
+  animation: flap-tick .11s ease-out;
+  transform-origin: 50% 50%;
+}
+/* bisagra central de la paleta */
+.flap-cell::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: rgba(0,0,0,.55);
+  box-shadow: none;
+}
+.flap-gap { display: inline-block; width: .38em; }
+.flap--sm { font-size: 12px; }
+.flap--md { font-size: 20px; }
+.flap--lg { font-size: clamp(28px, 7vw, 44px); }
+.flap-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@keyframes flap-tick {
+  from { transform: perspective(200px) rotateX(-65deg); filter: brightness(1.35); }
+  to   { transform: none; filter: none; }
+}
+
+/* ══ 2. Keyframes compartidos ════════════════════════════════════════════ */
+@keyframes board-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes board-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes board-grow-x { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes board-sweep { to { background-size: 100% 100%; } }
+@keyframes board-taxi {
+  from { opacity: 0; transform: translateX(-38px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes board-shine {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to   { transform: translateX(320%) skewX(-18deg); }
+}
+@keyframes board-fly {
+  0%   { left: 10%; opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { left: 88%; opacity: 0; }
+}
+@keyframes board-blink { 50% { opacity: .25; } }
+
+/* ══ 3. Hero ═════════════════════════════════════════════════════════════ */
+/* Fuera los orbes difuminados genéricos: retícula de puntos tipo carta
+   aeronáutica que se desvanece hacia los bordes. */
+.lp-hero.lp-hero--merged {
+  background: var(--bg);
+  border-bottom: none;
+}
+.lp-hero.lp-hero--merged::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: 0; right: 0; left: 0; bottom: 0;
+  width: auto; height: auto;
+  border-radius: 0;
+  background-image: radial-gradient(rgba(var(--primary-rgb), .20) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
+          mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
+  animation: none;
+  pointer-events: none;
+}
+.lp-hero.lp-hero--merged::after { display: none; }
+.lp-hero--merged > .container { position: relative; z-index: 1; }
+
+/* Eyebrow como etiqueta de billete */
+.lp-hero--merged .lp-eyebrow.lp-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+/* Entrada escalonada del texto del hero (HTML, no SVG) */
+.lp-hero--merged .lp-eyebrow { animation: board-rise .7s var(--ease-out-expo) .05s backwards; }
+.lp-hero--merged .lp-h1      { animation: board-rise .8s var(--ease-out-expo) .14s backwards; }
+.lp-hero--merged .lp-lead    { animation: board-rise .8s var(--ease-out-expo) .26s backwards; }
+.lp-search-section           { animation: board-rise .8s var(--ease-out-expo) .36s backwards; }
+
+/* Palabra acento: trazo de rotulador amarillo que se traza tras la entrada */
+.lp-h1-accent.lp-h1-accent {
+  background-image: linear-gradient(transparent 62%, rgba(var(--sign-rgb),.62) 62%, rgba(var(--sign-rgb),.62) 92%, transparent 92%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  animation: board-sweep .9s var(--ease-out-expo) .75s forwards;
+  padding: 0 .04em;
+}
+
+/* En oscuro la palabra ya es amarilla: en vez de resaltado, raya de pista */
+[data-theme="dark"] .lp-h1-accent.lp-h1-accent {
+  background-image: linear-gradient(transparent 90%, rgba(var(--sign-rgb),.9) 90%, rgba(var(--sign-rgb),.9) 97%, transparent 97%);
+}
+
+/* Aviones sobre los arcos (bucle SMIL, ver ConvergenceHero) */
+.cv-plane path { fill: var(--primary); transform: scale(1.35); }
+.cv-plane {  }
+
+/* Etiqueta del destino: texto + panel que gira con destinos de ejemplo */
+.cv-meet.cv-meet {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  right: 0;
+  transform: translateY(26px);
+}
+.cv-meet-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.cv-meet-flap.flap--sm { font-size: 22px; }
+@media (max-width: 860px) {
+  .cv-meet.cv-meet { display: flex; right: auto; transform: none; }
+}
+
+/* ══ 4. Botón principal: brillo que cruza + avión ═══════════════════════ */
+.btn-fm-primary.btn-fm-primary { position: relative; overflow: hidden; isolation: isolate; }
+.btn-fm-primary.btn-fm-primary::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-fm-primary.btn-fm-primary:hover:not(:disabled)::after { animation: board-shine .75s ease-out; }
+.btn-fm-primary.btn-fm-primary:hover:not(:disabled) { transform: translateY(-1px); opacity: 1; }
+.btn-fm-primary.btn-fm-primary:active:not(:disabled) { transform: translateY(0) scale(.98); }
+
+/* ══ 5. Cómo funciona → tramos de itinerario ═════════════════════════════ */
+.lp-how .lp-card.lp-card {
+  box-shadow: none;
+  border: 1px solid rgba(var(--primary-rgb), .14);
+  border-radius: var(--radius-lg);
+  padding-top: 28px;
+}
+.lp-how .lp-card.lp-card::before { display: none; }
+.lp-legs.lp-legs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin: 8px 0 26px;
+}
+/* ruta punteada que une los iconos (altura = puerta 34 + gap 10 + ½ icono 14) */
+.lp-legs.lp-legs::before {
+  content: "";
+  position: absolute;
+  top: 57px;
+  left: 14px;
+  right: 14%;
+  border-top: 2px dashed var(--sign-line); /* línea de rodadura pintada */
+}
+/* avión que recorre la ruta en bucle */
+.lp-legs.lp-legs::after {
+  content: "";
+  position: absolute;
+  top: 49px;
+  left: 10%;
+  width: 18px;
+  height: 18px;
+  background: var(--primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: rotate(90deg);
+  animation: board-fly 7s ease-in-out infinite;
+}
+.lp-leg.lp-leg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+}
+.lp-leg-gate {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.3px rgba(var(--primary-rgb), .6);
+  letter-spacing: -.02em;
+}
+.lp-leg .lp-step-num.lp-step-num {
+  position: relative;
+  z-index: 1;
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 0 6px var(--white);
+}
+[data-theme="dark"] .lp-leg .lp-step-num.lp-step-num { color: #1A1A1A; }
+.lp-leg-text { color: var(--slate-700); line-height: 1.5; }
+.lp-how .lp-card-meta { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+@media (max-width: 600px) {
+  .lp-legs.lp-legs { grid-template-columns: 1fr; gap: 14px; }
+  .lp-legs.lp-legs::before, .lp-legs.lp-legs::after { display: none; }
+  .lp-leg.lp-leg { display: grid; grid-template-columns: 44px 28px 1fr; align-items: center; gap: 12px; }
+  .lp-leg-gate { font-size: 26px; }
+}
+
+/* FAQ editorial: lista con reglas finas, sin "tarjetas flotantes" */
+.lp-faq .lp-faq-item.lp-faq-item {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--slate-200);
+}
+.lp-faq .lp-faq-item.lp-faq-item:hover { transform: none; box-shadow: none; }
+.lp-faq .lp-faq-q { padding: 20px 4px; font-size: 16px; }
+.lp-faq .lp-faq-chevron {
+  display: inline-grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--slate-300);
+  font-size: 16px;
+  transition: transform .35s var(--ease-out-expo), background .2s ease, color .2s ease, border-color .2s ease;
+}
+.lp-faq .lp-faq-item--open .lp-faq-chevron {
+  transform: rotate(180deg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+[data-theme="dark"] .lp-faq .lp-faq-item--open .lp-faq-chevron { color: #1A1A1A; }
+.lp-faq .lp-faq-a { padding-left: 4px; padding-right: 40px; }
+
+/* ══ 6. Panel "buscando…" ════════════════════════════════════════════════ */
+.fm-searching-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 9998;
+  width: min(560px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.fm-searching-dock .fm-searching-board { margin: 0; max-width: none; padding: 14px 18px 16px; gap: 10px; }
+.fm-searching-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 8px auto 22px;
+  padding: 20px 22px 22px;
+  max-width: 620px;
+  background: var(--panel-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--panel-shadow);
+  animation: board-rise .6s var(--ease-out-expo) backwards;
+}
+.fm-searching-board-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+}
+.fm-searching-board-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--sign);
+  box-shadow: none;
+  animation: board-blink 1s steps(2, jump-none) infinite;
+}
+.fm-searching-board-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.fm-searching-board-arrow { color: var(--sign-line); font-size: 22px; font-weight: 800; }
+
+/* ══ 7. Tarjeta ganadora → tarjeta de embarque ═══════════════════════════ */
+/* Nombre del destino en panel sobre la foto */
+.wc-card .wc-dest-code--flap.wc-dest-code--flap { font-size: inherit; line-height: 1; margin: 2px 0 2px; }
+.wc-card .wc-dest-code--flap .flap-cell {
+  --board-cell-top: rgba(42,43,48,.94);
+  --board-cell-bot: rgba(0,0,0,.96);
+}
+
+/* Cifras de la matriz en mono (panel) */
+.wc-card .wc-summary-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .12em;
+}
+.wc-card .wc-summary-price,
+.wc-card .wc-summary-date,
+.wc-card .wc-fs-price,
+.wc-card .wc-fs-code,
+.wc-card .wc-flight-code,
+.wc-card .wc-flight-price-tag,
+.wc-card .wc-booking-total {
+  font-family: var(--font-mono);
+  letter-spacing: -.02em;
+}
+.wc-card .wc-fs-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
+
+/* "Quién paga qué": las barras crecen escalonadas, luego aparece la media */
+.wc-card .wc-fs-fill {
+  transform-origin: left center;
+  animation: board-grow-x 1s var(--ease-out-expo) backwards;
+  animation-delay: calc(.45s + var(--i, 0) * .13s);
+}
+.wc-card .wc-fs-avg { animation: board-fade .4s ease backwards; animation-delay: 1.05s; }
+.wc-card .wc-fs-row { animation: board-fade .4s ease backwards; animation-delay: calc(.35s + var(--i, 0) * .13s); }
+
+/* Troquel: muescas del color de la página + línea perforada + código de barras */
+.wc-perf {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 32px 4px;
+  background-color: var(--white);
+  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
+  background-size: 12px 2px;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+}
+.wc-perf::before,
+.wc-perf::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.wc-perf::before { left: -13px; }
+.wc-perf::after  { right: -13px; }
+.wc-perf-text {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--slate-500);
+}
+.wc-perf-barcode {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 20px;
+  opacity: .7;
+  background: repeating-linear-gradient(90deg,
+    var(--navy) 0 2px, transparent 2px 4px,
+    var(--navy) 4px 5px, transparent 5px 8px,
+    var(--navy) 8px 11px, transparent 11px 12px,
+    var(--navy) 12px 13px, transparent 13px 16px);
+}
+.wc-card .wc-body.wc-body { padding-top: 16px; }
+@media (max-width: 480px) {
+  .wc-perf { padding: 14px 22px 2px; }
+  .wc-perf-text { font-size: 9.5px; letter-spacing: .08em; }
+  .wc-perf-barcode { display: none; }
+}
+
+/* Tarjetas por origen: entran escalonadas y el avión "rueda" por la pista */
+.wc-card .wc-booking-cards > .wc-flight-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(1) { animation-delay: .25s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(2) { animation-delay: .33s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(3) { animation-delay: .41s; }
+.wc-card .wc-booking-cards > .wc-flight-card:nth-child(n+4) { animation-delay: .49s; }
+.wc-card .wc-flight-plane {
+  display: inline-flex;
+  transition: transform .45s var(--ease-out-expo);
+  animation: board-taxi 1.1s var(--ease-out-expo) .45s backwards;
+}
+.wc-card .wc-flight-card:hover .wc-flight-plane { transform: translateX(10px); }
+.wc-card .wc-flight-line { background-image: linear-gradient(90deg, var(--slate-300) 60%, transparent 0); background-color: transparent; background-size: 7px 1.5px; }
+
+/* Botones de acción y CTAs: respuesta táctil coherente */
+.wc-card .wc-action-btn,
+.wc-card .wc-cta {
+  transition: transform .18s var(--ease-out-expo), box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+}
+.wc-card .wc-action-btn:hover,
+.wc-card .wc-cta:hover { transform: translateY(-2px); }
+.wc-card .wc-action-btn:active,
+.wc-card .wc-cta:active { transform: translateY(0) scale(.97); }
+
+/* ══ 8. Resto de resultados: cifras de panel + podio vivo ════════════════ */
+.fm-podium .fm-podium-price,
+.fm-stats-bar strong,
+.fm-split-amount,
+.cmp-price { font-family: var(--font-mono); letter-spacing: -.02em; }
+.fm-podium .fm-podium-card.fm-podium-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
+.fm-podium .fm-podium-card:nth-child(2) { animation-delay: .08s; }
+.fm-podium .fm-podium-card:nth-child(3) { animation-delay: .16s; }
+.fm-podium .fm-podium-thumb { transition: transform .5s var(--ease-out-expo); }
+.fm-podium .fm-podium-card:hover .fm-podium-thumb { transform: scale(1.06) rotate(-1.5deg); }
+.rv-tab.rv-tab { transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .18s var(--ease-out-expo); }
+.rv-tab.rv-tab:hover { transform: translateY(-1px); }
+
+/* ══ 9. Entradas al hacer scroll (CSS scroll-driven, cero JS) ════════════
+   Solo donde el navegador lo soporta; si no, el contenido se ve sin más. */
+@supports (animation-timeline: view()) {
+  .lp-how .lp-card,
+  .lp-leg.lp-leg,
+  .lp-faq-title,
+  .lp-faq .lp-faq-item,
+  .app-footer-seo,
+  .fm-group-nudge,
+  .fm-podium,
+  .fm-group-savings,
+  .fm-stats-bar,
+  .fm-split-card,
+  .fm-arrival-spread,
+  .fm-sharelink,
+  .fm-plan-trip,
+  .fm-quick-research {
+    animation: board-rise linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+/* ══ 10. Movimiento reducido: todo quieto ═════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .flap-cell,
+  .lp-hero--merged .lp-eyebrow,
+  .lp-hero--merged .lp-h1,
+  .lp-hero--merged .lp-lead,
+  .lp-search-section,
+  .fm-searching-board,
+  .fm-searching-board-dot,
+  .wc-card .wc-fs-fill,
+  .wc-card .wc-fs-avg,
+  .wc-card .wc-fs-row,
+  .wc-card .wc-booking-cards > .wc-flight-card,
+  .wc-card .wc-flight-plane,
+  .fm-podium .fm-podium-card.fm-podium-card,
+  .lp-legs.lp-legs::after,
+  .btn-fm-primary.btn-fm-primary::after { animation: none !important; }
+  .lp-h1-accent.lp-h1-accent { animation: none; background-size: 100% 100%; }
+  .lp-legs.lp-legs::after { display: none; }
+  .cv-plane { display: none; }
+  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo,
+  .fm-group-nudge, .fm-podium, .fm-group-savings, .fm-stats-bar, .fm-split-card,
+  .fm-arrival-spread, .fm-sharelink, .fm-plan-trip, .fm-quick-research { animation: none !important; }
+}
+
+/* Fix (previo a este rediseño): el stepper del skeleton de búsqueda
+   desbordaba 40px en móvil (390px) → el layout viewport se ensanchaba y los
+   position:fixed (panel "buscando") quedaban medio fuera de pantalla. */
+@media (max-width: 600px) {
+  .sk-stepper { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+  .sk-step-line { width: 14px; margin: 0 2px; }
+  .sk-step:not(.sk-step--active) .sk-step-label,
+  .sk-step--done .sk-step-label { display: none; }
+}
+
+/* ══ 11. Formulario: la barra resumen como "mini panel de salidas" ═══════
+   Última confirmación antes del CTA: orígenes en celdas de panel (mono) y
+   fecha/viajeros en tinta lavanda. Navy fijo en ambos temas. */
+.sf-summary-bar.sf-summary-bar {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-md);
+  color: var(--panel-muted);
+  box-shadow: var(--panel-shadow);
+}
+.sf-summary-bar .sf-summary-chip.sf-summary-chip {
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: .08em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  animation: flap-tick .25s ease-out;
+}
+.sf-summary-bar .sf-summary-meta,
+.sf-summary-bar .sf-summary-meta span,
+.sf-summary-bar .sf-summary-pax-total.sf-summary-pax-total {
+  color: var(--panel-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: transparent;
+}
+.sf-summary-bar .sf-summary-pax { color: var(--panel-accent); }
+.sf-summary-bar .sf-summary-flex.sf-summary-flex { color: var(--panel-accent); background: rgba(var(--sign-rgb),.22); }
+[data-theme="dark"] .sf-summary-bar.sf-summary-bar { background: var(--panel-bg); }
+
+/* Número de viajero como puerta de embarque */
+.sf-origin-row .sf-badge.sf-badge { font-family: var(--font-mono); }
+/* Filas de origen: entran deslizando (también al añadir un viajero) */
+.sf-origin-row.sf-origin-row { animation: board-rise .45s var(--ease-out-expo) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-summary-bar .sf-summary-chip.sf-summary-chip,
+  .sf-origin-row.sf-origin-row { animation: none; }
+}
+[data-theme="dark"] .fm-searching-board { border: 1px solid var(--panel-line); box-shadow: none; }
+
+/* ══ 12. Resultados simplificados: cabecera · avisos · salidas ══════════ */
+.fm-board-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+/* Cabecera del vuelo del grupo (navy fijo en ambos temas) */
+.fm-flight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 18px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  background: var(--panel-bg);
+  color: var(--panel-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--panel-line);
+  box-shadow: var(--panel-shadow);
+  animation: board-rise .5s var(--ease-out-expo) backwards;
+}
+[data-theme="dark"] .fm-flight-head { background: var(--panel-bg); }
+.fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fm-flight-head .fm-board-label { color: var(--panel-faint); }
+.fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
+.fm-flight-head-origins { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+.fm-flight-head-origins .flap--sm { font-size: 15px; }
+.fm-flight-head-arrow { color: var(--sign-line); font-weight: 800; font-size: 18px; }
+.fm-flight-head-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--panel-ink);
+}
+.fm-flight-head-badge {
+  padding: 2px 8px;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  color: var(--panel-muted);
+}
+.fm-flight-head-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--panel-ink);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 13px;
+  transition: background-color .2s ease, border-color .2s ease, transform .18s var(--ease-out-expo);
+}
+.fm-flight-head-btn:hover { background: var(--panel-hover); border-color: var(--panel-line); transform: translateY(-1px); }
+.fm-flight-head-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Punto de aviso (baliza): lo usan los avisos en línea (.fm-notice) */
+.fm-announce-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--sign);
+  box-shadow: none;
+  animation: board-blink 1.4s steps(2, jump-none) infinite;
+}
+
+/* Panel de salidas (la pieza estrella: navy fijo, tinta blanca/ámbar) */
+.fm-board {
+  margin: 18px 0;
+  padding: 18px 18px 10px;
+  background: var(--panel-bg);
+  color: var(--panel-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--panel-shadow);
+  scroll-margin-top: 80px;
+}
+[data-theme="dark"] .fm-board { background: var(--panel-bg); border: 1px solid var(--panel-line); }
+.fm-board-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.fm-board-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: var(--panel-accent);
+}
+.fm-board-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--panel-muted); }
+.fm-board-savings {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--panel-good);
+  background: rgba(82,222,162,.1);
+  border: 1px solid rgba(82,222,162,.25);
+  border-radius: var(--radius-full);
+}
+.fm-board-cols,
+.fm-board-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 190px 104px;
+  align-items: center;
+  gap: 20px;
+}
+.fm-board-cols--single,
+.fm-board-row--single { grid-template-columns: minmax(0, 1fr) 110px 104px; }
+.fm-board-cols {
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--panel-line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--panel-faint);
+}
+.fm-board-col-price { text-align: right; }
+.fm-board-rows { list-style: none; margin: 0; padding: 0; }
+.fm-board-rows > li { animation: board-rise .5s var(--ease-out-expo) backwards; animation-delay: calc(.08s + var(--i, 0) * .07s); }
+.fm-board-row {
+  width: 100%;
+  padding: 11px 12px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--panel-line);
+  border-left: 3px solid transparent;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+.fm-board-row:hover:not(.fm-board-row--current) { background: var(--panel-hover); }
+.fm-board-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.fm-board-row--current { background: rgba(var(--sign-rgb),.14); border-left-color: var(--sign); cursor: default; }
+.fm-board-dest { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
+.fm-board-dest .flap--sm { font-size: 16px; flex: 0 0 auto; }
+.fm-board-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-board-price {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--panel-ink);
+  font-variant-numeric: tabular-nums;
+}
+.fm-board-fair {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.fm-board-fair--good { color: var(--panel-good); }
+.fm-board-fair--mid  { color: var(--panel-mid); }
+.fm-board-fair--bad  { color: var(--panel-bad); }
+.fm-board-go { display: inline-flex; justify-content: flex-end; color: var(--panel-faint); transition: transform .25s var(--ease-out-expo), color .2s ease; }
+.fm-board-row:hover .fm-board-go { color: var(--panel-ink); transform: translateX(3px); }
+.fm-board-now {
+  padding: 3px 7px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #1A1A1A;
+  background: var(--coral);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .fm-board { padding: 16px 12px 8px; }
+  .fm-board-cols { display: none; }
+  .fm-board-row,
+  .fm-board-row--single {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "dest price go" "fair price go";
+    row-gap: 4px;
+    padding: 11px 8px;
+  }
+  .fm-board-row--single { grid-template-areas: "dest price go"; }
+  .fm-board-dest { grid-area: dest; }
+  .fm-board-price { grid-area: price; }
+  .fm-board-fair { grid-area: fair; padding-left: 2px; }
+  .fm-board-go { grid-area: go; }
+  .fm-board-dest .flap--sm { font-size: 14px; }
+  .fm-board-city { font-size: 14px; }
+}
+
+/* Reparto del grupo: tarjeta + llegadas como un solo bloque */
+.fm-group-block { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
+.fm-group-block .fm-split-card,
+.fm-group-block .fm-arrival-spread { margin: 0; }
+.fm-split-card .fm-split-title.fm-split-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+/* Pestañas (Mapa · Comparar · Más opciones) y panel "Más opciones" */
+.rv-tabs.rv-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.fm-more { display: flex; flex-direction: column; gap: 12px; }
+.fm-more .fm-plan-trip,
+.fm-more .fm-quick-research { margin: 0; }
+.fm-more-csv {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--slate-700);
+  border: 1px dashed var(--slate-300);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+.fm-more-csv:hover { color: var(--primary); border-color: var(--primary); }
+
+/* Barra fija de resultados en tinta de panel */
+.fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { background: var(--panel-bg); border-color: var(--panel-line); }
+.fm-sticky-bar .fm-sticky-dest.fm-sticky-dest { color: var(--panel-ink); }
+.fm-sticky-bar .fm-sticky-price.fm-sticky-price { color: var(--panel-accent); font-family: var(--font-mono); }
+.fm-sticky-bar .fm-sticky-origins.fm-sticky-origins { color: var(--panel-muted); font-family: var(--font-mono); }
+.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn { color: var(--panel-ink); border-color: var(--panel-line); }
+.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn:hover { background: var(--panel-hover); color: var(--panel-ink); }
+
+/* La tarjeta de embarque no queda tapada por la cabecera al saltar a ella */
+.wc-card.wc-card { scroll-margin-top: 80px; }
+
+/* ══ 13. Formulario, grupo y errores en clave terminal ══════════════════ */
+/* Secciones principales numeradas como puertas: 01 · 02 */
+.sf-form form { counter-reset: sf-gate; }
+.sf-form form > .sf-section > .sf-label:first-child::before {
+  counter-increment: sf-gate;
+  content: counter(sf-gate, decimal-leading-zero);
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #fff;
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  border-radius: 4px;
+}
+.sf-form .sf-label.sf-label { font-family: var(--font-mono); letter-spacing: .1em; }
+/* Selector de aeropuertos: código en celda de panel */
+.sf-airports .sf-airport-code.sf-airport-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 42px;
+  padding: 3px 5px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .06em;
+  color: #fff;
+  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
+  border-radius: 5px;
+}
+.sf-airports .sf-label.sf-label { font-family: var(--font-mono); letter-spacing: .12em; }
+
+/* Vista de grupo: lista de pasajeros */
+.gp-eyebrow.gp-eyebrow,
+.gp-roster-title.gp-roster-title,
+.gp-add-label.gp-add-label,
+.gp-invite-label.gp-invite-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+.gp-facts .gp-fact { font-family: var(--font-mono); font-size: 13px; }
+.gp-member-code { flex: 0 0 auto; }
+.gp-member-code .flap--sm { font-size: 14px; }
+.gp .gp-member { animation: board-rise .45s var(--ease-out-expo) backwards; }
+.gp-ac .gp-ac-code { font-family: var(--font-mono); font-weight: 800; }
+
+/* Mensaje de error como panel de "vuelo con incidencia" */
+.fm-error-state.fm-error-state {
+  background: var(--panel-bg);
+  border: 1px solid rgba(var(--sign-rgb),.5);
+  border-left: 4px solid var(--sign);
+  border-radius: var(--radius-md);
+  color: var(--panel-ink);
+}
+.fm-error-state .fm-error-icon { color: var(--panel-accent); }
+.fm-error-state .fm-error-message.fm-error-message { color: var(--panel-ink); font-weight: 600; }
+[data-theme="dark"] .fm-error-state.fm-error-state { background: var(--panel-bg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-flight-head, .fm-board-rows > li, .fm-announce-dot, .gp .gp-member, .fm-decision { animation: none !important; }
+}
+
+/* ══ 14. Tema coherente: la tarjeta y los paneles siguen al tema ════════ */
+/* Matriz de la tarjeta de embarque (precio · comprobar · quién paga qué):
+   papel en claro, navy en oscuro. Antes era navy fijo en ambos temas. */
+.wc-card .wc-summary.wc-summary {
+  background: var(--panel-stub);
+  color: var(--panel-ink);
+  border-top: 1px solid var(--panel-line);
+}
+:root:not([data-theme="dark"]) .wc-card .wc-summary.wc-summary {
+  --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #B45309; --fair-bad: #DC2626;
+}
+.wc-card .wc-summary-divider.wc-summary-divider { background: var(--panel-line); }
+.wc-card .wc-summary-label.wc-summary-label { color: var(--panel-muted); opacity: 1; }
+.wc-card .wc-verify.wc-verify {
+  background: var(--panel-stub);
+  border-top: 1px solid var(--panel-line);
+  color: var(--panel-muted);
+}
+.wc-card .wc-verify-status.wc-verify-status { color: var(--panel-muted); }
+.wc-card .wc-verify-btn.wc-verify-btn { color: var(--panel-ink); background: transparent; border-color: var(--slate-300); }
+.wc-card .wc-verify-btn.wc-verify-btn:hover { background: var(--panel-hover); border-color: var(--panel-ink); }
+.wc-card .wc-verify-btn.wc-verify-btn:focus-visible { outline-color: var(--panel-ink); }
+.wc-card .wc-fs.wc-fs { background: var(--panel-stub); color: var(--panel-ink); border-top: 1px dashed var(--panel-line); }
+.wc-card .wc-fs-title.wc-fs-title,
+.wc-card .wc-fs-code.wc-fs-code,
+.wc-card .wc-fs-price.wc-fs-price { color: var(--panel-ink); }
+.wc-card .wc-fs-track.wc-fs-track { background: var(--panel-track); }
+.wc-card .wc-fs-avg.wc-fs-avg,
+.wc-card .wc-fs-avgtick.wc-fs-avgtick { background: var(--panel-ink); }
+.wc-card .wc-fs-avglabel.wc-fs-avglabel { color: var(--panel-muted); }
+
+/* Paneles en claro: borde fino de papel en vez de bloque oscuro */
+.fm-board.fm-board,
+.fm-flight-head.fm-flight-head,
+.fm-searching-board.fm-searching-board { border: 1px solid var(--panel-line); }
+.sf-summary-bar.sf-summary-bar { background: var(--panel-stub); border-color: var(--panel-line); box-shadow: none; }
+.fm-flight-head-btn.fm-flight-head-btn { border-color: var(--slate-300); }
+.fm-flight-head-btn.fm-flight-head-btn:hover { border-color: var(--panel-ink); }
+/* Marca ámbar delante del título "Salidas" (en claro el texto va en tinta) */
+.fm-board-title::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  vertical-align: .1em;
+  background: var(--amber);
+  border-radius: 2px;
+}
+.fm-error-state .fm-error-icon.fm-error-icon { color: var(--amber-ink); }
+
+/* Títulos en Plex: un poco más apretados en tamaños grandes */
+.lp-h1.lp-h1 { letter-spacing: -0.025em; font-weight: 700; }
+.sf-title.sf-title,
+.lp-card-title.lp-card-title,
+.lp-faq-title.lp-faq-title,
+.gp-title.gp-title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
+
+/* ══ 15. Fotos de destino en duotono (tinta → amarillo señal) ════════════
+   Técnica de dos capas sin JS: fondo tinta + foto en gris con "screen"
+   (las sombras se vuelven tinta) + capa ámbar con "multiply" (las luces se
+   vuelven ámbar). Todas las fotos de Unsplash quedan con el mismo tono de
+   cartel de viaje en vez de parecer de banco de imágenes. */
+.wc-card .wc-image-wrap.wc-image-wrap {
+  --duo-dark: #1A1A1A;
+  --duo-light: #FFD65C;
+  background: var(--duo-dark);
+  isolation: isolate;
+}
+.wc-card .wc-image.wc-image {
+  filter: grayscale(1) contrast(1.12) brightness(1.04);
+  mix-blend-mode: screen;
+}
+.wc-image-duo {
+  position: absolute;
+  inset: 0;
+  background: var(--duo-light);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+/* Degradado inferior en tinta (antes azul del tema viejo) para leer el nombre */
+.wc-card .wc-image-overlay.wc-image-overlay {
+  background: linear-gradient(to top, rgba(26,26,26,.88) 0%, rgba(26,26,26,.35) 42%, transparent 72%);
+}
+/* Nombre + código del destino por encima de las pastillas (antes el código
+   quedaba tapado por "Precio confirmado / X% más barato"). */
+.wc-card .wc-image-label.wc-image-label { bottom: 56px; }
+.wc-card .wc-chips-overlay.wc-chips-overlay { left: 28px; bottom: 18px; right: 70px; flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .wc-card .wc-image-label.wc-image-label { left: 18px; bottom: 50px; }
+  .wc-card .wc-chips-overlay.wc-chips-overlay { left: 18px; bottom: 14px; right: 18px; }
+}
+.wc-card .wc-dest-city.wc-dest-city { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: .16em; opacity: .85; }
+
+/* ══ 16. Jerarquía plana (spec terminal v2) ══════════════════════════════
+   Radios mínimos (fichas, no burbujas), cero sombras flotantes borrosas y
+   divisores de 1px continuos. Los anillos de foco se conservan (a11y). */
+:root {
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   8px;
+  --radius-full: 4px;
+}
+/* Contenedores que antes se separaban con sombra: ahora filete de 1px */
+.app-header.app-header { box-shadow: none; border-bottom: 1px solid var(--line); }
+.sf-form.sf-form,
+.sf-airports.sf-airports,
+.lp-how .lp-card.lp-card,
+.wc-card.wc-card,
+.fm-card.fm-card,
+.fm-split-card.fm-split-card,
+.fm-quick-research.fm-quick-research,
+.fm-plan-trip.fm-plan-trip,
+.gp.gp { border: 1px solid var(--line); box-shadow: none; }
+.sf-section.sf-section { border: 1px solid var(--line); }
+.wc-card .wc-booking.wc-booking,
+.wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
+.wc-card .wc-flight-card.wc-flight-card:hover,
+.wc-card.wc-card:hover,
+.fm-podium .fm-podium-card.fm-podium-card:hover { box-shadow: none; transform: none; }
+/* Listas densas: filas separadas por divisor, sin tarjeta por fila */
+.fm-split-grid .fm-split-row.fm-split-row { border-radius: 0; background: transparent; border-bottom: 1px solid var(--line); }
+.fm-split-grid .fm-split-row.fm-split-row:last-child { border-bottom: none; }
+/* Iconos circulares puntuales se mantienen redondos (avatares, puntos) */
+.fm-split-avatar, .fm-announce-dot, .fm-searching-board-dot, .cv-dest-dot { border-radius: 50%; }
+
+/* ══ 17. PWA: pulido táctil nativo ═══════════════════════════════════════
+   Sin rebote de scroll, sin resaltado azul al tocar, sin selección de texto
+   en controles de navegación y márgenes seguros del dispositivo (notch,
+   barra de gestos; requiere viewport-fit=cover en index.html). */
+html, body { overscroll-behavior-y: contain; }
+html { -webkit-tap-highlight-color: transparent; }
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+button,
+[role="button"],
+.app-logo,
+.sf-pill,
+.sf-pills,
+.sf-airport-item,
+.sf-airport-code,
+.sf-summary-chip,
+.sf-recent-chip,
+.wc-criterion-pill,
+.wc-action-btn,
+.wc-cta,
+.rv-tab,
+.fm-board-row,
+.fm-currency-btn,
+.fm-split-pill,
+.fm-notice-btn,
+.fm-flight-head-origins,
+.gp-ac-item,
+.lp-faq-q,
+.flap {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Márgenes seguros */
+.app-header.app-header { padding-top: calc(12px + env(safe-area-inset-top)); }
+.app-footer.app-footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.pwa-banner { padding-bottom: env(safe-area-inset-bottom); }
+.fm-searching-dock { bottom: calc(18px + env(safe-area-inset-bottom)); }
+.fm-toast { bottom: calc(28px + env(safe-area-inset-bottom)); }
+.scroll-top-btn { bottom: calc(24px + env(safe-area-inset-bottom)); }
+.fm-fav-panel { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+@media (max-width: 767.98px) {
+  .sf-airports.sf-airports { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+/* Cabecera en papel (antes blanco puro) */
+:root:not([data-theme="dark"]) .app-header.app-header { background: rgba(251,249,245,.94); }
+.fm-board-note {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--panel-faint);
+}
+
+/* ══ 18. Señalética amarilla (sep-2026, paleta v3) ═══════════════════════
+   Gramática de carteles de aeropuerto (OACI), para que el color se entienda
+   sin explicarlo:
+   · Cartel de DIRECCIÓN = fondo amarillo + texto negro → "por aquí" (CTA).
+   · Cartel de POSICIÓN  = fondo negro + texto y filete amarillos → "estás
+     aquí" (pestaña, opción o paso activo).
+   En oscuro --primary ya es amarillo y lo activo lleva tinta encima.       */
+:root:not([data-theme="dark"]) :is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
+  background: #1A1A1A !important;
+  border-color: #1A1A1A !important;
+  color: var(--sign) !important;
+  box-shadow: inset 0 0 0 2px #1A1A1A, inset 0 0 0 3px var(--sign) !important;
+}
+:root:not([data-theme="dark"]) :is(.lp-leg .lp-step-num, .lp-faq-item--open .lp-faq-chevron, .sk-step--active .sk-step-dot, .cmp-row--best .cmp-rank) {
+  color: var(--sign) !important;
+}
+/* Oscuro: el relleno amarillo se reserva a los CTA (reservar, buscar). Lo
+   activo es cartel de posición (negro + filete y texto amarillos) y las
+   acciones secundarias van en contorno amarillo: menos "aviso" en pantalla. */
+[data-theme="dark"] :is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
+  background: #1A1A1A !important;
+  color: var(--sign) !important;
+  border-color: var(--sign) !important;
+  box-shadow: none !important;
+}
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
+  background: transparent;
+  color: var(--sign);
+  border: 1px solid rgba(var(--sign-rgb), .7);
+}
+[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .fm-sharelink-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
+  background: rgba(var(--sign-rgb), .12);
+  color: var(--sign);
+  filter: none;
+}
+/* Reservar = cartel de dirección en ambos temas (la acción que importa) */
+.wc-card .wc-cta--book.wc-cta--book { background: var(--sign); border-color: var(--sign); color: var(--on-sign); }
+.btn-fm-primary.btn-fm-primary:hover:not(:disabled) { background: var(--coral-dark); }
+.fm-sharelink-btn:hover { filter: brightness(1.15); }
+/* Oscuro: tinta sobre amarillo donde quedaba blanco */
+[data-theme="dark"] .sf-pill--active,
+[data-theme="dark"] .fm-stats-export:hover { color: #1A1A1A; }
+[data-theme="dark"] .form-check-input:checked[type="checkbox"] {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%231A1A1A' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
+}
+/* Carta aeronáutica del hero: en oscuro puntos neutros (no amarillos) */
+[data-theme="dark"] .lp-hero.lp-hero--merged::before {
+  background-image: radial-gradient(rgba(230,232,236,.13) 1px, transparent 1.3px);
+}
+/* Punto de encuentro = marcador amarillo con alfiler de tinta */
+.cv-dest-dot.cv-dest-dot { fill: var(--sign); }
+.cv-dest-pin.cv-dest-pin { fill: #1A1A1A; }
+.cv-dest-ring.cv-dest-ring { stroke: var(--sign-line); }
+/* Anillos de alcance de radar alrededor del punto de encuentro (estáticos) */
+.cv-range { fill: none; stroke: rgba(var(--primary-rgb), .16); stroke-width: 1; stroke-dasharray: 2 4; }
+.cv-radar path { fill: rgba(var(--sign-rgb), .22); }
+[data-theme="dark"] .cv-radar path { fill: rgba(var(--sign-rgb), .14); }
+
+/* Luces de aterrizaje: al aparecer la tarjeta de embarque su marco se
+   enciende en amarillo y se apaga (antes: degradado animado estilo IA). */
+.wc-card.wc-card::before { background: var(--sign); animation: none; opacity: 0; }
+.wc-card.wc-card--entered::before { animation: fm-landing-lights 2.4s ease-out .15s backwards; opacity: 0; }
+@keyframes fm-landing-lights {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  30%  { opacity: .35; }
+  42%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ══ 19. Microdetalles aeronáuticos (secundarios, nunca imprescindibles) ══
+   Todo decorativo (aria-hidden), sin datos inventados y apagado con
+   prefers-reduced-motion al final de esta sección.                        */
+
+/* a) Ruta de vuelo en la cabecera: el filete inferior es la trayectoria y un
+      avión la recorre según avanzas por la página (scroll-driven, cero JS).
+      Donde no hay soporte queda la barra de progreso clásica. */
+@supports (animation-timeline: scroll()) {
+  .fm-scroll-progress { display: none; }
+  .app-header.app-header::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 2px;
+    background: var(--sign);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    pointer-events: none;
+    animation: fm-flightpath linear both;
+    animation-timeline: scroll(root);
+  }
+  .app-header.app-header::before {
+    content: "";
+    position: absolute;
+    left: 0; bottom: -8px;
+    width: 16px; height: 16px;
+    background: var(--primary);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+    rotate: 90deg;
+    opacity: 0;
+    pointer-events: none;
+    animation: fm-flightpath-plane linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@keyframes fm-flightpath { to { transform: scaleX(1); } }
+@keyframes fm-flightpath-plane {
+  0%   { left: 0; opacity: 0; }
+  3%   { opacity: 1; }
+  100% { left: calc(100% - 18px); opacity: 1; }
+}
+
+/* b) Avisos: el punto parpadea con el doble destello de una baliza
+      anticolisión (flash-flash … pausa), no con un parpadeo genérico. */
+.fm-announce-dot.fm-announce-dot {
+  width: 8px; height: 8px;
+  background: var(--sign);
+  box-shadow: 0 0 0 1.5px #1A1A1A;
+  animation: fm-beacon 2.2s linear infinite;
+}
+[data-theme="dark"] .fm-announce-dot.fm-announce-dot { box-shadow: none; }
+@keyframes fm-beacon {
+  0%, 5%    { opacity: 1; }
+  6%, 11%   { opacity: .18; }
+  12%, 17%  { opacity: 1; }
+  18%, 100% { opacity: .18; }
+}
+
+/* c) Buscando: las luces de aproximación ("el conejo") corren desde los
+      orígenes hacia el destino que baraja, en lugar de una flecha fija. */
+.fm-rabbit { display: inline-flex; align-items: center; gap: 7px; padding: 0 2px; }
+.fm-rabbit i {
+  display: block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--panel-line);
+  animation: fm-rabbit 1s linear infinite;
+  animation-delay: calc(var(--i, 0) * .09s);
+}
+.fm-rabbit b {
+  display: block;
+  width: 3px; height: 16px;
+  margin-left: 3px;
+  border-radius: 1px;
+  background: #1F9D55; /* umbral de pista: luces verdes */
+  opacity: .85;
+}
+@keyframes fm-rabbit {
+  0%, 10%   { background: var(--sign); box-shadow: 0 0 0 2px rgba(var(--sign-rgb), .28); }
+  24%, 100% { background: var(--panel-line); box-shadow: none; }
+}
+
+/* d) Botón principal: el avión rueda al pasar el ratón y despega al pulsar
+      (y sigue despegando en bucle mientras se busca). */
+.sf-cta-plane {
+  display: inline-flex;
+  margin-left: 10px;
+  vertical-align: -3px;
+  transition: transform .35s var(--ease-out-expo);
+}
+.btn-fm-primary:hover:not(:disabled) .sf-cta-plane { transform: translateX(5px); }
+.btn-fm-primary:active:not(:disabled) .sf-cta-plane { transform: translate(14px, -10px) rotate(-12deg); opacity: 0; transition-duration: .25s; }
+.btn-fm-primary:disabled .sf-cta-plane { animation: fm-takeoff 1.4s var(--ease-out-expo) infinite; }
+@keyframes fm-takeoff {
+  0%   { transform: none; opacity: 1; }
+  55%  { transform: translate(22px, -14px) rotate(-14deg); opacity: 0; }
+  56%  { transform: translate(-16px, 0); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* e) Panel de salidas: al pasar por una fila se dibuja una estela */
+.fm-board-rows > li { position: relative; }
+.fm-board-row { position: relative; }
+.fm-board-row::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 38%;
+  bottom: 6px;
+  height: 1px;
+  background-image: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), .38) 30%, rgba(var(--primary-rgb), .38) 80%, transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .5s var(--ease-out-expo);
+  pointer-events: none;
+}
+.fm-board-row:hover:not(.fm-board-row--current)::after { transform: scaleX(1); }
+
+/* f) Sello de embarque en el troquel: se estampa al aparecer la tarjeta (y
+      otra vez al cambiar de destino). Datos reales: código + fecha. */
+.wc-stamp {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+  padding: 4px 9px 3px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.05;
+  color: rgba(26,26,26,.78);
+  border: 2px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+  rotate: -7deg;
+  mix-blend-mode: multiply;
+  animation: fm-stamp .5s cubic-bezier(.3, 1.6, .5, 1) 1.15s backwards;
+}
+[data-theme="dark"] .wc-stamp { color: rgba(255,194,14,.85); mix-blend-mode: normal; }
+.wc-stamp-label { font-size: 7.5px; letter-spacing: .16em; }
+.wc-stamp-code { font-size: 15px; letter-spacing: .12em; }
+.wc-stamp-date { font-size: 8.5px; letter-spacing: .1em; }
+@keyframes fm-stamp {
+  0%   { opacity: 0; scale: 1.9; }
+  60%  { opacity: 1; scale: .94; }
+  100% { opacity: 1; scale: 1; }
+}
+@media (max-width: 480px) {
+  .wc-stamp { padding: 3px 7px 2px; }
+  .wc-stamp-code { font-size: 13px; }
+}
+
+/* g) Pestaña activa: marca de "estás aquí" que se enciende al elegirla */
+.rv-tab.rv-tab--active { animation: fm-sign-on .45s ease-out; }
+@keyframes fm-sign-on {
+  0%   { filter: brightness(1.6); }
+  100% { filter: none; }
+}
+
+/* h) Formulario: el número de puerta (01/02) de la sección en la que estás
+      se enciende como cartel de posición. */
+.sf-form form > .sf-section:focus-within > .sf-label:first-child::before {
+  color: var(--sign);
+  background: #1A1A1A;
+  box-shadow: 0 0 0 1px var(--sign);
+  transition: color .2s ease, box-shadow .2s ease;
+}
+
+/* i) Volver arriba = despegar.
+      Fix de paso (bug previo): una regla posterior de App.css le ponía
+      position:relative y el botón quedaba en el flujo, pegado al final de la
+      página en vez de flotar abajo a la derecha. */
+.scroll-top-btn.scroll-top-btn { position: fixed; }
+.scroll-top-arrow { display: inline-flex; transition: transform .35s var(--ease-out-expo); }
+.scroll-top-btn:hover .scroll-top-arrow { transform: translateY(-3px); }
+.scroll-top-btn--launch .scroll-top-arrow { animation: fm-launch .7s var(--ease-out-expo); }
+@keyframes fm-launch {
+  0%   { transform: none; opacity: 1; }
+  45%  { transform: translateY(-22px) scale(.7); opacity: 0; }
+  46%  { transform: translateY(16px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* j) Avisos breves (toast) con el "ding-dong" de megafonía: dos ondas */
+.fm-toast-icon { position: relative; display: inline-grid; place-items: center; }
+.fm-toast-icon::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--sign);
+  opacity: 0;
+  animation: fm-chime .7s ease-out 2;
+  pointer-events: none;
+}
+@keyframes fm-chime {
+  0%   { opacity: .9; transform: scale(.7); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+/* k) Día/noche: el icono del tema entra girando como un faro */
+.theme-toggle svg { animation: fm-beacon-turn .5s var(--ease-out-expo); }
+@keyframes fm-beacon-turn {
+  from { transform: rotate(-120deg) scale(.6); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* l) Pie: manga de viento que se mece con la "brisa" */
+.app-footer-brand { display: inline-flex; align-items: center; gap: 8px; }
+.fm-windsock { width: 30px; height: 20px; flex: 0 0 auto; overflow: visible; }
+.fm-windsock-pole { stroke: var(--slate-400); stroke-width: 1.5; stroke-linecap: round; }
+.fm-windsock-sock { transform-origin: 6px 5px; animation: fm-windsock 3.8s ease-in-out infinite; }
+.fm-windsock-a { fill: var(--sign); }
+.fm-windsock-b { fill: var(--navy); }
+@keyframes fm-windsock {
+  0%, 100% { transform: rotate(6deg) scaleX(.94); }
+  35%      { transform: rotate(-3deg) scaleX(1); }
+  60%      { transform: rotate(3deg) scaleX(.97); }
+}
+
+/* m) Radar: barrido lento alrededor del punto de encuentro del hero (el SVG
+      solo lleva bucles infinitos, nunca animaciones de entrada). */
+
+/* Movimiento reducido: todo lo anterior, quieto */
+@media (prefers-reduced-motion: reduce) {
+  .app-header.app-header::before,
+  .app-header.app-header::after { display: none; }
+  .fm-scroll-progress { display: block; }
+  .fm-announce-dot.fm-announce-dot,
+  .fm-rabbit i,
+  .btn-fm-primary:disabled .sf-cta-plane,
+  .wc-stamp,
+  .rv-tab.rv-tab--active,
+  .scroll-top-btn--launch .scroll-top-arrow,
+  .fm-toast-icon::after,
+  .theme-toggle svg,
+  .fm-windsock-sock,
+  .wc-card.wc-card--entered::before { animation: none !important; }
+  .fm-rabbit i:nth-child(odd) { background: var(--sign); }
+  .cv-radar { display: none; }
+  .fm-board-row::after { transition: none; }
+}
+
+/* ══ 20. Mapa de rutas (carta aeronáutica) ═══════════════════════════════
+   Mar gris frío de carta, tierra de papel con fronteras finas, retícula con
+   grados, rosa de los vientos, fichas de precio en mono con franja de color
+   (barato / medio / caro), orígenes como fichas IATA con contorno y el
+   punto de encuentro como cartel amarillo con pulso de radar.            */
+.dm-wrap {
+  --dm-sea: #E4E8E7;
+  --dm-land: #FBF9F5;
+  --dm-land-alt: #F4F1EA;
+  --dm-border: #CFC8BA;
+  --dm-grat: rgba(26,26,26,.09);
+  --dm-grat-text: #85817A;
+  --dm-route: #1A1A1A;
+  --dm-chip: #1A1A1A;
+  --dm-chip-text: #FFFFFF;
+  --dm-chip-line: #1A1A1A;
+  --dm-origin-bg: #FBF9F5;
+  --dm-origin-ink: #1A1A1A;
+  --dm-cheap: #15803D;
+  --dm-mid: #D97706;
+  --dm-expensive: #DC2626;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 12px;
+  overflow: hidden;
+}
+[data-theme="dark"] .dm-wrap {
+  --dm-sea: #0C0E11;
+  --dm-land: #1C1F24;
+  --dm-land-alt: #191C20;
+  --dm-border: #30343C;
+  --dm-grat: rgba(230,232,236,.07);
+  --dm-grat-text: #7C828E;
+  --dm-route: #FFC20E;
+  --dm-chip: #2A2D34;
+  --dm-chip-text: #E6E8EC;
+  --dm-chip-line: #3A3E47;
+  --dm-origin-bg: #121316;
+  --dm-origin-ink: #E6E8EC;
+  --dm-cheap: #52DEA2;
+  --dm-mid: #FF9F5A;
+  --dm-expensive: #FF8A8A;
+}
+.dm-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 18px; flex-wrap: wrap; margin-bottom: 12px; }
+.dm-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--navy);
+}
+.dm-sub { margin: 4px 0 0; font-size: 13px; color: var(--slate-500); }
+.dm-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.dm-legend-item {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--slate-500);
+}
+.dm-key { display: inline-block; width: 18px; height: 11px; border-radius: 2px; flex: 0 0 auto; position: relative; overflow: hidden; }
+.dm-key--best { background: var(--sign); box-shadow: inset 0 0 0 1px #1A1A1A; }
+.dm-key--dest { background: var(--dm-chip); }
+.dm-key--dest i { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.dm-key--origin { background: var(--dm-origin-bg); box-shadow: inset 0 0 0 1.5px var(--dm-origin-ink); }
+.dm-tone--cheap { background: var(--dm-cheap); fill: var(--dm-cheap); }
+.dm-tone--mid { background: var(--dm-mid); fill: var(--dm-mid); }
+.dm-tone--expensive { background: var(--dm-expensive); fill: var(--dm-expensive); }
+
+/* Línea "En tu tarjeta" del mapa */
+.dm-current {
+  display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 8px 12px;
+  background: var(--panel-stub);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--sign);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.dm-current-label { font-family: var(--font-mono); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--slate-500); }
+.dm-current-dest { font-weight: 700; color: var(--navy); }
+.dm-current-price { font-family: var(--font-mono); font-weight: 800; color: var(--navy); }
+.dm-current-price small { font-weight: 600; color: var(--slate-500); }
+.dm-current-btn {
+  margin-left: auto; padding: 4px 10px;
+  background: transparent; color: var(--navy);
+  border: 1px solid var(--slate-300); border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700;
+}
+.dm-current-btn:hover { border-color: var(--navy); }
+
+.dm-container { position: relative; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--dm-sea); }
+.dm-svg { display: block; width: 100%; height: auto; }
+.dm-sea { fill: var(--dm-sea); }
+.dm-graticule line { stroke: var(--dm-grat); stroke-width: 1; }
+.dm-land { fill: var(--dm-land); stroke: var(--dm-border); stroke-width: .8; stroke-linejoin: round; }
+.dm-land--alt { fill: var(--dm-land-alt); }
+.dm-grat-labels text { fill: var(--dm-grat-text); font-family: var(--font-mono); font-weight: 600; letter-spacing: .04em; }
+.dm-compass circle { fill: var(--dm-land); stroke: var(--dm-border); stroke-width: 1; }
+.dm-compass-needle { fill: var(--dm-grat-text); opacity: .5; }
+.dm-compass-north { fill: var(--dm-route); }
+.dm-compass text { fill: var(--dm-grat-text); font-family: var(--font-mono); font-weight: 800; }
+
+/* Rutas */
+.dm-route {
+  fill: none;
+  stroke: var(--dm-route);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 6 5;
+  opacity: .7;
+  animation: dm-dash-flow 1.4s linear infinite;
+}
+.dm-route--preview { opacity: .38; stroke-width: 1.4; stroke-dasharray: 2 5; animation: none; }
+@keyframes dm-dash-flow { to { stroke-dashoffset: -22; } }
+.dm-plane path { fill: var(--dm-route); }
+
+/* Puntos */
+.dm-origin-dot { fill: var(--dm-origin-bg); stroke: var(--dm-origin-ink); }
+.dm-dot { stroke: var(--dm-land); }
+.dm-dot--cheap { fill: var(--dm-cheap); }
+.dm-dot--mid { fill: var(--dm-mid); }
+.dm-dot--expensive { fill: var(--dm-expensive); }
+.dm-dot--best { fill: var(--sign); stroke: #1A1A1A; }
+.dm-ping {
+  fill: none;
+  stroke: var(--sign-line);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dm-ping 2.4s ease-out infinite;
+}
+.dm-ping--late { animation-delay: 1.2s; }
+@keyframes dm-ping { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(3.4); opacity: 0; } }
+.dm-offmap-arrow { fill: var(--dm-grat-text); }
+
+/* Fichas */
+.dm-chip-bg { fill: var(--dm-chip); stroke: var(--dm-chip-line); }
+.dm-chip-text { fill: var(--dm-chip-text); font-family: var(--font-mono); font-weight: 700; white-space: pre; }
+.dm-dest--best .dm-chip-bg { fill: var(--sign); stroke: #1A1A1A; }
+.dm-dest--best .dm-chip-text { fill: #1A1A1A; font-weight: 800; }
+.dm-origin-chip rect { fill: var(--dm-origin-bg); stroke: var(--dm-origin-ink); }
+.dm-origin-chip text { fill: var(--dm-origin-ink); font-family: var(--font-mono); font-weight: 800; letter-spacing: .06em; }
+.dm-dest { cursor: pointer; outline: none; transition: opacity .2s ease; }
+.dm-dest--best { cursor: default; }
+.dm-dest--dim { opacity: .42; }
+.dm-dest--hover:not(.dm-dest--best) .dm-chip-bg { stroke: var(--sign); }
+.dm-dest:focus-visible .dm-chip-bg { stroke: var(--sign); stroke-width: 2.5; }
+
+/* Ficha informativa */
+.dm-tooltip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, calc(-100% - 22px));
+  min-width: 170px;
+  padding: 10px 12px;
+  background: #1A1A1A;
+  color: #E6E8EC;
+  border-left: 3px solid var(--sign);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: board-fade .15s ease;
+}
+.dm-tooltip--below { transform: translate(-50%, 22px); }
+[data-theme="dark"] .dm-tooltip { background: #22252B; box-shadow: 0 0 0 1px #30343C; }
+.dm-tooltip-city { font-weight: 700; font-size: 14px; color: #FFFFFF; }
+.dm-tooltip-city span { font-family: var(--font-mono); font-size: 11px; color: #9AA0AA; margin-left: 4px; }
+.dm-tooltip-price { font-family: var(--font-mono); font-weight: 800; font-size: 15px; color: var(--sign); margin: 2px 0; }
+.dm-tooltip-price small { font-family: var(--font); font-size: 11px; font-weight: 600; color: #9AA0AA; }
+.dm-tooltip-row { color: #C9CDD4; }
+.dm-tooltip-hint { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #3A3E47; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #9AA0AA; }
+.dm-note {
+  margin: 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--slate-500);
+}
+@media (max-width: 600px) {
+  .dm-wrap { padding: 14px 12px 10px; }
+  .dm-legend { gap: 4px 10px; }
+  .dm-current-btn { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dm-route, .dm-ping, .dm-tooltip { animation: none; }
+  .dm-ping--late { display: none; }
+  .dm-plane { display: none; }
+}
+
+/* ══ 21. PWA: sin conexión, cambio de puerta (versión nueva), instalar ═══ */
+.fm-offline {
+  display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 0 -12px; padding: 6px 16px;
+  background: #1A1A1A; color: #C9CDD4;
+  font-size: 12px; text-align: center;
+  animation: board-fade .3s ease;
+}
+.fm-offline svg { color: var(--sign); flex: 0 0 auto; }
+.fm-offline-tag { font-family: var(--font-mono); font-weight: 800; font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--sign); }
+[data-theme="dark"] .fm-offline { background: #1C1F24; border-top: 1px solid #25282F; }
+
+.fm-pwa-card {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 9997;
+  display: flex; align-items: center; gap: 12px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 12px 12px 12px 16px;
+  background: #1A1A1A; color: #E6E8EC;
+  border-left: 4px solid var(--sign);
+  border-radius: var(--radius-md);
+  transform: translateX(-50%);
+  animation: fm-pwa-in .5s var(--ease-out-expo) backwards;
+}
+[data-theme="dark"] .fm-pwa-card { background: #22252B; box-shadow: 0 0 0 1px #30343C; }
+@keyframes fm-pwa-in { from { opacity: 0; transform: translate(-50%, 24px); } }
+.fm-pwa-card--update { flex-wrap: wrap; }
+.fm-pwa-card-logo { flex: 0 0 auto; border-radius: 8px; }
+.fm-pwa-card-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.fm-pwa-card-tag { font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: var(--sign); }
+.fm-pwa-card--update .fm-pwa-card-tag { flex: 0 0 auto; }
+.fm-pwa-card-text { font-size: 13px; line-height: 1.4; color: #C9CDD4; flex: 1 1 auto; min-width: 0; }
+.fm-pwa-ios-share { vertical-align: -2px; color: #FFFFFF; }
+.fm-pwa-card-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; margin-left: auto; }
+.fm-pwa-card-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  background: var(--sign); color: #1A1A1A;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700;
+  transition: transform .18s var(--ease-out-expo), filter .2s ease;
+}
+.fm-pwa-card-cta:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.fm-pwa-card-cta:active { transform: scale(.97); }
+.fm-pwa-card-close {
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px;
+  background: transparent; color: #9AA0AA;
+  border: 1px solid #3A3E47; border-radius: var(--radius-sm);
+}
+.fm-pwa-card-close:hover { color: #FFFFFF; border-color: #9AA0AA; }
+.fm-pwa-card-cta:focus-visible, .fm-pwa-card-close:focus-visible { outline: 2px solid var(--sign); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .fm-pwa-card, .fm-offline { animation: none; }
+}
+
+/* ══ 22. Resultados en dos zonas: 01 DECISIÓN FINAL · 02 EXPLORAR ════════
+   La decisión va en un "mostrador" propio (fondo y marco más marcados, el
+   01 en cartel amarillo) y se separa de la exploración con un troquel de
+   billete. La exploración queda en segundo plano: cabecera en contorno.   */
+.fm-decision {
+  --decision-bg: #ECE7DD;
+  --decision-line: #1A1A1A;
+  position: relative;
+  margin: 4px 0 0;
+  padding: 16px 16px 16px;
+  background: var(--decision-bg);
+  border: 2px solid var(--decision-line);
+  border-radius: 10px;
+  scroll-margin-top: 76px;
+  animation: board-rise .55s var(--ease-out-expo) backwards;
+}
+[data-theme="dark"] .fm-decision {
+  --decision-bg: #0D0E11;
+  --decision-line: rgba(255,194,14,.7);
+}
+.fm-decision .wc-card.wc-card { margin: 0; }
+.fm-decision .fm-group-block { margin: 14px 0 0; }
+.fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 14px; }
+.fm-zone-num {
+  flex: 0 0 auto;
+  display: inline-grid; place-items: center;
+  min-width: 38px; height: 30px; padding: 0 7px;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 800; letter-spacing: .02em;
+  border-radius: 4px;
+}
+.fm-zone-head--decision .fm-zone-num { background: var(--sign); color: #1A1A1A; box-shadow: inset 0 0 0 1.5px #1A1A1A; }
+.fm-zone-head--explore .fm-zone-num { background: transparent; color: var(--slate-500); box-shadow: inset 0 0 0 1.5px var(--slate-300); }
+.fm-zone-text { min-width: 0; }
+.fm-zone-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  line-height: 1.3;
+}
+.fm-zone-head--decision .fm-zone-title { color: var(--navy); }
+.fm-zone-head--explore .fm-zone-title { color: var(--slate-500); }
+.fm-zone-sub { margin: 3px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--slate-500); }
+.fm-zone-head--decision .fm-zone-sub { color: var(--slate-700); }
+
+/* Troquel entre zonas: línea perforada con muescas del color de página */
+.fm-zone-perf {
+  position: relative;
+  height: 2px;
+  margin: 30px 8px 26px;
+  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
+  background-size: 12px 2px;
+}
+.fm-zone-perf::before,
+.fm-zone-perf::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--slate-300);
+}
+.fm-zone-perf::before { left: -16px; }
+.fm-zone-perf::after { right: -16px; }
+
+.fm-explore .fm-board { margin-top: 12px; }
+.fm-explore > .fm-notice { margin-bottom: 12px; }
+
+/* Avisos en línea (junto a lo que afectan) */
+.fm-notice {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--sign);
+  border-radius: var(--radius-md);
+}
+.fm-notice-tag {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 8px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--sign); background: #1A1A1A;
+  border-radius: 4px;
+}
+.fm-notice-tag .fm-announce-dot { width: 6px; height: 6px; box-shadow: none; }
+[data-theme="dark"] .fm-notice-tag { background: rgba(var(--sign-rgb), .12); box-shadow: inset 0 0 0 1px rgba(var(--sign-rgb), .35); }
+.fm-notice-body { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fm-notice-text { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+.fm-notice-detail { font-size: 12.5px; color: var(--slate-500); line-height: 1.45; }
+.fm-notice-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: var(--primary); color: var(--on-primary);
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+  transition: transform .18s var(--ease-out-expo), opacity .2s ease;
+}
+:root:not([data-theme="dark"]) .fm-notice-btn { color: #FFFFFF; }
+.fm-notice-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.fm-notice-btn:active:not(:disabled) { transform: scale(.97); }
+.fm-notice-btn:disabled { opacity: .6; cursor: progress; }
+.fm-notice--partial { border-left-color: var(--slate-400); }
+.fm-notice--partial .fm-notice-text { font-weight: 500; font-size: 13px; }
+@media (max-width: 600px) {
+  .fm-decision { padding: 12px 10px 12px; border-radius: 8px; }
+  .fm-zone-head { gap: 10px; }
+  .fm-zone-title { font-size: 13.5px; letter-spacing: .12em; }
+  .fm-notice-btn { width: 100%; }
+  .fm-zone-perf { margin: 24px 6px 20px; }
+}

@@ -15,6 +15,7 @@ import { getCityImage } from "../utils/cityImages";
 import { Heart, Calendar, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { useCountUp } from "./UiBits";
+import { FlapText } from "./FlapBoard";
 
 function useFairnessLabel(score) {
   const { t } = useI18n();
@@ -132,10 +133,15 @@ const WinnerCard = React.memo(function WinnerCard({
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
+        {/* Duotono de marca (tinta → ámbar): capa que tiñe las luces de la foto
+            para que todas las ciudades compartan el mismo tratamiento. */}
+        <div className="wc-image-duo" aria-hidden="true" />
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>
-          <span className="wc-dest-code">{city || code}</span>
+          {/* Nombre del destino en panel de salidas: gira y se asienta en el
+              valor REAL (el SSR/primer render ya pinta el nombre final). */}
+          <span className="wc-dest-code wc-dest-code--flap"><FlapText text={city || code} size="lg" delay={250} /></span>
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
@@ -231,15 +237,15 @@ const WinnerCard = React.memo(function WinnerCard({
 
       {/* Who pays what — makes the per-person spread (fairness) legible */}
       {payRows && (
-        <div className="wc-fs">
+        <div className="wc-fs" key={code}>
           <div className="wc-fs-head">
             <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
             <span className="wc-fs-verdict" style={{ color: fairness.color }}>
               {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
             </span>
           </div>
-          {payRows.rows.map((r) => (
-            <div key={r.origin} className="wc-fs-row">
+          {payRows.rows.map((r, i) => (
+            <div key={r.origin} className="wc-fs-row" style={{ "--i": i }}>
               <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
               <div className="wc-fs-track">
                 <div className="wc-fs-fill" style={{ width: `${Math.max(6, (r.price / payRows.maxP) * 100)}%`, background: payColor(r.price, payRows.avg) }} />
@@ -254,12 +260,30 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
       )}
 
+      {/* Troquel de tarjeta de embarque: separa la "matriz" (precio y reparto)
+          del cuerpo (reserva). Decorativo salvo la línea de datos reales. */}
+      <div className="wc-perf">
+        <span className="wc-perf-text">
+          {t("results.boardingPass")}
+          {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
+        </span>
+        {/* Sello de embarque: se estampa al aparecer la tarjeta y otra vez al
+            cambiar de destino (key). Solo datos reales: código y fecha. */}
+        <span key={code} className="wc-stamp" aria-hidden="true">
+          <span className="wc-stamp-label">{t("results.stampLabel")}</span>
+          <span className="wc-stamp-code">{code}</span>
+          {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
+        </span>
+        <span className="wc-perf-barcode" aria-hidden="true" />
+      </div>
+
       {/* Body */}
       <div className="wc-body">
         {/* Criterion toggle: control único que gobierna ganador Y lista de
             alternativas (uiCriterion en App.jsx). */}
+        {/* (El nº de destinos encontrados vive ahora en el panel de salidas.) */}
+        {!singleOrigin && (
         <div className="wc-criterion-row">
-          {!singleOrigin && (
           <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
             {[["total", t("results.criterionPrice")], ["fairness", t("results.criterionFairness")]].map(([v, l]) => (
               <button key={v} type="button"
@@ -268,11 +292,8 @@ const WinnerCard = React.memo(function WinnerCard({
                 onClick={() => onChangeCriterion(v)}>{l}</button>
             ))}
           </div>
-          )}
-          <div className="wc-stats-mini">
-            {t("results.destsFound")}: <strong>{flightsCount}</strong>
-          </div>
         </div>
+        )}
 
         {/* ── Booking section (collapsible) ── */}
         {cleanOrigins.length > 0 && dep && (
@@ -456,9 +477,13 @@ const WinnerCard = React.memo(function WinnerCard({
 
         {/* Actions */}
         <div className="wc-actions">
-          <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
-            {t("results.viewAlternatives")}
-          </button>
+          {/* Baja al panel de salidas (solo si hay más de un destino). "Cambiar
+              búsqueda" ya está en la cabecera del vuelo y en la barra fija. */}
+          {flightsCount > 1 && (
+            <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
+              {t("results.viewAlternatives")}
+            </button>
+          )}
           {/* Mobile: one "Share" → native OS sheet (covers WhatsApp/Telegram/Email/…).
               Desktop (no Web Share API): copy-link + explicit Telegram/Email so those
               channels stay reachable. */}
@@ -489,9 +514,6 @@ const WinnerCard = React.memo(function WinnerCard({
               <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}
             </button>
           )}
-          <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onChangeSearch}>
-            {t("results.changeSearch")}
-          </button>
         </div>
 
         {/* Search badges */}

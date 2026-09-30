@@ -1,18 +1,18 @@
 {
   "header": {
-    "tagline": "Meet smarter, fly fair",
+    "tagline": "Meeting points for groups",
     "newSearch": "New search",
     "home": "Home",
     "serverOnline": "Server online",
     "serverWaking": "Server waking up…"
   },
   "landing": {
-    "eyebrow": "Many cities. One decision.",
+    "eyebrow": "Many departures. One destination.",
     "title": "The perfect meeting point",
     "titleAccent": "perfect",
     "lead": "FlyndMe compares flights from everyone's city and finds the cheapest and fairest destination for everyone.",
     "diagramAlt": "Flight paths from several origin cities converging on a single meeting point",
-    "diagramMeet": "Best meeting point",
+    "diagramMeet": "Meeting point",
     "cta": "Start searching",
     "chips": [
       "Multi-origin",
@@ -20,7 +20,7 @@
       "Fairness score",
       "Budget per person"
     ],
-    "howTitle": "How does it work?",
+    "howTitle": "Your itinerary in 3 steps",
     "steps": [
       "Add the departure city of each traveler.",
       "FlyndMe compares flights with flexible dates and finds the cheapest destination.",
@@ -157,7 +157,7 @@
     ]
   },
   "search": {
-    "title": "Where are you flying from?",
+    "title": "Where are you all taking off from?",
     "subtitle": "Add each traveler's city and pick your dates.",
     "originLabel": "Departure cities",
     "placeholder": "Type city or code…",
@@ -166,7 +166,7 @@
     "removeTitle": "Remove traveler",
     "addTraveler": "+ Add traveler",
     "tryExample": "Try example: MAD + LON + BER",
-    "tripTypeLabel": "Trip type",
+    "tripTypeLabel": "Ticket type",
     "oneway": "One way",
     "roundtrip": "Round trip",
     "datesLabel": "When?",
@@ -185,7 +185,7 @@
     "budgetOn": "On",
     "budgetOff": "Off",
     "submit": "Meet up for less",
-    "searching": "Searching…",
+    "searching": "Checking departures…",
     "footnoteTime": "Results in ~5 s",
     "footnotePrices": "Real flight prices",
     "flexLabel": "Flexible dates",
@@ -236,7 +236,7 @@
     "completionReady": "Ready"
   },
   "results": {
-    "eyebrow": "Recommended destination",
+    "eyebrow": "Meeting point set",
     "criterionPrice": "Cheapest",
     "criterionFairness": "Most balanced",
     "criterionGroupLabel": "Choose winner and sort order",
@@ -255,17 +255,17 @@
     "whoPaysSpread": "{{amount}} between the cheapest and priciest",
     "whoPaysAvg": "Average {{amount}} per person",
     "verifyCta": "Check live price",
-    "verifyCaption": "Cached estimate — check it against Google Flights",
+    "verifyCaption": "Estimate based on recent searches · check it against Google Flights",
     "verifyChecking": "Checking live price…",
     "verifyUnavailable": "Couldn't check live prices right now — still a cached estimate.",
     "maxSpread": "Max spread",
     "spreadSub": "Between the most and least expensive flight",
     "destsFound": "Destinations found",
-    "bookTitle": "Book your flights",
+    "bookTitle": "Boarding gate: book your flight",
     "bookSub": "One link per traveler. Book on Aviasales or compare on Skyscanner and Google Flights.",
     "bookCta": "Book",
     "bookLabel": "Book flights — one link per traveler",
-    "viewAlternatives": "View alternatives",
+    "viewAlternatives": "See other departures",
     "share": "Share",
     "copied": "Copied!",
     "copyFailed": "Copy failed",
@@ -276,7 +276,7 @@
     "stops": "{{n}} stop(s)",
     "outbound": "Outbound",
     "returnLeg": "Return",
-    "disclaimer": "Estimated prices from live flight data. May vary at time of booking.",
+    "disclaimer": "Estimate based on recent searches. The final fare is set by the airline when you book on Aviasales, Skyscanner or Google Flights.",
     "otherOptions": "Other options",
     "hide": "Hide",
     "showMap": "Map",
@@ -295,6 +295,15 @@
     "tripDays": "{{n}}-day trip",
     "shareNative": "Share",
     "bestRouteTitle": "Your cheapest route to {{city}}",
+    "boardingPass": "Group boarding pass",
+    "boardingMeta": "{{n}} cities · 1 meeting point",
+    "stampLabel": "Meeting point",
+    "decisionTitle": "Final decision",
+    "decisionSub": "The destination that suits you best and everything you need to close it.",
+    "exploreTitle": "Explore alternatives",
+    "exploreSub": "Other destinations, map and comparison. Your pass only changes if you pick another.",
+    "exploreSubOne": "Only this destination has data for all your cities.",
+    "nextStep": "Next step",
     "vsLastCheaper": "{{pct}}% cheaper than last search",
     "vsLastPricier": "{{pct}}% pricier than last search",
     "copyFlight": "Copy flight info",
@@ -321,7 +330,7 @@
     "savingsPerOrigin": "What each traveler saves",
     "savingsVsWorst": "vs flying to {{dest}}",
     "copySearchLink": "Copy search link",
-    "splitTitle": "Cost split",
+    "splitTitle": "Who owes whom",
     "splitEqual": "Split equally",
     "splitActual": "Each pays own",
     "splitGets": "gets back",
@@ -349,11 +358,11 @@
     }
   },
   "verifyBadge": {
-    "confirmed": "Price confirmed",
+    "confirmed": "Fare confirmed",
     "changed": "Price updated {{pct}}",
     "wasPrice": "Was {{price}}/person (indicative) · now the real Google Flights price",
-    "estimate": "Cached estimate",
-    "estimateHint": "Price from a cached search feed; check the live price to compare against Google Flights.",
+    "estimate": "Estimate · recent searches",
+    "estimateHint": "Estimate based on recent searches, not a bookable offer. Check the live price to compare against Google Flights.",
     "indicative": "Indicative price",
     "verifiedAt": "Verified at {{time}}",
     "indicativeHint": "Live re-pricing was unavailable; showing original search price."
@@ -363,6 +372,24 @@
     "totalCost": "Total group cost",
     "avgPerPerson": "Avg per person",
     "fairness": "Fairness score"
+  },
+  "board": {
+    "flightHead": "Group flight",
+    "travelers": "{{n}} travelers",
+    "announcements": "Notices",
+    "tagDate": "Date",
+    "tagGroup": "Group",
+    "tagNotice": "Notice",
+    "departures": "Departures",
+    "departuresSub": "{{n}} destinations for your group · tap one to see it",
+    "colDest": "Destination",
+    "colPrice": "Per person",
+    "colFair": "Fairness",
+    "selected": "On your pass",
+    "select": "See {{city}}",
+    "more": "More options",
+    "estimateNote": "Estimate based on recent searches",
+    "exportCsv": "Download CSV"
   },
   "fairness": {
     "veryBalanced": "Very balanced",
@@ -378,7 +405,7 @@
     "noReturn": "Pick a return date.",
     "returnBeforeDep": "Return date must be after departure.",
     "noBudgetResults": "No results within that budget. Try increasing the limit or turn it off.",
-    "noResults": "No results for those cities and dates. Try different dates.",
+    "noResults": "No shared departures for those cities and dates. Try different dates.",
     "serverWaking": "Server is starting up. Retrying automatically…",
     "unexpected": "Something went wrong. Please try again.",
     "connection": "Couldn't reach the server. Check your connection and try again.",
@@ -424,14 +451,15 @@
     "season.autumn": "Autumn"
   },
   "loading": {
+    "boardTitle": "Finding your meeting point",
     "messages": [
-      "Waking up the server…",
-      "Connecting to airlines…",
-      "Searching flights from your cities…",
+      "Powering up the departures board…",
+      "Checking departures from each city…",
+      "Syncing passengers…",
       "Comparing destinations…",
-      "Calculating the best price for your group…",
-      "Just a moment more…",
-      "Almost there…"
+      "Working out what each of you pays…",
+      "Final call: just a moment more…",
+      "Printing your boarding pass…"
     ],
     "ariaLabel": "Searching flights",
     "steps": [
@@ -455,11 +483,17 @@
     "clear": "Clear all"
   },
   "map": {
-    "title": "Price map",
+    "title": "Route map",
+    "subtitle": "Tap a destination to put it on your boarding pass.",
     "cheap": "Cheap",
     "mid": "Mid",
     "expensive": "Expensive",
     "origin": "Your cities",
+    "meetPoint": "Meeting point",
+    "showCard": "View pass",
+    "tapHint": "Tap to put it on your pass",
+    "selectAria": "{{city}}: {{price}} per person. Put it on your pass",
+    "bestAria": "{{city}}: {{price}} per person. Meeting point on your pass",
     "best": "Best",
     "groupTotal": "Group total",
     "ariaLabel": "Map of European destinations with flight prices"
@@ -486,8 +520,18 @@
   "footerGuides": "Guides",
   "footerCopy": "© 2026 FlyndMe. All rights reserved.",
   "pwa": {
-    "installHint": "Add to your home screen for faster access",
-    "install": "Install"
+    "installHint": "Open it in one tap from your home screen, like any other app.",
+    "install": "Install",
+    "installTitle": "Take FlyndMe on board",
+    "iosHintBefore": "Tap",
+    "iosShare": "Share",
+    "iosHintAfter": "then “Add to Home Screen”.",
+    "later": "Not now",
+    "updateTitle": "Gate change",
+    "updateText": "A new version of FlyndMe is ready.",
+    "updateCta": "Update",
+    "offline": "Offline",
+    "offlineText": "Prices need internet; what you already see stays here."
   },
   "share": {
     "title": "FlyndMe · Recommended destination: {{dest}}",
@@ -626,7 +670,7 @@
   },
   "cheaperDate": {
     "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
-    "use": "Use this date"
+    "use": "Switch to this date"
   },
   "arrivalCoord": {
     "diffDays": "With the cheapest flights, you land on different days ({{time}} apart).",
@@ -787,7 +831,7 @@
   "group": {
     "cta": "Planning with others? Invite your group",
     "eyebrow": "Group trip",
-    "title": "Plan your trip together",
+    "title": "Group boarding open",
     "subtitle": "Everyone adds their own departure city — FlyndMe finds the cheapest place to meet.",
     "inviteLabel": "Invite link",
     "inviteHint": "Share this link so each traveler adds where they're flying from.",
@@ -796,8 +840,8 @@
     "shareWhatsApp": "Send on WhatsApp",
     "share": "Share",
     "shareText": "✈ We're planning a trip on FlyndMe! Add the city you'd fly from and it finds the cheapest, fairest place for us all to meet 👉",
-    "rosterTitle": "Travelers ({{n}})",
-    "refresh": "Refresh",
+    "rosterTitle": "Passengers ({{n}})",
+    "refresh": "Sync passengers",
     "empty": "No one's added a city yet. Add yours below.",
     "travelerN": "Traveler {{n}}",
     "travelers": "Travelers",
@@ -811,6 +855,8 @@
     "exit": "Back to single search",
     "needDate": "Pick a departure date first.",
     "createError": "Couldn't create the group link. Try again.",
+    "creating": "Preparing boarding…",
+    "rateLimited": "You've created several groups in a row. Wait a few minutes and try again.",
     "addError": "Couldn't update the group. Try again.",
     "expired": "This group link has expired."
   }

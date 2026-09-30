@@ -196,7 +196,7 @@ export function scrollBehavior() {
 // el fallback hex es el valor del tema claro.
 export function fairnessColor(s) {
   if (s >= 85) return "var(--fair-high, #15803D)";
-  if (s >= 65) return "var(--fair-mid, #0059B8)";
+  if (s >= 65) return "var(--fair-mid, #1F7A5C)";
   if (s >= 45) return "var(--fair-low, #B45309)";
   return "var(--fair-bad, #DC2626)";
 }

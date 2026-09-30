@@ -3,7 +3,7 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand, List } from "lucide-react";
+import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand, List, PlaneTakeoff } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, weekdayOf, todayISO, countryFlag,
@@ -705,10 +705,12 @@ const SearchPage = React.memo(function SearchPage({
             <div className="sf-submit-wrap">
               <button type="submit" className={`btn-fm-primary w-100 py-3 fw-bold fs-6${!loading && origins.some(o => o.trim()) && departureDate ? " sf-submit--ready" : ""}`} disabled={loading}>
                 {loading ? t("search.searching") : t("search.submit")}
+                {/* Avión que rueda al pasar el ratón y despega al pulsar (decorativo) */}
+                <span className="sf-cta-plane" aria-hidden="true"><PlaneTakeoff size={18} /></span>
               </button>
               {onCreateGroup && (
                 <button type="button" className="sf-group-cta" onClick={onCreateGroup} disabled={loading || groupBusy}>
-                  <Users size={16} className="lucide" /> {t("group.cta")}
+                  <Users size={16} className="lucide" /> {groupBusy ? t("group.creating") : t("group.cta")}
                 </button>
               )}
             </div>

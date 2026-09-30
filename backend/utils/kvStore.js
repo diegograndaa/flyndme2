@@ -56,43 +56,60 @@ function createMemoryStore({ namespace, ttlMs, maxSize, sweepEveryMs }) {
   };
 }
 
-function createUpstashStore({ namespace, ttlMs }) {
+function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: injected }) {
   // require perezoso: el módulo solo se carga (y solo hace falta en
   // node_modules) cuando el backend upstash está configurado. dev/tests no lo
-  // necesitan ni lo importan.
-  const { Redis } = require("@upstash/redis");
-  const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
+  // necesitan ni lo importan (los tests inyectan un cliente falso).
+  let redis = injected;
+  if (!redis) {
+    const { Redis } = require("@upstash/redis");
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
   const key = (id) => `${namespace}:${id}`;
   const defaultTtlSec = Math.max(1, Math.round(ttlMs / 1000));
+  // Respaldo en memoria: si Upstash falla al ESCRIBIR (base archivada, cupo
+  // agotado, red), el recurso se guarda aquí en vez de devolver 500 → crear un
+  // grupo o un enlace para compartir sigue funcionando (sin persistencia entre
+  // reinicios, como antes de Upstash). Las lecturas lo consultan si Redis no
+  // lo tiene o falla.
+  const fallback = createMemoryStore({ namespace, ttlMs, maxSize, sweepEveryMs });
 
   return {
     backend: "upstash",
     async get(id) {
       try {
         const v = await redis.get(key(id)); // @upstash/redis (de)serializa JSON
-        return v == null ? null : v;
+        if (v != null) return v;
       } catch (err) {
         console.error(`[kv:${namespace}] get(${id}) falló: ${err.message}`);
-        return null; // degradar como "no encontrado", nunca tumbar la petición
       }
+      return fallback.get(id); // null si tampoco está: "no encontrado"
     },
     async set(id, value, opts = {}) {
       const ex = opts.ttlMs != null
         ? Math.max(1, Math.round(opts.ttlMs / 1000))
         : defaultTtlSec;
-      await redis.set(key(id), value, { ex }); // TTL nativo: sin barrido manual
+      try {
+        await redis.set(key(id), value, { ex }); // TTL nativo: sin barrido manual
+        // Si una versión anterior vivía en el respaldo, que no quede obsoleta
+        if (await fallback.get(id)) await fallback.set(id, value);
+      } catch (err) {
+        console.error(`[kv:${namespace}] set(${id}) falló: ${err.message} — guardado en memoria`);
+        await fallback.set(id, value);
+      }
       return value;
     },
     async delete(id) {
+      let removed = await fallback.delete(id);
       try {
-        return (await redis.del(key(id))) > 0;
+        removed = (await redis.del(key(id))) > 0 || removed;
       } catch (err) {
         console.error(`[kv:${namespace}] del(${id}) falló: ${err.message}`);
-        return false;
       }
+      return removed;
     },
     async size() {
       return null; // acotado por TTL; no hay conteo barato y no se necesita
@@ -190,4 +207,4 @@ function createCounters({ namespace = "metrics" } = {}) {
   };
 }
 
-module.exports = { createStore, createMemoryStore, storeBackends, createCounters };
+module.exports = { createStore, createMemoryStore, createUpstashStore, storeBackends, createCounters };

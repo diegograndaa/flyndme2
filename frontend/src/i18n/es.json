@@ -1,18 +1,18 @@
 {
   "header": {
-    "tagline": "Queda mejor, vuela justo",
+    "tagline": "Punto de encuentro para grupos",
     "newSearch": "Nueva búsqueda",
     "home": "Inicio",
     "serverOnline": "Servidor activo",
     "serverWaking": "Servidor iniciándose…"
   },
   "landing": {
-    "eyebrow": "Muchas ciudades. Una decisión.",
+    "eyebrow": "Varias salidas. Un solo destino.",
     "title": "El punto de encuentro perfecto",
     "titleAccent": "perfecto",
     "lead": "FlyndMe compara los vuelos desde la ciudad de cada uno y encuentra el destino más barato y justo para todos.",
     "diagramAlt": "Trayectos de vuelo desde varias ciudades de origen convergiendo en un único punto de encuentro",
-    "diagramMeet": "Mejor punto de encuentro",
+    "diagramMeet": "Punto de encuentro",
     "cta": "Empezar búsqueda",
     "chips": [
       "Multi-origen",
@@ -20,7 +20,7 @@
       "Índice de equidad",
       "Presupuesto por persona"
     ],
-    "howTitle": "¿Cómo funciona?",
+    "howTitle": "Vuestro itinerario en 3 pasos",
     "steps": [
       "Añade la ciudad de salida de cada viajero.",
       "FlyndMe compara vuelos con fechas flexibles y encuentra el destino más barato.",
@@ -157,7 +157,7 @@
     ]
   },
   "search": {
-    "title": "¿Desde dónde viajáis?",
+    "title": "¿Desde dónde despegáis?",
     "subtitle": "Añade la ciudad de cada viajero y elige las fechas.",
     "originLabel": "Ciudades de salida",
     "placeholder": "Escribe ciudad o código…",
@@ -166,7 +166,7 @@
     "removeTitle": "Eliminar viajero",
     "addTraveler": "+ Añadir viajero",
     "tryExample": "Probar ejemplo: MAD + LON + BER",
-    "tripTypeLabel": "Tipo de viaje",
+    "tripTypeLabel": "Tipo de billete",
     "oneway": "Solo ida",
     "roundtrip": "Ida y vuelta",
     "datesLabel": "¿Cuándo?",
@@ -185,7 +185,7 @@
     "budgetOn": "Sí",
     "budgetOff": "No",
     "submit": "Reuníos al mejor precio",
-    "searching": "Buscando…",
+    "searching": "Consultando salidas…",
     "footnoteTime": "Resultado en ~5 s",
     "footnotePrices": "Precios reales de vuelos",
     "flexLabel": "Fechas flexibles",
@@ -236,7 +236,7 @@
     "completionReady": "Listo"
   },
   "results": {
-    "eyebrow": "Destino recomendado",
+    "eyebrow": "Punto de encuentro fijado",
     "criterionPrice": "Más barato",
     "criterionFairness": "Más equitativo",
     "criterionGroupLabel": "Elegir ganador y orden de la lista",
@@ -255,17 +255,17 @@
     "whoPaysSpread": "{{amount}} entre el más barato y el más caro",
     "whoPaysAvg": "Media {{amount}} por persona",
     "verifyCta": "Comprobar precio en vivo",
-    "verifyCaption": "Estimación en caché — compruébala contra Google Flights",
+    "verifyCaption": "Estimación basada en búsquedas recientes · compruébala contra Google Flights",
     "verifyChecking": "Comprobando precio en vivo…",
     "verifyUnavailable": "No se pudo comprobar el precio en vivo ahora — sigue siendo una estimación en caché.",
     "maxSpread": "Diferencia máxima",
     "spreadSub": "Entre el vuelo más caro y el más barato",
     "destsFound": "Destinos encontrados",
-    "bookTitle": "Reserva tus vuelos",
+    "bookTitle": "Puerta de embarque: reserva tu vuelo",
     "bookSub": "Un enlace por viajero. Reserva en Aviasales o compara en Skyscanner y Google Flights.",
     "bookCta": "Reservar",
     "bookLabel": "Reservar vuelos — un enlace por viajero",
-    "viewAlternatives": "Ver alternativas",
+    "viewAlternatives": "Ver otras salidas",
     "share": "Compartir",
     "copied": "¡Copiado!",
     "copyFailed": "Error al copiar",
@@ -276,7 +276,7 @@
     "stops": "{{n}} escala(s)",
     "outbound": "Ida",
     "returnLeg": "Vuelta",
-    "disclaimer": "Precios estimados con datos reales de vuelos. Pueden variar al momento de reservar.",
+    "disclaimer": "Estimación basada en búsquedas recientes. La tarifa final la fija la aerolínea al reservar en Aviasales, Skyscanner o Google Flights.",
     "otherOptions": "Otras opciones",
     "hide": "Ocultar",
     "showMap": "Mapa",
@@ -295,6 +295,15 @@
     "tripDays": "Viaje de {{n}} días",
     "shareNative": "Compartir",
     "bestRouteTitle": "Vuestra ruta más barata a {{city}}",
+    "boardingPass": "Tarjeta de embarque del grupo",
+    "boardingMeta": "{{n}} ciudades · 1 punto de encuentro",
+    "stampLabel": "Punto de encuentro",
+    "decisionTitle": "Decisión final",
+    "decisionSub": "El destino que más os conviene y todo lo necesario para cerrarlo.",
+    "exploreTitle": "Explorar alternativas",
+    "exploreSub": "Otros destinos, mapa y comparación. Tu tarjeta solo cambia si eliges otro.",
+    "exploreSubOne": "Solo este destino tiene datos para todas vuestras ciudades.",
+    "nextStep": "Siguiente paso",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
     "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
     "copyFlight": "Copiar info del vuelo",
@@ -321,7 +330,7 @@
     "savingsPerOrigin": "Lo que ahorra cada viajero",
     "savingsVsWorst": "vs volar a {{dest}}",
     "copySearchLink": "Copiar enlace de búsqueda",
-    "splitTitle": "Dividir costes",
+    "splitTitle": "Quién debe a quién",
     "splitEqual": "Partes iguales",
     "splitActual": "Cada uno el suyo",
     "splitGets": "recupera",
@@ -349,11 +358,11 @@
     }
   },
   "verifyBadge": {
-    "confirmed": "Precio confirmado",
+    "confirmed": "Tarifa confirmada",
     "changed": "Precio actualizado {{pct}}",
     "wasPrice": "Antes {{price}}/persona (orientativo) · ahora el real de Google Flights",
-    "estimate": "Estimación en caché",
-    "estimateHint": "Precio de una caché de búsquedas; comprueba el precio en vivo para compararlo con Google Flights.",
+    "estimate": "Estimación · búsquedas recientes",
+    "estimateHint": "Estimación basada en búsquedas recientes, no una oferta reservable. Comprueba el precio en vivo para compararlo con Google Flights.",
     "indicative": "Precio indicativo",
     "verifiedAt": "Verificado a las {{time}}",
     "indicativeHint": "No se pudo re-tarifar en vivo; se muestra el precio de la búsqueda original."
@@ -363,6 +372,24 @@
     "totalCost": "Coste total del grupo",
     "avgPerPerson": "Media por persona",
     "fairness": "Puntuación de equidad"
+  },
+  "board": {
+    "flightHead": "Vuelo del grupo",
+    "travelers": "{{n}} viajeros",
+    "announcements": "Avisos",
+    "tagDate": "Fecha",
+    "tagGroup": "Grupo",
+    "tagNotice": "Aviso",
+    "departures": "Salidas",
+    "departuresSub": "{{n}} destinos para vuestro grupo · pulsa uno para verlo",
+    "colDest": "Destino",
+    "colPrice": "Por persona",
+    "colFair": "Equidad",
+    "selected": "En tu tarjeta",
+    "select": "Ver {{city}}",
+    "more": "Más opciones",
+    "estimateNote": "Estimación basada en búsquedas recientes",
+    "exportCsv": "Descargar CSV"
   },
   "fairness": {
     "veryBalanced": "Muy equilibrado",
@@ -378,7 +405,7 @@
     "noReturn": "Elige una fecha de vuelta.",
     "returnBeforeDep": "La vuelta debe ser después de la ida.",
     "noBudgetResults": "Sin resultados dentro de ese presupuesto. Sube el límite o desactívalo.",
-    "noResults": "Sin resultados para esas ciudades y fechas. Prueba con otras fechas.",
+    "noResults": "No hay salidas comunes para esas ciudades y fechas. Prueba con otras fechas.",
     "serverWaking": "El servidor se está iniciando. Reintentando automáticamente…",
     "unexpected": "Algo salió mal. Inténtalo de nuevo.",
     "connection": "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
@@ -424,14 +451,15 @@
     "season.autumn": "Otoño"
   },
   "loading": {
+    "boardTitle": "Buscando vuestro punto de encuentro",
     "messages": [
-      "Despertando el servidor…",
-      "Conectando con aerolíneas…",
-      "Buscando vuelos desde tus ciudades…",
+      "Encendiendo el panel de salidas…",
+      "Consultando las salidas de cada ciudad…",
+      "Sincronizando pasajeros…",
       "Comparando destinos…",
-      "Calculando el mejor precio para el grupo…",
-      "Un momento más…",
-      "Casi listo…"
+      "Calculando lo que paga cada uno…",
+      "Última llamada: un momento más…",
+      "Preparando vuestra tarjeta de embarque…"
     ],
     "ariaLabel": "Buscando vuelos",
     "steps": [
@@ -455,11 +483,17 @@
     "clear": "Borrar todo"
   },
   "map": {
-    "title": "Mapa de precios",
+    "title": "Mapa de rutas",
+    "subtitle": "Toca un destino para ponerlo en tu tarjeta de embarque.",
     "cheap": "Barato",
     "mid": "Medio",
     "expensive": "Caro",
-    "origin": "Tus ciudades",
+    "origin": "Vuestras ciudades",
+    "meetPoint": "Punto de encuentro",
+    "showCard": "Ver tarjeta",
+    "tapHint": "Toca para ponerlo en tu tarjeta",
+    "selectAria": "{{city}}: {{price}} por persona. Poner en tu tarjeta",
+    "bestAria": "{{city}}: {{price}} por persona. Punto de encuentro en tu tarjeta",
     "best": "Mejor",
     "groupTotal": "Total grupo",
     "ariaLabel": "Mapa de destinos europeos con precios de vuelos"
@@ -486,8 +520,18 @@
   "footerGuides": "Guías",
   "footerCopy": "© 2026 FlyndMe. Todos los derechos reservados.",
   "pwa": {
-    "installHint": "Añade a tu pantalla de inicio para acceder más rápido",
-    "install": "Instalar"
+    "installHint": "Ábrela en un toque desde tu pantalla de inicio, como una app más.",
+    "install": "Instalar",
+    "installTitle": "Llévate FlyndMe a bordo",
+    "iosHintBefore": "Pulsa",
+    "iosShare": "Compartir",
+    "iosHintAfter": "y luego «Añadir a pantalla de inicio».",
+    "later": "Ahora no",
+    "updateTitle": "Cambio de puerta",
+    "updateText": "Hay una versión nueva de FlyndMe lista.",
+    "updateCta": "Actualizar",
+    "offline": "Sin conexión",
+    "offlineText": "Los precios necesitan internet; lo que ya ves sigue aquí."
   },
   "share": {
     "title": "FlyndMe · Destino recomendado: {{dest}}",
@@ -626,7 +670,7 @@
   },
   "cheaperDate": {
     "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
-    "use": "Usar esta fecha"
+    "use": "Cambiar a esta fecha"
   },
   "arrivalCoord": {
     "diffDays": "Con los vuelos más baratos, llegáis en días distintos ({{time}} de diferencia).",
@@ -787,7 +831,7 @@
   "group": {
     "cta": "¿Lo planeáis entre varios? Invita a tu grupo",
     "eyebrow": "Viaje en grupo",
-    "title": "Planificad el viaje juntos",
+    "title": "Embarque de grupo abierto",
     "subtitle": "Cada uno añade su ciudad de salida y FlyndMe encuentra el lugar más barato para reuniros.",
     "inviteLabel": "Enlace de invitación",
     "inviteHint": "Comparte este enlace para que cada viajero añada desde dónde vuela.",
@@ -796,8 +840,8 @@
     "shareWhatsApp": "Enviar por WhatsApp",
     "share": "Compartir",
     "shareText": "✈ ¡Organizamos un viaje en FlyndMe! Añade tu ciudad de salida y busca el sitio más barato y justo para vernos todos 👉",
-    "rosterTitle": "Viajeros ({{n}})",
-    "refresh": "Actualizar",
+    "rosterTitle": "Pasajeros ({{n}})",
+    "refresh": "Sincronizar pasajeros",
     "empty": "Nadie ha añadido su ciudad todavía. Añade la tuya abajo.",
     "travelerN": "Viajero {{n}}",
     "travelers": "Viajeros",
@@ -811,6 +855,8 @@
     "exit": "Volver a la búsqueda individual",
     "needDate": "Elige primero una fecha de salida.",
     "createError": "No se pudo crear el enlace del grupo. Inténtalo de nuevo.",
+    "creating": "Preparando el embarque…",
+    "rateLimited": "Has creado muchos grupos seguidos. Espera unos minutos y vuelve a intentarlo.",
     "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
     "expired": "Este enlace de grupo ha caducado."
   }

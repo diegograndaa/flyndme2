@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="google" content="notranslate" />
-    <meta name="theme-color" content="#AE2F34" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#131434" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F5F3EF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)" />
 
     <!-- Anti-flash de tema: fija data-theme ANTES de pintar nada (React lo
          re-sincroniza al montar vía useTheme; misma clave de localStorage). -->
@@ -48,24 +48,28 @@
 
     <!-- PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "default": barra de estado opaca con texto oscuro (con black-translucent el
+         texto blanco del sistema no se leía sobre el crema del tema claro). -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="FlyndMe" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Favicons -->
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <!-- Favicon coral (pestaña). El logo DENTRO de la app sigue siendo granate
-         (logo-flyndme.svg). Este SVG va separado para que el navegador no
-         prefiera el granate del logo de cabecera como icono de pestaña. -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico?v=6" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=6" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=6" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6" />
+    <!-- Favicon = logo «Convergencia» (sep-2026): el mismo símbolo que la
+         cabecera (logo-flyndme.svg). Se mantiene como archivo aparte por si
+         pestaña y cabecera vuelven a divergir. El ?v= obliga a navegadores y
+         service worker a pedir el logo nuevo (el favicon se cachea mucho). -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
 
-    <!-- Google Fonts: Bricolage Grotesque (display) + Plus Jakarta Sans (UI/cuerpo) -->
+    <!-- Google Fonts: IBM Plex Sans (UI/cuerpo/títulos) + IBM Plex Mono (panel de salidas: códigos, precios y etiquetas) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } fr
 import "./styles/bootstrap-custom.scss";
 import "./App.css";
 import "./styles/theme-stitch.css";
-import FlightResults from "./components/FlightResults";
 import { SearchProgress } from "./components/SearchUX";
 
 // Lazy-load heavy visual components (map SVG + chart) for smaller initial bundle
@@ -19,17 +18,21 @@ import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay, Breadcrumb, AnimatedStat } from "./components/UiBits";
+import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
 import WinnerCard from "./components/WinnerCard";
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
-import { CostSplitCard, PlanYourTripCTA, ResultsShareLink, TopDestinationsPodium } from "./components/ResultsPanels";
+import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
+import { FlightHeader, ZoneHead, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
+import { usePwaStatus } from "./hooks/usePwaStatus";
+import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
-import { Heart, X, Clock, Plane, Download, Wallet, Map as MapIcon, BarChart3, List, CalendarClock, Users, PlaneLanding, ChevronRight } from "lucide-react";
+import "./styles/board.css";
+import { Heart, X, Plane, Download, Map as MapIcon, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -135,46 +138,6 @@ class ErrorBoundary extends React.Component {
 // ─── Search form ──────────────────────────────────────────────────────────────
 
 // ─── Winner card ──────────────────────────────────────────────────────────────
-
-// ─── Search params summary (results page) ────────────────────────────────────
-
-const SearchParamsSummary = React.memo(function SearchParamsSummary({
-  origins, departureDate, returnDate, tripType, flexEnabled, flexDays,
-  cabinClass, directOnly, budgetEnabled, maxBudget, currency,
-}) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-
-  const tags = [
-    tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway"),
-    departureDate && formatDate(departureDate),
-    tripType === "roundtrip" && returnDate && `→ ${formatDate(returnDate)}`,
-    flexEnabled && `±${flexDays}d`,
-    cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
-    directOnly && t("search.directOnly"),
-    budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
-  ].filter(Boolean);
-
-  return (
-    <div className="fm-search-summary">
-      <button type="button" className="fm-search-summary-toggle" onClick={() => setOpen(v => !v)} aria-expanded={open}>
-        <div className="fm-search-summary-origins">
-          {origins.map(o => (
-            <span key={o} className="fm-search-summary-chip">{countryFlag(o)} {o}</span>
-          ))}
-        </div>
-        <span className={`fm-search-summary-chevron${open ? " fm-search-summary-chevron--open" : ""}`} aria-hidden="true">▾</span>
-      </button>
-      {open && (
-        <div className="fm-search-summary-tags">
-          {tags.map((tag, i) => (
-            <span key={i} className="fm-search-summary-tag">{tag}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});
 
 // ─── Destination category tags ───────────────────────────────────────────────
 
@@ -436,35 +399,15 @@ export default function App() {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
   }, []);
 
-  // ── PWA: Register service worker ────────────────────────────────────────
-  useEffect(() => {
-    // Solo en producción: en dev el SW cacheaba módulos de Vite y rompía la app
-    if (import.meta.env.PROD && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-  }, []);
-
-  // ── PWA: Install prompt ─────────────────────────────────────────────────
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-      setShowInstallBanner(true);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  // ── PWA: service worker, versión nueva, conexión e instalación ──────────
+  // (ver hooks/usePwaStatus). La invitación a instalar solo aparece tras un
+  // momento útil: haber visto resultados al menos una vez en esta visita.
+  const [pwaEngaged, setPwaEngaged] = useState(false);
+  const pwa = usePwaStatus({ engaged: pwaEngaged });
 
   const handleInstall = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    const outcome = await pwa.promptInstall();
     if (outcome === "accepted") trackEvent("pwa_install");
-    setInstallPrompt(null);
-    setShowInstallBanner(false);
   };
 
   // Keep Render backend alive (free tier sleeps)
@@ -525,17 +468,29 @@ export default function App() {
   useEffect(() => {
     const gid = new URLSearchParams(window.location.search).get("group");
     if (!gid) return;
-    fetch(`${API_BASE}/api/groups/${gid}`)
-      .then((res) => { if (!res.ok) throw new Error("Group not found"); return res.json(); })
+    // Con el backend dormido el enlace de invitación decía «caducado» y se
+    // borraba de la URL: ahora se despierta y reintenta, y solo un 404 real
+    // cuenta como caducado (un fallo de red conserva ?group= para recargar).
+    groupFetch(`${API_BASE}/api/groups/${gid}`)
+      .then((res) => {
+        if (res.status === 404) { const e = new Error("Group not found"); e.expired = true; throw e; }
+        if (!res.ok) throw new Error("Group load failed");
+        return res.json();
+      })
       .then((g) => {
         setGroup(g);
         if (g.departureDate) setDepartureDate(g.departureDate);
         if (g.tripType) setTripType(g.tripType);
+        if (g.returnDate) setReturnDate(g.returnDate);
         setView("group");
       })
-      .catch(() => {
-        setToast({ message: t("group.expired"), type: "error" });
-        window.history.replaceState({}, "", window.location.pathname);
+      .catch((err) => {
+        if (err && err.expired) {
+          setToast({ message: t("group.expired"), type: "error" });
+          window.history.replaceState({}, "", window.location.pathname);
+        } else {
+          setToast({ message: t("errors.connection"), type: "error" });
+        }
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -562,6 +517,16 @@ export default function App() {
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
 
+  // PWA: invitar a instalar solo tras ver resultados (y sin interrumpir la
+  // primera lectura de la tarjeta).
+  useEffect(() => {
+    if (view === "results" && bestDestination && !pwaEngaged) {
+      const id = setTimeout(() => setPwaEngaged(true), 6000); // no interrumpir la primera lectura
+      return () => clearTimeout(id);
+    }
+    return undefined;
+  }, [view, bestDestination, pwaEngaged]);
+
   // ── Dynamic document title per view ────────────────────────────────────
   useEffect(() => {
     const titles = {
@@ -577,6 +542,12 @@ export default function App() {
   const cleanOrigins = useMemo(
     () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
     [origins]
+  );
+  // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
+  // cabecera de vuelo de resultados.
+  const totalTravelers = useMemo(
+    () => origins.reduce((sum, o, i) => (String(o || "").trim() ? sum + (passengers[i] || 1) : sum), 0),
+    [origins, passengers]
   );
 
   // ── Compute best for each criterion ────────────────────────────────────────
@@ -628,6 +599,13 @@ export default function App() {
       from: cleanOrigins.map((o) => cityOf(normalizeCode(o)) || normalizeCode(o)).join(", "),
       n: String(bestDestination.totalPassengers || cleanOrigins.length),
     });
+    // "Quién paga qué" real (precio por persona de cada origen) para las barras
+    // de la tarjeta de embarque que se ve al compartir. Solo multi-origen.
+    const legs = (bestDestination.flights || [])
+      .map((f) => ({ code: normalizeCode(f.origin), price: Math.round(Number(f.price) || 0) }))
+      .filter((l) => /^[A-Z]{3}$/.test(l.code) && l.price > 0)
+      .slice(0, 8);
+    if (legs.length >= 2) ogParams.set("legs", legs.map((l) => `${l.code}:${l.price}`).join(","));
     return {
       id,
       shareUrl: `${window.location.origin}${window.location.pathname}?share=${id}`,
@@ -802,6 +780,28 @@ export default function App() {
       await new Promise((r) => setTimeout(r, WAKE_DELAY));
     }
     return false;                    // gave up
+  }
+
+  // Peticiones del plan de grupo: el backend (Render free) se duerme tras unos
+  // minutos sin uso y la primera petición fallaba → «no se pudo crear el
+  // grupo» / «el grupo ha caducado» (falso). Igual que la búsqueda: despertarlo
+  // primero y reintentar ante 502/503/504 o error de red.
+  async function groupFetch(url, opts = {}) {
+    await ensureBackendAwake();
+    let last = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 20000);
+        const res = await fetch(url, { ...opts, signal: ctrl.signal });
+        clearTimeout(timer);
+        if (![502, 503, 504].includes(res.status)) return res;
+        last = res;
+      } catch (err) { last = err; }
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+    if (last instanceof Response) return last;
+    throw last || new Error("network");
   }
 
   // ── Verificación de precio del ganador (capa 2, en segundo plano) ──────────
@@ -1123,10 +1123,11 @@ export default function App() {
     setGroupBusy(true);
     try {
       const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
-      const res = await fetch(`${API_BASE}/api/groups`, {
+      const res = await groupFetch(`${API_BASE}/api/groups`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departureDate, returnDate, tripType, members }),
+        body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
       });
+      if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
       if (!res.ok) throw new Error("create failed");
       const { id } = await res.json();
       setGroup({ id, departureDate, returnDate, tripType, members });
@@ -1146,7 +1147,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members`, {
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(member),
       });
@@ -1164,7 +1165,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
       if (!res.ok) throw new Error("remove failed");
       setGroup(await res.json());
     } catch {
@@ -1179,7 +1180,7 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/groups/${group.id}`);
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}`);
       if (res.ok) setGroup(await res.json());
     } catch { /* keep current roster */ }
     finally { setGroupBusy(false); }
@@ -1240,7 +1241,7 @@ export default function App() {
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
           <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("landing"); } }}>
-            <img src={`${getBaseUrl()}logo-flyndme.svg`} alt="FlyndMe" height={28}
+            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="FlyndMe" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
             <span className="app-logo-sub">{t("header.tagline")}</span>
@@ -1264,6 +1265,7 @@ export default function App() {
             )}
           </div>
         </div>
+        {!pwa.online && <OfflineStrip />}
       </header>
 
       {/* Favorites panel */}
@@ -1303,7 +1305,7 @@ export default function App() {
       )}
 
       {/* Loading bar */}
-      <SearchProgress loading={loading} />
+      <SearchProgress loading={loading} origins={cleanOrigins} />
 
       {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
@@ -1401,28 +1403,21 @@ export default function App() {
           <h1 className="sr-only">
             {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
           </h1>
-          <Breadcrumb current="results" onNavigate={(k) => { setView(k); if (k !== "results") setShowAlt(false); }} />
-
-          {/* Aviso de resultados parciales (la búsqueda agotó su presupuesto de tiempo) */}
-          {partialResults && (
-            <div className="alert alert-warning py-2 mb-3" role="status">
-              <Clock size={14} aria-hidden="true" /> {t("results.partialNotice")}
-            </div>
-          )}
-
-          {/* Search params summary (collapsible) */}
-          <SearchParamsSummary
+          {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
+              orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
+          <FlightHeader
             origins={cleanOrigins}
             departureDate={departureDate}
             returnDate={returnDate}
             tripType={tripType}
-            flexEnabled={flexEnabled}
-            flexDays={flexDays}
-            cabinClass={cabinClass}
-            directOnly={directOnly}
-            budgetEnabled={budgetEnabled}
-            maxBudget={maxBudget}
-            currency={currency}
+            travelers={totalTravelers}
+            badges={[
+              flexEnabled && `±${flexDays}d`,
+              cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
+              directOnly && t("search.directOnly"),
+              budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
+            ].filter(Boolean)}
+            onChange={() => setView("search")}
           />
 
           {/* Sticky results mini-bar */}
@@ -1445,6 +1440,12 @@ export default function App() {
             </div>
           </div>
 
+          {/* ══ 01 · DECISIÓN FINAL ══ Lo que os conviene reservar, separado de
+              la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
+              decisión) + reparto del grupo + siguiente paso. */}
+          <section className="fm-decision" aria-labelledby="fm-decision-title">
+          <ZoneHead id="fm-decision-title" variant="decision" num="01"
+            title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -1463,115 +1464,40 @@ export default function App() {
             onShareNative={handleShareNative}
             onCopySearchLink={handleCopySearchLink}
             shareStatus={shareStatus}
-            onViewAlternatives={() => setShowAlt((v) => v ? false : "list")}
+            onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
             onChangeSearch={() => setView("search")}
             onVerify={() => handleVerifyWinner(bestDestination)}
             verifyPhase={liveCheck.code === normalizeCode(bestDestination.destination) ? liveCheck.phase : null}
             currency={currency}
-            searchBadges={[
-              cabinClass !== "ECONOMY" && (cabinClass === "BUSINESS" ? t("search.cabinBusiness") : t("search.cabinPremium")),
-              directOnly && t("search.directOnly"),
-              flexEnabled && `± ${flexDays} ${t("search.flexDaysUnit")}`,
-              tripType === "roundtrip" && t("search.roundtrip"),
-            ].filter(Boolean)}
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
           />
 
-          {/* ── Nudge: convierte esta búsqueda en un plan de grupo colaborativo ── */}
-          <div className="fm-group-nudge view-enter">
-            <span className="fm-group-nudge-icon" aria-hidden="true"><Users size={20} /></span>
-            <div className="fm-group-nudge-body">
-              <p className="fm-group-nudge-title">{t("results.groupNudge.title")}</p>
-              <p className="fm-group-nudge-text">{t("results.groupNudge.text")}</p>
-            </div>
-            <button
-              type="button"
-              className="fm-group-nudge-btn"
-              onClick={createGroup}
-              disabled={groupBusy}
-            >
-              {t("results.groupNudge.cta")}
-            </button>
-          </div>
-
-          {/* ── Nudge: fecha cercana más barata para el grupo ── */}
+          {/* Fecha más barata para ESTE destino (solo si el backend la encontró) */}
           {cheaperDate && (
-            <div className="fm-cheaper-date view-enter">
-              <span className="fm-cheaper-date-icon" aria-hidden="true"><CalendarClock size={18} /></span>
-              <span className="fm-cheaper-date-text">
-                {t("cheaperDate.text", {
-                  date: formatDate(cheaperDate.date),
-                  total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
-                  saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
-                })}
-              </span>
-              <button type="button" className="fm-cheaper-date-btn" onClick={() => useCheaperDate(cheaperDate.date)}>
-                {t("cheaperDate.use")}
-              </button>
-            </div>
+            <Notice variant="date" tag={t("board.tagDate")}
+              text={t("cheaperDate.text", {
+                date: formatDate(cheaperDate.date),
+                total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
+                saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
+              })}
+              actionLabel={t("cheaperDate.use")}
+              onAction={() => useCheaperDate(cheaperDate.date)} />
           )}
 
-          {/* ── CORE: Top 3 destinations podium ── */}
-          <TopDestinationsPodium flights={flights} currency={currency} singleOrigin={cleanOrigins.length <= 1} onSelect={(dest) => {
-            const idx = flights.findIndex(f => f.destination === dest.destination);
-            if (idx >= 0) {
-              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
-            }
-          }} />
-
-          {/* ── CORE: Stats bar ── */}
-          <div className="fm-stats-bar view-enter">
-            <span className="fm-stats-item">
-              <AnimatedStat value={flights.length} /> {t("results.destsFound")}
-            </span>
-            <span className="fm-stats-sep" aria-hidden="true">·</span>
-            <span className="fm-stats-item">
-              <AnimatedStat value={cleanOrigins.length} /> {t("results.originsUsed")}
-            </span>
-            <span className="fm-stats-sep" aria-hidden="true">·</span>
-            <span className="fm-stats-item">
-              <AnimatedStat value={flights.length * cleanOrigins.length} /> {t("results.routesCompared")}
-            </span>
-            {searchDuration > 0 && (
-              <>
-                <span className="fm-stats-sep" aria-hidden="true">·</span>
-                <span className="fm-stats-item fm-stats-item--time">
-                  <Clock size={13} aria-hidden="true" /> {searchDuration}s
-                </span>
-              </>
-            )}
-            <button type="button" className="fm-stats-export" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)} title={t("results.exportCSV")}>
-              <Download size={14} aria-hidden="true" /> CSV
-            </button>
-          </div>
-
-
-          {/* ── Group savings vs the most expensive option ── */}
-          {flights.length >= 2 && (() => {
-            const maxTotal = Math.max(...flights.map(f => f.totalCostEUR || 0));
-            const saved = maxTotal - bestDestination.totalCostEUR;
-            if (saved > 10) return (
-              <div className="fm-group-savings view-enter">
-                <span className="fm-group-savings-icon"><Wallet size={16} aria-hidden="true" /></span>
-                <span>{t("results.groupSavings", { amount: currency === "EUR" ? formatEur(saved, 0) : convertPrice(saved, currency) })}</span>
-              </div>
-            );
-            return null;
-          })()}
-
-          {/* ── Cost split between travelers ── (sin sentido con un solo origen:
-              todos salen de la misma ciudad y pagan lo mismo) */}
+          {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
+              en un mismo bloque (sin sentido con un solo origen: todos salen de
+              la misma ciudad y pagan lo mismo) */}
           {cleanOrigins.length > 1 && (
+          <div className="fm-group-block">
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
-          )}
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
               REALES: solo los vuelos directos informan la hora, los de escalas
               no → se avisa. Solo mostramos la DIFERENCIA entre llegadas, nunca
               horas locales: no tenemos la zona horaria del destino. Reacciona
               al toggle de criterio porque se recalcula sobre bestDestination. */}
-          {cleanOrigins.length > 1 && (() => {
+          {(() => {
             const sp = computeArrivalSpread(bestDestination.flights);
             if (!sp || sp.legsWithTime < 2 || sp.spreadMs == null) return null; // no comparable
             const parts = splitSpread(sp.spreadMs);
@@ -1610,11 +1536,45 @@ export default function App() {
             );
           })()}
 
-          {/* ── Share results with the group ── */}
-          <ResultsShareLink origins={cleanOrigins} departureDate={departureDate} returnDate={returnDate} tripType={tripType} t={t} />
+          </div>
+          )}
 
-          {/* ── Booking CTA ── */}
-          <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+          {/* Siguiente paso: convertirlo en plan de grupo (cada uno añade su ciudad) */}
+          <Notice variant="next" tag={t("results.nextStep")}
+            text={t("results.groupNudge.title")}
+            detail={t("results.groupNudge.text")}
+            actionLabel={groupBusy ? t("group.creating") : t("results.groupNudge.cta")}
+            onAction={createGroup}
+            disabled={groupBusy} />
+          </section>
+
+          {/* Troquel: aquí termina la decisión y empieza la exploración */}
+          <div className="fm-zone-perf" aria-hidden="true" />
+
+          {/* ══ 02 · EXPLORAR ALTERNATIVAS ══ Otros destinos, mapa y comparación */}
+          <section className="fm-explore" aria-labelledby="fm-explore-title">
+          <ZoneHead id="fm-explore-title" variant="explore" num="02"
+            title={t("results.exploreTitle")}
+            sub={flights.length > 1 ? t("results.exploreSub") : t("results.exploreSubOne")} />
+          {partialResults && (
+            <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
+          )}
+
+          {/* ── Salidas: todos los destinos encontrados en un panel de salidas
+              (sustituye podio Top 3 + barra de stats + lista "otras opciones").
+              Pulsar uno lo pone en la tarjeta de embarque y sube a ella. */}
+          <DeparturesBoard
+            flights={flights}
+            current={bestDestination}
+            criterion={uiCriterion}
+            singleOrigin={cleanOrigins.length <= 1}
+            currency={currency}
+            savings={flights.length >= 2 ? Math.max(...flights.map(f => f.totalCostEUR || 0)) - bestDestination.totalCostEUR : 0}
+            onSelect={(dest) => {
+              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
+              setTimeout(() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
+            }}
+          />
 
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -1629,9 +1589,11 @@ export default function App() {
             }
           }) }} />
 
-          {/* Visual tabs: Map & Compare */}
-          {flights.length > 1 && (
-            <div className="rv-tabs mt-4" ref={tabContentRef}>
+          {/* Pestañas: Mapa · Comparar · Más opciones (la lista "otras opciones"
+              ya no hace falta: el panel de salidas muestra todos los destinos). */}
+          <div className="rv-tabs mt-4" ref={tabContentRef}>
+            {flights.length > 1 && (
+            <>
               <button type="button"
                 className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "map"} aria-controls="rv-panel-map"
@@ -1644,20 +1606,24 @@ export default function App() {
                 onClick={() => { setShowAlt(showAlt === "compare" ? false : "compare"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
                 <BarChart3 size={15} aria-hidden="true" /> {t("results.showCompare")}
               </button>
+            </>
+            )}
               <button type="button"
-                className={`rv-tab${showAlt === "list" ? " rv-tab--active" : ""}`}
-                aria-expanded={showAlt === "list"} aria-controls="rv-panel-list"
-                onClick={() => { setShowAlt(showAlt === "list" ? false : "list"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                <List size={15} aria-hidden="true" /> {t("results.otherOptions")} <span className="rv-tab-badge">{flights.length - 1}</span>
+                className={`rv-tab${showAlt === "more" ? " rv-tab--active" : ""}`}
+                aria-expanded={showAlt === "more"} aria-controls="rv-panel-more"
+                onClick={() => { setShowAlt(showAlt === "more" ? false : "more"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
+                <SlidersHorizontal size={15} aria-hidden="true" /> {t("board.more")}
               </button>
-            </div>
-          )}
+          </div>
 
           {showAlt === "map" && flights.length > 1 && (
             <div className="mt-3 view-enter" id="rv-panel-map">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
+                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
+                    currency={currency}
+                    onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))}
+                    onShowCard={() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })} />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -1673,65 +1639,47 @@ export default function App() {
             </div>
           )}
 
-          {showAlt === "list" && flights.length > 1 && (
-            <div className="mt-4" id="rv-panel-list">
-              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <h2 className="h5 fw-bold mb-0" style={{ color: "var(--navy)" }}>{t("results.otherOptions")}</h2>
-                <div className="d-flex align-items-center gap-2">
-                  {/* La lista sigue al criterio único (toggle de la WinnerCard):
-                      antes había aquí dos controles de orden que se pisaban. */}
-                  <span className="small" style={{ color: "var(--slate-700)" }}>
-                    {uiCriterion === "fairness" ? t("results.sortedByFairness") : t("results.sortedByPrice")}
-                  </span>
-                  <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setShowAlt(false)}>{t("results.hide")}</button>
+          {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
+          {showAlt === "more" && (
+            <div className="mt-3 view-enter fm-more" id="rv-panel-more">
+              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+
+              {/* Quick re-search: try nearby dates */}
+              <div className="fm-quick-research">
+                <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
+                <div className="fm-quick-research-btns">
+                  {[-1, 1, -2, 2].map((offset) => {
+                    const d = new Date((departureDate || todayISO()) + "T00:00:00");
+                    d.setDate(d.getDate() + offset);
+                    const iso = d.toISOString().slice(0, 10);
+                    const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
+                    return (
+                      <button key={offset} type="button" className="fm-quick-research-btn"
+                        onClick={() => {
+                          setDepartureDate(iso);
+                          if (tripType === "roundtrip" && returnDate) {
+                            const r = new Date(returnDate + "T00:00:00");
+                            r.setDate(r.getDate() + offset);
+                            setReturnDate(r.toISOString().slice(0, 10));
+                          }
+                          setView("search");
+                          setTimeout(() => {
+                            document.querySelector(".sf-form form")?.requestSubmit?.();
+                          }, 200);
+                        }}>
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
-                <FlightResults
-                  flights={flights}
-                  optimizeBy={uiCriterion}
-                  bestDestination={bestDestination}
-                  origins={cleanOrigins}
-                  departureDate={departureDate}
-                  returnDate={returnDate}
-                  tripType={tripType}
-                  budgetEnabled={budgetEnabled}
-                  maxBudgetPerTraveler={maxBudget}
-                />
-              </ErrorBoundary>
+
+              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)}>
+                <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}
+              </button>
             </div>
           )}
-
-
-          {/* Quick re-search: try nearby dates */}
-          <div className="fm-quick-research view-enter">
-            <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
-            <div className="fm-quick-research-btns">
-              {[-1, 1, -2, 2].map((offset) => {
-                const d = new Date((departureDate || todayISO()) + "T00:00:00");
-                d.setDate(d.getDate() + offset);
-                const iso = d.toISOString().slice(0, 10);
-                const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
-                return (
-                  <button key={offset} type="button" className="fm-quick-research-btn"
-                    onClick={() => {
-                      setDepartureDate(iso);
-                      if (tripType === "roundtrip" && returnDate) {
-                        const r = new Date(returnDate + "T00:00:00");
-                        r.setDate(r.getDate() + offset);
-                        setReturnDate(r.toISOString().slice(0, 10));
-                      }
-                      setView("search");
-                      setTimeout(() => {
-                        document.querySelector(".sf-form form")?.requestSubmit?.();
-                      }, 200);
-                    }}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          </section>
         </main>
       )}
       </div>{/* /main-content */}
@@ -1742,21 +1690,11 @@ export default function App() {
       {/* Scroll to top */}
       <ScrollToTopBtn />
 
-      {/* PWA Install banner */}
-      {showInstallBanner && installPrompt && (
-        <div className="pwa-banner">
-          <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
-            <span className="pwa-banner-text">
-              <strong>FlyndMe</strong> — {t("pwa.installHint")}
-            </span>
-            <div className="d-flex gap-2">
-              <button className="btn btn-sm btn-light fw-semibold" onClick={handleInstall}>
-                {t("pwa.install")}
-              </button>
-              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)} aria-label={t("a11y.close")}><X size={16} aria-hidden="true" /></button>
-            </div>
-          </div>
-        </div>
+      {/* PWA: versión nueva (prioritario) o invitación a instalar */}
+      {pwa.updateReady ? (
+        <UpdateBanner onUpdate={pwa.applyUpdate} onDismiss={pwa.dismissUpdate} />
+      ) : pwa.install && (
+        <InstallBanner mode={pwa.install} onInstall={handleInstall} onDismiss={pwa.dismissInstall} />
       )}
 
       <footer className="app-footer">
@@ -1782,7 +1720,19 @@ export default function App() {
             </nav>
           )}
           <div className="app-footer-inner">
-            <span className="app-footer-brand">{t("footerBrand")}</span>
+            <span className="app-footer-brand">
+              {/* Manga de viento que se mece (decorativa) */}
+              <svg className="fm-windsock" viewBox="0 0 30 20" aria-hidden="true">
+                <line className="fm-windsock-pole" x1="6" y1="2" x2="6" y2="20" />
+                <g className="fm-windsock-sock">
+                  <polygon className="fm-windsock-a" points="6,1 11.5,1.5 11.5,8.5 6,9" />
+                  <polygon className="fm-windsock-b" points="11.5,1.5 17,2 17,8 11.5,8.5" />
+                  <polygon className="fm-windsock-a" points="17,2 22.5,2.5 22.5,7.5 17,8" />
+                  <polygon className="fm-windsock-b" points="22.5,2.5 28,3 28,7 22.5,7.5" />
+                </g>
+              </svg>
+              {t("footerBrand")}
+            </span>
             <span className="app-footer-tagline">{t("footerTagline")}</span>
             <nav className="app-footer-links">
               {/* Botones, no <a> sin href: los anchors sin href no reciben foco de teclado */}
