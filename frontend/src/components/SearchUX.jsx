@@ -86,7 +86,7 @@ export function SearchProgress({ loading, origins = [] }) {
           left:       0,
           width:      `${width}%`,
           height:     3,
-          background: "linear-gradient(90deg, #AE2F34 0%, #FF6B6B 100%)",
+          background: "linear-gradient(90deg, #C2410C 0%, #FF5A1F 100%)",
           transition: loading ? "width 0.6s ease" : "width 0.35s ease",
           zIndex:     9999,
           borderRadius: "0 2px 2px 0",

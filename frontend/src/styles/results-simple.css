@@ -12,7 +12,7 @@
   background: var(--white);
   background-image: none;
   border: none;
-  border-radius: 24px;
+  border-radius: 8px;
   box-shadow: var(--shadow-md);
   color: var(--navy);
   overflow: hidden;
@@ -23,12 +23,12 @@
 /* Foto protagonista, estilo hero del diseño */
 .wc-card.wc-card .wc-image-wrap { max-height: 420px; min-height: 240px; }
 .wc-card .wc-image-overlay.wc-image-overlay {
-  background: linear-gradient(to top, rgba(22,23,59,.82) 0%, rgba(22,23,59,.25) 45%, transparent 75%);
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.25) 45%, transparent 75%);
 }
 
 .wc-card .wc-badge-winner.wc-badge-winner {
   background: var(--coral);
-  color: #16173B; /* AA: blanco sobre coral no llega a 4.5:1 en texto pequeño */
+  color: #1A1A1A; /* AA: blanco sobre coral no llega a 4.5:1 en texto pequeño */
   border: none;
   border-radius: var(--radius-full);
   font-weight: 700;
@@ -42,7 +42,7 @@
 .wc-card .wc-savings-chip.wc-savings-chip,
 .wc-card .wc-trip-days-chip.wc-trip-days-chip {
   background: rgba(255,255,255,.92);
-  color: #16173B;
+  color: #1A1A1A;
   border: none;
   box-shadow: var(--shadow-xs);
   border-radius: var(--radius-full);
@@ -210,7 +210,7 @@
   background: var(--slate-100);
   display: block;
   /* borde interior sutil: define la miniatura sobre fondos claros */
-  box-shadow: inset 0 0 0 1px rgba(22, 23, 59, .06);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0, .06);
 }
 /* Sin foto → bloque con gradiente de marca + código (se ve intencionado) */
 .altl-thumb--placeholder {
@@ -293,24 +293,24 @@
 .altl-link--muted:hover { color: var(--navy); }
 
 /* ─── Modo oscuro: tinta sobre --primary ─────────────────────────────────────
-   En oscuro --primary pasa a rosa claro (#FFB3B0): el texto blanco de los
+   En oscuro --primary pasa a rosa claro (#FF7A45): el texto blanco de los
    botones primarios deja de contrastar. Mismo tratamiento que el coral del
-   CTA: tinta #16173B encima. */
+   CTA: tinta #1A1A1A encima. */
 [data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
 [data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
 [data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary,
 [data-theme="dark"] .altl-link {
-  color: #16173B;
+  color: #1A1A1A;
 }
-[data-theme="dark"] .altl-link:hover { color: #16173B; }
+[data-theme="dark"] .altl-link:hover { color: #1A1A1A; }
 /* La variante muted tiene fondo oscuro, no rosa: la regla genérica de arriba
    la dejaba con tinta sobre oscuro (~1:1, ilegible). Texto claro encima. */
 [data-theme="dark"] .altl-link--muted {
-  background: #2C2D52;
-  color: #E1E0FF;
-  border-color: #3F4066;
+  background: #25282F;
+  color: #E6E8EC;
+  border-color: #353A43;
 }
-[data-theme="dark"] .altl-link--muted:hover { color: #E1E0FF; }
+[data-theme="dark"] .altl-link--muted:hover { color: #E6E8EC; }
 
 @media (max-width: 600px) {
   .altl-fair { display: none; }

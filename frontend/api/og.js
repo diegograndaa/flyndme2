@@ -14,25 +14,25 @@ import { ImageResponse } from "@vercel/og";
 export const config = { runtime: "edge" };
 
 const C = {
-  paper: "#F7F5EF",
-  card: "#FFFFFF",
-  stub: "#FBFAF6",
-  ink: "#15172A",
-  muted: "#686B7B",
-  line: "#E5E2D8",
-  dash: "#D8D5CB",
-  track: "#ECE9E0",
-  tileTop: "#2E3150",
-  tileBot: "#1D2036",
-  amber: "#FFB020",
-  amberInk: "#8A5A00",
+  paper: "#F5F3EF",
+  card: "#FBF9F5",
+  stub: "#F7F4EE",
+  ink: "#1A1A1A",
+  muted: "#6B6860",
+  line: "#E5E0D8",
+  dash: "#D6D0C4",
+  track: "#ECE7DD",
+  tileTop: "#2A2B30",
+  tileBot: "#18191C",
+  amber: "#FF5A1F",   // naranja de señalética (acento único)
+  amberInk: "#B23A0B",
   good: "#15803D",
   warn: "#B45309",
   bad: "#DC2626",
 };
 // Logo «Convergencia» (mismo SVG que public/logo-flyndme.svg), embebido para
 // no depender de un fetch en el Edge.
-const LOGO_URI = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjQUUyRjM0Ii8+CiAgPHBhdGggZD0iTTYgOC41QzEzIDguOCAxOS41IDExLjUgMjMuNSAxNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTUgMTZIMjMuNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTYgMjMuNUMxMyAyMy4yIDE5LjUgMjAuNSAyMy41IDE2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjE2IiByPSIzLjgiIGZpbGw9IiNGRkIwMjAiLz4KPC9zdmc+Cg==";
+const LOGO_URI = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjQUUyRjM0Ii8+CiAgPHBhdGggZD0iTTYgOC41QzEzIDguOCAxOS41IDExLjUgMjMuNSAxNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTUgMTZIMjMuNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTYgMjMuNUMxMyAyMy4yIDE5LjUgMjAuNSAyMy41IDE2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjE2IiByPSIzLjgiIGZpbGw9IiNGRjVBMUYiLz4KPC9zdmc+Cg==";
 const SANS = "Plex";
 const MONO = "PlexMono";
 

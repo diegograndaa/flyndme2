@@ -4,8 +4,8 @@
   "description": "Compare flights from multiple origins and find the best destination for your group.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F5EF",
-  "theme_color": "#15172A",
+  "background_color": "#F5F3EF",
+  "theme_color": "#121316",
   "orientation": "portrait-primary",
   "icons": [
     {

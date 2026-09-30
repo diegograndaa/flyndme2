@@ -143,7 +143,7 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
 
   // Green → amber → red ramp with enough depth for white text (AA at bold 9px)
   function priceColor(avg) {
-    if (!avg) return "#64748B";
+    if (!avg) return "#6B6F78";
     const ratio = (avg - minPrice) / (maxPrice - minPrice || 1);
     const mix = (a, b, k) => Math.round(a + (b - a) * k);
     if (ratio < 0.5) {
@@ -190,7 +190,7 @@ export default function DestinationMap({ flights, bestDestination, origins }) {
               <stop className="dm-vignette-out" offset="100%" />
             </radialGradient>
             <filter id="dmLandShadow" x="-3%" y="-3%" width="106%" height="106%">
-              <feDropShadow dx="0" dy="1" stdDeviation="1.6" floodColor="#0B1030" floodOpacity="0.18" />
+              <feDropShadow dx="0" dy="1" stdDeviation="1.6" floodColor="#000000" floodOpacity="0.18" />
             </filter>
           </defs>
 
