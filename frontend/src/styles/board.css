@@ -1221,3 +1221,11 @@ button,
 }
 /* Cabecera en papel (antes blanco puro) */
 :root:not([data-theme="dark"]) .app-header.app-header { background: rgba(251,249,245,.94); }
+.fm-board-note {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--panel-faint);
+}

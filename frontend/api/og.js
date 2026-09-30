@@ -134,7 +134,7 @@ function passShell({ kicker, main, stub, seed }) {
       flexDirection: "row",
       background: C.card,
       border: `2px solid ${C.line}`,
-      borderRadius: 28,
+      borderRadius: 12,
       overflow: "hidden",
     }, [
       // main
@@ -183,6 +183,8 @@ export function buildCard({ mode, dest, pp, from, total, n, legs }) {
     total ? label("Group total", { marginTop: 22 }) : null,
     total ? el("div", { fontFamily: MONO, fontSize: 40, color: C.ink, marginTop: 2 }, total) : null,
     n ? label(`${n} travelers`, { marginTop: 18, color: C.amberInk }) : null,
+    // Regla de datos: todo importe es una estimación, no una oferta reservable
+    label("Estimate · recent searches", { marginTop: 18, fontSize: 13, letterSpacing: 2 }),
   ].filter(Boolean);
   return passShell({ kicker: "Group boarding pass", main, stub, seed: `${dest}${pp}` });
 }

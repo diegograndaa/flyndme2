@@ -1,6 +1,6 @@
 {
   "header": {
-    "tagline": "Queda mejor, vuela justo",
+    "tagline": "Punto de encuentro para grupos",
     "newSearch": "Nueva búsqueda",
     "home": "Inicio",
     "serverOnline": "Servidor activo",
@@ -236,7 +236,7 @@
     "completionReady": "Listo"
   },
   "results": {
-    "eyebrow": "Destino recomendado",
+    "eyebrow": "Punto de encuentro fijado",
     "criterionPrice": "Más barato",
     "criterionFairness": "Más equitativo",
     "criterionGroupLabel": "Elegir ganador y orden de la lista",
@@ -255,13 +255,13 @@
     "whoPaysSpread": "{{amount}} entre el más barato y el más caro",
     "whoPaysAvg": "Media {{amount}} por persona",
     "verifyCta": "Comprobar precio en vivo",
-    "verifyCaption": "Estimación en caché — compruébala contra Google Flights",
+    "verifyCaption": "Estimación basada en búsquedas recientes · compruébala contra Google Flights",
     "verifyChecking": "Comprobando precio en vivo…",
     "verifyUnavailable": "No se pudo comprobar el precio en vivo ahora — sigue siendo una estimación en caché.",
     "maxSpread": "Diferencia máxima",
     "spreadSub": "Entre el vuelo más caro y el más barato",
     "destsFound": "Destinos encontrados",
-    "bookTitle": "Reserva tus vuelos",
+    "bookTitle": "Puerta de embarque: reserva tu vuelo",
     "bookSub": "Un enlace por viajero. Reserva en Aviasales o compara en Skyscanner y Google Flights.",
     "bookCta": "Reservar",
     "bookLabel": "Reservar vuelos — un enlace por viajero",
@@ -276,7 +276,7 @@
     "stops": "{{n}} escala(s)",
     "outbound": "Ida",
     "returnLeg": "Vuelta",
-    "disclaimer": "Precios estimados con datos reales de vuelos. Pueden variar al momento de reservar.",
+    "disclaimer": "Estimación basada en búsquedas recientes. La tarifa final la fija la aerolínea al reservar en Aviasales, Skyscanner o Google Flights.",
     "otherOptions": "Otras opciones",
     "hide": "Ocultar",
     "showMap": "Mapa",
@@ -351,11 +351,11 @@
     }
   },
   "verifyBadge": {
-    "confirmed": "Precio confirmado",
+    "confirmed": "Tarifa confirmada",
     "changed": "Precio actualizado {{pct}}",
     "wasPrice": "Antes {{price}}/persona (orientativo) · ahora el real de Google Flights",
-    "estimate": "Estimación en caché",
-    "estimateHint": "Precio de una caché de búsquedas; comprueba el precio en vivo para compararlo con Google Flights.",
+    "estimate": "Estimación · búsquedas recientes",
+    "estimateHint": "Estimación basada en búsquedas recientes, no una oferta reservable. Comprueba el precio en vivo para compararlo con Google Flights.",
     "indicative": "Precio indicativo",
     "verifiedAt": "Verificado a las {{time}}",
     "indicativeHint": "No se pudo re-tarifar en vivo; se muestra el precio de la búsqueda original."
@@ -381,6 +381,7 @@
     "selected": "En tu tarjeta",
     "select": "Ver {{city}}",
     "more": "Más opciones",
+    "estimateNote": "Estimación basada en búsquedas recientes",
     "exportCsv": "Descargar CSV"
   },
   "fairness": {
@@ -445,9 +446,9 @@
   "loading": {
     "boardTitle": "Buscando vuestro punto de encuentro",
     "messages": [
-      "Despertando el servidor…",
+      "Encendiendo el panel de salidas…",
       "Consultando las salidas de cada ciudad…",
-      "Cruzando precios y fechas…",
+      "Sincronizando pasajeros…",
       "Comparando destinos…",
       "Calculando lo que paga cada uno…",
       "Última llamada: un momento más…",
@@ -807,7 +808,7 @@
   "group": {
     "cta": "¿Lo planeáis entre varios? Invita a tu grupo",
     "eyebrow": "Viaje en grupo",
-    "title": "Planificad el viaje juntos",
+    "title": "Embarque de grupo abierto",
     "subtitle": "Cada uno añade su ciudad de salida y FlyndMe encuentra el lugar más barato para reuniros.",
     "inviteLabel": "Enlace de invitación",
     "inviteHint": "Comparte este enlace para que cada viajero añada desde dónde vuela.",
@@ -816,8 +817,8 @@
     "shareWhatsApp": "Enviar por WhatsApp",
     "share": "Compartir",
     "shareText": "✈ ¡Organizamos un viaje en FlyndMe! Añade tu ciudad de salida y busca el sitio más barato y justo para vernos todos 👉",
-    "rosterTitle": "Viajeros ({{n}})",
-    "refresh": "Actualizar",
+    "rosterTitle": "Pasajeros ({{n}})",
+    "refresh": "Sincronizar pasajeros",
     "empty": "Nadie ha añadido su ciudad todavía. Añade la tuya abajo.",
     "travelerN": "Viajero {{n}}",
     "travelers": "Viajeros",

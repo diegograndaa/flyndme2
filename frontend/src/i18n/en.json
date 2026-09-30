@@ -1,6 +1,6 @@
 {
   "header": {
-    "tagline": "Meet smarter, fly fair",
+    "tagline": "Meeting points for groups",
     "newSearch": "New search",
     "home": "Home",
     "serverOnline": "Server online",
@@ -236,7 +236,7 @@
     "completionReady": "Ready"
   },
   "results": {
-    "eyebrow": "Recommended destination",
+    "eyebrow": "Meeting point set",
     "criterionPrice": "Cheapest",
     "criterionFairness": "Most balanced",
     "criterionGroupLabel": "Choose winner and sort order",
@@ -255,13 +255,13 @@
     "whoPaysSpread": "{{amount}} between the cheapest and priciest",
     "whoPaysAvg": "Average {{amount}} per person",
     "verifyCta": "Check live price",
-    "verifyCaption": "Cached estimate — check it against Google Flights",
+    "verifyCaption": "Estimate based on recent searches · check it against Google Flights",
     "verifyChecking": "Checking live price…",
     "verifyUnavailable": "Couldn't check live prices right now — still a cached estimate.",
     "maxSpread": "Max spread",
     "spreadSub": "Between the most and least expensive flight",
     "destsFound": "Destinations found",
-    "bookTitle": "Book your flights",
+    "bookTitle": "Boarding gate: book your flight",
     "bookSub": "One link per traveler. Book on Aviasales or compare on Skyscanner and Google Flights.",
     "bookCta": "Book",
     "bookLabel": "Book flights — one link per traveler",
@@ -276,7 +276,7 @@
     "stops": "{{n}} stop(s)",
     "outbound": "Outbound",
     "returnLeg": "Return",
-    "disclaimer": "Estimated prices from live flight data. May vary at time of booking.",
+    "disclaimer": "Estimate based on recent searches. The final fare is set by the airline when you book on Aviasales, Skyscanner or Google Flights.",
     "otherOptions": "Other options",
     "hide": "Hide",
     "showMap": "Map",
@@ -351,11 +351,11 @@
     }
   },
   "verifyBadge": {
-    "confirmed": "Price confirmed",
+    "confirmed": "Fare confirmed",
     "changed": "Price updated {{pct}}",
     "wasPrice": "Was {{price}}/person (indicative) · now the real Google Flights price",
-    "estimate": "Cached estimate",
-    "estimateHint": "Price from a cached search feed; check the live price to compare against Google Flights.",
+    "estimate": "Estimate · recent searches",
+    "estimateHint": "Estimate based on recent searches, not a bookable offer. Check the live price to compare against Google Flights.",
     "indicative": "Indicative price",
     "verifiedAt": "Verified at {{time}}",
     "indicativeHint": "Live re-pricing was unavailable; showing original search price."
@@ -381,6 +381,7 @@
     "selected": "On your pass",
     "select": "See {{city}}",
     "more": "More options",
+    "estimateNote": "Estimate based on recent searches",
     "exportCsv": "Download CSV"
   },
   "fairness": {
@@ -445,9 +446,9 @@
   "loading": {
     "boardTitle": "Finding your meeting point",
     "messages": [
-      "Waking up the server…",
+      "Powering up the departures board…",
       "Checking departures from each city…",
-      "Matching fares and dates…",
+      "Syncing passengers…",
       "Comparing destinations…",
       "Working out what each of you pays…",
       "Final call: just a moment more…",
@@ -807,7 +808,7 @@
   "group": {
     "cta": "Planning with others? Invite your group",
     "eyebrow": "Group trip",
-    "title": "Plan your trip together",
+    "title": "Group boarding open",
     "subtitle": "Everyone adds their own departure city — FlyndMe finds the cheapest place to meet.",
     "inviteLabel": "Invite link",
     "inviteHint": "Share this link so each traveler adds where they're flying from.",
@@ -816,8 +817,8 @@
     "shareWhatsApp": "Send on WhatsApp",
     "share": "Share",
     "shareText": "✈ We're planning a trip on FlyndMe! Add the city you'd fly from and it finds the cheapest, fairest place for us all to meet 👉",
-    "rosterTitle": "Travelers ({{n}})",
-    "refresh": "Refresh",
+    "rosterTitle": "Passengers ({{n}})",
+    "refresh": "Sync passengers",
     "empty": "No one's added a city yet. Add yours below.",
     "travelerN": "Traveler {{n}}",
     "travelers": "Travelers",
