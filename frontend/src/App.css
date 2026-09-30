@@ -36,7 +36,7 @@
   --bg:            #FCF8FF;
 
   /* Tipografía */
-  --font-display:  "Bricolage Grotesque", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display:  "IBM Plex Sans", system-ui, sans-serif;
 
   /* Semantic */
   --success:       #0E9F6E;
@@ -61,7 +61,7 @@
   --shadow-primary: 0 8px 24px rgba(174,47,52,.25);
 
   /* Typography */
-  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Equidad (fairness): AA como texto pequeño sobre blanco/lavanda.
      fairnessColor() (utils/helpers) devuelve var(--fair-*) para que el

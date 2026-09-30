@@ -14,11 +14,95 @@
    · prefers-reduced-motion lo apaga todo al final del archivo.            */
 
 :root {
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Tipografía (sep-2026): IBM Plex Sans + Plex Mono, una sola familia con aire
+     de señalética técnica. Sustituye a Plus Jakarta / Bricolage / JetBrains. */
+  --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
-  --board-cell-top: #2A2B5E;
-  --board-cell-bot: #1B1C40;
+  --amber: #FFB020;
   --board-ink: #FFFFFF;
+}
+
+/* Paleta terminal en CLARO: blanco roto + tinta + ámbar (coral solo en el CTA,
+   granate solo en el logo). Scope :not(dark) para no pisar los tokens oscuros
+   de App.css (mismo peso de selector y este archivo va después). */
+:root:not([data-theme="dark"]) {
+  --bg:            #F7F5EF;
+  --white:         #FFFFFF;
+  --navy:          #15172A;
+  --slate-900:     #2A2C3D;
+  --slate-700:     #464959;
+  --slate-500:     #686B7B;
+  --slate-400:     #9A9CA8;
+  --slate-300:     #D8D5CB;
+  --slate-200:     #E5E2D8;
+  --slate-100:     #EEEBE2;
+  --slate-50:      #F4F2EB;
+  --primary:       #1F2240;
+  --primary-rgb:   31, 34, 64;
+  --primary-dark:  #0F1128;
+  --primary-deep:  #5A3A00;
+  --primary-light: #FFEFC7;
+  --primary-50:    #FFF8E6;
+  --secondary:       #1F2240;
+  --secondary-light: #FFE3A3;
+  --info:          #1F2240;
+  --fair-mid:      #1F7A5C;
+  --amber-ink:     #8A5A00;
+  --shadow-xs:     0 1px 2px rgba(21,23,42,.05);
+  --shadow-sm:     0 2px 8px rgba(21,23,42,.06);
+  --shadow-md:     0 8px 24px rgba(21,23,42,.08);
+  --shadow-lg:     0 20px 48px rgba(21,23,42,.12);
+
+  /* Paneles "terminal de día": papel + tinta; las celdas split-flap siguen
+     siendo fichas de tinta (como las paletas físicas de un panel real). */
+  --panel-bg:      #FFFFFF;
+  --panel-stub:    #FBFAF6;
+  --panel-ink:     #15172A;
+  --panel-muted:   #5E6172;
+  --panel-faint:   #7C7F8E;
+  --panel-line:    #E5E2D8;
+  --panel-hover:   rgba(21,23,42,.04);
+  --panel-track:   #ECE9E0;
+  --panel-accent:  #15172A;
+  --panel-good:    #0F7A4A;
+  --panel-mid:     #8A5A00;
+  --panel-bad:     #B42318;
+  --panel-shadow:  0 10px 28px rgba(21,23,42,.07);
+  --board-cell-top: #2E3150;
+  --board-cell-bot: #1D2036;
+}
+
+/* Terminal de NOCHE: navy de App.css + ámbar de panel como acento */
+[data-theme="dark"] {
+  --primary:       #FFB020;
+  --primary-rgb:   255, 176, 32;
+  --primary-dark:  #FFC24D;
+  --primary-deep:  #FFD37F;
+  --primary-light: #3A2B0C;
+  --primary-50:    #2B2009;
+  --secondary:       #FFB020;
+  --secondary-light: #3A2E14;
+  --info:          #FFD37F;
+  --fair-mid:      #7FE0C0;
+  --amber-ink:     #FFB020;
+
+  --panel-bg:      #101130;
+  --panel-stub:    #15163A;
+  --panel-ink:     #FFFFFF;
+  --panel-muted:   #A9A8D8;
+  --panel-faint:   #8E8DC4;
+  --panel-line:    rgba(255,255,255,.09);
+  --panel-hover:   rgba(255,255,255,.05);
+  --panel-track:   rgba(255,255,255,.10);
+  --panel-accent:  #FFB020;
+  --panel-good:    #52DEA2;
+  --panel-mid:     #FBBF24;
+  --panel-bad:     #FF8A8A;
+  --panel-shadow:  0 18px 40px rgba(0,0,0,.35);
+  --board-cell-top: #3A3B78;
+  --board-cell-bot: #2A2B5C;
 }
 
 /* ══ 1. Split-flap ═══════════════════════════════════════════════════════ */
@@ -308,9 +392,9 @@
   margin: 8px auto 22px;
   padding: 20px 22px 22px;
   max-width: 620px;
-  background: #16173B;
+  background: var(--panel-bg);
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 40px rgba(22,23,59,.28);
+  box-shadow: var(--panel-shadow);
   animation: board-rise .6s var(--ease-out-expo) backwards;
 }
 .fm-searching-board-head {
@@ -322,7 +406,7 @@
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #C9C8F0;
+  color: var(--panel-muted);
 }
 .fm-searching-board-dot {
   width: 7px; height: 7px;
@@ -340,7 +424,6 @@
 }
 .fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .fm-searching-board-arrow { color: var(--coral); font-size: 22px; font-weight: 800; }
-.fm-searching-board .flap-cell { --board-cell-top: #33346B; --board-cell-bot: #25264F; }
 
 /* ══ 7. Tarjeta ganadora → tarjeta de embarque ═══════════════════════════ */
 /* Nombre del destino en panel sobre la foto */
@@ -528,11 +611,11 @@
    Última confirmación antes del CTA: orígenes en celdas de panel (mono) y
    fecha/viajeros en tinta lavanda. Navy fijo en ambos temas. */
 .sf-summary-bar.sf-summary-bar {
-  background: #16173B;
-  border: 1px solid rgba(255,255,255,.06);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-line);
   border-radius: var(--radius-md);
-  color: #C9C8F0;
-  box-shadow: 0 10px 24px rgba(22,23,59,.18);
+  color: var(--panel-muted);
+  box-shadow: var(--panel-shadow);
 }
 .sf-summary-bar .sf-summary-chip.sf-summary-chip {
   background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
@@ -548,14 +631,14 @@
 .sf-summary-bar .sf-summary-meta,
 .sf-summary-bar .sf-summary-meta span,
 .sf-summary-bar .sf-summary-pax-total.sf-summary-pax-total {
-  color: #C9C8F0;
+  color: var(--panel-muted);
   font-family: var(--font-mono);
   font-size: 12px;
   background: transparent;
 }
 .sf-summary-bar .sf-summary-pax { color: var(--coral); }
-.sf-summary-bar .sf-summary-flex.sf-summary-flex { color: #FFB020; background: rgba(255,176,32,.12); }
-[data-theme="dark"] .sf-summary-bar.sf-summary-bar { background: #0E0F2A; }
+.sf-summary-bar .sf-summary-flex.sf-summary-flex { color: var(--panel-accent); background: rgba(255,176,32,.12); }
+[data-theme="dark"] .sf-summary-bar.sf-summary-bar { background: var(--panel-bg); }
 
 /* Número de viajero como puerta de embarque */
 .sf-origin-row .sf-badge.sf-badge { font-family: var(--font-mono); }
@@ -566,7 +649,7 @@
   .sf-summary-bar .sf-summary-chip.sf-summary-chip,
   .sf-origin-row.sf-origin-row { animation: none; }
 }
-[data-theme="dark"] .fm-searching-board { border: 1px solid rgba(255,255,255,.1); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+[data-theme="dark"] .fm-searching-board { border: 1px solid var(--panel-line); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
 
 /* ══ 12. Resultados simplificados: cabecera · avisos · salidas ══════════ */
 .fm-board-label {
@@ -586,20 +669,19 @@
   flex-wrap: wrap;
   margin: 0 0 18px;
   padding: 14px 18px;
-  background: #16173B;
-  color: #C9C8F0;
+  background: var(--panel-bg);
+  color: var(--panel-muted);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,.06);
-  box-shadow: 0 10px 24px rgba(22,23,59,.16);
+  border: 1px solid var(--panel-line);
+  box-shadow: var(--panel-shadow);
   animation: board-rise .5s var(--ease-out-expo) backwards;
 }
-[data-theme="dark"] .fm-flight-head { background: #0E0F2A; }
+[data-theme="dark"] .fm-flight-head { background: var(--panel-bg); }
 .fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.fm-flight-head .fm-board-label { color: #8E8DC4; }
+.fm-flight-head .fm-board-label { color: var(--panel-faint); }
 .fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
 .fm-flight-head-origins { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .fm-flight-head-origins .flap--sm { font-size: 15px; }
-.fm-flight-head .flap-cell { --board-cell-top: #3A3B78; --board-cell-bot: #2A2B5C; }
 .fm-flight-head-arrow { color: var(--coral); font-weight: 800; font-size: 18px; }
 .fm-flight-head-meta {
   display: inline-flex;
@@ -609,27 +691,27 @@
   font-family: var(--font-mono);
   font-size: 12.5px;
   font-weight: 600;
-  color: #E1E0FF;
+  color: var(--panel-ink);
 }
 .fm-flight-head-badge {
   padding: 2px 8px;
-  border: 1px solid rgba(225,224,255,.28);
+  border: 1px solid var(--panel-line);
   border-radius: var(--radius-full);
   font-size: 11px;
-  color: #C9C8F0;
+  color: var(--panel-muted);
 }
 .fm-flight-head-btn {
   flex: 0 0 auto;
   padding: 8px 14px;
   background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,.3);
+  color: var(--panel-ink);
+  border: 1px solid var(--panel-line);
   border-radius: var(--radius-full);
   font-weight: 700;
   font-size: 13px;
   transition: background-color .2s ease, border-color .2s ease, transform .18s var(--ease-out-expo);
 }
-.fm-flight-head-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.55); transform: translateY(-1px); }
+.fm-flight-head-btn:hover { background: var(--panel-hover); border-color: var(--panel-line); transform: translateY(-1px); }
 .fm-flight-head-btn:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
 
 /* Avisos: un único panel con etiqueta ámbar tipo "información de vuelo" */
@@ -701,13 +783,13 @@
 .fm-board {
   margin: 18px 0;
   padding: 18px 18px 10px;
-  background: #16173B;
-  color: #E1E0FF;
+  background: var(--panel-bg);
+  color: var(--panel-ink);
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 40px rgba(22,23,59,.22);
+  box-shadow: var(--panel-shadow);
   scroll-margin-top: 80px;
 }
-[data-theme="dark"] .fm-board { background: #0E0F2A; border: 1px solid rgba(255,255,255,.08); }
+[data-theme="dark"] .fm-board { background: var(--panel-bg); border: 1px solid var(--panel-line); }
 .fm-board-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .fm-board-title {
   margin: 0;
@@ -716,14 +798,14 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .18em;
-  color: #FFB020;
+  color: var(--panel-accent);
 }
-.fm-board-sub { margin: 4px 0 0; font-size: 12.5px; color: #A9A8D8; }
+.fm-board-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--panel-muted); }
 .fm-board-savings {
   padding: 5px 10px;
   font-size: 12px;
   font-weight: 700;
-  color: #52DEA2;
+  color: var(--panel-good);
   background: rgba(82,222,162,.1);
   border: 1px solid rgba(82,222,162,.25);
   border-radius: var(--radius-full);
@@ -739,13 +821,13 @@
 .fm-board-row--single { grid-template-columns: minmax(0, 1fr) 110px 104px; }
 .fm-board-cols {
   padding: 0 12px 8px;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-bottom: 1px solid var(--panel-line);
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .14em;
-  color: #8E8DC4;
+  color: var(--panel-faint);
 }
 .fm-board-col-price { text-align: right; }
 .fm-board-rows { list-style: none; margin: 0; padding: 0; }
@@ -757,23 +839,22 @@
   color: inherit;
   text-align: left;
   border: none;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  border-bottom: 1px solid var(--panel-line);
   border-left: 3px solid transparent;
   transition: background-color .2s ease, border-color .2s ease;
 }
-.fm-board-row:hover:not(.fm-board-row--current) { background: rgba(255,255,255,.05); }
+.fm-board-row:hover:not(.fm-board-row--current) { background: var(--panel-hover); }
 .fm-board-row:focus-visible { outline: 2px solid var(--coral); outline-offset: -2px; }
 .fm-board-row--current { background: rgba(255,107,107,.1); border-left-color: var(--coral); cursor: default; }
 .fm-board-dest { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
 .fm-board-dest .flap--sm { font-size: 16px; flex: 0 0 auto; }
-.fm-board .flap-cell { --board-cell-top: #3A3B78; --board-cell-bot: #2A2B5C; }
-.fm-board-city { font-weight: 700; font-size: 15px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-board-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm-board-price {
   text-align: right;
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 800;
-  color: #fff;
+  color: var(--panel-ink);
   font-variant-numeric: tabular-nums;
 }
 .fm-board-fair {
@@ -783,11 +864,11 @@
   text-transform: uppercase;
   letter-spacing: .06em;
 }
-.fm-board-fair--good { color: #52DEA2; }
-.fm-board-fair--mid  { color: #FBBF24; }
-.fm-board-fair--bad  { color: #FF8A8A; }
-.fm-board-go { display: inline-flex; justify-content: flex-end; color: #8E8DC4; transition: transform .25s var(--ease-out-expo), color .2s ease; }
-.fm-board-row:hover .fm-board-go { color: #fff; transform: translateX(3px); }
+.fm-board-fair--good { color: var(--panel-good); }
+.fm-board-fair--mid  { color: var(--panel-mid); }
+.fm-board-fair--bad  { color: var(--panel-bad); }
+.fm-board-go { display: inline-flex; justify-content: flex-end; color: var(--panel-faint); transition: transform .25s var(--ease-out-expo), color .2s ease; }
+.fm-board-row:hover .fm-board-go { color: var(--panel-ink); transform: translateX(3px); }
 .fm-board-now {
   padding: 3px 7px;
   font-family: var(--font-mono);
@@ -853,12 +934,12 @@
 .fm-more-csv:hover { color: var(--primary); border-color: var(--primary); }
 
 /* Barra fija de resultados en tinta de panel */
-.fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { background: rgba(22,23,59,.94); border-color: rgba(255,255,255,.08); }
-.fm-sticky-bar .fm-sticky-dest.fm-sticky-dest { color: #fff; }
+.fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { background: var(--panel-bg); border-color: var(--panel-line); }
+.fm-sticky-bar .fm-sticky-dest.fm-sticky-dest { color: var(--panel-ink); }
 .fm-sticky-bar .fm-sticky-price.fm-sticky-price { color: var(--coral); font-family: var(--font-mono); }
-.fm-sticky-bar .fm-sticky-origins.fm-sticky-origins { color: #A9A8D8; font-family: var(--font-mono); }
-.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn { color: #fff; border-color: rgba(255,255,255,.35); }
-.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+.fm-sticky-bar .fm-sticky-origins.fm-sticky-origins { color: var(--panel-muted); font-family: var(--font-mono); }
+.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn { color: var(--panel-ink); border-color: var(--panel-line); }
+.fm-sticky-bar .fm-sticky-btn.fm-sticky-btn:hover { background: var(--panel-hover); color: var(--panel-ink); }
 
 /* La tarjeta de embarque no queda tapada por la cabecera al saltar a ella */
 .wc-card.wc-card { scroll-margin-top: 80px; }
@@ -915,17 +996,74 @@
 
 /* Mensaje de error como panel de "vuelo con incidencia" */
 .fm-error-state.fm-error-state {
-  background: #16173B;
+  background: var(--panel-bg);
   border: 1px solid rgba(255,176,32,.35);
   border-left: 4px solid #FFB020;
   border-radius: var(--radius-md);
-  color: #fff;
+  color: var(--panel-ink);
 }
-.fm-error-state .fm-error-icon { color: #FFB020; }
-.fm-error-state .fm-error-message.fm-error-message { color: #fff; font-weight: 600; }
-[data-theme="dark"] .fm-error-state.fm-error-state { background: #0E0F2A; }
+.fm-error-state .fm-error-icon { color: var(--panel-accent); }
+.fm-error-state .fm-error-message.fm-error-message { color: var(--panel-ink); font-weight: 600; }
+[data-theme="dark"] .fm-error-state.fm-error-state { background: var(--panel-bg); }
 
 @media (prefers-reduced-motion: reduce) {
   .fm-flight-head, .fm-board-rows > li, .fm-announce-dot, .gp .gp-member { animation: none !important; }
 }
-[data-theme="dark"] .gp-member-code .flap-cell { --board-cell-top: #3A3B78; --board-cell-bot: #2A2B5C; }
+
+/* ══ 14. Tema coherente: la tarjeta y los paneles siguen al tema ════════ */
+/* Matriz de la tarjeta de embarque (precio · comprobar · quién paga qué):
+   papel en claro, navy en oscuro. Antes era navy fijo en ambos temas. */
+.wc-card .wc-summary.wc-summary {
+  background: var(--panel-stub);
+  color: var(--panel-ink);
+  border-top: 1px solid var(--panel-line);
+}
+:root:not([data-theme="dark"]) .wc-card .wc-summary.wc-summary {
+  --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #B45309; --fair-bad: #DC2626;
+}
+.wc-card .wc-summary-divider.wc-summary-divider { background: var(--panel-line); }
+.wc-card .wc-summary-label.wc-summary-label { color: var(--panel-muted); opacity: 1; }
+.wc-card .wc-verify.wc-verify {
+  background: var(--panel-stub);
+  border-top: 1px solid var(--panel-line);
+  color: var(--panel-muted);
+}
+.wc-card .wc-verify-status.wc-verify-status { color: var(--panel-muted); }
+.wc-card .wc-verify-btn.wc-verify-btn { color: var(--panel-ink); background: transparent; border-color: var(--slate-300); }
+.wc-card .wc-verify-btn.wc-verify-btn:hover { background: var(--panel-hover); border-color: var(--panel-ink); }
+.wc-card .wc-verify-btn.wc-verify-btn:focus-visible { outline-color: var(--panel-ink); }
+.wc-card .wc-fs.wc-fs { background: var(--panel-stub); color: var(--panel-ink); border-top: 1px dashed var(--panel-line); }
+.wc-card .wc-fs-title.wc-fs-title,
+.wc-card .wc-fs-code.wc-fs-code,
+.wc-card .wc-fs-price.wc-fs-price { color: var(--panel-ink); }
+.wc-card .wc-fs-track.wc-fs-track { background: var(--panel-track); }
+.wc-card .wc-fs-avg.wc-fs-avg,
+.wc-card .wc-fs-avgtick.wc-fs-avgtick { background: var(--panel-ink); }
+.wc-card .wc-fs-avglabel.wc-fs-avglabel { color: var(--panel-muted); }
+
+/* Paneles en claro: borde fino de papel en vez de bloque oscuro */
+.fm-board.fm-board,
+.fm-flight-head.fm-flight-head,
+.fm-searching-board.fm-searching-board { border: 1px solid var(--panel-line); }
+.sf-summary-bar.sf-summary-bar { background: var(--panel-stub); border-color: var(--panel-line); box-shadow: none; }
+.fm-flight-head-btn.fm-flight-head-btn { border-color: var(--slate-300); }
+.fm-flight-head-btn.fm-flight-head-btn:hover { border-color: var(--panel-ink); }
+/* Marca ámbar delante del título "Salidas" (en claro el texto va en tinta) */
+.fm-board-title::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  vertical-align: .1em;
+  background: var(--amber);
+  border-radius: 2px;
+}
+.fm-error-state .fm-error-icon.fm-error-icon { color: var(--amber-ink); }
+
+/* Títulos en Plex: un poco más apretados en tamaños grandes */
+.lp-h1.lp-h1 { letter-spacing: -0.025em; font-weight: 700; }
+.sf-title.sf-title,
+.lp-card-title.lp-card-title,
+.lp-faq-title.lp-faq-title,
+.gp-title.gp-title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
