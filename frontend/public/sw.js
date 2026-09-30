@@ -11,9 +11,10 @@
 //   · Otros orígenes (fotos, analítica)→ sin tocar
 //
 // v5 (sep-2026): paleta terminal v2 + logo con punto naranja + iconos
-// maskable. v6: acento amarillo de señalética + logo amarillo.
+// maskable. v6: acento amarillo de señalética + logo amarillo. v7: iconos
+// y logo con ?v=6 (fuerza el logo nuevo) + aviso de versión nueva en la app.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v6";
+const VERSION = "v7";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;
@@ -23,14 +24,14 @@ const APP_SHELL = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/logo-flyndme.svg",
-  "/favicon.svg",
-  "/favicon.ico",
-  "/favicon-32.png",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/icon-maskable-512.png",
-  "/apple-touch-icon.png",
+  "/logo-flyndme.svg?v=6",
+  "/favicon.svg?v=6",
+  "/favicon.ico?v=6",
+  "/favicon-32.png?v=6",
+  "/icon-192.png?v=6",
+  "/icon-512.png?v=6",
+  "/icon-maskable-512.png?v=6",
+  "/apple-touch-icon.png?v=6",
 ];
 
 const STATIC_RE = /\.(?:js|css|svg|png|jpg|jpeg|webp|ico|woff2?|json|webmanifest)$/i;

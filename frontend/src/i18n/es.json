@@ -477,11 +477,17 @@
     "clear": "Borrar todo"
   },
   "map": {
-    "title": "Mapa de precios",
+    "title": "Mapa de rutas",
+    "subtitle": "Toca un destino para ponerlo en tu tarjeta de embarque.",
     "cheap": "Barato",
     "mid": "Medio",
     "expensive": "Caro",
-    "origin": "Tus ciudades",
+    "origin": "Vuestras ciudades",
+    "meetPoint": "Punto de encuentro",
+    "showCard": "Ver tarjeta",
+    "tapHint": "Toca para ponerlo en tu tarjeta",
+    "selectAria": "{{city}}: {{price}} por persona. Poner en tu tarjeta",
+    "bestAria": "{{city}}: {{price}} por persona. Punto de encuentro en tu tarjeta",
     "best": "Mejor",
     "groupTotal": "Total grupo",
     "ariaLabel": "Mapa de destinos europeos con precios de vuelos"
@@ -508,8 +514,18 @@
   "footerGuides": "Guías",
   "footerCopy": "© 2026 FlyndMe. Todos los derechos reservados.",
   "pwa": {
-    "installHint": "Añade a tu pantalla de inicio para acceder más rápido",
-    "install": "Instalar"
+    "installHint": "Ábrela en un toque desde tu pantalla de inicio, como una app más.",
+    "install": "Instalar",
+    "installTitle": "Llévate FlyndMe a bordo",
+    "iosHintBefore": "Pulsa",
+    "iosShare": "Compartir",
+    "iosHintAfter": "y luego «Añadir a pantalla de inicio».",
+    "later": "Ahora no",
+    "updateTitle": "Cambio de puerta",
+    "updateText": "Hay una versión nueva de FlyndMe lista.",
+    "updateCta": "Actualizar",
+    "offline": "Sin conexión",
+    "offlineText": "Los precios necesitan internet; lo que ya ves sigue aquí."
   },
   "share": {
     "title": "FlyndMe · Destino recomendado: {{dest}}",

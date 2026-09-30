@@ -56,14 +56,15 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Favicons -->
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico?v=6" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=6" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=6" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6" />
     <!-- Favicon = logo «Convergencia» (sep-2026): el mismo símbolo que la
          cabecera (logo-flyndme.svg). Se mantiene como archivo aparte por si
-         pestaña y cabecera vuelven a divergir. -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+         pestaña y cabecera vuelven a divergir. El ?v= obliga a navegadores y
+         service worker a pedir el logo nuevo (el favicon se cachea mucho). -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
 
     <!-- Google Fonts: IBM Plex Sans (UI/cuerpo/títulos) + IBM Plex Mono (panel de salidas: códigos, precios y etiquetas) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

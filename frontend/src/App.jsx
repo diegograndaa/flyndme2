@@ -28,6 +28,8 @@ import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, Announcements, DeparturesBoard } from "./components/BoardPanels";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
+import { usePwaStatus } from "./hooks/usePwaStatus";
+import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
 import "./styles/board.css";
 import { Heart, X, Plane, Download, Map as MapIcon, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -397,35 +399,15 @@ export default function App() {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
   }, []);
 
-  // ── PWA: Register service worker ────────────────────────────────────────
-  useEffect(() => {
-    // Solo en producción: en dev el SW cacheaba módulos de Vite y rompía la app
-    if (import.meta.env.PROD && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-  }, []);
-
-  // ── PWA: Install prompt ─────────────────────────────────────────────────
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
-
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-      setShowInstallBanner(true);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  // ── PWA: service worker, versión nueva, conexión e instalación ──────────
+  // (ver hooks/usePwaStatus). La invitación a instalar solo aparece tras un
+  // momento útil: haber visto resultados al menos una vez en esta visita.
+  const [pwaEngaged, setPwaEngaged] = useState(false);
+  const pwa = usePwaStatus({ engaged: pwaEngaged });
 
   const handleInstall = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    const outcome = await pwa.promptInstall();
     if (outcome === "accepted") trackEvent("pwa_install");
-    setInstallPrompt(null);
-    setShowInstallBanner(false);
   };
 
   // Keep Render backend alive (free tier sleeps)
@@ -522,6 +504,16 @@ export default function App() {
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+
+  // PWA: invitar a instalar solo tras ver resultados (y sin interrumpir la
+  // primera lectura de la tarjeta).
+  useEffect(() => {
+    if (view === "results" && bestDestination && !pwaEngaged) {
+      const id = setTimeout(() => setPwaEngaged(true), 6000); // no interrumpir la primera lectura
+      return () => clearTimeout(id);
+    }
+    return undefined;
+  }, [view, bestDestination, pwaEngaged]);
 
   // ── Dynamic document title per view ────────────────────────────────────
   useEffect(() => {
@@ -1214,7 +1206,7 @@ export default function App() {
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
           <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("landing"); } }}>
-            <img src={`${getBaseUrl()}logo-flyndme.svg`} alt="FlyndMe" height={28}
+            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="FlyndMe" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
             <span className="app-logo-sub">{t("header.tagline")}</span>
@@ -1238,6 +1230,7 @@ export default function App() {
             )}
           </div>
         </div>
+        {!pwa.online && <OfflineStrip />}
       </header>
 
       {/* Favorites panel */}
@@ -1578,7 +1571,10 @@ export default function App() {
             <div className="mt-3 view-enter" id="rv-panel-map">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins} />
+                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
+                    currency={currency}
+                    onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))}
+                    onShowCard={() => document.querySelector(".wc-card")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })} />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -1644,21 +1640,11 @@ export default function App() {
       {/* Scroll to top */}
       <ScrollToTopBtn />
 
-      {/* PWA Install banner */}
-      {showInstallBanner && installPrompt && (
-        <div className="pwa-banner">
-          <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
-            <span className="pwa-banner-text">
-              <strong>FlyndMe</strong> — {t("pwa.installHint")}
-            </span>
-            <div className="d-flex gap-2">
-              <button className="btn btn-sm btn-light fw-semibold" onClick={handleInstall}>
-                {t("pwa.install")}
-              </button>
-              <button className="btn btn-sm btn-outline-light" onClick={() => setShowInstallBanner(false)} aria-label={t("a11y.close")}><X size={16} aria-hidden="true" /></button>
-            </div>
-          </div>
-        </div>
+      {/* PWA: versión nueva (prioritario) o invitación a instalar */}
+      {pwa.updateReady ? (
+        <UpdateBanner onUpdate={pwa.applyUpdate} onDismiss={pwa.dismissUpdate} />
+      ) : pwa.install && (
+        <InstallBanner mode={pwa.install} onInstall={handleInstall} onDismiss={pwa.dismissInstall} />
       )}
 
       <footer className="app-footer">

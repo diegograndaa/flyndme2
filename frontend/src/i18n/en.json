@@ -477,11 +477,17 @@
     "clear": "Clear all"
   },
   "map": {
-    "title": "Price map",
+    "title": "Route map",
+    "subtitle": "Tap a destination to put it on your boarding pass.",
     "cheap": "Cheap",
     "mid": "Mid",
     "expensive": "Expensive",
     "origin": "Your cities",
+    "meetPoint": "Meeting point",
+    "showCard": "View pass",
+    "tapHint": "Tap to put it on your pass",
+    "selectAria": "{{city}}: {{price}} per person. Put it on your pass",
+    "bestAria": "{{city}}: {{price}} per person. Meeting point on your pass",
     "best": "Best",
     "groupTotal": "Group total",
     "ariaLabel": "Map of European destinations with flight prices"
@@ -508,8 +514,18 @@
   "footerGuides": "Guides",
   "footerCopy": "© 2026 FlyndMe. All rights reserved.",
   "pwa": {
-    "installHint": "Add to your home screen for faster access",
-    "install": "Install"
+    "installHint": "Open it in one tap from your home screen, like any other app.",
+    "install": "Install",
+    "installTitle": "Take FlyndMe on board",
+    "iosHintBefore": "Tap",
+    "iosShare": "Share",
+    "iosHintAfter": "then “Add to Home Screen”.",
+    "later": "Not now",
+    "updateTitle": "Gate change",
+    "updateText": "A new version of FlyndMe is ready.",
+    "updateCta": "Update",
+    "offline": "Offline",
+    "offlineText": "Prices need internet; what you already see stays here."
   },
   "share": {
     "title": "FlyndMe · Recommended destination: {{dest}}",
