@@ -88,7 +88,8 @@ test("fairnessColor: umbrales coherentes vía tokens (verde alto, rojo bajo)", (
   // Devuelve var(--fair-*) con fallback del tema claro: el modo oscuro
   // redefine los tokens en App.css sin tocar esta lógica.
   assert.equal(fairnessColor(90), "var(--fair-high, #15803D)");
-  assert.equal(fairnessColor(70), "var(--fair-mid, #0059B8)");
+  // Paleta terminal v2 (sep-2026): el tramo medio pasa de azul a verde azulado
+  assert.equal(fairnessColor(70), "var(--fair-mid, #1F7A5C)");
   assert.equal(fairnessColor(50), "var(--fair-low, #B45309)");
   assert.equal(fairnessColor(10), "var(--fair-bad, #DC2626)");
 });
