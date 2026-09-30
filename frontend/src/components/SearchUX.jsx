@@ -24,7 +24,11 @@ export function SearchingBoard({ origins = [], title, className = "" }) {
         <span className="fm-searching-board-origins">
           {codes.map((c, i) => <FlapText key={c + i} text={c} size="md" delay={i * 120} />)}
         </span>
-        <span className="fm-searching-board-arrow" aria-hidden="true">→</span>
+        {/* Luces de aproximación que corren hacia el destino (decorativo) */}
+        <span className="fm-rabbit" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => <i key={i} style={{ "--i": i }} />)}
+          <b />
+        </span>
         <span aria-hidden="true"><FlapCycle words={SHUFFLE_CODES} interval={650} size="md" /></span>
       </div>
     </div>
@@ -86,7 +90,7 @@ export function SearchProgress({ loading, origins = [] }) {
           left:       0,
           width:      `${width}%`,
           height:     3,
-          background: "linear-gradient(90deg, #C2410C 0%, #FF5A1F 100%)",
+          background: "var(--sign, #FFC20E)",
           transition: loading ? "width 0.6s ease" : "width 0.35s ease",
           zIndex:     9999,
           borderRadius: "0 2px 2px 0",

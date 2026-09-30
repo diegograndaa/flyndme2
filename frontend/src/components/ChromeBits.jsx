@@ -29,6 +29,13 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
+  // Microdetalle: al pulsar, la flecha "despega" (clase temporal, decorativa)
+  const [launch, setLaunch] = useState(false);
+  useEffect(() => {
+    if (!launch) return;
+    const id = setTimeout(() => setLaunch(false), 700);
+    return () => clearTimeout(id);
+  }, [launch]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -48,8 +55,8 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
   return (
     <button
       type="button"
-      className={`scroll-top-btn${visible ? " visible" : ""}`}
-      onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
+      className={`scroll-top-btn${visible ? " visible" : ""}${launch ? " scroll-top-btn--launch" : ""}`}
+      onClick={() => { setLaunch(true); window.scrollTo({ top: 0, behavior: scrollBehavior() }); }}
       aria-label={t("a11y.scrollToTop")}
       title={t("a11y.scrollToTop")}
     >

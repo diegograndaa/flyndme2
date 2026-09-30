@@ -297,6 +297,7 @@
     "bestRouteTitle": "Your cheapest route to {{city}}",
     "boardingPass": "Group boarding pass",
     "boardingMeta": "{{n}} cities · 1 meeting point",
+    "stampLabel": "Meeting point",
     "vsLastCheaper": "{{pct}}% cheaper than last search",
     "vsLastPricier": "{{pct}}% pricier than last search",
     "copyFlight": "Copy flight info",

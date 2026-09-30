@@ -11,8 +11,9 @@
 //   · Otros orígenes (fotos, analítica)→ sin tocar
 //
 // v5 (sep-2026): paleta terminal v2 + logo con punto naranja + iconos
-// maskable. Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v5";
+// maskable. v6: acento amarillo de señalética + logo amarillo.
+// Subir la versión purga los caches viejos en 'activate'.
+const VERSION = "v6";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

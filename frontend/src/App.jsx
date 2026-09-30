@@ -1684,7 +1684,19 @@ export default function App() {
             </nav>
           )}
           <div className="app-footer-inner">
-            <span className="app-footer-brand">{t("footerBrand")}</span>
+            <span className="app-footer-brand">
+              {/* Manga de viento que se mece (decorativa) */}
+              <svg className="fm-windsock" viewBox="0 0 30 20" aria-hidden="true">
+                <line className="fm-windsock-pole" x1="6" y1="2" x2="6" y2="20" />
+                <g className="fm-windsock-sock">
+                  <polygon className="fm-windsock-a" points="6,1 11.5,1.5 11.5,8.5 6,9" />
+                  <polygon className="fm-windsock-b" points="11.5,1.5 17,2 17,8 11.5,8.5" />
+                  <polygon className="fm-windsock-a" points="17,2 22.5,2.5 22.5,7.5 17,8" />
+                  <polygon className="fm-windsock-b" points="22.5,2.5 28,3 28,7 22.5,7.5" />
+                </g>
+              </svg>
+              {t("footerBrand")}
+            </span>
             <span className="app-footer-tagline">{t("footerTagline")}</span>
             <nav className="app-footer-links">
               {/* Botones, no <a> sin href: los anchors sin href no reciben foco de teclado */}

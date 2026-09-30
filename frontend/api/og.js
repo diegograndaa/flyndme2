@@ -3,7 +3,7 @@
 // the actual result in WhatsApp/Telegram/Twitter: destination in split-flap
 // tiles, price per person, group total and — when the share carries it — the
 // real per-origin fare ("who pays what"). Identity of the app (sep-2026):
-// paper + ink + amber, IBM Plex Sans/Mono.
+// paper + ink + signage yellow, IBM Plex Sans/Mono.
 //
 // The card tree is built WITHOUT JSX (plain element objects) so the exact same
 // builder can be rendered to a PNG locally for visual QA, no transpile needed.
@@ -24,15 +24,15 @@ const C = {
   track: "#ECE7DD",
   tileTop: "#2A2B30",
   tileBot: "#18191C",
-  amber: "#FF5A1F",   // naranja de señalética (acento único)
-  amberInk: "#B23A0B",
+  amber: "#FFC20E",   // amarillo de señalética aeroportuaria (acento único)
+  amberInk: "#1A1A1A", // texto sobre el amarillo (cartel de dirección)
   good: "#15803D",
   warn: "#B45309",
   bad: "#DC2626",
 };
 // Logo «Convergencia» (mismo SVG que public/logo-flyndme.svg), embebido para
 // no depender de un fetch en el Edge.
-const LOGO_URI = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjQUUyRjM0Ii8+CiAgPHBhdGggZD0iTTYgOC41QzEzIDguOCAxOS41IDExLjUgMjMuNSAxNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTUgMTZIMjMuNSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTYgMjMuNUMxMyAyMy4yIDE5LjUgMjAuNSAyMy41IDE2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjE2IiByPSIzLjgiIGZpbGw9IiNGRjVBMUYiLz4KPC9zdmc+Cg==";
+const LOGO_URI = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjRkZDMjBFIi8+CiAgPHBhdGggZD0iTTYgOC41QzEzIDguOCAxOS41IDExLjUgMjMuNSAxNiIgc3Ryb2tlPSIjMUExQTFBIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTUgMTZIMjMuNSIgc3Ryb2tlPSIjMUExQTFBIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTYgMjMuNUMxMyAyMy4yIDE5LjUgMjAuNSAyMy41IDE2IiBzdHJva2U9IiMxQTFBMUEiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjE2IiByPSIzLjgiIGZpbGw9IiMxQTFBMUEiLz4KPC9zdmc+Cg==";
 const SANS = "Plex";
 const MONO = "PlexMono";
 
@@ -158,7 +158,7 @@ function passShell({ kicker, main, stub, seed }) {
       // notches (half circles of the paper colour on the perforation)
       el("div", { position: "absolute", left: 780 - 22, top: -24, width: 46, height: 46, borderRadius: 23, background: C.paper, border: `2px solid ${C.line}` }, []),
       el("div", { position: "absolute", left: 780 - 22, bottom: -24, width: 46, height: 46, borderRadius: 23, background: C.paper, border: `2px solid ${C.line}` }, []),
-      // amber accent strip on top of the stub
+      // signage-yellow accent strip on top of the stub
       el("div", { position: "absolute", left: 783, right: 0, top: 0, height: 8, background: C.amber }, []),
     ]),
   ]);
@@ -182,7 +182,7 @@ export function buildCard({ mode, dest, pp, from, total, n, legs }) {
     el("div", { fontFamily: MONO, fontSize: 76, color: C.ink, marginTop: 4, letterSpacing: -2 }, pp || "—"),
     total ? label("Group total", { marginTop: 22 }) : null,
     total ? el("div", { fontFamily: MONO, fontSize: 40, color: C.ink, marginTop: 2 }, total) : null,
-    n ? label(`${n} travelers`, { marginTop: 18, color: C.amberInk }) : null,
+    n ? label(`${n} travelers`, { marginTop: 18, color: C.amberInk, background: C.amber, padding: "5px 12px", borderRadius: 4, alignSelf: "flex-start" }) : null,
     // Regla de datos: todo importe es una estimación, no una oferta reservable
     label("Estimate · recent searches", { marginTop: 18, fontSize: 13, letterSpacing: 2 }),
   ].filter(Boolean);
@@ -205,7 +205,7 @@ export function buildGroupCard({ from, n }) {
       ]),
     ]),
     el("div", { flexDirection: "column" }, [
-      el("div", { fontSize: 34, color: C.amberInk }, sub),
+      el("div", { fontSize: 34, color: C.ink }, sub),
       el("div", { fontFamily: MONO, fontSize: 22, color: C.muted, marginTop: 10 }, from ? `FROM ${from.toUpperCase()}` : ""),
     ]),
   ];
@@ -214,7 +214,7 @@ export function buildGroupCard({ from, n }) {
     el("div", { fontFamily: MONO, fontSize: 44, color: C.ink, marginTop: 4 }, "BOARDING"),
     label("Travelers", { marginTop: 22 }),
     el("div", { fontFamily: MONO, fontSize: 44, color: C.ink, marginTop: 2 }, String(count || "—")),
-    label("Everyone pays fair", { marginTop: 18, color: C.amberInk }),
+    label("Everyone pays fair", { marginTop: 18, color: C.amberInk, background: C.amber, padding: "5px 12px", borderRadius: 4, alignSelf: "flex-start" }),
   ];
   return passShell({ kicker: "Group trip · open", main, stub, seed: `group${from}` });
 }

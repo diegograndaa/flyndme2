@@ -237,7 +237,7 @@ const WinnerCard = React.memo(function WinnerCard({
 
       {/* Who pays what — makes the per-person spread (fairness) legible */}
       {payRows && (
-        <div className="wc-fs">
+        <div className="wc-fs" key={code}>
           <div className="wc-fs-head">
             <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
             <span className="wc-fs-verdict" style={{ color: fairness.color }}>
@@ -266,6 +266,13 @@ const WinnerCard = React.memo(function WinnerCard({
         <span className="wc-perf-text">
           {t("results.boardingPass")}
           {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
+        </span>
+        {/* Sello de embarque: se estampa al aparecer la tarjeta y otra vez al
+            cambiar de destino (key). Solo datos reales: código y fecha. */}
+        <span key={code} className="wc-stamp" aria-hidden="true">
+          <span className="wc-stamp-label">{t("results.stampLabel")}</span>
+          <span className="wc-stamp-code">{code}</span>
+          {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
         </span>
         <span className="wc-perf-barcode" aria-hidden="true" />
       </div>

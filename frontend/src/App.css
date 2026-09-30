@@ -4,19 +4,20 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Primary palette (Stitch: granate + coral) */
-  --primary:       #C2410C;
-  --primary-rgb:   174, 47, 52; /* --primary as r,g,b for rgba() focus rings/glows */
-  --primary-dark:  #9A330A;
-  --primary-deep:  #7A2A0A;
-  --primary-light: #FDE3D6;
-  --primary-50:    #FEF1EA;
+  /* Primary palette — base; los valores vigentes (tinta + amarillo de
+     señalética) viven en styles/board.css, que se importa después. */
+  --primary:       #1A1A1A;
+  --primary-rgb:   26, 26, 26; /* --primary as r,g,b for rgba() focus rings/glows */
+  --primary-dark:  #000000;
+  --primary-deep:  #1A1A1A;
+  --primary-light: #FFF1C2;
+  --primary-50:    #FFF8E1;
 
-  /* Secondary (azul) + CTA coral */
-  --secondary:        #C2410C;
+  /* Secondary + CTA (amarillo de señalética) */
+  --secondary:        #1A1A1A;
   --secondary-light:  #EEE9E0;
-  --coral:            #FF5A1F;
-  --coral-dark:       #E64A12;
+  --coral:            #FFC20E;
+  --coral-dark:       #F2B200;
 
   /* Accent (verde) */
   --accent:        #00B179;
@@ -42,7 +43,7 @@
   --success:       #0E9F6E;
   --warning:       #D97706;
   --danger:        #BA1A1A;
-  --info:          #C2410C;
+  --info:          #1A1A1A;
 
   /* Spacing & Shape */
   --radius-xs:     8px;
@@ -58,7 +59,7 @@
   --shadow-md:     0 8px 24px rgba(0,0,0,.08);
   --shadow-lg:     0 20px 48px rgba(0,0,0,.12);
   --shadow-xl:     0 32px 64px rgba(0,0,0,.16);
-  --shadow-primary: 0 8px 24px rgba(194,65,12,.25);
+  --shadow-primary: none;
 
   /* Typography */
   --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -67,7 +68,7 @@
      fairnessColor() (utils/helpers) devuelve var(--fair-*) para que el
      modo oscuro aclare los tonos sin tocar JS. */
   --fair-high: #15803D;
-  --fair-mid:  #C2410C;
+  --fair-mid:  #1F7A5C;
   --fair-low:  #B45309;
   --fair-bad:  #DC2626;
 
@@ -77,17 +78,17 @@
 /* ── Dark mode overrides ─────────────────────────────────────── */
 
 [data-theme="dark"] {
-  --primary:       #FF7A45;
-  --primary-rgb:   255, 179, 176;
-  --primary-dark:  #FF9466;
-  --primary-deep:  #FFB08A;
-  --primary-light: #3A1C10;
-  --primary-50:    #2A150C;
+  --primary:       #FFC20E;
+  --primary-rgb:   255, 194, 14;
+  --primary-dark:  #FFD24D;
+  --primary-deep:  #FFE08A;
+  --primary-light: #332A0A;
+  --primary-50:    #262008;
 
-  --secondary:        #FF9A6B;
-  --secondary-light:  #1E3A5F;
-  --coral:            #FF5A1F;
-  --coral-dark:       #FF9466;
+  --secondary:        #FFC20E;
+  --secondary-light:  #332A0A;
+  --coral:            #FFC20E;
+  --coral-dark:       #FFD24D;
 
   --accent:        #52DEA2;
   --accent-dark:   #72FBBC;
@@ -107,19 +108,19 @@
   --success:       #52DEA2;
   --warning:       #FBBF24;
   --danger:        #FFB4AB;
-  --info:          #FF9A6B;
+  --info:          #FFE08A;
 
   --shadow-xs:     0 1px 2px rgba(0,0,0,.2);
   --shadow-sm:     0 2px 8px rgba(0,0,0,.25);
   --shadow-md:     0 8px 24px rgba(0,0,0,.3);
   --shadow-lg:     0 20px 48px rgba(0,0,0,.35);
   --shadow-xl:     0 32px 64px rgba(0,0,0,.4);
-  --shadow-primary: 0 8px 24px rgba(255,122,69,.2);
+  --shadow-primary: none;
 
   /* Equidad sobre superficies navy (#17191D): tonos claros, AA */
   --fair-high: #52DEA2;
-  --fair-mid:  #FF9A6B;
-  --fair-low:  #FBBF24;
+  --fair-mid:  #7FE0C0;
+  --fair-low:  #FF9F5A; /* naranja: el amarillo es la marca, no un aviso */
   --fair-bad:  #FFB4AB;
 
   /* Controles nativos (date picker, select, scrollbars) en oscuro */
@@ -205,7 +206,7 @@
   color: #E6E8EC; /* var(--white) se invierte en dark y dejaba tinta sobre tinta */
 }
 
-/* En oscuro --primary es rosa claro (#FF7A45): los elementos con ese fondo
+/* En oscuro --primary es amarillo de señal (#FFC20E): los elementos con ese fondo
    llevan texto tinta, como el coral del CTA (tratamiento AA existente). */
 [data-theme="dark"] .skip-link,
 [data-theme="dark"] .scroll-top-btn {
@@ -330,7 +331,7 @@ body {
   justify-content: center;
   gap: 8px;
   background: var(--primary);
-  /* Tinta fija: blanco sobre coral #FF5A1F da 2.8:1 (suspende AA). El navy
+  /* Tinta fija: blanco sobre amarillo #FFC20E no llega a AA. La tinta
      #1A1A1A da 6.2:1 a cualquier tamaño y es lo que ya mostraba el modo
      oscuro (var(--white) ahí resolvía a un navy casi idéntico). */
   color: #1A1A1A !important;
@@ -368,8 +369,8 @@ body {
 .lp-hero {
   padding: 80px 0 72px;
   background:
-    radial-gradient(ellipse 760px 520px at 80% 10%, rgba(194,65,12,.07) 0%, transparent 62%),
-    radial-gradient(ellipse 620px 420px at 6% 22%, rgba(255,90,31,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 760px 520px at 80% 10%, rgba(var(--primary-rgb),.05) 0%, transparent 62%),
+    radial-gradient(ellipse 620px 420px at 6% 22%, rgba(255,194,14,.06) 0%, transparent 60%),
     linear-gradient(180deg, var(--white) 0%, var(--slate-50) 100%);
   border-bottom: 1px solid var(--slate-200);
   position: relative;
@@ -682,7 +683,7 @@ body {
   height: 22px;
   flex: 0 0 auto;
   border-radius: var(--radius-full);
-  background: var(--primary-50, rgba(194,65,12,.1));
+  background: var(--primary-50, rgba(255,194,14,.12));
   color: var(--primary);
   font-weight: 800;
   font-size: 12px;
@@ -1258,8 +1259,8 @@ body {
   /* La franja es navy SIEMPRE: el anillo de equidad usa los tonos claros
      de --fair-* en ambos temas (los oscuros AA-sobre-blanco no contrastan) */
   --fair-high: #52DEA2;
-  --fair-mid:  #FF9A6B;
-  --fair-low:  #FBBF24;
+  --fair-mid:  #7FE0C0;
+  --fair-low:  #FF9F5A;
   --fair-bad:  #FFB4AB;
   overflow-x: auto;
 }
@@ -2255,7 +2256,7 @@ body {
 }
 .dm-bubble--best {
   fill: var(--primary);
-  stroke: #7A2A0A;
+  stroke: #FFC20E;
   stroke-width: 3;
 }
 .dm-best-halo {
@@ -2310,8 +2311,8 @@ body {
 [data-theme="dark"] .dm-land { fill: #25282F; stroke: #3A3E47; }
 [data-theme="dark"] .dm-land--alt { fill: #1F2227; }
 [data-theme="dark"] .dm-bubble { stroke: #E6E8EC; }
-/* En oscuro --primary es #FF7A45: texto tinta y anillo rosado profundo */
-[data-theme="dark"] .dm-bubble--best { stroke: #FF9466; }
+/* En oscuro --primary es amarillo: anillo tinta para separarlo del mapa */
+[data-theme="dark"] .dm-bubble--best { stroke: #1A1A1A; }
 [data-theme="dark"] .dm-bubble-text--best { fill: #1A1A1A; stroke: none; }
 [data-theme="dark"] .dm-offmap-ring { stroke: #9AA0AA; }
 [data-theme="dark"] .dm-offmap-arrow { fill: #9AA0AA; }
@@ -3544,7 +3545,7 @@ html {
 }
 [data-theme="dark"] .sf-weekday-badge {
   background: rgba(var(--primary-rgb),.18);
-  color: #FF9A6B;
+  color: #FFC20E;
 }
 
 /* ── Pulse animation on ready submit button ─────────────────── */
@@ -3553,8 +3554,8 @@ html {
   animation: submitPulse 2.5s ease-in-out infinite;
 }
 @keyframes submitPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,90,31,.4); }
-  50%      { box-shadow: 0 0 0 8px rgba(255,90,31,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,194,14,.55); }
+  50%      { box-shadow: 0 0 0 8px rgba(255,194,14,0); }
 }
 
 /* ── Total pax count in summary bar ─────────────────────────── */
@@ -3712,7 +3713,7 @@ html {
   position: absolute;
   inset: -2px;
   border-radius: calc(var(--radius-lg, 8px) + 2px);
-  background: linear-gradient(135deg, #C2410C, #FF5A1F, #C2410C, #00B179, #C2410C);
+  background: #FFC20E;
   background-size: 300% 300%;
   animation: gradientShift 4s ease infinite;
   z-index: -1;
@@ -3902,8 +3903,8 @@ html {
   gap: 12px;
   padding: 12px 18px;
   margin-top: 12px;
-  background: linear-gradient(135deg, #F5F3EF 0%, #F7E4D9 100%);
-  border: 1px solid rgba(194,65,12,.18);
+  background: #FFF8E1;
+  border: 1px solid rgba(224,163,0,.35);
   border-radius: var(--radius-md);
   font-size: 14px;
 }
@@ -3926,8 +3927,8 @@ html {
 .fm-cheaper-date-btn:active { transform: translateY(1px); }
 .fm-cheaper-date-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 [data-theme="dark"] .fm-cheaper-date {
-  background: linear-gradient(135deg, rgba(255,122,69,.08) 0%, rgba(255,122,69,.16) 100%);
-  border-color: rgba(255,122,69,.25);
+  background: rgba(255,194,14,.08);
+  border-color: rgba(255,194,14,.25);
 }
 [data-theme="dark"] .fm-cheaper-date-text { color: #E9E5DC; }
 [data-theme="dark"] .fm-cheaper-date-btn { color: #1A1A1A; }
@@ -3961,8 +3962,8 @@ html {
 }
 .fm-arrival-spread--good .fm-arrival-spread-icon { color: var(--fair-high); }
 .fm-arrival-spread--neutral {
-  background: linear-gradient(135deg, #F5F3EF 0%, #F7E4D9 100%);
-  border-color: rgba(194,65,12,.18);
+  background: #FFF8E1;
+  border-color: rgba(224,163,0,.35);
 }
 .fm-arrival-spread--neutral .fm-arrival-spread-icon { color: var(--primary); }
 [data-theme="dark"] .fm-arrival-spread-text { color: #E9E5DC; }
@@ -3972,8 +3973,8 @@ html {
   border-color: rgba(16,185,129,.25);
 }
 [data-theme="dark"] .fm-arrival-spread--neutral {
-  background: linear-gradient(135deg, rgba(255,122,69,.08) 0%, rgba(255,122,69,.16) 100%);
-  border-color: rgba(255,122,69,.25);
+  background: rgba(255,194,14,.08);
+  border-color: rgba(255,194,14,.25);
 }
 @media (max-width: 600px) {
   .fm-arrival-spread { padding: 12px 14px; }
@@ -4099,7 +4100,7 @@ html {
 [data-theme="dark"] .fm-quick-research-btn:hover {
   border-color: var(--primary);
   background: rgba(var(--primary-rgb),.12);
-  color: #FF9A6B;
+  color: #FFC20E;
 }
 
 /* ── Airline badge on booking cards ─────────────────────────── */
@@ -4375,7 +4376,7 @@ html {
   user-select: none;
 }
 [data-theme="dark"] .fm-breadcrumb-item { color: #C9CDD4; }
-[data-theme="dark"] .fm-breadcrumb-item:hover { color: #FF9A6B; background: rgba(172,199,255,.08); }
+[data-theme="dark"] .fm-breadcrumb-item:hover { color: #FFC20E; background: rgba(255,255,255,.08); }
 [data-theme="dark"] .fm-breadcrumb-item--active { color: #E6E8EC; }
 [data-theme="dark"] .fm-breadcrumb-item--active:hover { color: #E6E8EC; background: transparent; }
 [data-theme="dark"] .fm-breadcrumb-sep { color: #7C828E; }
@@ -4532,7 +4533,7 @@ html {
   position: absolute;
   inset: -2px;
   border-radius: calc(var(--radius-lg) + 2px);
-  background: linear-gradient(135deg, #C2410C, #FF5A1F, #C2410C, #00B179, #C2410C);
+  background: #FFC20E;
   background-size: 300% 300%;
   animation: wc-gradient-rotate 6s ease infinite;
   z-index: -1;
@@ -4552,12 +4553,12 @@ html {
 
 .sf-submit--ready {
   animation: sf-pulse-ready 2s ease-in-out infinite;
-  box-shadow: 0 0 0 0 rgba(255,90,31,.45);
+  box-shadow: 0 0 0 0 rgba(255,194,14,.55);
 }
 @keyframes sf-pulse-ready {
-  0%   { box-shadow: 0 0 0 0 rgba(255,90,31,.45); }
-  50%  { box-shadow: 0 0 0 10px rgba(255,90,31,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,90,31,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(255,194,14,.55); }
+  50%  { box-shadow: 0 0 0 10px rgba(255,194,14,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,194,14,0); }
 }
 
 /* ── Parallax-like hero section ────────────────────────────── */
@@ -4574,7 +4575,7 @@ html {
   width: 480px;
   height: 480px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(194,65,12,.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--primary-rgb),.05) 0%, transparent 70%);
   pointer-events: none;
   animation: lp-float-orb 20s ease-in-out infinite alternate;
 }
@@ -4586,7 +4587,7 @@ html {
   width: 360px;
   height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,90,31,.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,194,14,.06) 0%, transparent 70%);
   pointer-events: none;
   animation: lp-float-orb 16s ease-in-out infinite alternate-reverse;
 }
@@ -4949,7 +4950,7 @@ html {
 }
 [data-theme="dark"] .fm-search-summary-chip {
   background: rgba(var(--primary-rgb),.1);
-  color: #FF9A6B;
+  color: #FFC20E;
 }
 [data-theme="dark"] .fm-search-summary-tags {
   border-color: #25282F;
@@ -5068,7 +5069,7 @@ html {
 }
 [data-theme="dark"] .fm-podium-city { color: #E6E8EC; }
 [data-theme="dark"] .fm-podium-code { color: #9AA0AA; }
-[data-theme="dark"] .fm-podium-price { color: #FF9A6B; }
+[data-theme="dark"] .fm-podium-price { color: #FFC20E; }
 @media (max-width: 600px) {
   .fm-podium-cards { gap: 6px; }
   .fm-podium-card { min-width: 80px; padding: 10px 10px 8px; }
@@ -5169,7 +5170,7 @@ html {
 }
 [data-theme="dark"] .app-footer-brand { color: #C9CDD4; }
 [data-theme="dark"] .app-footer-link { color: #9AA0AA; }
-[data-theme="dark"] .app-footer-link:hover { color: #FF9A6B; }
+[data-theme="dark"] .app-footer-link:hover { color: #FFC20E; }
 [data-theme="dark"] .app-footer-copy { color: #9AA0AA; }
 [data-theme="dark"] .app-footer-tagline { color: #9AA0AA; }
 
@@ -5277,7 +5278,7 @@ html {
 [data-theme="dark"] .fm-currency-btn { color: #9AA0AA; }
 [data-theme="dark"] .fm-currency-btn--active {
   background: #353A43;
-  color: #FF9A6B;
+  color: #FFC20E;
   box-shadow: none;
 }
 
@@ -5475,7 +5476,7 @@ html {
 [data-theme="dark"] .fm-split-title { color: #E6E8EC; }
 [data-theme="dark"] .fm-split-toggle { background: #1A1A1A; }
 [data-theme="dark"] .fm-split-pill { color: #9AA0AA; }
-[data-theme="dark"] .fm-split-pill--active { background: #353A43; color: #FF9A6B; box-shadow: none; }
+[data-theme="dark"] .fm-split-pill--active { background: #353A43; color: #FFC20E; box-shadow: none; }
 [data-theme="dark"] .fm-split-row { background: #1A1A1A; }
 [data-theme="dark"] .fm-split-origin { color: #C9CDD4; }
 [data-theme="dark"] .fm-split-pays { color: #E6E8EC; }
@@ -5535,8 +5536,8 @@ html {
   font-size: 18px;
 }
 [data-theme="dark"] .fm-plan-trip {
-  background: linear-gradient(135deg, rgba(172,199,255,.04), rgba(124,58,237,.04));
-  border-color: rgba(172,199,255,.12);
+  background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(124,58,237,.04));
+  border-color: rgba(255,255,255,.12);
 }
 [data-theme="dark"] .fm-plan-trip-title { color: #E6E8EC; }
 [data-theme="dark"] .fm-plan-trip-subtitle { color: #9AA0AA; }
@@ -5546,8 +5547,8 @@ html {
   color: #E6E8EC;
 }
 [data-theme="dark"] .fm-plan-trip-link:hover {
-  border-color: #FF9A6B;
-  color: #FF9A6B;
+  border-color: #FFC20E;
+  color: #FFC20E;
   box-shadow: none;
 }
 @media (max-width: 600px) {
@@ -5665,12 +5666,12 @@ html {
 }
 [data-theme="dark"] .fm-history-toggle:hover { background: #1A1A1A; }
 [data-theme="dark"] .fm-history-title { color: #E6E8EC; }
-[data-theme="dark"] .fm-history-count { background: rgba(172,199,255,.15); color: #FF9A6B; }
+[data-theme="dark"] .fm-history-count { background: rgba(255,255,255,.15); color: #FFC20E; }
 [data-theme="dark"] .fm-history-item { background: #1A1A1A; }
 [data-theme="dark"] .fm-history-item:hover { background: #25282F; }
 [data-theme="dark"] .fm-history-item-origins { color: #E6E8EC; }
 [data-theme="dark"] .fm-history-item-date { color: #C9CDD4; }
-[data-theme="dark"] .fm-history-item-dest { color: #FF9A6B; }
+[data-theme="dark"] .fm-history-item-dest { color: #FFC20E; }
 
 /* ── Weather Badge ────────────────────────────────────────── */
 
@@ -5810,7 +5811,7 @@ html {
   align-items: center;
   gap: 10px;
   background: linear-gradient(135deg, #F2EFE8, #EEE9E0);
-  border: 1px solid #FF9A6B;
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 12px 18px;
   margin-bottom: 14px;
@@ -5820,11 +5821,11 @@ html {
   flex: 1;
   font-size: 13px;
   font-weight: 600;
-  color: #1e40af;
+  color: var(--navy);
 }
 .fm-sharelink-btn {
-  background: #C2410C;
-  color: white;
+  background: var(--primary);
+  color: var(--on-primary, #fff);
   border: none;
   border-radius: var(--radius-xs);
   padding: 7px 16px;
@@ -5833,15 +5834,13 @@ html {
   cursor: pointer;
   transition: background .2s;
 }
-.fm-sharelink-btn:hover { background: #004591; }
+/* hover: ver board.css (sin azul del tema viejo) */
 [data-theme="dark"] .fm-sharelink {
   background: linear-gradient(135deg, #17191D, #1C1F24);
   border-color: #353A43;
 }
-[data-theme="dark"] .fm-sharelink-text { color: #FF9A6B; }
-/* El botón conserva el azul de marca (#C2410C): blanco encima da >5.9:1 */
-[data-theme="dark"] .fm-sharelink-btn { background: #C2410C; }
-[data-theme="dark"] .fm-sharelink-btn:hover { background: #004591; }
+[data-theme="dark"] .fm-sharelink-text { color: #FFC20E; }
+/* En oscuro el botón es amarillo de señal con tinta encima (var(--on-primary)) */
 
 @media (max-width: 600px) {
   .fm-sharelink { padding: 10px 14px; flex-wrap: wrap; }

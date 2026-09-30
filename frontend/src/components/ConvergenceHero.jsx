@@ -42,8 +42,8 @@ export default function ConvergenceHero({ idSuffix = "" }) {
       <svg viewBox="0 0 360 300" className="cv-svg" aria-hidden="true">
         <defs>
           <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.30" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--sign, #FFC20E)" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="var(--sign, #FFC20E)" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -72,6 +72,16 @@ export default function ConvergenceHero({ idSuffix = "" }) {
             <text x={o.x - 13} y={o.y + 4} textAnchor="end" className="cv-origin-label">{o.code}</text>
           </g>
         ))}
+
+        {/* Radar alrededor del punto de encuentro: anillos de alcance estáticos
+            + barrido en bucle infinito (nunca animación de entrada). */}
+        <circle cx={DEST.x} cy={DEST.y} r="34" className="cv-range" />
+        <circle cx={DEST.x} cy={DEST.y} r="58" className="cv-range" />
+        <g className="cv-radar">
+          <path d={`M ${DEST.x} ${DEST.y} L ${DEST.x} ${DEST.y - 58} A 58 58 0 0 1 ${DEST.x + 41} ${DEST.y - 41} Z`} />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`0 ${DEST.x} ${DEST.y}`} to={`360 ${DEST.x} ${DEST.y}`} dur="7s" repeatCount="indefinite" />
+        </g>
 
         {/* Destino: halo + anillo de pulso + punto */}
         <circle cx={DEST.x} cy={DEST.y} r="48" fill={`url(#${glowId})`} />
