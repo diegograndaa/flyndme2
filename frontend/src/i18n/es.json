@@ -7,12 +7,12 @@
     "serverWaking": "Servidor iniciándose…"
   },
   "landing": {
-    "eyebrow": "Muchas ciudades. Una decisión.",
+    "eyebrow": "Varias salidas. Un solo destino.",
     "title": "El punto de encuentro perfecto",
     "titleAccent": "perfecto",
     "lead": "FlyndMe compara los vuelos desde la ciudad de cada uno y encuentra el destino más barato y justo para todos.",
     "diagramAlt": "Trayectos de vuelo desde varias ciudades de origen convergiendo en un único punto de encuentro",
-    "diagramMeet": "Mejor punto de encuentro",
+    "diagramMeet": "Punto de encuentro",
     "cta": "Empezar búsqueda",
     "chips": [
       "Multi-origen",
@@ -20,7 +20,7 @@
       "Índice de equidad",
       "Presupuesto por persona"
     ],
-    "howTitle": "¿Cómo funciona?",
+    "howTitle": "Vuestro itinerario en 3 pasos",
     "steps": [
       "Añade la ciudad de salida de cada viajero.",
       "FlyndMe compara vuelos con fechas flexibles y encuentra el destino más barato.",
@@ -157,7 +157,7 @@
     ]
   },
   "search": {
-    "title": "¿Desde dónde viajáis?",
+    "title": "¿Desde dónde despegáis?",
     "subtitle": "Añade la ciudad de cada viajero y elige las fechas.",
     "originLabel": "Ciudades de salida",
     "placeholder": "Escribe ciudad o código…",
@@ -166,7 +166,7 @@
     "removeTitle": "Eliminar viajero",
     "addTraveler": "+ Añadir viajero",
     "tryExample": "Probar ejemplo: MAD + LON + BER",
-    "tripTypeLabel": "Tipo de viaje",
+    "tripTypeLabel": "Tipo de billete",
     "oneway": "Solo ida",
     "roundtrip": "Ida y vuelta",
     "datesLabel": "¿Cuándo?",
@@ -185,7 +185,7 @@
     "budgetOn": "Sí",
     "budgetOff": "No",
     "submit": "Reuníos al mejor precio",
-    "searching": "Buscando…",
+    "searching": "Consultando salidas…",
     "footnoteTime": "Resultado en ~5 s",
     "footnotePrices": "Precios reales de vuelos",
     "flexLabel": "Fechas flexibles",
@@ -265,7 +265,7 @@
     "bookSub": "Un enlace por viajero. Reserva en Aviasales o compara en Skyscanner y Google Flights.",
     "bookCta": "Reservar",
     "bookLabel": "Reservar vuelos — un enlace por viajero",
-    "viewAlternatives": "Ver alternativas",
+    "viewAlternatives": "Ver otras salidas",
     "share": "Compartir",
     "copied": "¡Copiado!",
     "copyFailed": "Error al copiar",
@@ -323,7 +323,7 @@
     "savingsPerOrigin": "Lo que ahorra cada viajero",
     "savingsVsWorst": "vs volar a {{dest}}",
     "copySearchLink": "Copiar enlace de búsqueda",
-    "splitTitle": "Dividir costes",
+    "splitTitle": "Quién debe a quién",
     "splitEqual": "Partes iguales",
     "splitActual": "Cada uno el suyo",
     "splitGets": "recupera",
@@ -378,7 +378,7 @@
     "colDest": "Destino",
     "colPrice": "Por persona",
     "colFair": "Equidad",
-    "selected": "En pantalla",
+    "selected": "En tu tarjeta",
     "select": "Ver {{city}}",
     "more": "Más opciones",
     "exportCsv": "Descargar CSV"
@@ -397,7 +397,7 @@
     "noReturn": "Elige una fecha de vuelta.",
     "returnBeforeDep": "La vuelta debe ser después de la ida.",
     "noBudgetResults": "Sin resultados dentro de ese presupuesto. Sube el límite o desactívalo.",
-    "noResults": "Sin resultados para esas ciudades y fechas. Prueba con otras fechas.",
+    "noResults": "No hay salidas comunes para esas ciudades y fechas. Prueba con otras fechas.",
     "serverWaking": "El servidor se está iniciando. Reintentando automáticamente…",
     "unexpected": "Algo salió mal. Inténtalo de nuevo.",
     "connection": "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
@@ -446,12 +446,12 @@
     "boardTitle": "Buscando vuestro punto de encuentro",
     "messages": [
       "Despertando el servidor…",
-      "Conectando con aerolíneas…",
-      "Buscando vuelos desde tus ciudades…",
+      "Consultando las salidas de cada ciudad…",
+      "Cruzando precios y fechas…",
       "Comparando destinos…",
-      "Calculando el mejor precio para el grupo…",
-      "Un momento más…",
-      "Casi listo…"
+      "Calculando lo que paga cada uno…",
+      "Última llamada: un momento más…",
+      "Preparando vuestra tarjeta de embarque…"
     ],
     "ariaLabel": "Buscando vuelos",
     "steps": [
@@ -646,7 +646,7 @@
   },
   "cheaperDate": {
     "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
-    "use": "Usar esta fecha"
+    "use": "Cambiar a esta fecha"
   },
   "arrivalCoord": {
     "diffDays": "Con los vuelos más baratos, llegáis en días distintos ({{time}} de diferencia).",

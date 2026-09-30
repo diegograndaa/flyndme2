@@ -7,12 +7,12 @@
     "serverWaking": "Server waking up…"
   },
   "landing": {
-    "eyebrow": "Many cities. One decision.",
+    "eyebrow": "Many departures. One destination.",
     "title": "The perfect meeting point",
     "titleAccent": "perfect",
     "lead": "FlyndMe compares flights from everyone's city and finds the cheapest and fairest destination for everyone.",
     "diagramAlt": "Flight paths from several origin cities converging on a single meeting point",
-    "diagramMeet": "Best meeting point",
+    "diagramMeet": "Meeting point",
     "cta": "Start searching",
     "chips": [
       "Multi-origin",
@@ -20,7 +20,7 @@
       "Fairness score",
       "Budget per person"
     ],
-    "howTitle": "How does it work?",
+    "howTitle": "Your itinerary in 3 steps",
     "steps": [
       "Add the departure city of each traveler.",
       "FlyndMe compares flights with flexible dates and finds the cheapest destination.",
@@ -157,7 +157,7 @@
     ]
   },
   "search": {
-    "title": "Where are you flying from?",
+    "title": "Where are you all taking off from?",
     "subtitle": "Add each traveler's city and pick your dates.",
     "originLabel": "Departure cities",
     "placeholder": "Type city or code…",
@@ -166,7 +166,7 @@
     "removeTitle": "Remove traveler",
     "addTraveler": "+ Add traveler",
     "tryExample": "Try example: MAD + LON + BER",
-    "tripTypeLabel": "Trip type",
+    "tripTypeLabel": "Ticket type",
     "oneway": "One way",
     "roundtrip": "Round trip",
     "datesLabel": "When?",
@@ -185,7 +185,7 @@
     "budgetOn": "On",
     "budgetOff": "Off",
     "submit": "Meet up for less",
-    "searching": "Searching…",
+    "searching": "Checking departures…",
     "footnoteTime": "Results in ~5 s",
     "footnotePrices": "Real flight prices",
     "flexLabel": "Flexible dates",
@@ -265,7 +265,7 @@
     "bookSub": "One link per traveler. Book on Aviasales or compare on Skyscanner and Google Flights.",
     "bookCta": "Book",
     "bookLabel": "Book flights — one link per traveler",
-    "viewAlternatives": "View alternatives",
+    "viewAlternatives": "See other departures",
     "share": "Share",
     "copied": "Copied!",
     "copyFailed": "Copy failed",
@@ -323,7 +323,7 @@
     "savingsPerOrigin": "What each traveler saves",
     "savingsVsWorst": "vs flying to {{dest}}",
     "copySearchLink": "Copy search link",
-    "splitTitle": "Cost split",
+    "splitTitle": "Who owes whom",
     "splitEqual": "Split equally",
     "splitActual": "Each pays own",
     "splitGets": "gets back",
@@ -378,7 +378,7 @@
     "colDest": "Destination",
     "colPrice": "Per person",
     "colFair": "Fairness",
-    "selected": "On screen",
+    "selected": "On your pass",
     "select": "See {{city}}",
     "more": "More options",
     "exportCsv": "Download CSV"
@@ -397,7 +397,7 @@
     "noReturn": "Pick a return date.",
     "returnBeforeDep": "Return date must be after departure.",
     "noBudgetResults": "No results within that budget. Try increasing the limit or turn it off.",
-    "noResults": "No results for those cities and dates. Try different dates.",
+    "noResults": "No shared departures for those cities and dates. Try different dates.",
     "serverWaking": "Server is starting up. Retrying automatically…",
     "unexpected": "Something went wrong. Please try again.",
     "connection": "Couldn't reach the server. Check your connection and try again.",
@@ -446,12 +446,12 @@
     "boardTitle": "Finding your meeting point",
     "messages": [
       "Waking up the server…",
-      "Connecting to airlines…",
-      "Searching flights from your cities…",
+      "Checking departures from each city…",
+      "Matching fares and dates…",
       "Comparing destinations…",
-      "Calculating the best price for your group…",
-      "Just a moment more…",
-      "Almost there…"
+      "Working out what each of you pays…",
+      "Final call: just a moment more…",
+      "Printing your boarding pass…"
     ],
     "ariaLabel": "Searching flights",
     "steps": [
@@ -646,7 +646,7 @@
   },
   "cheaperDate": {
     "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
-    "use": "Use this date"
+    "use": "Switch to this date"
   },
   "arrivalCoord": {
     "diffDays": "With the cheapest flights, you land on different days ({{time}} apart).",
