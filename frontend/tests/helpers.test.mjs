@@ -113,3 +113,34 @@ test("MULTI_AIRPORT: todos los códigos ciudad existen en AIRPORTS", () => {
     assert.ok(AIRPORT_MAP[cityCode], `código ciudad ${cityCode} no está en AIRPORTS`);
   }
 });
+
+test("searchAirports: código y prefijo antes que coincidencias a mitad de palabra", async () => {
+  const { searchAirports } = await import("../src/utils/helpers.js");
+  const lon = searchAirports("lon").map((a) => a.code);
+  assert.equal(lon[0], "LON", "LON primero");
+  assert.ok(lon.indexOf("BCN") > 0, "Barce·lon·a después");
+  assert.equal(searchAirports("MAD")[0].code, "MAD");
+});
+
+test("searchAirports: nombres en español, sin acentos y con alias visible", async () => {
+  const { searchAirports } = await import("../src/utils/helpers.js");
+  const londres = searchAirports("LONDRES");
+  assert.equal(londres[0].code, "LON");
+  assert.equal(londres[0].alias, "Londres");
+  assert.equal(searchAirports("munich")[0].code, "MUC");
+  assert.equal(searchAirports("MÚNICH")[0].code, "MUC");
+  assert.equal(searchAirports("praga")[0].code, "PRG");
+  assert.equal(searchAirports("mallorca")[0].code, "PMI", "palabra dentro del nombre");
+  assert.equal(searchAirports("Madrid")[0].alias, undefined, "sin alias si casa el nombre del catálogo");
+});
+
+test("searchAirports: país, exclusiones y límite", async () => {
+  const { searchAirports, POPULAR_ORIGINS, AIRPORT_MAP } = await import("../src/utils/helpers.js");
+  const es = searchAirports("españa", { limit: 10 });
+  assert.ok(es.length >= 3 && es.every((a) => a.country === "Spain"));
+  assert.ok(!searchAirports("mad", { exclude: ["MAD"] }).some((a) => a.code === "MAD"));
+  assert.ok(searchAirports("a").length <= 6);
+  assert.deepEqual(searchAirports("   "), []);
+  assert.deepEqual(searchAirports("zzzz"), []);
+  for (const c of POPULAR_ORIGINS) assert.ok(AIRPORT_MAP[c], `popular desconocido: ${c}`);
+});

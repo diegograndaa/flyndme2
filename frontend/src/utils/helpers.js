@@ -86,6 +86,73 @@ export function airportName(code) {
 
 export const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
 
+// ── Búsqueda de aeropuertos (autocompletado) ─────────────────────────────────
+// Nombres en español y variantes habituales: quien escribe "Londres", "Múnich"
+// o "Praga" debe encontrar su ciudad aunque el catálogo esté en inglés.
+const AIRPORT_ALIASES = {
+  AGP: ["Málaga"], PMI: ["Palma", "Mallorca"], TFS: ["Tenerife Sur"],
+  LON: ["Londres"], EDI: ["Edimburgo"], PAR: ["París"], MRS: ["Marsella"],
+  NCE: ["Niza"], ROM: ["Roma"], MIL: ["Milán", "Milano"], NAP: ["Nápoles", "Napoli"],
+  BER: ["Berlín"], MUC: ["Múnich", "München"], FRA: ["Fráncfort"], AMS: ["Ámsterdam"],
+  LIS: ["Lisboa"], OPO: ["Oporto"], DUB: ["Dublín"], BRU: ["Bruselas"],
+  GVA: ["Ginebra"], ZRH: ["Zúrich"], VIE: ["Viena", "Wien"], PRG: ["Praga", "Praha"],
+  WAW: ["Varsovia"], KRK: ["Cracovia", "Kraków"], OTP: ["Bucarest"], SOF: ["Sofía"],
+  BEG: ["Belgrado"], CPH: ["Copenhague"], STO: ["Estocolmo"], TLL: ["Tallin"],
+  VNO: ["Vilna"], ATH: ["Atenas"], SKG: ["Salónica", "Tesalónica"], RHO: ["Rodas"],
+  IST: ["Estambul"], RAK: ["Marrakech", "Marrakesh"], TLV: ["Tel Aviv-Yafo"],
+};
+const COUNTRY_ALIASES = {
+  Spain: ["España"], "United Kingdom": ["Reino Unido", "UK", "Inglaterra", "Escocia"],
+  France: ["Francia"], Italy: ["Italia"], Germany: ["Alemania"],
+  Netherlands: ["Países Bajos", "Holanda"], Ireland: ["Irlanda"], Belgium: ["Bélgica"],
+  Switzerland: ["Suiza"], Czechia: ["Chequia", "República Checa"], Poland: ["Polonia"],
+  Hungary: ["Hungría"], Romania: ["Rumanía"], Croatia: ["Croacia"], Denmark: ["Dinamarca"],
+  Finland: ["Finlandia"], Norway: ["Noruega"], Sweden: ["Suecia"], Latvia: ["Letonia"],
+  Lithuania: ["Lituania"], Greece: ["Grecia"], Turkey: ["Turquía"], Morocco: ["Marruecos"],
+};
+
+// Minúsculas y sin acentos ("MÚNICH" → "munich")
+export function foldText(s) {
+  return String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+// Salidas más habituales: se proponen al enfocar un origen vacío.
+export const POPULAR_ORIGINS = ["MAD", "BCN", "LON", "PAR", "BER", "ROM", "AMS", "LIS"];
+
+/**
+ * Aeropuertos que encajan con lo escrito, mejor coincidencia primero:
+ * código exacto > nombre exacto > código empieza por > nombre empieza por >
+ * alguna palabra del nombre empieza por > contiene (≥3 letras) > país.
+ * Devuelve copias de AIRPORTS con `alias` cuando el acierto vino de un nombre
+ * alternativo (para enseñar "London · Londres").
+ */
+export function searchAirports(query, { exclude = [], limit = 6 } = {}) {
+  const q = foldText(query);
+  if (!q) return [];
+  const ex = new Set(exclude.map((c) => String(c).toUpperCase()));
+  const hits = [];
+  for (const a of AIRPORTS) {
+    if (ex.has(a.code)) continue;
+    const code = a.code.toLowerCase();
+    const names = [a.city, ...(AIRPORT_ALIASES[a.code] || [])];
+    const folded = names.map(foldText);
+    const countries = [a.country, ...(COUNTRY_ALIASES[a.country] || [])].map(foldText);
+    const rank = (test) => folded.findIndex(test);
+    let score = -1;
+    let via = -1;
+    if (code === q) score = 0;
+    else if ((via = rank((n) => n === q)) >= 0) score = 1;
+    else if (code.startsWith(q)) score = 2;
+    else if ((via = rank((n) => n.startsWith(q))) >= 0) score = 3;
+    else if ((via = rank((n) => n.split(/[\s-]+/).some((w) => w.startsWith(q)))) >= 0) score = 4;
+    else if (q.length >= 3 && (via = rank((n) => n.includes(q))) >= 0) score = 5;
+    else if (q.length >= 2 && countries.some((c) => c.startsWith(q))) score = 6;
+    if (score < 0) continue;
+    hits.push({ a: via > 0 ? { ...a, alias: names[via] } : a, score });
+  }
+  return hits.sort((x, y) => x.score - y.score).slice(0, limit).map((h) => h.a);
+}
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 export function getBaseUrl() {

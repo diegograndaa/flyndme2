@@ -3,18 +3,24 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Check, Plus, Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, Hand, List, PlaneTakeoff } from "lucide-react";
+import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
-  AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag,
+  AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
+  formatDate, weekdayOf, todayISO, countryFlag, searchAirports, foldText,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
-import { useFocusTrap } from "../hooks/useFocusTrap";
 import { tapHaptic } from "../utils/haptics";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
 // único consumidor es este componente).
 const TYPING_EXAMPLES = ["Madrid", "London", "Berlin", "Rome", "Paris", "Lisbon", "MAD", "LON", "BCN"];
+
+// Resalta en la sugerencia lo que coincide con lo escrito (sin acentos).
+function MatchText({ text, q }) {
+  const i = q ? foldText(text).indexOf(q) : -1;
+  if (i < 0 || foldText(text).length !== String(text).length) return text;
+  return <>{text.slice(0, i)}<mark className="sf-ac-mark">{text.slice(i, i + q.length)}</mark>{text.slice(i + q.length)}</>;
+}
 
 function useDateWarnings(departureDate, returnDate, tripType) {
   const { t } = useI18n();
@@ -124,14 +130,8 @@ const SearchPage = React.memo(function SearchPage({
   recentSearches, onLoadRecent, onClearRecent,
 }) {
   const { t } = useI18n();
-  const [activeIdx, setActiveIdx] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
-  const [showMobileAirports, setShowMobileAirports] = useState(false);
-  // Focus-trap solo cuando actúa como bottom drawer modal en móvil (en
-  // escritorio es un sidebar inline y showMobileAirports nunca se activa:
-  // el botón que lo abre está display:none).
-  const drawerTrapRef = useFocusTrap(showMobileAirports, () => setShowMobileAirports(false));
   const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
   const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
   const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
@@ -148,49 +148,44 @@ const SearchPage = React.memo(function SearchPage({
 
   const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
 
-  const safeIdx = activeIdx >= 0 && activeIdx < origins.length ? activeIdx : 0;
-  const filterVal = origins[safeIdx]?.trim().toLowerCase() || "";
-
-  // Memoize airport filtering to avoid blocking the main thread on every keystroke (fixes INP)
-  const filtered = useMemo(() => {
-    if (!filterVal) return AIRPORTS;
-    return AIRPORTS.filter((a) =>
-      a.code.toLowerCase().includes(filterVal) ||
-      a.city.toLowerCase().includes(filterVal) ||
-      a.country.toLowerCase().includes(filterVal)
-    );
-  }, [filterVal]);
-
-  // Inline autocomplete suggestions (max 5, only when typing 1+ chars)
-  const acSuggestions = useMemo(() => {
-    if (acFocus < 0) return [];
-    const val = (origins[acFocus] || "").trim().toLowerCase();
-    if (!val || val.length < 1) return [];
-    // Don't show if already a valid code
-    if (AIRPORT_MAP[val.toUpperCase()]) return [];
-    return AIRPORTS.filter((a) =>
-      a.code.toLowerCase().includes(val) ||
-      a.city.toLowerCase().includes(val)
-    ).slice(0, 5);
+  // Sugerencias del campo de origen (sustituyen al antiguo selector lateral):
+  // vacío y enfocado → salidas populares; escribiendo → searchAirports (código,
+  // nombre, nombres en español, país). Nunca repite una ciudad ya elegida en
+  // otra fila; si el campo ya es un código válido no se abre.
+  const acState = useMemo(() => {
+    if (acFocus < 0) return { items: [], popular: false, q: "" };
+    const raw = (origins[acFocus] || "").trim();
+    const exclude = origins.filter((o, i) => i !== acFocus && o?.trim()).map((o) => normalizeCode(o));
+    if (!raw) {
+      return { items: POPULAR_ORIGINS.filter((c) => !exclude.includes(c)).slice(0, 6).map((c) => AIRPORT_MAP[c]), popular: true, q: "" };
+    }
+    if (AIRPORT_MAP[raw.toUpperCase()]) return { items: [], popular: false, q: "" };
+    return { items: searchAirports(raw, { exclude, limit: 6 }), popular: false, q: foldText(raw) };
   }, [acFocus, origins]);
+  const acSuggestions = acState.items;
+
+  // Elegir una sugerencia: fija el código y salta al siguiente origen vacío
+  // (con dos filas vacías: MAD → la fila 2 ya enseña sus salidas populares).
+  const inputRefs = useRef([]);
+  const pickOrigin = (idx, code) => {
+    const copy = [...origins];
+    copy[idx] = code;
+    setOrigins(copy);
+    tapHaptic();
+    const next = copy.findIndex((o, i) => i > idx && !o.trim());
+    const nextAny = next >= 0 ? next : copy.findIndex((o, i) => i !== idx && !o.trim());
+    if (nextAny >= 0 && inputRefs.current[nextAny]) {
+      inputRefs.current[nextAny].focus();
+    } else {
+      setAcFocus(-1);
+    }
+  };
 
   // Memoize destination airports (excludes selected origins)
   const destAirports = useMemo(() => {
     const originCodes = new Set(origins.map(o => normalizeCode(o)));
     return AIRPORTS.filter(a => !originCodes.has(a.code));
   }, [origins]);
-
-  const handleClickAirport = (code) => {
-    const copy = [...origins];
-    if (!copy[safeIdx]?.trim()) {
-      copy[safeIdx] = code;
-    } else {
-      const empty = copy.findIndex((v) => !v.trim());
-      if (empty !== -1) copy[empty] = code;
-      else if (!copy.includes(code)) copy.push(code);
-    }
-    setOrigins(copy);
-  };
 
   const BUDGET_MIN = 30; const BUDGET_MAX = 800; const BUDGET_STEP = 10;
 
@@ -202,9 +197,10 @@ const SearchPage = React.memo(function SearchPage({
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: 960 }}>
+    <div className="container py-4" style={{ maxWidth: 720 }}>
+      {/* Una sola columna: el selector lateral de aeropuertos se retiró (las
+          sugerencias del propio campo ya cubren la búsqueda y la exploración). */}
       <div className="sf-grid">
-        {/* ── Left: form ── */}
         <div className="sf-form fm-card">
           <h2 className="sf-title">{t("search.title")}</h2>
           <p className="sf-sub">{t("search.subtitle")}</p>
@@ -269,7 +265,7 @@ const SearchPage = React.memo(function SearchPage({
                   </div>
                 </div>
                 {tripType === "roundtrip" && (
-                  <div className="col-sm-6">
+                  <div className="col-sm-6 sf-ret-col">
                     <label className="sf-input-label" htmlFor="sf-date-ret">{t("search.return")}</label>
                     <div className="sf-date-wrap">
                       <input type="date" id="sf-date-ret" className="form-control sf-input"
@@ -310,7 +306,7 @@ const SearchPage = React.memo(function SearchPage({
                   : "";
                 return (
                   <div key={idx}
-                    className={`sf-origin-row${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
+                    className={`sf-origin-row${city && origin.trim() ? " sf-origin-row--set" : ""}${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
                     draggable={origins.length > 1 && !loading}
                     onDragStart={() => setDragIdx(idx)}
                     onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
@@ -331,7 +327,7 @@ const SearchPage = React.memo(function SearchPage({
                     </span>
                     <div className="sf-input-wrap">
                       {/* Typing placeholder animation (coordinated across all empty inputs) */}
-                      {empty && showTyping && typingSlice && (
+                      {empty && showTyping && typingSlice && acFocus !== idx && (
                         <span className={`sf-typing-placeholder${typingActive ? " sf-typing-placeholder--active" : ""}`}>
                           {typingSlice}
                         </span>
@@ -345,6 +341,8 @@ const SearchPage = React.memo(function SearchPage({
                         aria-autocomplete="list"
                         aria-expanded={acFocus === idx && acSuggestions.length > 0}
                         aria-controls={`sf-ac-list-${idx}`}
+                        aria-activedescendant={acFocus === idx && acSuggestions[acHighlight] ? `sf-ac-${idx}-${acSuggestions[acHighlight].code}` : undefined}
+                        ref={(el) => { inputRefs.current[idx] = el; }}
                         value={origin}
                         onChange={(e) => {
                           const val = e.target.value.toUpperCase();
@@ -356,34 +354,42 @@ const SearchPage = React.memo(function SearchPage({
                           setAcFocus(idx);
                           setAcHighlight(0);
                         }}
-                        onFocus={() => { setActiveIdx(idx); setAcFocus(idx); setAcHighlight(0); }}
-                        onBlur={() => setTimeout(() => setAcFocus(-1), 150)}
+                        onFocus={() => { setAcFocus(idx); setAcHighlight(0); }}
+                        onBlur={() => setTimeout(() => setAcFocus((f) => (f === idx ? -1 : f)), 150)}
                         onKeyDown={(e) => {
                           if (acFocus === idx && acSuggestions.length > 0) {
                             if (e.key === "ArrowDown") { e.preventDefault(); setAcHighlight((h) => Math.min(h + 1, acSuggestions.length - 1)); }
                             else if (e.key === "ArrowUp") { e.preventDefault(); setAcHighlight((h) => Math.max(h - 1, 0)); }
                             else if (e.key === "Enter" && acSuggestions[acHighlight]) {
                               e.preventDefault();
-                              const copy = [...origins]; copy[idx] = acSuggestions[acHighlight].code; setOrigins(copy); setAcFocus(-1);
+                              pickOrigin(idx, acSuggestions[acHighlight].code);
                             }
+                            else if (e.key === "Escape") { setAcFocus(-1); }
                           }
                         }}
                         disabled={loading}
                         autoComplete="off"
                       />
-                      {/* Inline autocomplete dropdown */}
+                      {/* Sugerencias como mini panel de salidas */}
                       {acFocus === idx && acSuggestions.length > 0 && (
-                        <div className="sf-ac-dropdown" role="listbox" id={`sf-ac-list-${idx}`}>
+                        <div className={`sf-ac-dropdown${acState.popular ? " sf-ac-dropdown--popular" : ""}`} role="listbox" id={`sf-ac-list-${idx}`}
+                          aria-label={acState.popular ? t("search.acPopular") : t("search.acMatches")}>
+                          {acState.popular && <div className="sf-ac-head" aria-hidden="true">{t("search.acPopular")}</div>}
                           {acSuggestions.map((a, ai) => (
-                            <div key={a.code}
+                            <div key={a.code} id={`sf-ac-${idx}-${a.code}`}
                               role="option"
                               aria-selected={ai === acHighlight}
+                              style={{ "--i": ai }}
                               className={`sf-ac-item${ai === acHighlight ? " sf-ac-item--hl" : ""}`}
-                              onMouseDown={(e) => { e.preventDefault(); const copy = [...origins]; copy[idx] = a.code; setOrigins(copy); setAcFocus(-1); }}
+                              onMouseDown={(e) => { e.preventDefault(); pickOrigin(idx, a.code); }}
                               onMouseEnter={() => setAcHighlight(ai)}>
                               <span className="sf-ac-code">{a.code}</span>
-                              <span className="sf-ac-city">{a.city}</span>
+                              <span className="sf-ac-city">
+                                <MatchText text={a.city} q={acState.q} />
+                                {a.alias && <span className="sf-ac-alias"> · <MatchText text={a.alias} q={acState.q} /></span>}
+                              </span>
                               <span className="sf-ac-country">{countryFlag(a.code)} {a.country}</span>
+                              <span className="sf-ac-go" aria-hidden="true"><Plane size={14} /></span>
                             </div>
                           ))}
                         </div>
@@ -413,7 +419,7 @@ const SearchPage = React.memo(function SearchPage({
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
                             [p[idx], p[idx - 1]] = [p[idx - 1], p[idx]];
-                            setOrigins(o); setPassengers(p); setActiveIdx(idx - 1);
+                            setOrigins(o); setPassengers(p);
                           }} aria-hidden="false"><ArrowUp size={15} /></button>
                       )}
                       {origins.length > 1 && idx < origins.length - 1 && (
@@ -422,7 +428,7 @@ const SearchPage = React.memo(function SearchPage({
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
                             [p[idx], p[idx + 1]] = [p[idx + 1], p[idx]];
-                            setOrigins(o); setPassengers(p); setActiveIdx(idx + 1);
+                            setOrigins(o); setPassengers(p);
                           }}><ArrowDown size={15} /></button>
                       )}
                     </div>
@@ -435,7 +441,6 @@ const SearchPage = React.memo(function SearchPage({
                           const pCopy = passengers.filter((_, i) => i !== idx);
                           setOrigins(copy.length ? copy : [""]);
                           setPassengers(pCopy.length ? pCopy : [1]);
-                          setActiveIdx(Math.min(safeIdx, copy.length - 1));
                         }}
                         disabled={loading}
                         title={t("search.removeTitle")}
@@ -446,17 +451,13 @@ const SearchPage = React.memo(function SearchPage({
                 );
               })}
               <div className="sf-origin-actions">
-                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setPassengers([...passengers, 1]); setActiveIdx(origins.length); }} disabled={loading || origins.length >= 8}>
+                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setPassengers([...passengers, 1]); }} disabled={loading || origins.length >= 8}>
                   {t("search.addTraveler")}
-                </button>
-                <button type="button" className="sf-pick-btn" onClick={() => setShowMobileAirports(true)} disabled={loading}>
-                  <List size={14} aria-hidden="true" /> {t("search.pickAirport")}
                 </button>
                 {origins.length === 1 && !origins[0].trim() && (
                   <button type="button" className="sf-example-btn" onClick={() => {
                     setOrigins(["MAD", "LON", "BER"]);
                     setPassengers([1, 1, 1]);
-                    setActiveIdx(0);
                   }} disabled={loading}>
                     {t("search.tryExample")}
                   </button>
@@ -682,7 +683,7 @@ const SearchPage = React.memo(function SearchPage({
                     const c = normalizeCode(o);
                     const flag = countryFlag(c);
                     return (
-                      <span key={i} className="sf-summary-chip" title={cityOf(c) || c}>
+                      <span key={`${c}-${i}`} className="sf-summary-chip" title={cityOf(c) || c}>
                         {flag && <span className="sf-summary-flag">{flag}</span>}
                         {c}
                         {(passengers[origins.indexOf(o)] || 1) > 1 && (
@@ -723,65 +724,6 @@ const SearchPage = React.memo(function SearchPage({
             </div>
           </form>
         </div>
-
-        {/* ── Right: airport picker (desktop sidebar / mobile bottom drawer) ── */}
-        {showMobileAirports && <div className="sf-drawer-overlay" onClick={() => setShowMobileAirports(false)} />}
-        <aside className={`sf-airports fm-card${showMobileAirports ? " sf-airports--open" : ""}`}
-          ref={drawerTrapRef}
-          role={showMobileAirports ? "dialog" : undefined}
-          aria-modal={showMobileAirports ? "true" : undefined}
-          aria-label={t("search.airportsTitle")}>
-          <div className="sf-drawer-handle" onClick={() => setShowMobileAirports(false)} aria-hidden="true">
-            <span className="sf-drawer-bar" />
-          </div>
-          <div className="sf-airports-header">
-            <div className="sf-label">{t("search.airportsTitle")}</div>
-            <button type="button" className="sf-drawer-close" onClick={() => setShowMobileAirports(false)}>
-              {t("search.closeDrawer")}
-            </button>
-          </div>
-          <div className="sf-picker-hint">
-            <span className="sf-picker-hint-icon"><Hand size={15} aria-hidden="true" /></span>
-            {t("search.airportsHint", { n: safeIdx + 1 })}
-          </div>
-          <div className="sf-airport-list">
-            {filtered.map((a) => {
-              const isSelected = origins.some((o) => normalizeCode(o) === a.code);
-              return (
-                <div key={a.code}
-                  className={`sf-airport-item${isSelected ? " sf-airport-item--selected" : ""}`}
-                  onClick={() => !loading && handleClickAirport(a.code)}
-                  role="button" tabIndex={0} aria-pressed={isSelected}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!loading) handleClickAirport(a.code); } }}>
-                  <span className="sf-airport-code">{a.code}</span>
-                  <span className="sf-airport-city">{a.city}</span>
-                  <span className="sf-airport-country">{a.country}</span>
-                  {isSelected
-                    ? <span className="sf-airport-check"><Check size={14} /></span>
-                    : <span className="sf-airport-add" aria-hidden="true"><Plus size={15} /></span>}
-                </div>
-              );
-            })}
-            {!filtered.length && <div className="text-center small" style={{ color: "var(--slate-400)", padding: "16px 0" }}>{t("search.noMatches")}</div>}
-          </div>
-          {/* Guía rápida (solo desktop): da propósito a la columna cuando la
-              lista de aeropuertos se filtra a pocos resultados. El CSS la oculta
-              en móvil (donde la aside es un drawer). */}
-          <div className="sf-aside-guide">
-            <div className="sf-aside-guide-title">{t("search.asideGuideTitle")}</div>
-            <ol className="sf-aside-guide-list">
-              {(() => {
-                const gs = t("search.asideGuideSteps");
-                return Array.isArray(gs) ? gs.map((s, i) => (
-                  <li key={i} className="sf-aside-guide-step">
-                    <span className="sf-aside-guide-num">{i + 1}</span>
-                    <span>{s}</span>
-                  </li>
-                )) : null;
-              })()}
-            </ol>
-          </div>
-        </aside>
       </div>
     </div>
   );

@@ -66,8 +66,7 @@
 .lp-example-result.lp-example-result { border-radius: var(--radius-md); }
 
 /* ── Formulario de búsqueda ────────────────────────────────────── */
-.sf-form.sf-form,
-.sf-airports.sf-airports {
+.sf-form.sf-form {
   background: var(--white);
   border: none;
   border-radius: var(--radius-lg);

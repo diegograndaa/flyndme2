@@ -10,12 +10,13 @@
 //                        (antes: podio Top 3 + barra de stats + lista aparte)
 // Presentacionales puros (reciben props, emiten eventos). Datos 100% reales:
 // precios/equidad vienen tal cual del backend, nada se inventa.
-import React from "react";
+import React, { useRef } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, formatDate } from "../utils/helpers";
 import { convertPrice, sortByCriterion } from "../utils/resultsLogic";
 import { FlapText } from "./FlapBoard";
 import { ChevronRight } from "lucide-react";
+import { useFlip } from "../hooks/useFlip";
 
 function money(v, currency) {
   return currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency);
@@ -112,8 +113,12 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
   flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect,
 }) {
   const { t } = useI18n();
-  if (!flights || flights.length < 2) return null;
-  const rows = sortByCriterion(flights, criterion);
+  const listRef = useRef(null);
+  const rows = flights && flights.length >= 2 ? sortByCriterion(flights, criterion) : [];
+  // Al cambiar de criterio las filas se recolocan deslizándose (FLIP): se ve
+  // qué destino sube y cuál baja en vez de un salto brusco.
+  useFlip(listRef, rows.map((f) => normalizeCode(f.destination)).join(","));
+  if (rows.length < 2) return null;
   const currentCode = current ? normalizeCode(current.destination) : "";
   return (
     <section className="fm-board" id="fm-board" aria-labelledby="fm-board-title">
@@ -139,14 +144,14 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
         <span />
       </div>
 
-      <ol className="fm-board-rows">
+      <ol className="fm-board-rows" ref={listRef}>
         {rows.map((f, i) => {
           const code = normalizeCode(f.destination);
           const city = cityOf(code) || code;
           const isCurrent = code === currentCode;
           const fk = fairnessKey(f.fairnessScore ?? 0);
           return (
-            <li key={code} style={{ "--i": i }}>
+            <li key={code} data-flip={code} style={{ "--i": i }}>
               <button type="button"
                 className={`fm-board-row${singleOrigin ? " fm-board-row--single" : ""}${isCurrent ? " fm-board-row--current" : ""}`}
                 onClick={() => !isCurrent && onSelect && onSelect(f)}
