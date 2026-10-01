@@ -8,7 +8,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
 import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2 } from "lucide-react";
-import { AIRPORTS, AIRPORT_MAP, normalizeCode, cityOf, formatDate, weekdayOf, countryFlag } from "../utils/helpers";
+import { AIRPORT_MAP, normalizeCode, cityOf, formatDate, weekdayOf, countryFlag, searchAirports, foldText } from "../utils/helpers";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
 // can, so the search receives the same city codes the main form produces.
@@ -17,8 +17,10 @@ function resolveOrigin(input) {
   if (!raw) return "";
   const code = normalizeCode(raw);
   if (AIRPORT_MAP[code]) return code;
-  const byCity = AIRPORTS.find((a) => a.city.toLowerCase() === raw.toLowerCase());
-  return byCity ? byCity.code : code;
+  // Nombre exacto de la ciudad, también en español ("Bucarest", "Atenas")
+  const hit = searchAirports(raw, { limit: 1 })[0];
+  const exact = hit && [hit.city, hit.alias].some((n) => n && foldText(n) === foldText(raw));
+  return exact ? hit.code : code;
 }
 
 function GroupPlanner({
@@ -40,24 +42,8 @@ function GroupPlanner({
   const members = group?.members || [];
   const canSearch = members.length >= 1 && !loading;
 
-  const suggestions = useMemo(() => {
-    const q = city.trim().toLowerCase();
-    if (q.length < 1) return [];
-    // Rank so an exact/prefix code or a city-name PREFIX beats a mid-word
-    // substring (otherwise "lon" surfaces Barce·lon·a before LON / London).
-    const scored = [];
-    for (const a of AIRPORTS) {
-      const code = a.code.toLowerCase();
-      const cityL = a.city.toLowerCase();
-      let score = -1;
-      if (code === q) score = 0;
-      else if (code.startsWith(q)) score = 1;
-      else if (cityL.startsWith(q)) score = 2;
-      else if (cityL.includes(q)) score = 3;
-      if (score >= 0) scored.push({ a, score });
-    }
-    return scored.sort((x, y) => x.score - y.score).slice(0, 6).map((s) => s.a);
-  }, [city]);
+  // Misma búsqueda que el formulario: código, nombre, nombres en español, país.
+  const suggestions = useMemo(() => searchAirports(city, { limit: 6 }), [city]);
 
   function pickSuggestion(a) {
     setCity(a.code);

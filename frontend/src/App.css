@@ -638,56 +638,8 @@ body {
   grid-template-columns: 1fr;
   gap: 20px;
 }
-@media (min-width: 768px) {
-  .sf-grid { grid-template-columns: 1.4fr 0.6fr; }
-}
 
 .sf-form     { padding: 32px; }
-.sf-airports { padding: 24px; }
-
-/* Guía rápida en la columna del selector. Solo desktop (en móvil la aside es
-   un drawer): rellena el hueco cuando la lista de aeropuertos es corta. */
-.sf-aside-guide { display: none; }
-@media (min-width: 768px) {
-  .sf-aside-guide {
-    display: block;
-    margin-top: 18px;
-    padding-top: 18px;
-    border-top: 1px solid var(--border, rgba(0,0,0,.08));
-  }
-}
-.sf-aside-guide-title {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .02em;
-  color: var(--slate-500);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-.sf-aside-guide-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.sf-aside-guide-step {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: start;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--slate-600);
-}
-.sf-aside-guide-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-full);
-  background: var(--primary-50, rgba(255,194,14,.12));
-  color: var(--primary);
-  font-weight: 800;
-  font-size: 12px;
-}
 
 .sf-title {
   font-family: var(--font-display);
@@ -991,67 +943,6 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Airport picker */
-.sf-airport-list {
-  margin-top: 12px;
-  max-height: 400px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--slate-300) transparent;
-}
-.sf-airport-list::-webkit-scrollbar { width: 5px; }
-.sf-airport-list::-webkit-scrollbar-thumb {
-  background: var(--slate-300);
-  border-radius: var(--radius-full);
-}
-
-.sf-airport-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  border: 1.5px solid var(--slate-200);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  cursor: pointer;
-  transition: all .15s;
-}
-.sf-airport-item:hover {
-  border-color: var(--primary);
-  background: var(--primary-50);
-  box-shadow: var(--shadow-xs);
-  transform: translateY(-1px);
-}
-
-.sf-airport-code {
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--primary);
-  min-width: 38px;
-  letter-spacing: .3px;
-}
-.sf-airport-city {
-  font-size: 14px;
-  color: var(--slate-700);
-  flex: 1;
-  font-weight: 500;
-}
-.sf-airport-country {
-  font-size: 12px;
-  color: var(--slate-500); /* AA sobre blanco */
-  font-weight: 500;
-}
-/* Afordancia "añadir": un + sutil que se enciende al hover */
-.sf-airport-add {
-  display: inline-flex;
-  color: var(--slate-300);
-  transition: color .15s ease, transform .15s ease;
-}
-.sf-airport-item:hover .sf-airport-add { color: var(--primary); transform: scale(1.12); }
-
 /* ── Input city label (shows city name next to code) ──────── */
 
 .sf-input-wrap {
@@ -1134,37 +1025,6 @@ body {
   margin-left: 6px;
   cursor: help;
   vertical-align: middle;
-}
-
-/* ── Airport picker hint ───────────────────────────────────── */
-
-.sf-picker-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--primary);
-  font-weight: 600;
-  background: var(--primary-50);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  margin-top: 8px;
-}
-.sf-picker-hint-icon {
-  font-size: 14px;
-}
-
-/* ── Airport item selected state ───────────────────────────── */
-
-.sf-airport-item--selected {
-  border-color: var(--primary) !important;
-  background: var(--primary-50) !important;
-}
-.sf-airport-check {
-  color: var(--primary);
-  font-weight: 800;
-  font-size: 14px;
-  margin-left: auto;
 }
 
 /* form-check-input brand color */
@@ -1633,109 +1493,6 @@ body {
   border: none;
   cursor: pointer;
   text-decoration: underline;
-}
-
-/* ── Mobile airport picker button ── */
-
-/* Mobile-only: a QUIET fallback to browse the airport drawer. The typed input +
-   autocomplete is the primary way to enter a city; this is demoted to a muted
-   text link (was a prominent filled pill that competed with the input). */
-.sf-pick-btn {
-  display: none; /* hidden on desktop; the airport list is the always-visible sidebar */
-  align-items: center;
-  gap: 5px;
-  padding: 4px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-500);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color .15s;
-}
-.sf-pick-btn:hover {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
-/* ── Airport drawer (mobile) ── */
-
-.sf-drawer-overlay {
-  display: none;
-}
-.sf-drawer-handle {
-  display: none;
-}
-.sf-airports-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sf-drawer-close {
-  display: none;
-}
-
-@media (max-width: 767.98px) {
-  .sf-pick-btn {
-    display: inline-flex;
-  }
-
-  .sf-airports {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    max-height: 70vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: none;
-    transform: translateY(100%);
-    transition: transform .3s cubic-bezier(.32,.72,0,1);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 20px 24px;
-  }
-  .sf-airports--open {
-    transform: translateY(0);
-  }
-
-  .sf-drawer-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgba(0,0,0,.4);
-    animation: fadeIn .2s ease;
-  }
-
-  .sf-drawer-handle {
-    display: flex;
-    justify-content: center;
-    padding: 8px 0 4px;
-    cursor: grab;
-  }
-  .sf-drawer-bar {
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--slate-300);
-  }
-
-  .sf-drawer-close {
-    display: inline-flex;
-    padding: 6px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--primary);
-    background: var(--primary-light);
-    border: none;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-  }
-
-  .sf-airport-list {
-    max-height: 50vh;
-  }
 }
 
 @keyframes fadeIn {
@@ -2303,7 +2060,6 @@ body {
 
 @media (hover: none) {
   /* Larger touch targets on mobile */
-  .sf-airport-item { padding: 14px 16px; }
   .sf-pill         { padding: 12px 20px; }
   .sf-remove       { width: 40px; height: 40px; }
   .sf-pax-btn      { width: 34px; height: 34px; font-size: 16px; }
@@ -2323,11 +2079,6 @@ body {
   .app-footer-link { padding: 8px 4px; }
 
   /* Active state instead of hover on touch */
-  .sf-airport-item:active {
-    border-color: var(--primary);
-    background: var(--primary-50);
-    transform: scale(.98);
-  }
   .sf-pill:active {
     transform: scale(.97);
   }
@@ -2390,7 +2141,6 @@ html {
   .app-footer,
   .wc-actions,
   .wc-book,
-  .sf-airports,
   .btn-fm-primary { display: none !important; }
 
   .wc-card {

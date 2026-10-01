@@ -73,7 +73,7 @@ export default function CompareChart({ flights, bestDestination, singleOrigin = 
           const fColor = fairnessColor(r.fairness);
           const hasRange = r.min != null && r.max != null && r.max > r.min;
           return (
-            <li key={r.code} className={`cmp-row${r.isBest ? " cmp-row--best" : ""}`}>
+            <li key={r.code} className={`cmp-row${r.isBest ? " cmp-row--best" : ""}`} style={{ "--i": i }}>
               <div className="cmp-rank" aria-hidden="true">{i + 1}</div>
 
               <div className="cmp-main">
