@@ -361,40 +361,14 @@ export default function App() {
     if (entry.returnDate) setReturnDate(entry.returnDate);
   }, []);
 
-  // ── Auto-save search draft to localStorage ────────────────────────────
-  const DRAFT_KEY = "flyndme_draft";
-
-  // Restore draft on mount
+  // ── Sin borradores ───────────────────────────────────────────────────────
+  // El formulario arranca SIEMPRE vacío (oct-2026, Diego: no quiere ciudades
+  // "predeterminadas" al entrar). Antes se guardaba un borrador en
+  // localStorage que reaparecía en cada visita (incluidas las ciudades de un
+  // enlace ?o=). Se borra el que dejaron versiones anteriores. Para repetir
+  // una búsqueda quedan las "Búsquedas recientes" (a un toque, nunca solas).
   useEffect(() => {
-    try {
-      const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
-      if (draft && draft.origins?.length) {
-        setOrigins(draft.origins);
-        if (draft.tripType) setTripType(draft.tripType);
-        if (draft.departureDate) setDepartureDate(draft.departureDate);
-        if (draft.returnDate) setReturnDate(draft.returnDate);
-        if (draft.passengers) setPassengers(draft.passengers);
-      }
-    } catch { /* ignore */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Save draft on change (debounced)
-  useEffect(() => {
-    const tid = setTimeout(() => {
-      try {
-        const hasInput = origins.some(o => o.trim());
-        if (hasInput) {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify({ origins, tripType, departureDate, returnDate, passengers }));
-        }
-      } catch { /* quota */ }
-    }, 500);
-    return () => clearTimeout(tid);
-  }, [origins, tripType, departureDate, returnDate, passengers]);
-
-  // Clear draft on successful search
-  const clearDraft = useCallback(() => {
-    try { localStorage.removeItem(DRAFT_KEY); } catch { /* */ }
+    try { localStorage.removeItem("flyndme_draft"); } catch { /* */ }
   }, []);
 
   // ── PWA: service worker, versión nueva, conexión e instalación ──────────
@@ -939,7 +913,6 @@ export default function App() {
     verifyAbortRef.current?.abort();
     verifyAbortRef.current = null;
     setLiveCheck({ code: null, phase: null });
-    clearDraft();
 
     try {
       // Step 1: wake backend if needed (ping is lightweight)

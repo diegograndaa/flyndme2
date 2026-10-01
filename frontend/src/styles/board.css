@@ -1958,28 +1958,25 @@ button,
 
 /* ── 24.1 Radar vivo en el hero ───────────────────────────────────────── */
 .cv-stage { position: relative; }
-/* Disco cónico que gira alrededor del punto de encuentro (89,4 % · 50 % de
-   la carta), recortado a la carta y desvanecido hacia los bordes. */
+/* Pantalla del radar: su caja y la posición del disco las fija
+   ConvergenceHero (SCOPE / SWEEP_R). Bordes difuminados: izquierda 40 u (6 %),
+   derecha 120 u (18 %), arriba/abajo 42 u (15 %). El disco gira dentro. */
 .cv-sweep-clip {
   position: absolute;
-  inset: 0;
   overflow: hidden;
   pointer-events: none;
   -webkit-mask-image:
-    radial-gradient(ellipse 105% 82% at 89.4% 50%, #000 46%, rgba(0,0,0,.55) 86%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+    linear-gradient(to right, transparent 0, #000 6%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 15%, #000 85%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-image:
-    radial-gradient(ellipse 105% 82% at 89.4% 50%, #000 46%, rgba(0,0,0,.55) 86%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+    linear-gradient(to right, transparent 0, #000 6%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 15%, #000 85%, transparent 100%);
   mask-composite: intersect;
 }
 .cv-sweep {
   position: absolute;
-  top: 50%;
-  width: 183.4%;           /* radio 330 de 360 unidades: llega a las tres ciudades */
   aspect-ratio: 1;
-  margin: -91.7% 0 0 -91.7%; /* los márgenes en % van sobre el ANCHO → centrado */
   border-radius: 50%;
   /* Borde de ataque al norte (0°) y estela hacia atrás; gira en sentido horario */
   background: conic-gradient(from -40deg,
@@ -1990,6 +1987,13 @@ button,
     rgba(var(--sign-rgb), 0) 40deg);
   animation: cv-sweep 6s linear infinite; /* = SWEEP_S en ConvergenceHero */
   will-change: transform;
+}
+/* La pantalla del radar sobresale de la carta: en móvil el remate no tiene un
+   contenedor que recorte, así que se corta en horizontal (sin scroll lateral)
+   sin tocar el vertical. */
+.lp-hero-visual-m { overflow-x: clip; }
+@supports not (overflow: clip) {
+  .lp-hero-visual-m { overflow: hidden; }
 }
 [data-theme="dark"] .cv-sweep { opacity: .62; }
 @keyframes cv-sweep { to { transform: rotate(360deg); } }
