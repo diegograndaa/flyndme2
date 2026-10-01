@@ -36,6 +36,15 @@ const ORIGINS = [
   { code: "BER", x: 40, y: 246 },
 ];
 const DEST = { x: 322, y: 150 };
+// Pantalla del radar (unidades del viewBox; bordes difuminados en board.css):
+// a la izquierda acaba justo tras las etiquetas MAD/LON/BER (no invade el
+// titular), a la derecha sigue hacia el borde de la pantalla y arriba/abajo
+// se apaga antes del final del hero. El disco (radio SWEEP_R) gira centrado
+// en el punto de encuentro y cubre hasta la esquina más lejana.
+const SCOPE = { left: -40, right: DEST.x + 300, top: DEST.y - 140, bottom: DEST.y + 140 };
+const SCOPE_W = SCOPE.right - SCOPE.left;
+const SCOPE_H = SCOPE.bottom - SCOPE.top;
+const SWEEP_R = 400;
 
 function arcCtrl(o) {
   return { x: (o.x + DEST.x) / 2, y: (o.y + DEST.y) / 2 - 46 }; // curva hacia arriba
@@ -111,10 +120,21 @@ export default function ConvergenceHero({ idSuffix = "" }) {
   return (
     <div className="cv" role="group" aria-label={t("landing.diagramAlt")}>
       <div className={`cv-stage${active ? " cv-stage--focus" : ""}`} ref={stageRef}>
-        {/* Haz de radar: disco cónico que gira (compositor) recortado a la
-            carta y desvanecido hacia los bordes. */}
-        <div className="cv-sweep-clip" aria-hidden="true">
-          <div className="cv-sweep" style={{ left: pct(DEST.x, VB_W) }} />
+        {/* Haz de radar: disco cónico que gira (compositor) centrado en el
+            punto de encuentro, dentro de una pantalla que se desvanece en sus
+            bordes (antes se recortaba a la carta y, con el destino casi en el
+            borde derecho, el haz se apagaba al girar hacia la derecha). */}
+        <div className="cv-sweep-clip" aria-hidden="true" style={{
+          left: pct(SCOPE.left, VB_W), width: pct(SCOPE_W, VB_W),
+          top: pct(SCOPE.top, VB_H), height: pct(SCOPE_H, VB_H),
+        }}>
+          <div className="cv-sweep" style={{
+            left: pct(DEST.x - SCOPE.left, SCOPE_W), top: pct(DEST.y - SCOPE.top, SCOPE_H),
+            width: pct(2 * SWEEP_R, SCOPE_W),
+            // los márgenes en % van sobre el ANCHO de la pantalla → centrado
+            marginLeft: `-${((SWEEP_R / SCOPE_W) * 100).toFixed(3)}%`,
+            marginTop: `-${((SWEEP_R / SCOPE_W) * 100).toFixed(3)}%`,
+          }} />
         </div>
 
         <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="cv-svg" aria-hidden="true">
