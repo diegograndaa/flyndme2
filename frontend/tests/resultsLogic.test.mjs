@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   convertPrice, approxDistKm, pickBest, sortByCriterion, buildResultsCsv, AIRPORT_COORDS,
+  travelerSlot, payRows, paySpread, maxLegPrice,
 } from "../src/utils/resultsLogic.js";
 
 test("convertPrice: convierte con tasas estáticas y símbolo correcto", () => {
@@ -97,4 +98,28 @@ test("buildResultsCsv: tolera flights/datos ausentes", () => {
   const csv = buildResultsCsv([{ destination: "ROM" }], ["MAD"]);
   assert.ok(csv.split("\n").length === 2);
   assert.ok(csv.includes('"ROM"'));
+});
+
+test("travelerSlot: el color sigue a la ciudad (posición en la búsqueda), no al destino", () => {
+  const origins = ["MAD", "LON", "BER"];
+  assert.equal(travelerSlot(origins, "MAD"), 1);
+  assert.equal(travelerSlot(origins, "lon"), 2);
+  assert.equal(travelerSlot(origins, "BER"), 3);
+  assert.equal(travelerSlot(origins, "XXX"), 1); // desconocido → primer hueco, nunca fuera de 1-8
+  assert.equal(travelerSlot(["A", "B", "C", "D", "E", "F", "G", "H"].map((x) => x + "AA"), "HAA"), 8);
+});
+
+test("payRows / paySpread / maxLegPrice: solo precios reales, en el orden de la búsqueda", () => {
+  const dest = { flights: [
+    { origin: "lon", price: 261, passengers: 2 },
+    { origin: "MAD", price: 118 },
+    { origin: "BER", price: null },      // sin precio → fuera, no se rellena
+  ] };
+  const rows = payRows(dest, ["MAD", "LON", "BER"]);
+  assert.deepEqual(rows, [{ origin: "MAD", price: 118, pax: 1 }, { origin: "LON", price: 261, pax: 2 }]);
+  assert.equal(paySpread(dest), 143);                         // calculado de los precios reales
+  assert.equal(paySpread({ ...dest, priceSpread: 140 }), 140); // si el backend lo da, manda el backend
+  assert.equal(paySpread({ flights: [{ origin: "MAD", price: 50 }] }), 0);
+  assert.equal(maxLegPrice([dest, { flights: [{ origin: "MAD", price: 300 }] }]), 300);
+  assert.deepEqual(payRows(null, []), []);
 });

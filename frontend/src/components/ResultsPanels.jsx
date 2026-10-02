@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cityOf, formatEur, countryFlag } from "../utils/helpers";
 import { BedDouble, Target, Map as MapIcon } from "lucide-react";
-import { convertPrice } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot } from "../utils/resultsLogic";
 import { tapHaptic } from "../utils/haptics";
 
 export function CostSplitCard({ bestDest, origins, currency, t }) {
@@ -40,7 +40,7 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
       <div className="fm-split-grid">
         {diffs.map(d => (
           <div key={d.origin} className="fm-split-row">
-            <span className="fm-split-avatar" aria-hidden="true">{d.origin}</span>
+            <span className={`fm-split-avatar trav-c${travelerSlot(origins, d.origin)}`} aria-hidden="true">{d.origin}</span>
             <span className="fm-split-origin">{countryFlag(d.origin)} {d.origin}</span>
             <span className="fm-split-pays">
               {splitMode === "equal"
