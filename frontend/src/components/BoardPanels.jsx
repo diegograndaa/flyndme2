@@ -10,11 +10,13 @@
 //                        (antes: podio Top 3 + barra de stats + lista aparte)
 // Presentacionales puros (reciben props, emiten eventos). Datos 100% reales:
 // precios/equidad vienen tal cual del backend, nada se inventa.
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { normalizeCode, cityOf, formatEur, formatDate } from "../utils/helpers";
-import { convertPrice, sortByCriterion } from "../utils/resultsLogic";
+import { normalizeCode, cityOf, formatEur, formatDate, getBaseUrl } from "../utils/helpers";
+import { convertPrice, sortByCriterion, paySpread, maxLegPrice } from "../utils/resultsLogic";
+import { getCityImage } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
+import { PayBars, TravelerLegend } from "./TravelerBits";
 import { ChevronRight } from "lucide-react";
 import { useFlip } from "../hooks/useFlip";
 
@@ -22,17 +24,8 @@ function money(v, currency) {
   return currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency);
 }
 
-// Tono de la etiqueta sobre el fondo navy del panel (los --fair-* normales
-// están pensados para fondo claro y no contrastan aquí).
-const FAIR_TONE = { veryBalanced: "good", fairlyBalanced: "good", somewhatUnequal: "mid", unequal: "bad" };
-
-// Mismos umbrales que useFairnessLabel de WinnerCard (coherencia de etiquetas)
-function fairnessKey(score) {
-  if (score >= 85) return "veryBalanced";
-  if (score >= 65) return "fairlyBalanced";
-  if (score >= 45) return "somewhatUnequal";
-  return "unequal";
-}
+// Reparto "parejo": mismo umbral que las etiquetas de equidad (≥ 65/100).
+const EVEN_SCORE = 65;
 
 /** Cabecera del vuelo: orígenes → fecha · viajeros · extras  [Cambiar] */
 export const FlightHeader = React.memo(function FlightHeader({
@@ -104,13 +97,29 @@ export function Notice({ tag, text, detail, actionLabel, onAction, disabled, var
   );
 }
 
+/** Miniatura de la ciudad (foto a color). Sin foto → bloque con el código. */
+function DestThumb({ code }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span className="dep-thumb" aria-hidden="true">
+      <span className="dep-thumb-code">{code}</span>
+      {!failed && (
+        <img src={getCityImage(code, getBaseUrl(), { w: 192, h: 128 })} alt="" loading="lazy" decoding="async"
+          width="96" height="64" onError={() => setFailed(true)} />
+      )}
+    </span>
+  );
+}
+
 /**
  * Panel de salidas: todos los destinos encontrados, ordenados por el criterio
- * activo. El destino mostrado en la tarjeta va marcado; el resto se puede
- * pulsar para verlo arriba. Con un solo origen no hay columna de equidad.
+ * activo. Cada fila lleva la miniatura de la ciudad y "quién paga qué": una
+ * barra por viajero con SU color (misma escala en todas las filas), en vez de
+ * una etiqueta de equidad. El destino de la tarjeta va marcado; el resto se
+ * puede pulsar para verlo arriba. Con un solo origen no hay reparto.
  */
 export const DeparturesBoard = React.memo(function DeparturesBoard({
-  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect,
+  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
 }) {
   const { t } = useI18n();
   const listRef = useRef(null);
@@ -120,8 +129,9 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
   useFlip(listRef, rows.map((f) => normalizeCode(f.destination)).join(","));
   if (rows.length < 2) return null;
   const currentCode = current ? normalizeCode(current.destination) : "";
+  const scale = maxLegPrice(flights);
   return (
-    <section className="fm-board" id="fm-board" aria-labelledby="fm-board-title">
+    <section className={`fm-board dep${singleOrigin ? " dep--single" : ""}`} id="fm-board" aria-labelledby="fm-board-title">
       <div className="fm-board-top">
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
@@ -137,39 +147,54 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
         )}
       </div>
 
-      <div className={`fm-board-cols${singleOrigin ? " fm-board-cols--single" : ""}`} aria-hidden="true">
+      <div className="dep-cols" aria-hidden="true">
         <span>{t("board.colDest")}</span>
-        <span className="fm-board-col-price">{t("board.colPrice")}</span>
-        {!singleOrigin && <span className="fm-board-col-fair">{t("board.colFair")}</span>}
+        {!singleOrigin && (
+          <span className="dep-col-pay">
+            {t("board.colPay")}
+            <TravelerLegend origins={origins} className="trav-legend--inline" />
+          </span>
+        )}
+        <span className="dep-col-price">{t("board.colPrice")}</span>
         <span />
       </div>
 
-      <ol className="fm-board-rows" ref={listRef}>
+      <ol className="dep-rows" ref={listRef}>
         {rows.map((f, i) => {
           const code = normalizeCode(f.destination);
           const city = cityOf(code) || code;
           const isCurrent = code === currentCode;
-          const fk = fairnessKey(f.fairnessScore ?? 0);
+          const even = (f.fairnessScore ?? 0) >= EVEN_SCORE;
           return (
             <li key={code} data-flip={code} style={{ "--i": i }}>
               <button type="button"
-                className={`fm-board-row${singleOrigin ? " fm-board-row--single" : ""}${isCurrent ? " fm-board-row--current" : ""}`}
+                className={`dep-row${isCurrent ? " dep-row--current" : ""}`}
                 onClick={() => !isCurrent && onSelect && onSelect(f)}
                 aria-current={isCurrent ? "true" : undefined}
                 aria-label={isCurrent ? `${city} · ${t("board.selected")}` : t("board.select", { city })}>
-                <span className="fm-board-dest">
+                <DestThumb code={code} />
+                <span className="dep-dest">
                   <FlapText text={code} size="sm" delay={120 + i * 110} />
-                  <span className="fm-board-city">{city}</span>
+                  <span className="dep-city">{city}</span>
+                  {isCurrent && <span className="dep-now">{t("board.selected")}</span>}
                 </span>
-                <span className="fm-board-price">{money(f.averageCostPerTraveler, currency)}</span>
                 {!singleOrigin && (
-                  <span className={`fm-board-fair fm-board-fair--${FAIR_TONE[fk]}`}>
-                    {t(`fairness.${fk}`)}
+                  <span className="dep-pay">
+                    <PayBars dest={f} origins={origins} max={scale} currency={currency} />
                   </span>
                 )}
-                <span className="fm-board-go" aria-hidden="true">
-                  {isCurrent ? <span className="fm-board-now">{t("board.selected")}</span> : <ChevronRight size={16} />}
+                <span className="dep-price">
+                  <span className="dep-price-main">
+                    <span className="dep-price-v">{money(f.averageCostPerTraveler, currency)}</span>
+                    <span className="dep-price-u">{t("compare.perPerson")}</span>
+                  </span>
+                  {!singleOrigin && (
+                    <span className={`dep-spread${even ? " dep-spread--even" : ""}`}>
+                      {even ? t("board.payEven") : t("board.paySpread", { amount: money(paySpread(f), currency) })}
+                    </span>
+                  )}
                 </span>
+                <span className="dep-go" aria-hidden="true">{!isCurrent && <ChevronRight size={18} />}</span>
               </button>
             </li>
           );
