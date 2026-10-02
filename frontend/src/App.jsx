@@ -32,7 +32,8 @@ import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
 import "./styles/board.css";
-import { Heart, X, Plane, Download, Map as MapIcon, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
+import "./styles/revision.css";
+import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -1199,7 +1200,7 @@ export default function App() {
       setView("results");
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
     } else {
-      setToast({ message: t("favorites.notInResults", { city: f.city || f.code }), type: "info" });
+      setToast({ message: t("favorites.notInResults", { city: cityOf(f.code) || f.city || f.code }), type: "info" });
     }
   };
 
@@ -1258,16 +1259,16 @@ export default function App() {
                   <div key={f.code} className="fm-fav-panel-item">
                     <button type="button" className="fm-fav-panel-open"
                       onClick={() => openFavorite(f)}
-                      aria-label={t("favorites.open", { city: f.city || f.code })}>
+                      aria-label={t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}>
                       <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
                       <span className="fm-fav-panel-info">
                         <span className="fm-fav-panel-code">{f.code}</span>
-                        <span className="fm-fav-panel-city">{f.city}</span>
+                        <span className="fm-fav-panel-city">{cityOf(f.code) || f.city}</span>
                       </span>
                       <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
                       <ChevronRight size={16} className="fm-fav-panel-chevron lucide" aria-hidden="true" />
                     </button>
-                    <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: f.city || f.code })}
+                    <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: cityOf(f.code) || f.city || f.code })}
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
@@ -1307,7 +1308,7 @@ export default function App() {
       <div id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
-          <Landing searchForm={
+          <Landing origins={cleanOrigins} searchForm={
             <SearchPage
               origins={origins}           setOrigins={setOrigins}
               tripType={tripType}         setTripType={setTripType}
@@ -1453,6 +1454,15 @@ export default function App() {
               actionLabel: t("cheaperDate.use"),
               onAction: () => useCheaperDate(cheaperDate.date),
             } : null}
+            mapSlot={flights.length > 0 ? (
+              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+                <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
+                  <DestinationMap inline flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
+                    currency={currency}
+                    onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))} />
+                </Suspense>
+              </ErrorBoundary>
+            ) : null}
           />
 
           {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
@@ -1475,7 +1485,7 @@ export default function App() {
               </span>
             </summary>
             <div className="fm-split-body">
-            <WhoPaysStrip dest={bestDestination} currency={currency} />
+            <WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} />
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
@@ -1553,6 +1563,7 @@ export default function App() {
           <DeparturesBoard
             flights={flights}
             current={bestDestination}
+            origins={cleanOrigins}
             criterion={uiCriterion}
             singleOrigin={cleanOrigins.length <= 1}
             currency={currency}
@@ -1576,17 +1587,11 @@ export default function App() {
             }
           }) }} />
 
-          {/* Pestañas: Mapa · Comparar · Más opciones (la lista "otras opciones"
-              ya no hace falta: el panel de salidas muestra todos los destinos). */}
+          {/* Pestañas: Comparar · Más opciones (el mapa de rutas vive ahora en la
+              tarjeta ganadora, junto a la foto). */}
           <div className="rv-tabs mt-4" ref={tabContentRef}>
             {flights.length > 1 && (
             <>
-              <button type="button"
-                className={`rv-tab${showAlt === "map" ? " rv-tab--active" : ""}`}
-                aria-expanded={showAlt === "map"} aria-controls="rv-panel-map"
-                onClick={() => { setShowAlt(showAlt === "map" ? false : "map"); setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 100); }}>
-                <MapIcon size={15} aria-hidden="true" /> {t("results.showMap")}
-              </button>
               <button type="button"
                 className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
                 aria-expanded={showAlt === "compare"} aria-controls="rv-panel-compare"
@@ -1603,24 +1608,12 @@ export default function App() {
               </button>
           </div>
 
-          {showAlt === "map" && flights.length > 1 && (
-            <div className="mt-3 view-enter" id="rv-panel-map">
-              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
-                <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <DestinationMap flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
-                    currency={currency}
-                    onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))}
-                    onShowCard={() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
           {showAlt === "compare" && flights.length > 1 && (
             <div className="mt-3 view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1} />
+                  <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1}
+                    criterion={uiCriterion} origins={cleanOrigins} currency={currency} />
                 </Suspense>
               </ErrorBoundary>
             </div>

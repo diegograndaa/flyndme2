@@ -45,10 +45,56 @@ test("render: DeparturesBoard lista los destinos y marca el de la tarjeta", asyn
     current: FIXTURE_DEST,
     criterion: "total",
     currency: "EUR",
+    origins: ["MAD", "LON"],
     onSelect: () => {},
   }));
   assert.ok(html.includes("LIS") || html.includes("Lisbon"));
-  assert.ok(html.includes("fm-board-row--current"), "el destino de la tarjeta va marcado");
+  assert.ok(html.includes("dep-row--current"), "el destino de la tarjeta va marcado");
+  // Miniatura de foto en cada alternativa + una barra por viajero con SU color
+  assert.equal((html.match(/class="dep-thumb"/g) || []).length, 2);
+  assert.equal((html.match(/class="pay-row trav-c1"/g) || []).length, 2, "MAD lleva el color 1 en las dos filas");
+  assert.equal((html.match(/class="pay-row trav-c2"/g) || []).length, 2, "LON lleva el color 2 en las dos filas");
+  // La equidad ya no se comunica en negativo (ni "Unequal" ni "Desigual")
+  assert.ok(!/Unequal|Desigual/i.test(html), "sin etiquetas de equidad en negativo");
+});
+
+test("render: el comparador marca «Mejor» según el criterio, no según la tarjeta", async () => {
+  const { default: CompareChart } = await import("../src/components/CompareChart.jsx");
+  const cheap = { ...FIXTURE_DEST, destination: "LIS", totalCostEUR: 280, averageCostPerTraveler: 140, fairnessScore: 50 };
+  const picked = { ...FIXTURE_DEST, destination: "ROM", totalCostEUR: 300, averageCostPerTraveler: 150, fairnessScore: 82.5 };
+  // El usuario ha puesto ROM en su tarjeta; el más barato sigue siendo LIS
+  const html = renderWithI18n(React.createElement(CompareChart, {
+    flights: [picked, cheap], bestDestination: picked, criterion: "total", origins: ["MAD", "LON"],
+  }));
+  const rows = html.split('<li class="cmp-row').slice(1);
+  assert.equal(rows.length, 2);
+  const lis = rows.find((r) => r.includes(">LIS<"));
+  const rom = rows.find((r) => r.includes(">ROM<"));
+  assert.ok(lis.includes("cmp-best") && !lis.includes("cmp-selected"), "★ Mejor en el más barato");
+  assert.ok(rom.includes("cmp-selected") && !rom.includes("cmp-best"), "el elegido lleva «En tu tarjeta», no ★");
+  // Con criterio de equidad, el mejor es el más parejo
+  const fair = renderWithI18n(React.createElement(CompareChart, {
+    flights: [picked, cheap], bestDestination: cheap, criterion: "fairness", origins: ["MAD", "LON"],
+  }));
+  const romFair = fair.split('<li class="cmp-row').slice(1).find((r) => r.includes(">ROM<"));
+  assert.ok(romFair.includes("cmp-best"));
+});
+
+test("render: el mapa de la portada dibuja las ciudades del formulario", async () => {
+  const { default: HeroMap } = await import("../src/components/HeroMap.jsx");
+  // Sin ciudades: ejemplo etiquetado como tal
+  const example = renderWithI18n(React.createElement(HeroMap, { origins: [] }));
+  assert.ok(example.includes("hm--example"));
+  for (const c of ["MAD", "LON", "BER"]) assert.ok(example.includes(`>${c}</text>`), `ejemplo con ${c}`);
+  // Con Lisboa y Palma: esas dos, y NO el ejemplo
+  const live = renderWithI18n(React.createElement(HeroMap, { origins: ["LIS", "PMI", "", "LISB"] }));
+  assert.ok(live.includes("hm--live"));
+  assert.ok(live.includes(">LIS</text>") && live.includes(">PMI</text>"));
+  assert.ok(!live.includes(">MAD</text>") && !live.includes(">BER</text>"), "sin las ciudades de ejemplo");
+  assert.equal((live.match(/class="hm-hit"/g) || []).length, 2, "una diana por ciudad real");
+  // Honestidad: el punto de encuentro es un candidato (¿…?), nunca uno de los orígenes, y sin precios
+  assert.ok(/>¿[A-Z]{3}\?<\/text>/.test(live));
+  assert.ok(!live.includes(">¿LIS?<") && !/[€£$]\d/.test(live));
 });
 
 test("render: DeparturesBoard con un solo destino no pinta nada", async () => {

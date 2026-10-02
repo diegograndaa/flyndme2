@@ -2,9 +2,37 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import en from "./en.json";
 import es from "./es.json";
 
+import { setCityLang } from "../utils/helpers";
+
 const translations = { en, es };
 const STORAGE_KEY = "flyndme_lang";
+// Marca de que el idioma guardado lo ELIGIÓ el usuario (botón EN/ES). Antes se
+// guardaba también el valor por defecto, así que un "en" guardado sin esta
+// marca no es una preferencia: se vuelve a detectar del navegador.
+const CHOSEN_KEY = "flyndme_lang_chosen";
 const DEFAULT_LANG = "en";
+
+// Idioma del navegador (primera coincidencia con un idioma que tengamos).
+export function detectLang(languages) {
+  for (const l of languages || []) {
+    const base = String(l || "").toLowerCase().split("-")[0];
+    if (translations[base]) return base;
+  }
+  return DEFAULT_LANG;
+}
+
+function initialLang() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && translations[saved] && localStorage.getItem(CHOSEN_KEY) === "1") return saved;
+  } catch { /* SSR / sin localStorage */ }
+  try {
+    if (typeof navigator !== "undefined") {
+      return detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
+    }
+  } catch { /* ignore */ }
+  return DEFAULT_LANG;
+}
 
 const I18nContext = createContext(null);
 
@@ -22,23 +50,22 @@ function interpolate(template, vars) {
 }
 
 export function I18nProvider({ children }) {
-  const [lang, setLangState] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && translations[saved]) return saved;
-    } catch { /* SSR / no localStorage */ }
-    return DEFAULT_LANG;
-  });
+  const [lang, setLangState] = useState(initialLang);
 
-  // Persist language choice
+  // Los nombres de ciudad siguen al idioma (Milán, Roma, Lisboa…). Se fija
+  // durante el render para que los hijos ya lean el nombre correcto.
+  setCityLang(lang);
+
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* ignore */ }
     // Update <html lang="..."> for accessibility / SEO
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Solo se guarda cuando el usuario lo elige con el selector EN/ES.
   const setLang = useCallback((l) => {
-    if (translations[l]) setLangState(l);
+    if (!translations[l]) return;
+    try { localStorage.setItem(STORAGE_KEY, l); localStorage.setItem(CHOSEN_KEY, "1"); } catch { /* ignore */ }
+    setLangState(l);
   }, []);
 
   /**

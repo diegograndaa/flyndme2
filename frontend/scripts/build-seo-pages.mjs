@@ -466,7 +466,17 @@ h1,.faq h2,.related h2,.who-title{font-weight:700;letter-spacing:-.02em}
 .cv-o{stroke:var(--ink)}
 .cv-d{fill:var(--sign)}
 .cv-dot{fill:#1A1A1A}
-.cv-ring{stroke:var(--sign-line);opacity:.6}`.trim();
+.cv-ring{stroke:var(--sign-line);opacity:.6}
+/* La tabla cabe en el móvil: las cabeceras pueden partir línea (antes iban en
+   una sola y la tabla medía 438 px en una pantalla de 390) */
+.est-table th[scope=col]{white-space:normal;line-height:1.3;vertical-align:bottom}
+@media (max-width:560px){
+  .est-table{font-size:.94rem}
+  .est-table th[scope=col]{font-size:.68rem;letter-spacing:.06em;padding:6px 4px}
+  .est-table tbody th,.est-table td{padding:10px 4px}
+  .est-table tbody th{padding-left:8px}
+  .est-table td:last-child,.est-table th[scope=col]:last-child{padding-right:8px}
+}`.trim();
 
 // ─── Plantilla de página ─────────────────────────────────────────────────────
 function renderPage(page, lang, flights) {

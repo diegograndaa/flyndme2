@@ -167,8 +167,35 @@ export function normalizeCode(v) {
   return m ? m[0] : raw.slice(0, 3);
 }
 
-export function cityOf(code) {
-  return AIRPORT_MAP[normalizeCode(code)]?.city || "";
+// Idioma en el que se muestran los nombres de ciudad y país. Lo fija el
+// proveedor de i18n; por defecto inglés (tests / SSR).
+let cityLang = "en";
+export function setCityLang(lang) { cityLang = lang === "es" ? "es" : "en"; }
+
+// Nombres en español de las ciudades que cambian respecto al listado (inglés).
+const CITY_ES = {
+  AGP: "Málaga", LON: "Londres", EDI: "Edimburgo", PAR: "París", MRS: "Marsella",
+  NCE: "Niza", ROM: "Roma", MIL: "Milán", NAP: "Nápoles", BER: "Berlín",
+  MUC: "Múnich", FRA: "Fráncfort", AMS: "Ámsterdam", LIS: "Lisboa", OPO: "Oporto",
+  DUB: "Dublín", BRU: "Bruselas", GVA: "Ginebra", ZRH: "Zúrich", VIE: "Viena",
+  PRG: "Praga", WAW: "Varsovia", KRK: "Cracovia", OTP: "Bucarest", SOF: "Sofía",
+  BEG: "Belgrado", CPH: "Copenhague", STO: "Estocolmo", TLL: "Tallin", VNO: "Vilna",
+  ATH: "Atenas", SKG: "Salónica", RHO: "Rodas", IST: "Estambul",
+};
+
+// Nombre de la ciudad en el idioma de la interfaz ("Milán", "Roma", "Lisboa"
+// en español); si no hay traducción, el nombre del listado.
+export function cityOf(code, lang = cityLang) {
+  const c = normalizeCode(code);
+  const a = AIRPORT_MAP[c];
+  if (!a) return "";
+  return (lang === "es" && CITY_ES[c]) || a.city;
+}
+
+export function countryOf(code, lang = cityLang) {
+  const a = AIRPORT_MAP[normalizeCode(code)];
+  if (!a) return "";
+  return (lang === "es" && COUNTRY_ALIASES[a.country]?.[0]) || a.country;
 }
 
 export function destLabel(code) {

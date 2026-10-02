@@ -8,7 +8,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
 import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2 } from "lucide-react";
-import { AIRPORT_MAP, normalizeCode, cityOf, formatDate, weekdayOf, countryFlag, searchAirports, foldText } from "../utils/helpers";
+import { AIRPORT_MAP, normalizeCode, cityOf, countryOf, formatDate, weekdayOf, countryFlag, searchAirports, foldText } from "../utils/helpers";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
 // can, so the search receives the same city codes the main form produces.
@@ -150,8 +150,8 @@ function GroupPlanner({
                   <li key={a.code}>
                     <button type="button" className="gp-ac-item" onMouseDown={(e) => { e.preventDefault(); pickSuggestion(a); }}>
                       <span className="gp-ac-code">{a.code}</span>
-                      <span className="gp-ac-city">{a.city}</span>
-                      <span className="gp-ac-country">{a.country}</span>
+                      <span className="gp-ac-city">{cityOf(a.code) || a.city}</span>
+                      <span className="gp-ac-country">{countryOf(a.code) || a.country}</span>
                     </button>
                   </li>
                 ))}
