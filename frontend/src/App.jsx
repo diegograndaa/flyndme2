@@ -1409,7 +1409,9 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button type="button" className="fm-sticky-btn" onClick={() => setView("search")}>{t("results.changeSearch")}</button>
+              <button type="button" className="fm-sticky-btn" aria-label={t("results.changeSearch")} onClick={() => setView("search")}>
+                <SlidersHorizontal size={14} aria-hidden="true" /><span className="fm-sticky-btn-text">{t("results.changeSearch")}</span>
+              </button>
             </div>
           </div>
 

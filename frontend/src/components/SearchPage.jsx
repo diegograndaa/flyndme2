@@ -395,7 +395,7 @@ const SearchPage = React.memo(function SearchPage({
                         </div>
                       )}
                       {city && origin.trim() && (
-                        <span className="sf-input-city">{countryFlag(code)} {city}</span>
+                        <span className="sf-input-city"><span className="sf-input-flag">{countryFlag(code)}</span> <span className="sf-input-cityname">{city}</span></span>
                       )}
                       {isUnknown && (
                         <span className="sf-input-unknown">{t("search.unknownAirport")}</span>
@@ -711,12 +711,15 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Avión que rueda al pasar el ratón y despega al pulsar (decorativo) */}
                 <span className="sf-cta-plane" aria-hidden="true"><PlaneTakeoff size={18} /></span>
               </button>
-              {onCreateGroup && (
-                <button type="button" className="sf-group-cta" onClick={onCreateGroup} disabled={loading || groupBusy}>
-                  <Users size={16} className="lucide" /> {groupBusy ? t("group.creating") : t("group.cta")}
-                </button>
-              )}
             </div>
+            {/* Fuera de .sf-submit-wrap a propósito: en móvil esa caja es la barra
+                fija inferior y solo debe llevar el CTA (con la invitación dentro
+                tapaba ~170 px de formulario mientras se rellenaba). */}
+            {onCreateGroup && (
+              <button type="button" className="sf-group-cta" onClick={onCreateGroup} disabled={loading || groupBusy}>
+                <Users size={16} className="lucide" /> <span>{groupBusy ? t("group.creating") : t("group.cta")}</span>
+              </button>
+            )}
             <div className="sf-footnote">
               <span>{t("search.footnoteTime")}</span>
               <span className="sf-kbd-hint">{t("search.kbdHint")}</span>

@@ -40,7 +40,7 @@
   --slate-900:     #2B2B2B;
   --slate-700:     #45433E;
   --slate-500:     #6B6860;
-  --slate-400:     #9C988E;
+  --slate-400:     #6B6860;   /* AA 4.5:1 sobre crema y pie (antes #9C988E, 2.6:1) */
   --slate-300:     #D6D0C4;
   --slate-200:     #E5E0D8;
   --slate-100:     #EEEAE2;
@@ -50,7 +50,7 @@
   --primary-dark:  #000000;
   --primary-deep:  #1A1A1A;
   --primary-light: #FFF1C2;   /* tinte amarillo pálido (resaltador) */
-  --primary-50:    #FFF8E1;
+  --primary-50:    #FFF3C9;
   --secondary:       #1A1A1A;
   --secondary-light: #FFF1C2;
   --coral:         #FFC20E;   /* amarillo señalética: relleno del CTA */
@@ -58,8 +58,8 @@
   --info:          #1A1A1A;
   --fair-high:     #15803D;
   --fair-mid:      #1F7A5C;
-  --fair-low:      #B45309;
-  --fair-bad:      #DC2626;
+  --fair-low:      #A34A07;
+  --fair-bad:      #C81E1E;
   --amber:         #FFC20E;
   --amber-ink:     #8A6100;   /* ocre legible sobre crema (AA 5:1) */
   --sign:          #FFC20E;   /* amarillo de cartel */
@@ -67,6 +67,8 @@
   --sign-line:     #E0A300;   /* línea de rodadura pintada (algo más densa sobre crema) */
   --on-sign:       #1A1A1A;
   --on-primary:    #FFC20E;   /* texto sobre --primary: cartel de posición */
+  --on-solid:      #FFFFFF;   /* texto sobre un relleno --primary (botón neutro) */
+  --pos-bg:        #1A1A1A;   /* cartel de posición: negro + texto/filete amarillos */
   --line:          #E5E0D8;
   --shadow-xs:     none;
   --shadow-sm:     none;
@@ -81,13 +83,13 @@
   --panel-stub:    #F7F4EE;
   --panel-ink:     #1A1A1A;
   --panel-muted:   #5F5C55;
-  --panel-faint:   #85817A;
+  --panel-faint:   #6F6B64;
   --panel-line:    #E5E0D8;
   --panel-hover:   rgba(26,26,26,.04);
   --panel-track:   #ECE7DD;
   --panel-accent:  #1A1A1A;
   --panel-good:    #0F7A4A;
-  --panel-mid:     #9A5B00;
+  --panel-mid:     #A34A07;   /* naranja (no ocre): no se confunde con el amarillo de marca */
   --panel-bad:     #B42318;
   --panel-shadow:  none;
   --board-cell-top: #2A2B30;
@@ -95,8 +97,13 @@
 }
 
 /* Terminal de NOCHE: pantalla FIDS/radar neutra (#121316), divisores
-   precisos (#25282F), texto hueso (#E6E8EC) y el amarillo de señal como
-   acento (aquí sí se lee como texto: amarillo sobre negro = cartel OACI). */
+   precisos (#25282F) y texto hueso (#E6E8EC).
+   PARIDAD CON EL CLARO (oct-2026): el tema solo cambia el SOPORTE (papel ↔
+   pantalla) y la TINTA (carbón ↔ hueso). El amarillo vive exactamente en los
+   mismos sitios en los dos temas (CTA, carteles, marcadores): por eso aquí
+   --primary es el HUESO —la tinta de la noche—, no el amarillo. Antes era
+   amarillo y medio interfaz (logo, iconos, marcos, botones secundarios) se
+   teñía solo en oscuro. */
 [data-theme="dark"] {
   --bg:            #121316;
   --white:         #17191D;
@@ -109,17 +116,17 @@
   --slate-200:     #2C3038;
   --slate-100:     #25282F;
   --slate-50:      #1C1F24;
-  --primary:       #FFC20E;
-  --primary-rgb:   255, 194, 14;
-  --primary-dark:  #FFD24D;
-  --primary-deep:  #FFE08A;
-  --primary-light: #332A0A;
-  --primary-50:    #262008;
-  --secondary:       #FFC20E;
+  --primary:       #E6E8EC;   /* tinta de noche: texto de acento y estados activos */
+  --primary-rgb:   230, 232, 236;
+  --primary-dark:  #FFFFFF;
+  --primary-deep:  #E6E8EC;
+  --primary-light: #332A0A;   /* tinte amarillo apagado (resaltador) */
+  --primary-50:    #2B2408;
+  --secondary:       #E6E8EC;
   --secondary-light: #332A0A;
   --coral:         #FFC20E;
-  --coral-dark:    #FFD24D;
-  --info:          #FFE08A;
+  --coral-dark:    #F2B200;
+  --info:          #E6E8EC;
   --fair-mid:      #7FE0C0;
   --amber:         #FFC20E;
   --amber-ink:     #FFC20E;
@@ -127,7 +134,9 @@
   --sign-rgb:      255, 194, 14;
   --sign-line:     #FFC20E;
   --on-sign:       #1A1A1A;
-  --on-primary:    #1A1A1A;
+  --on-primary:    #121316;
+  --on-solid:      #121316;
+  --pos-bg:        #0A0B0D;
   --line:          #25282F;
   --shadow-xs:     none;
   --shadow-sm:     none;
@@ -144,13 +153,13 @@
   --panel-line:    #25282F;
   --panel-hover:   rgba(255,255,255,.04);
   --panel-track:   #25282F;
-  --panel-accent:  #FFC20E;
+  --panel-accent:  #E6E8EC;
   --panel-good:    #52DEA2;
   --panel-mid:     #FF9F5A;   /* naranja, distinto del amarillo de marca */
   --panel-bad:     #FF8A8A;
   --panel-shadow:  none;
-  --board-cell-top: #2A2D34;
-  --board-cell-bot: #1E2025;
+  --board-cell-top: #454A54;
+  --board-cell-bot: #30343C;
   background: #121316;
 }
 [data-theme="dark"] body,
@@ -282,7 +291,9 @@
 
 /* En oscuro la palabra ya es amarilla: en vez de resaltado, raya de pista */
 [data-theme="dark"] .lp-h1-accent.lp-h1-accent {
-  background-image: linear-gradient(transparent 90%, rgba(var(--sign-rgb),.9) 90%, rgba(var(--sign-rgb),.9) 97%, transparent 97%);
+  /* misma franja de rotulador que en claro, algo más apagada para que el
+     texto hueso se lea encima */
+  background-image: linear-gradient(transparent 62%, rgba(var(--sign-rgb),.42) 62%, rgba(var(--sign-rgb),.42) 92%, transparent 92%);
 }
 
 /* Aviones sobre los arcos (bucle SMIL, ver ConvergenceHero) */
@@ -385,10 +396,9 @@
   position: relative;
   z-index: 1;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-solid);
   box-shadow: 0 0 0 6px var(--white);
 }
-[data-theme="dark"] .lp-leg .lp-step-num.lp-step-num { color: #1A1A1A; }
 .lp-leg-text { color: var(--slate-700); line-height: 1.5; }
 .lp-how .lp-card-meta { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
 @media (max-width: 600px) {
@@ -420,9 +430,8 @@
   transform: rotate(180deg);
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--on-solid);
 }
-[data-theme="dark"] .lp-faq .lp-faq-item--open .lp-faq-chevron { color: #1A1A1A; }
 .lp-faq .lp-faq-a { padding-left: 4px; padding-right: 40px; }
 
 /* ══ 6. Panel "buscando…" ════════════════════════════════════════════════ */
@@ -656,7 +665,6 @@
 }
 .sf-summary-bar .sf-summary-pax { color: var(--panel-accent); }
 .sf-summary-bar .sf-summary-flex.sf-summary-flex { color: var(--panel-accent); background: rgba(var(--sign-rgb),.22); }
-[data-theme="dark"] .sf-summary-bar.sf-summary-bar { background: var(--panel-bg); }
 
 /* Número de viajero como puerta de embarque */
 .sf-origin-row .sf-badge.sf-badge { font-family: var(--font-mono); }
@@ -807,7 +815,7 @@
 }
 .fm-board-row:hover:not(.fm-board-row--current) { background: var(--panel-hover); }
 .fm-board-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-.fm-board-row--current { background: rgba(var(--sign-rgb),.14); border-left-color: var(--sign); cursor: default; }
+.fm-board-row--current { background: rgba(var(--sign-rgb),.16); border-left-color: var(--sign); cursor: default; }
 .fm-board-dest { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
 .fm-board-dest .flap--sm { font-size: 16px; flex: 0 0 auto; }
 .fm-board-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1118,44 +1126,30 @@ button,
    · Cartel de DIRECCIÓN = fondo amarillo + texto negro → "por aquí" (CTA).
    · Cartel de POSICIÓN  = fondo negro + texto y filete amarillos → "estás
      aquí" (pestaña, opción o paso activo).
-   En oscuro --primary ya es amarillo y lo activo lleva tinta encima.       */
-:root:not([data-theme="dark"]) :is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
-  background: #1A1A1A !important;
-  border-color: #1A1A1A !important;
+   Los dos carteles son IGUALES en claro y en oscuro (oct-2026).            */
+:is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
+  background: var(--pos-bg) !important;
+  border-color: var(--pos-bg) !important;
   color: var(--sign) !important;
-  box-shadow: inset 0 0 0 2px #1A1A1A, inset 0 0 0 3px var(--sign) !important;
+  box-shadow: inset 0 0 0 2px var(--pos-bg), inset 0 0 0 3px var(--sign) !important;
 }
-:root:not([data-theme="dark"]) :is(.lp-leg .lp-step-num, .lp-faq-item--open .lp-faq-chevron, .sk-step--active .sk-step-dot, .cmp-row--best .cmp-rank) {
+.lp-leg .lp-step-num.lp-step-num,
+.lp-faq .lp-faq-item--open .lp-faq-chevron,
+.sk-step--active .sk-step-dot,
+.cmp-row--best .cmp-rank {
+  background: var(--pos-bg) !important;
+  border-color: var(--pos-bg) !important;
   color: var(--sign) !important;
 }
-/* Oscuro: el relleno amarillo se reserva a los CTA (reservar, buscar). Lo
-   activo es cartel de posición (negro + filete y texto amarillos) y las
-   acciones secundarias van en contorno amarillo: menos "aviso" en pantalla. */
-[data-theme="dark"] :is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
-  background: #1A1A1A !important;
-  color: var(--sign) !important;
-  border-color: var(--sign) !important;
-  box-shadow: none !important;
-}
-[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary) {
-  background: transparent;
-  color: var(--sign);
-  border: 1px solid rgba(var(--sign-rgb), .7);
-}
-[data-theme="dark"] :is(.fm-notice-btn, .fm-cheaper-date-btn, .fm-group-nudge-btn, .wc-card .wc-action-btn--primary.wc-action-btn--primary):hover:not(:disabled) {
-  background: rgba(var(--sign-rgb), .12);
-  color: var(--sign);
-  filter: none;
+/* Mismo cartel en los dos temas: de noche el negro del cartel casi se funde
+   con la pantalla, así que el filete amarillo es quien lo dibuja. */
+[data-theme="dark"] :is(.lp-leg .lp-step-num, .lp-faq-item--open .lp-faq-chevron, .sk-step--active .sk-step-dot, .cmp-row--best .cmp-rank) {
+  outline: 1px solid rgba(var(--sign-rgb), .55);
+  outline-offset: -1px;
 }
 /* Reservar = cartel de dirección en ambos temas (la acción que importa) */
 .wc-card .wc-cta--book.wc-cta--book { background: var(--sign); border-color: var(--sign); color: var(--on-sign); }
 .btn-fm-primary.btn-fm-primary:hover:not(:disabled) { background: var(--coral-dark); }
-/* Oscuro: tinta sobre amarillo donde quedaba blanco */
-[data-theme="dark"] .sf-pill--active,
-[data-theme="dark"] .fm-stats-export:hover { color: #1A1A1A; }
-[data-theme="dark"] .form-check-input:checked[type="checkbox"] {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%231A1A1A' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
-}
 /* Carta aeronáutica del hero: en oscuro puntos neutros (no amarillos) */
 [data-theme="dark"] .lp-hero.lp-hero--merged::before {
   background-image: radial-gradient(rgba(230,232,236,.13) 1px, transparent 1.3px);
@@ -1320,7 +1314,7 @@ button,
   mix-blend-mode: multiply;
   animation: fm-stamp .5s cubic-bezier(.3, 1.6, .5, 1) 1.15s backwards;
 }
-[data-theme="dark"] .wc-stamp { color: rgba(255,194,14,.85); mix-blend-mode: normal; }
+[data-theme="dark"] .wc-stamp { color: rgba(230,232,236,.8); mix-blend-mode: normal; }
 .wc-stamp-label { font-size: 7.5px; letter-spacing: .16em; }
 .wc-stamp-code { font-size: 15px; letter-spacing: .12em; }
 .wc-stamp-date { font-size: 8.5px; letter-spacing: .1em; }
@@ -1443,7 +1437,7 @@ button,
   --dm-origin-bg: #FBF9F5;
   --dm-origin-ink: #1A1A1A;
   --dm-cheap: #15803D;
-  --dm-mid: #D97706;
+  --dm-mid: #C2570A;
   --dm-expensive: #DC2626;
   background: var(--white);
   border: 1px solid var(--line);
@@ -1458,7 +1452,7 @@ button,
   --dm-border: #30343C;
   --dm-grat: rgba(230,232,236,.07);
   --dm-grat-text: #7C828E;
-  --dm-route: #FFC20E;
+  --dm-route: #E6E8EC;
   --dm-chip: #2A2D34;
   --dm-chip-text: #E6E8EC;
   --dm-chip-line: #3A3E47;
@@ -1693,7 +1687,7 @@ button,
 }
 [data-theme="dark"] .fm-decision {
   --decision-bg: #0D0E11;
-  --decision-line: rgba(255,194,14,.7);
+  --decision-line: #E6E8EC;
 }
 .fm-decision .wc-card.wc-card { margin: 0; }
 .fm-decision .fm-group-block { margin: 14px 0 0; }
@@ -1762,18 +1756,17 @@ button,
   padding: 3px 8px;
   font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .1em;
-  color: var(--sign); background: #1A1A1A;
+  color: var(--sign); background: var(--pos-bg);
   border-radius: 4px;
 }
 .fm-notice-tag .fm-announce-dot { width: 6px; height: 6px; box-shadow: none; }
-[data-theme="dark"] .fm-notice-tag { background: rgba(var(--sign-rgb), .12); box-shadow: inset 0 0 0 1px rgba(var(--sign-rgb), .35); }
 .fm-notice-body { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .fm-notice-text { font-size: 14px; font-weight: 600; color: var(--navy); line-height: 1.4; }
 .fm-notice-detail { font-size: 12.5px; color: var(--slate-500); line-height: 1.45; }
 .fm-notice-btn {
   flex: 0 0 auto;
   padding: 8px 14px;
-  background: var(--primary); color: var(--on-primary);
+  background: var(--primary); color: var(--on-solid);
   border: none; border-radius: var(--radius-sm);
   font-size: 13px; font-weight: 700; white-space: nowrap;
   transition: transform .18s var(--ease-out-expo), opacity .2s ease;
@@ -1817,7 +1810,6 @@ button,
   border: 2px solid var(--navy);
   border-radius: 8px;
 }
-[data-theme="dark"] .wc-total { border-color: rgba(var(--sign-rgb), .7); }
 .wc-total-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .wc-total-label {
   font-family: var(--font-mono); font-size: 12px; font-weight: 800;
@@ -1852,7 +1844,7 @@ button,
 .wc-total-hint-text { flex: 1 1 220px; min-width: 0; }
 .wc-total-hint-btn {
   flex: 0 0 auto; padding: 7px 12px;
-  background: var(--primary); color: var(--on-primary);
+  background: var(--primary); color: var(--on-solid);
   border: none; border-radius: 4px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
 }
 :root:not([data-theme="dark"]) .wc-total-hint-btn { color: #FFFFFF; }
@@ -1922,7 +1914,7 @@ button,
 .fm-split-details .wc-fs-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--panel-ink); }
 .fm-split-details .wc-fs-code,
 .fm-split-details .wc-fs-price { font-family: var(--font-mono); color: var(--panel-ink); }
-:root:not([data-theme="dark"]) .fm-split-details .wc-fs { --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #B45309; --fair-bad: #DC2626; }
+:root:not([data-theme="dark"]) .fm-split-details .wc-fs { --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #A34A07; --fair-bad: #C81E1E; }
 @media (prefers-reduced-motion: reduce) {
   .fm-split-body { animation: none; }
   .fm-split-summary-more::after { transition: none; }
@@ -2474,7 +2466,7 @@ button,
 .sf-ac-mark { padding: 0 1px; border-radius: 2px; background: rgba(var(--sign-rgb), .45); color: inherit; }
 .sf-ac-dropdown .sf-ac-country.sf-ac-country { color: var(--panel-muted); font-size: 12px; white-space: nowrap; }
 .sf-ac-go { display: inline-flex; color: var(--sign); opacity: 0; transform: translateX(-6px); transition: opacity .15s ease, transform .2s cubic-bezier(.2,.9,.25,1); }
-.sf-ac-dropdown .sf-ac-item.sf-ac-item--hl { background: #1A1A1A; }
+.sf-ac-dropdown .sf-ac-item.sf-ac-item--hl { background: var(--pos-bg); }
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-city.sf-ac-city { color: var(--sign); }
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-alias,
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-country.sf-ac-country { color: rgba(230,232,236,.72); }
@@ -2482,7 +2474,6 @@ button,
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-mark { background: rgba(var(--sign-rgb), .28); }
 .sf-ac-item--hl .sf-ac-go { opacity: 1; transform: none; }
 [data-theme="dark"] .sf-ac-dropdown.sf-ac-dropdown { background: #17191D; border-color: #25282F; }
-[data-theme="dark"] .sf-ac-dropdown .sf-ac-item.sf-ac-item--hl { background: #0D0E11; box-shadow: inset 3px 0 0 var(--sign); }
 @keyframes sf-ac-drop { from { opacity: 0; transform: translateY(-4px) scaleY(.96); } }
 @keyframes sf-ac-item { from { opacity: 0; transform: translateX(-6px); } }
 @media (max-width: 480px) {
@@ -2530,4 +2521,312 @@ button,
   .sf-origin-row--set .sf-input-city,
   .sf-origin-row--set .sf-badge.sf-badge::after,
   .sf-ret-col { animation: none; }
+}
+
+/* ══ 26. Móvil compacto (oct-2026) ════════════════════════════════════════
+   El formulario perdía 150 px de 390 en márgenes anidados (tarjeta → sección
+   → fila) y por eso cada viajero ocupaba 2-3 líneas: número arriba, campo en
+   medio, contador y cruz debajo. Ahora cada viajero es UNA línea:
+     [nº│ciudad ............ ficha] [− 1 +] [×]
+   Solo distribución: ningún color nuevo (todo sale de los tokens, así que
+   claro y oscuro quedan idénticos por construcción).                       */
+@media (max-width: 600px) {
+  /* Menos cajas dentro de cajas */
+  .sf-form.sf-form { padding: 20px 14px 14px; }
+  .sf-form .sf-title { font-size: 22px; }
+  .sf-form .sf-section.sf-section { padding: 14px 12px; margin-bottom: 12px; }
+
+  /* Campos a 16 px: por debajo iOS hace zoom al enfocar y descoloca la página */
+  .sf-form .sf-input.sf-input { font-size: 16px !important; min-height: 44px; }
+
+  /* ── Un viajero = una línea ── */
+  .sf-origin-row.sf-origin-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 6px;
+    padding: 0;
+    margin-bottom: 8px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .sf-origin-row.sf-origin-row:hover { background: none; }
+  /* Reordenar es cosmético (el resultado es el mismo conjunto): en móvil sobra */
+  .sf-origin-row .sf-drag-handle,
+  .sf-origin-row .sf-origin-actions-inline { display: none; }
+
+  /* Número de viajero = pestaña pegada al campo (como el índice de un talón) */
+  .sf-origin-row .sf-badge.sf-badge {
+    flex: 0 0 28px;
+    min-width: 0;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    margin-right: -6px;
+    border: 1px solid var(--slate-200);
+    border-right: 0;
+    border-radius: 6px 0 0 6px;
+    background: var(--slate-100);
+    color: var(--slate-700);
+    font-size: 13px;
+    line-height: 1;
+  }
+  .sf-origin-row .sf-badge .sf-badge-icon { display: none; }
+  .sf-origin-row--set .sf-badge.sf-badge { border-color: var(--sign); background: var(--sign); color: var(--on-sign); }
+  .sf-origin-row--set .sf-badge.sf-badge::after { inset: 0; border-radius: 6px 0 0 6px; }
+
+  .sf-origin-row .sf-input-wrap { flex: 1 1 0; min-width: 0; }
+  .sf-origin-row .sf-input-wrap .sf-input.sf-input {
+    height: 44px;
+    padding: 6px 10px !important;
+    border-radius: 0 6px 6px 0;
+  }
+  /* El hueco de la derecha solo cuando hay ficha de ciudad (antes siempre:
+     dejaba 40 px para escribir "BARCELONA") */
+  .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 88px !important; }
+  .sf-origin-row .sf-input-city { right: 5px; max-width: 78px; padding: 3px 5px; font-size: 12px; }
+  .sf-origin-row .sf-typing-placeholder { font-size: 16px; }
+  /* Mientras se escribe se ve lo que se escribe: ni la ficha ni el aviso de
+     "no reconocido" pisan el texto (vuelven al salir del campo) */
+  .sf-origin-row .sf-input:focus ~ .sf-input-unknown,
+  .sf-origin-row .sf-input:focus ~ .sf-input-city { display: none; }
+  .sf-origin-row--set .sf-input-wrap .sf-input.sf-input:focus { padding-right: 10px !important; }
+
+  /* Contador de viajeros: una sola pieza de 44 px de alto */
+  .sf-origin-row .sf-pax {
+    flex: 0 0 auto;
+    gap: 0;
+    padding: 0;
+    border-radius: 6px;
+    background: var(--white);
+    overflow: hidden;
+  }
+  .sf-origin-row .sf-pax-btn.sf-pax-btn {
+    width: 28px;
+    height: 42px;
+    border-radius: 0;
+    background: transparent;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .sf-origin-row .sf-pax-btn:active:not(:disabled) { background: var(--slate-100); }
+  .sf-origin-row .sf-pax-count { min-width: 16px; font-family: var(--font-mono); font-size: 14px; }
+
+  /* Quitar: icono discreto, mismo alto que el resto de la línea */
+  .sf-origin-row .sf-remove.sf-remove {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 44px;
+    margin-left: -2px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+  }
+  .sf-origin-row .sf-remove:active { background: var(--slate-100); color: var(--navy); }
+
+  /* Sugerencias a todo el ancho de la fila (antes solo el del campo: ~140 px,
+     cortaba "London · Londres"). Los offsets son los anchos fijos de la fila:
+     pestaña 28 a la izquierda; contador 74 + cruz 30 + huecos a la derecha. */
+  .sf-origin-row .sf-ac-dropdown.sf-ac-dropdown { left: -28px; right: -80px; }
+  .sf-origin-row:has(.sf-remove) .sf-ac-dropdown.sf-ac-dropdown { right: -114px; }
+  .sf-ac-dropdown .sf-ac-item.sf-ac-item { min-height: 44px; }
+
+  .sf-origin-actions { margin-top: 10px; }
+  .sf-origin-actions .sf-add-btn.sf-add-btn { width: 100%; min-height: 44px; padding: 10px 12px; border-width: 1px; }
+
+  /* Tipo de billete: dos mitades iguales en vez de dos píldoras sueltas */
+  .sf-form .sf-pills.sf-pills:has(> .fm-switch) { display: grid; grid-template-columns: 1fr 1fr; }
+  .sf-form .sf-pills > .fm-switch { justify-content: center; min-height: 44px; padding: 10px 8px; }
+
+  /* ── Barra inferior fija: SOLO el botón de buscar ── */
+  .sf-submit-wrap.sf-submit-wrap {
+    margin: 14px -14px 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: var(--white);
+    border-top: 1px solid var(--line);
+  }
+  .sf-submit-wrap .btn-fm-primary.btn-fm-primary { min-height: 50px; padding-top: 12px !important; padding-bottom: 12px !important; }
+  .sf-group-cta.sf-group-cta { margin-top: 4px; padding: 12px; font-size: 13.5px; font-weight: 600; text-align: left; justify-content: flex-start; border-width: 1px; }
+  .sf-group-cta .lucide { flex: 0 0 auto; }
+  /* Pie: en táctil no hay tecla Enter que anunciar */
+  .sf-footnote { justify-content: center; gap: 2px 14px; text-align: center; }
+  .sf-footnote .sf-kbd-hint { display: none; }
+
+  /* Botón de subir más pequeño; en la portada sobra (página corta, cabecera
+     fija) y pisaba la barra inferior del formulario */
+  .scroll-top-btn.scroll-top-btn { right: 12px; width: 40px; height: 40px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .scroll-top-btn .scroll-top-ring { width: 40px; height: 40px; }
+  .app-root:has(.sf-submit-wrap) .scroll-top-btn { display: none; }
+}
+/* Móviles anchos: la ficha de ciudad puede enseñar nombres más largos */
+@media (min-width: 385px) and (max-width: 600px) {
+  .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 108px !important; }
+  .sf-origin-row .sf-input-city { max-width: 98px; }
+}
+/* Pantallas muy estrechas (< 360 px): la ficha enseña solo la bandera */
+@media (max-width: 359px) {
+  .sf-origin-row .sf-input-cityname { display: none; }
+  .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 40px !important; }
+}
+
+/* ── 26.1b Plan de grupo en móvil ───────────────────────────────────────── */
+@media (max-width: 600px) {
+  .gp.gp { padding: 20px 14px; }
+  /* En columna, `flex: 1 1 130px` se convertía en ALTO: el campo del nombre
+     medía 130 px y dejaba un hueco vacío antes del contador */
+  .gp-add-row.gp-add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .gp-add-row .gp-input-name { grid-column: 1 / -1; width: 100%; }
+  .gp-add-row .gp-city-wrap { grid-column: 1; width: auto; }
+  .gp-add-row .gp-pax { grid-column: 2; width: auto; }
+  .gp-add-row .gp-add-btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .gp .gp-input, .gp .gp-invite-url { font-size: 16px; height: 44px; }
+  .gp-invite-share .wc-action-btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
+}
+
+/* ── 26.2 Resultados en móvil ───────────────────────────────────────────── */
+/* La barra fija de resultados reservaba su alto aunque estuviera oculta: un
+   hueco vacío de ~70 px entre la cabecera del vuelo y la decisión. Ahora no
+   ocupa sitio en el flujo (alto 0) y su contenido flota. */
+.fm-sticky-bar.fm-sticky-bar { height: 0; margin: 0; padding: 0; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; }
+.fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { position: absolute; top: 8px; left: 0; right: 0; }
+.fm-sticky-btn { display: inline-flex; align-items: center; gap: 6px; }
+
+@media (max-width: 600px) {
+  /* Una sola fila: destino · precio · divisa · ajustar (antes dos filas) */
+  .fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { flex-wrap: nowrap; gap: 8px; padding: 6px 6px 6px 12px; }
+  .fm-sticky-dest.fm-sticky-dest { flex: 1 1 0; }
+  .fm-sticky-btn-text { display: none; }
+  .fm-sticky-btn.fm-sticky-btn { width: 36px; height: 36px; padding: 0; justify-content: center; }
+  .fm-currency-switcher .fm-currency-btn { min-width: 30px; height: 32px; padding: 0 6px; }
+
+  /* Acciones de la tarjeta: rejilla de 2 columnas en vez de botones a
+     distinta anchura que caían donde cupieran */
+  .wc-card .wc-actions.wc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .wc-card .wc-actions .wc-action-btn.wc-action-btn { width: 100%; min-height: 44px; margin: 0; justify-content: center; text-align: center; }
+  .wc-card .wc-actions .wc-action-btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+  /* Más barato | Más equitativo: dos mitades iguales, como el tipo de billete */
+  .wc-buy .wc-criterion-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .wc-buy .wc-criterion-pill { justify-content: center; min-height: 44px; }
+
+  /* Pestañas Mapa · Comparar · Más opciones: columnas iguales en una fila */
+  .rv-tabs.rv-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  .rv-tabs .rv-tab.rv-tab { justify-content: center; min-height: 44px; padding: 10px 4px; font-size: 13px; white-space: nowrap; }
+}
+
+/* ══ 27. Paridad claro / oscuro (oct-2026) ════════════════════════════════
+   Regla: cambiar de tema cambia el SOPORTE y la TINTA, nada más. Mismas
+   formas, mismos marcos, el amarillo en los mismos sitios. Lo que queda aquí
+   son las piezas que tenían un aspecto distinto en cada tema.              */
+
+/* Idioma: mismo conmutador en los dos temas (antes clases de Bootstrap:
+   contorno en claro, caja blanca en oscuro). Activo = cartel de posición. */
+.fm-lang { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--slate-200); border-radius: 6px; overflow: hidden; }
+.fm-lang-btn {
+  min-width: 36px;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--slate-500);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.fm-lang-btn:hover:not(.fm-lang-btn--active) { background: var(--slate-100); color: var(--navy); }
+.fm-lang-btn--active { background: var(--pos-bg); color: var(--sign); font-weight: 700; }
+.fm-lang-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+/* Carteles de posición pequeños: de noche el filete es quien los dibuja */
+[data-theme="dark"] :is(.fm-notice-tag, .fm-lang-btn--active, .sf-ac-dropdown .sf-ac-item.sf-ac-item--hl) {
+  box-shadow: inset 0 0 0 1px rgba(var(--sign-rgb), .55);
+}
+
+/* Fichas split-flap: mismas fichas de carbón en los dos temas; de noche
+   llevan un canto claro para que no se fundan con la pantalla */
+[data-theme="dark"] .flap-cell,
+[data-theme="dark"] .sf-summary-bar .sf-summary-chip.sf-summary-chip,
+[data-theme="dark"] .sf-ac-dropdown .sf-ac-code.sf-ac-code {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+/* Cabecera: papel/pantalla "elevada" + filete en los dos temas (en oscuro era
+   una franja gris más clara sin filete) */
+[data-theme="dark"] .app-header.app-header { background: rgba(23,25,29,.94); }
+
+/* Fila "en tu tarjeta" del panel de salidas: mismo tinte amarillo de noche */
+[data-theme="dark"] .fm-board-row--current { background: rgba(var(--sign-rgb), .2); }
+
+/* Botón de contorno (elegir destinos): tinta/hueso con contraste AA */
+.sf-form .btn-outline-primary { color: var(--navy); border-color: var(--slate-300); background: transparent; }
+.sf-form .btn-outline-primary:hover:not(:disabled) { color: var(--on-solid); background: var(--primary); border-color: var(--primary); }
+
+/* Botón "nueva búsqueda" de la cabecera: gris de Bootstrap (4.4:1) → tinta */
+.app-header .btn-outline-secondary { color: var(--slate-700); border-color: var(--slate-300); }
+.app-header .btn-outline-secondary:hover { color: var(--navy); background: var(--slate-100); border-color: var(--slate-300); }
+
+/* Interruptores del formulario (fechas flexibles, presupuesto, directos): eran
+   una casilla de 14 px, gris en oscuro y de contorno en claro. Mismo
+   conmutador en los dos temas; encendido = cartel de posición. */
+.sf-form .form-switch { display: inline-flex; align-items: center; gap: 8px; padding-left: 0; }
+.sf-form .form-switch .form-check-input {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 auto;
+  position: relative;
+  float: none;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border: 1px solid var(--slate-300) !important;
+  border-radius: 6px;
+  background: var(--slate-100) !important;
+  background-image: none !important;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.sf-form .form-switch .form-check-input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--slate-400);
+  transition: transform .18s var(--ease-out-expo), background-color .15s ease;
+}
+.sf-form .form-switch .form-check-input:checked { background: var(--pos-bg) !important; border-color: var(--sign) !important; }
+.sf-form .form-switch .form-check-input:checked::after { transform: translateX(18px); background: var(--sign); }
+.sf-form .form-switch .form-check-input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sf-form .form-switch .form-check-label { color: var(--slate-500); font-size: 13px; min-width: 1.4em; }
+@media (prefers-reduced-motion: reduce) { .sf-form .form-switch .form-check-input::after { transition: none; } }
+
+/* "Quién paga qué": la capa del diamante mide todo el carril y se desplaza un
+   % de su ancho → en escritorio sobresalía ~44 px de la página y aparecía
+   scroll horizontal al abrir el reparto. Se recorta en el contenedor. */
+.wc-fs { overflow-x: clip; }
+
+/* ── 26.3 Pantallas muy estrechas (≤ 360 px) ────────────────────────────── */
+@media (max-width: 360px) {
+  /* Cabecera: con el botón de favoritos visible, el selector de idioma se
+     salía por la derecha */
+  .app-header .container { padding-left: 10px; padding-right: 10px; }
+  .app-logo { gap: 6px; }
+  .app-logo-name.app-logo-name { font-size: 16px; }
+  .app-header .fm-lang-btn { min-width: 30px; padding: 0 5px; }
+  .app-header .theme-toggle { width: 34px; height: 34px; }
+  /* Skyscanner | Google Flights se montaban uno sobre otro */
+  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 4px; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 340px) {
+  .wc-buy .wc-flight-ctas { gap: 6px; }
+  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 2px; font-size: 11px; letter-spacing: -.01em; }
+  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 34px; }
+  /* La fila actual ya se distingue por el tinte y la franja amarilla */
+  .fm-board-row--current .fm-board-now { display: none; }
 }

@@ -74,13 +74,12 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
 export const LangSelector = React.memo(function LangSelector() {
   const { lang, setLang } = useI18n();
   return (
-    <div className="btn-group btn-group-sm" role="group" aria-label="Language">
+    <div className="fm-lang" role="group" aria-label="Language">
       {[["en", "EN"], ["es", "ES"]].map(([code, label]) => (
         <button
           key={code}
           type="button"
-          className={`btn ${lang === code ? "btn-light fw-bold" : "btn-outline-secondary"}`}
-          style={{ minWidth: 38, fontSize: 13 }}
+          className={`fm-lang-btn${lang === code ? " fm-lang-btn--active" : ""}`}
           aria-pressed={lang === code}
           onClick={() => setLang(code)}
         >

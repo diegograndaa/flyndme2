@@ -65,7 +65,7 @@
 }
 .wc-card .wc-body .wc-criterion-pill--active {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-solid);
   border-color: var(--primary);
 }
 .wc-card .wc-body .wc-stats-mini { color: var(--slate-500); }
@@ -118,7 +118,7 @@
 }
 .wc-card .wc-cta--book.wc-cta--book {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-solid);
   border-color: var(--primary);
 }
 
@@ -133,7 +133,7 @@
 }
 .wc-card .wc-action-btn--primary.wc-action-btn--primary {
   background: var(--primary);
-  color: #fff;
+  color: var(--on-solid);
   border-color: var(--primary);
 }
 .wc-card .wc-disclaimer { color: var(--slate-500); }
