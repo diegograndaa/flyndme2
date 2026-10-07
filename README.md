@@ -85,7 +85,7 @@ ejecuta con horas de retraso, así que hace falta un pinger externo gratuito:
   cada 5 minutos, método GET.
 - **UptimeRobot** (alternativa): monitor HTTP(s) con la misma URL, intervalo 5 min.
 
-`/api/ping` responde a GET y HEAD y nunca se cachea. Mantenerla despierta todo
+`/api/ping` responde a GET y HEAD. Mantenerla despierta todo
 el mes consume ~744 de las 750 horas gratuitas de Render: vale para un único
 servicio gratuito en la cuenta.
 
