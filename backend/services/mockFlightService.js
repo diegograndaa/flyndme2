@@ -142,15 +142,26 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
 
 // Dated prices in a ±14-day window around the requested date (one-way). Mirrors
 // the real provider's getDatedPrices; mockPrice varies by date so the cheaper-
-// date nudge has something to find.
+// date nudge has something to find. Round trips return {date, returnDate} pairs
+// with the requested trip length and one night longer (the nudge must keep only
+// the former).
 async function getDatedPrices(origin, destination, departureDate, options = {}) {
   if (origin === destination) return [];
   await sleep(MOCK_DELAY_MS);
   const out = [];
+  const DAY = 86400000;
   const base = new Date(`${departureDate}T00:00:00Z`).getTime();
+  const nights = options.returnDate
+    ? Math.round((new Date(`${options.returnDate}T00:00:00Z`).getTime() - base) / DAY)
+    : null;
   for (let d = -14; d <= 14; d++) {
-    const date = new Date(base + d * 86400000).toISOString().slice(0, 10);
-    out.push({ date, price: mockPrice(origin, destination, date) });
+    const date = new Date(base + d * DAY).toISOString().slice(0, 10);
+    const price = mockPrice(origin, destination, date);
+    if (nights == null) { out.push({ date, price }); continue; }
+    for (const n of [nights, nights + 1]) {
+      const returnDate = new Date(base + (d + n) * DAY).toISOString().slice(0, 10);
+      out.push({ date, returnDate, price });
+    }
   }
   return out;
 }

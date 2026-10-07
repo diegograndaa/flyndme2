@@ -712,7 +712,9 @@
   },
   "cheaperDate": {
     "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
-    "use": "Cambiar a esta fecha"
+    "use": "Cambiar a esta fecha",
+    "textRoundtrip": "Salid el {{date}} y volved el {{returnDate}} (mismas noches): el grupo paga {{total}} — ahorráis {{saving}}",
+    "useRoundtrip": "Cambiar a estas fechas"
   },
   "arrivalCoord": {
     "diffDays": "Con los vuelos más baratos, llegáis en días distintos ({{time}} de diferencia).",

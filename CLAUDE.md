@@ -51,7 +51,7 @@ Dos servicios independientes que hablan **solo por HTTP/JSON**:
 | `GET /` · `/api/ping` · `/api/version` · `/api/health` | status · keep-alive · fingerprint de commit · salud (incluye `metrics{}` del loop + `stores{}`) |
 | `POST /api/flights/multi-origin` | **Búsqueda principal** multi-origen por tiers de destinos |
 | `POST /api/flights/verify` | **Capa 2**: re-tarifica el ganador contra Google Flights (SerpAPI) |
-| `POST /api/flights/cheaper-date` | Nudge "fecha más barata para el grupo" (solo ida) |
+| `POST /api/flights/cheaper-date` | Nudge "fecha más barata para el grupo" (ida; en ida y vuelta mueve las dos fechas conservando las noches, oct-2026) |
 | `GET /api/flights/budget` | Estado del cupo mensual del proveedor (coste 0) |
 | `POST /api/share` · `GET /:id` · `GET /:id/og` | Resultados compartidos + HTML con meta OG |
 | `POST /api/groups` · `GET /:id` · `GET /:id/og` · `POST /:id/members` · `DELETE /:id/members/:index` | Planificación de grupo (store con TTL 14d: Upstash/in-memory) + tarjeta OG de invitación (`/og`, espejo de share) |

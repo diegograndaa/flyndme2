@@ -749,15 +749,38 @@ test("cheaper-date: devuelve una fecha mas barata con forma valida (total forzad
   }
 });
 
-test("cheaper-date: roundtrip no soportado en v1 (betterDate=null)", async () => {
+test("cheaper-date: ida y vuelta sugiere salida y vuelta con la misma duración", async () => {
   const r = await post("/api/flights/cheaper-date", {
     origins: ["MAD", "LON"],
+    passengers: [1, 1],
     destination: "PAR",
     departureDate: futureDate(44),
+    returnDate: futureDate(51),
     tripType: "roundtrip",
-    currentTotalEUR: 400,
+    currentTotalEUR: 99999,
   });
   assert.equal(r.status, 200);
-  assert.equal(r.body.betterDate, null);
-  assert.equal(r.body.reason, "roundtrip-unsupported");
+  const b = r.body.betterDate;
+  assert.ok(b, "debería sugerir un par de fechas");
+  assert.notEqual(b.date, futureDate(44));
+  assert.match(b.returnDate, /^\d{4}-\d{2}-\d{2}$/);
+  const nights = (Date.parse(b.returnDate) - Date.parse(b.date)) / 86_400_000;
+  assert.equal(nights, 7, "conserva las 7 noches del viaje");
+  assert.equal(b.perOrigin.length, 2);
+});
+
+test("cheaper-date: ida y vuelta sin fecha de vuelta válida → 400", async () => {
+  const missing = await post("/api/flights/cheaper-date", {
+    origins: ["MAD", "LON"], destination: "PAR",
+    departureDate: futureDate(44), tripType: "roundtrip", currentTotalEUR: 400,
+  });
+  assert.equal(missing.status, 400);
+  assert.equal(missing.body.code, "INVALID_RETURN_DATE");
+
+  const before = await post("/api/flights/cheaper-date", {
+    origins: ["MAD", "LON"], destination: "PAR",
+    departureDate: futureDate(44), returnDate: futureDate(40), tripType: "roundtrip", currentTotalEUR: 400,
+  });
+  assert.equal(before.status, 400);
+  assert.equal(before.body.code, "INVALID_RETURN_DATE_ORDER");
 });

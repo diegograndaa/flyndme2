@@ -570,22 +570,35 @@ const capabilities = {
 // devuelve el más barato de cada día) — una consulta de día solo trae ~ese día,
 // así que para sugerir fechas alternativas hay que pedir el mes. Cubre los meses
 // que toca la ventana de ±DATE_NUDGE_DAYS. Cacheado por mes (coste acotado;
-// Travelpayouts es gratis/ilimitado). Solo ida (v1).
+// Travelpayouts es gratis/ilimitado).
+// Ida y vuelta (options.returnDate): cruza meses de salida × meses de vuelta
+// con one_way=false y devuelve el más barato de cada PAR de fechas
+// ({date, returnDate, price}); la lógica del nudge filtra por duración.
 async function getDatedPrices(origin, destination, departureDate, options = {}) {
   if (!origin || !destination || origin === destination) return [];
-  const months = monthsInWindow(departureDate, DATE_NUDGE_DAYS);
+  const depMonths = monthsInWindow(departureDate, DATE_NUDGE_DAYS);
+  const retMonths = options.returnDate ? monthsInWindow(options.returnDate, DATE_NUDGE_DAYS) : [null];
   const m = new Map();
-  for (const month of months) {
-    let tickets = [];
-    try { tickets = await fetchTickets(origin, destination, month, options); } catch { continue; }
-    for (const t of Array.isArray(tickets) ? tickets : []) {
-      const date = String(t?.departure_at || "").slice(0, 10);
-      const price = Number(t?.price);
-      if (!date || !Number.isFinite(price) || price <= 0) continue;
-      if (!m.has(date) || price < m.get(date)) m.set(date, price);
+  for (const dm of depMonths) {
+    for (const rm of retMonths) {
+      if (rm && rm < dm) continue;
+      const opts = rm ? { ...options, returnDate: rm, limit: 500 } : options;
+      let tickets = [];
+      try { tickets = await fetchTickets(origin, destination, dm, opts); } catch { continue; }
+      for (const t of Array.isArray(tickets) ? tickets : []) {
+        const date = String(t?.departure_at || "").slice(0, 10);
+        const ret = rm ? String(t?.return_at || "").slice(0, 10) : "";
+        const price = Number(t?.price);
+        if (!date || (rm && !ret) || !Number.isFinite(price) || price <= 0) continue;
+        const key = `${date}|${ret}`;
+        if (!m.has(key) || price < m.get(key)) m.set(key, price);
+      }
     }
   }
-  return [...m.entries()].map(([date, price]) => ({ date, price }));
+  return [...m.entries()].map(([key, price]) => {
+    const [date, ret] = key.split("|");
+    return ret ? { date, returnDate: ret, price } : { date, price };
+  });
 }
 
 module.exports = {

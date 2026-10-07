@@ -101,3 +101,86 @@ test("scales by passengers per origin", () => {
   assert.equal(r.totalEUR, 450); // 150*2 + 150*1
   assert.equal(r.savingEUR, 150);
 });
+
+// ─── Ida y vuelta: misma duración, las dos fechas se mueven juntas ──────────
+
+test("roundtrip: sugiere el par salida+vuelta con la misma duración", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    tripNights: 7, // 15 → 22 sep
+    currentTotalEUR: 600,
+    perOrigin: [
+      [{ date: "2026-09-15", returnDate: "2026-09-22", price: 300 },
+       { date: "2026-09-12", returnDate: "2026-09-19", price: 200 }],
+      [{ date: "2026-09-15", returnDate: "2026-09-22", price: 300 },
+       { date: "2026-09-12", returnDate: "2026-09-19", price: 220 }],
+    ],
+  });
+  assert.ok(r);
+  assert.equal(r.date, "2026-09-12");
+  assert.equal(r.returnDate, "2026-09-19");
+  assert.equal(r.totalEUR, 420);
+  assert.equal(r.savingEUR, 180);
+});
+
+test("roundtrip: ignora precios con otra duración aunque sean más baratos", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    tripNights: 7,
+    currentTotalEUR: 600,
+    perOrigin: [
+      [{ date: "2026-09-12", returnDate: "2026-09-20", price: 50 }], // 8 noches
+      [{ date: "2026-09-12", returnDate: "2026-09-20", price: 50 }],
+    ],
+  });
+  assert.equal(r, null);
+});
+
+test("roundtrip: exige el mismo par para TODOS los orígenes", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    tripNights: 7,
+    currentTotalEUR: 600,
+    perOrigin: [
+      [{ date: "2026-09-12", returnDate: "2026-09-19", price: 100 }],
+      [{ date: "2026-09-12", returnDate: "2026-09-20", price: 100 }], // LON vuelve otro día
+    ],
+  });
+  assert.equal(r, null);
+});
+
+test("roundtrip: entradas sin fecha de vuelta no cuentan", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    tripNights: 7,
+    currentTotalEUR: 600,
+    perOrigin: [
+      [{ date: "2026-09-12", price: 100 }],
+      [{ date: "2026-09-12", price: 100 }],
+    ],
+  });
+  assert.equal(r, null);
+});
+
+test("roundtrip: duración inválida → null", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    tripNights: -1,
+    currentTotalEUR: 600,
+    perOrigin: [[{ date: "2026-09-12", returnDate: "2026-09-11", price: 1 }], [{ date: "2026-09-12", returnDate: "2026-09-11", price: 1 }]],
+  });
+  assert.equal(r, null);
+});
+
+test("oneway: el resultado no lleva returnDate", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    currentTotalEUR: 400,
+    perOrigin: [
+      [{ date: "2026-09-12", price: 150 }],
+      [{ date: "2026-09-12", price: 150 }],
+    ],
+  });
+  assert.ok(r);
+  assert.equal("returnDate" in r, false);
+});

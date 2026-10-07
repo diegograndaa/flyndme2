@@ -4,6 +4,10 @@
 // No network, no provider coupling — easy to unit test. Honesty rules (CLAUDE.md
 // #1): only suggests a date for which we have a real price for EVERY origin; the
 // group must all fly the same day, so we only consider dates present for all.
+//
+// Round trips keep the trip length: a candidate departure D only counts with a
+// return on D + tripNights, so the suggestion is one shift of both dates
+// ("leave the 12th, back the 19th") with real prices for that exact pair.
 
 function daysBetween(a, b) {
   const da = new Date(`${a}T00:00:00Z`).getTime();
@@ -11,24 +15,32 @@ function daysBetween(a, b) {
   return Math.round((da - db) / 86400000);
 }
 
+function shiftDays(isoDate, days) {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * @param {object} args
  * @param {string[]} args.originList            origin IATA codes
  * @param {number[]} args.originPax             travelers per origin (aligned)
- * @param {Array<Array<{date:string,price:number}>>} args.perOrigin  dated prices per origin (aligned)
+ * @param {Array<Array<{date:string,returnDate?:string,price:number}>>} args.perOrigin  dated prices per origin (aligned)
  * @param {string} args.currentDate             date currently shown (excluded as candidate)
+ * @param {number|null} [args.tripNights=null]  round trip: nights between departure and return (kept fixed)
  * @param {number} args.currentTotalEUR         group total to beat (what the user sees)
  * @param {string} args.today                   YYYY-MM-DD; candidates must be strictly after
  * @param {number} [args.windowDays=14]         max |candidate - currentDate| in days
  * @param {number} [args.minSavingAbs=15]       min absolute group saving (EUR)
  * @param {number} [args.minSavingPct=0.05]     min relative group saving
- * @returns {null | {date,totalEUR,savingEUR,perOrigin:Array<{origin,price,passengers}>}}
+ * @returns {null | {date,returnDate?,totalEUR,savingEUR,perOrigin:Array<{origin,price,passengers}>}}
  */
 function findCheaperGroupDate({
   originList,
   originPax,
   perOrigin,
   currentDate,
+  tripNights = null,
   currentTotalEUR,
   today,
   windowDays = 14,
@@ -38,14 +50,17 @@ function findCheaperGroupDate({
   if (!Array.isArray(perOrigin) || perOrigin.length === 0) return null;
   if (perOrigin.length !== originList.length) return null;
   if (!Number.isFinite(currentTotalEUR) || currentTotalEUR <= 0) return null;
+  const roundtrip = tripNights != null;
+  if (roundtrip && !(Number.isInteger(tripNights) && tripNights >= 0)) return null;
 
-  // cheapest price per date, per origin
+  // cheapest price per (departure) date, per origin
   const maps = perOrigin.map((list) => {
     const m = new Map();
     for (const t of Array.isArray(list) ? list : []) {
       const price = Number(t?.price);
       const date = t?.date;
       if (!date || !Number.isFinite(price) || price <= 0) continue;
+      if (roundtrip && t?.returnDate !== shiftDays(date, tripNights)) continue;
       if (!m.has(date) || price < m.get(date)) m.set(date, price);
     }
     return m;
@@ -77,6 +92,7 @@ function findCheaperGroupDate({
 
   return {
     date: best.date,
+    ...(roundtrip ? { returnDate: shiftDays(best.date, tripNights) } : {}),
     totalEUR: Math.round(best.total),
     savingEUR: Math.round(saving),
     perOrigin: originList.map((origin, i) => ({
@@ -87,4 +103,4 @@ function findCheaperGroupDate({
   };
 }
 
-module.exports = { findCheaperGroupDate, daysBetween };
+module.exports = { findCheaperGroupDate, daysBetween, shiftDays };
