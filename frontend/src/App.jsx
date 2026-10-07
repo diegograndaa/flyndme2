@@ -242,6 +242,10 @@ export default function App() {
       // Ignore if user is typing in an input
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // Atajos del navegador/sistema (Ctrl+S, Cmd+H…) no son atajos de la app
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Escape que ya cerró una ventana emergente (calendario, cajón…) no navega
+      if (e.defaultPrevented || e.target?.closest?.('[role="dialog"]')) return;
 
       // Escape: close panels first, then go back
       if (e.key === "Escape") {
