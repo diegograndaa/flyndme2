@@ -6,7 +6,7 @@ import {
   AIRPORTS, AIRPORT_MAP, MULTI_AIRPORT, airportName, getBaseUrl,
   normalizeCode, cityOf, destLabel, formatEur, formatDate, weekdayOf,
   todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, fairnessColor,
-  countryFlag, destQuickInfo,
+  countryFlag, destQuickInfo, setCityLang, countryOf,
 } from "../src/utils/helpers.js";
 
 test("AIRPORTS: códigos IATA únicos y válidos", () => {
@@ -143,4 +143,25 @@ test("searchAirports: país, exclusiones y límite", async () => {
   assert.deepEqual(searchAirports("   "), []);
   assert.deepEqual(searchAirports("zzzz"), []);
   for (const c of POPULAR_ORIGINS) assert.ok(AIRPORT_MAP[c], `popular desconocido: ${c}`);
+});
+
+test("cityOf / countryOf: nombres en el idioma de la interfaz", () => {
+  // Por defecto (inglés) no cambia nada
+  assert.equal(cityOf("MIL"), "Milan");
+  assert.equal(cityOf("ROM"), "Rome");
+  // Explícito
+  assert.equal(cityOf("MIL", "es"), "Milán");
+  assert.equal(cityOf("ROM", "es"), "Roma");
+  assert.equal(cityOf("LIS", "es"), "Lisboa");
+  assert.equal(cityOf("MAD", "es"), "Madrid"); // sin traducción → el del listado
+  assert.equal(countryOf("LON", "es"), "Reino Unido");
+  assert.equal(countryOf("LON", "en"), "United Kingdom");
+  // Idioma global (lo fija el proveedor de i18n)
+  setCityLang("es");
+  try {
+    assert.equal(cityOf("MIL"), "Milán");
+    assert.equal(destLabel("lis"), "LIS · Lisboa");
+  } finally { setCityLang("en"); }
+  assert.equal(cityOf("MIL"), "Milan");
+  assert.equal(cityOf("XXX", "es"), "");
 });

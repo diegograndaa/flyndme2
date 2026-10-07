@@ -9,41 +9,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur } from "../utils/helpers";
-import { convertPrice } from "../utils/resultsLogic";
-import { COUNTRIES } from "./europeGeo";
+import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { CITY_COORDS } from "../utils/geo";
-
-// ── Mercator projection for Europe ──────────────────────────────────────────
-const MAP_BOUNDS = { lonMin: -14, lonMax: 36, latMin: 30, latMax: 62 };
-const SVG_W = 700;
-const SVG_H = 500;
-
-const MERC_MIN = Math.log(Math.tan(Math.PI / 4 + (MAP_BOUNDS.latMin * Math.PI) / 360));
-const MERC_MAX = Math.log(Math.tan(Math.PI / 4 + (MAP_BOUNDS.latMax * Math.PI) / 360));
-
-function project(lon, lat) {
-  const x = ((lon - MAP_BOUNDS.lonMin) / (MAP_BOUNDS.lonMax - MAP_BOUNDS.lonMin)) * SVG_W;
-  const mercN = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-  const y = SVG_H - ((mercN - MERC_MIN) / (MERC_MAX - MERC_MIN)) * SVG_H;
-  return [x, y];
-}
-
-// Helper: generate SVG path from array of [lon, lat]
-function toPath(coords) {
-  return coords.map(([lon, lat], i) => {
-    const [x, y] = project(lon, lat);
-    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ") + " Z";
-}
-
-// ── Real country shapes (Natural Earth, see europeGeo.js) ───────────────────
-// Pre-projected once at module load; fills alternate subtly per country so
-// internal borders read without strong color differences.
-const COUNTRY_PATHS = COUNTRIES.map((c) => ({
-  iso: c.iso,
-  alt: (c.iso.charCodeAt(0) + c.iso.charCodeAt(c.iso.length - 1)) % 2 === 1,
-  d: c.rings.map(toPath).join(" "),
-}));
+import { SVG_W, SVG_H, project, COUNTRY_PATHS, flightArc, PLANE_D, placeLabels } from "./mapProjection";
 
 // ── Edge clamping for cities outside the visible canvas (TFS, etc.) ─────────
 const EDGE_PAD = 16;
@@ -58,24 +26,6 @@ function clampPos([x, y]) {
     offAngle: offMap ? (Math.atan2(y - cy, x - cx) * 180) / Math.PI : 0,
   };
 }
-
-// Quadratic Bézier arc between two points, bowed upwards (great-circle feel).
-function flightArc([x1, y1], [x2, y2]) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const dist = Math.hypot(dx, dy) || 1;
-  const lift = Math.min(60, dist * 0.2);
-  // Perpendicular to the chord, always bowing towards the top of the map
-  let px = -dy / dist;
-  let py = dx / dist;
-  if (py > 0) { px = -px; py = -py; }
-  const cx = (x1 + x2) / 2 + px * lift;
-  const cy = (y1 + y2) / 2 + py * lift;
-  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
-}
-
-// Avión de 14px apuntando a +x (animateMotion rotate="auto" lo orienta)
-const PLANE_D = "M7 0 L-3 -5.5 L-1.5 -1.2 L-6 -1.2 L-7.5 -3.5 L-8.5 -3.5 L-7.4 0 L-8.5 3.5 L-7.5 3.5 L-6 1.2 L-1.5 1.2 L-3 5.5 Z";
 
 // Encuadre: caja de los puntos + margen, con la proporción del contenedor y
 // un zoom máximo (para que dos ciudades vecinas no llenen la pantalla).
@@ -100,65 +50,25 @@ function fitView(points, aspect) {
   return { x, y, w, h };
 }
 
-const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-
-// Coloca cada ficha arriba/abajo/derecha/izquierda de su punto, la primera
-// posición que no pisa otra ficha ni otro punto (voraz, por prioridad).
-function placeLabels(items, dots, vb, u) {
-  const placed = [];
-  const gap = 9 * u;
-  const out = {};
-  for (const it of items) {
-    const { w, h } = it;
-    const [x, y] = it.pos;
-    const cands = [
-      { x: x - w / 2, y: y - gap - h, side: "top" },
-      { x: x - w / 2, y: y + gap, side: "bottom" },
-      { x: x + gap, y: y - h / 2, side: "right" },
-      { x: x - gap - w, y: y - h / 2, side: "left" },
-    ];
-    let best = null;
-    let bestScore = Infinity;
-    for (const c of cands) {
-      const r = { x: c.x, y: c.y, w, h };
-      let score = 0;
-      for (const p of placed) if (overlaps(r, p)) score += 10;
-      for (const d of dots) {
-        if (d.code === it.code) continue;
-        const dr = { x: d.pos[0] - 6 * u, y: d.pos[1] - 6 * u, w: 12 * u, h: 12 * u };
-        if (overlaps(r, dr)) score += 4;
-      }
-      if (r.x < vb.x || r.y < vb.y || r.x + w > vb.x + vb.w || r.y + h > vb.y + vb.h) score += 6;
-      if (score < bestScore) { bestScore = score; best = { ...c, w, h }; }
-      if (score === 0) break;
-    }
-    placed.push(best);
-    out[it.code] = best;
-  }
-  return out;
-}
-
 const GRAT_STEP = 5;
 
-// Mismos umbrales que el panel de salidas / tarjeta
-function fairnessKey(score) {
-  if (score >= 85) return "veryBalanced";
-  if (score >= 65) return "fairlyBalanced";
-  if (score >= 45) return "somewhatUnequal";
-  return "unequal";
-}
-
-export default function DestinationMap({ flights, bestDestination, origins, currency = "EUR", onSelect, onShowCard }) {
-  const { t } = useI18n();
+// `inline`: versión sin cabecera ni leyenda que rellena su hueco (va junto a la
+// foto en la tarjeta ganadora); el encuadre toma la proporción del hueco.
+export default function DestinationMap({ flights, bestDestination, origins, currency = "EUR", onSelect, onShowCard, inline = false }) {
+  const { t, lang } = useI18n();
   const [hovered, setHovered] = useState(null);
   const wrapRef = useRef(null);
   // Ancho real del contenedor → los marcadores miden lo mismo en pantalla
   // con cualquier zoom (SSR: 700 px).
-  const [widthPx, setWidthPx] = useState(700);
+  const [widthPx, setWidthPx] = useState(inline ? 440 : 700);
+  const [heightPx, setHeightPx] = useState(250);
   useEffect(() => {
     const el = wrapRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(([e]) => { const w = e.contentRect.width; if (w > 0) setWidthPx(w); });
+    const ro = new ResizeObserver(([e]) => {
+      const w = e.contentRect.width; if (w > 0) setWidthPx(w);
+      const h = e.contentRect.height; if (h > 0) setHeightPx(h);
+    });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -166,15 +76,16 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
   const bestCode = normalizeCode(bestDestination?.destination || "");
   const singleOrigin = (origins || []).filter(Boolean).length <= 1;
-  const compact = widthPx < 480;
-  const aspect = compact ? 1.05 : 1.45;
+  const compact = inline ? widthPx < 360 : widthPx < 480;
+  const aspect = inline ? Math.max(1, Math.min(2.4, widthPx / Math.max(heightPx, 1))) : compact ? 1.05 : 1.45;
+  const originCodes = (origins || []).filter(Boolean).map((o) => normalizeCode(o));
 
   const originPoints = useMemo(() => (origins || []).filter(Boolean).map((o) => {
     const code = normalizeCode(o);
     const coords = CITY_COORDS[code];
     if (!coords) return null;
     return { code, city: cityOf(code), ...clampPos(project(coords[0], coords[1])) };
-  }).filter(Boolean), [origins]);
+  }).filter(Boolean), [origins, lang]);
 
   const destPoints = useMemo(() => (flights || []).map((f) => {
     const code = normalizeCode(f.destination);
@@ -185,7 +96,7 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
       fairness: f.fairnessScore ?? 0, isBest: code === bestCode,
       ...clampPos(project(coords[0], coords[1])),
     };
-  }).filter(Boolean), [flights, bestCode]);
+  }).filter(Boolean), [flights, bestCode, lang]);
 
   const vb = useMemo(
     () => fitView([...originPoints, ...destPoints].map((p) => p.pos), aspect),
@@ -204,7 +115,9 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
 
   // Fichas: medidas en px de pantalla × u (fuente mono ≈ 0,62 em por carácter)
   const chipFor = (d) => {
-    const label = compact ? money(d.avg) : `${d.code}  ${money(d.avg)}`;
+    // Compacto: en la carta grande solo el precio; junto a la foto (inline) el
+    // código, que es lo que sitúa (los precios están en el panel de salidas).
+    const label = !compact || (inline && d.isBest) ? `${d.code}  ${money(d.avg)}` : inline ? d.code : money(d.avg);
     const fs = d.isBest ? 12.5 : 11;
     const w = (label.length * fs * 0.62 + (d.isBest ? 20 : 17)) * u;
     const h = (d.isBest ? 24 : 20) * u;
@@ -253,8 +166,8 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
   const nf = (v) => v.toFixed(1);
 
   return (
-    <div className="dm-wrap">
-      <div className="dm-header">
+    <div className={`dm-wrap${inline ? " dm-wrap--inline" : ""}`}>
+      {!inline && <div className="dm-header">
         <div>
           <h3 className="dm-title">{t("map.title")}</h3>
           {onSelect && destPoints.length > 1 && <p className="dm-sub">{t("map.subtitle")}</p>}
@@ -266,9 +179,9 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
           <span className="dm-legend-item"><span className="dm-key dm-key--dest"><i className="dm-tone--expensive" /></span> {t("map.expensive")}</span>
           <span className="dm-legend-item"><span className="dm-key dm-key--origin" /> {t("map.origin")}</span>
         </div>
-      </div>
+      </div>}
 
-      {bestPoint && (
+      {!inline && bestPoint && (
         <div className="dm-current">
           <span className="dm-current-label">{t("board.selected")}</span>
           <span className="dm-current-dest">{bestPoint.code} · {bestPoint.city || bestPoint.code}</span>
@@ -346,7 +259,8 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
 
           {/* Puntos de origen */}
           {originPoints.map((o) => (
-            <circle key={`od-${o.code}`} cx={o.pos[0]} cy={o.pos[1]} r={5 * u} strokeWidth={2 * u} className="dm-origin-dot" />
+            <circle key={`od-${o.code}`} cx={o.pos[0]} cy={o.pos[1]} r={5 * u} strokeWidth={2.2 * u}
+              className={`dm-origin-dot trav-c${travelerSlot(originCodes, o.code)}`} />
           ))}
 
           {/* Destinos: punto + ficha (código · €/pp), pulsables */}
@@ -415,12 +329,18 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
             <div className="dm-tooltip-city">{hoveredPoint.city || hoveredPoint.code} <span>{hoveredPoint.code}</span></div>
             <div className="dm-tooltip-price">{money(hoveredPoint.avg)} <small>{t("compare.perPerson")}</small></div>
             <div className="dm-tooltip-row">{t("map.groupTotal")}: {money(hoveredPoint.total)}</div>
-            {!singleOrigin && <div className="dm-tooltip-row">{t(`fairness.${fairnessKey(hoveredPoint.fairness)}`)}</div>}
+            {!singleOrigin && (
+              <div className="dm-tooltip-row">
+                {hoveredPoint.fairness >= 65 ? t("board.payEven") : t("board.paySpread", { amount: money(paySpread(hoveredPoint.flight)) })}
+              </div>
+            )}
             <div className="dm-tooltip-hint">{hoveredPoint.isBest ? t("board.selected") : t("map.tapHint")}</div>
           </div>
         )}
       </div>
-      <p className="dm-note">{t("board.estimateNote")}</p>
+      {inline
+        ? (onSelect && destPoints.length > 1 && <span className="dm-inline-hint" aria-hidden="true">{t("map.subtitleShort")}</span>)
+        : <p className="dm-note">{t("board.estimateNote")}</p>}
     </div>
   );
 }

@@ -6,9 +6,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
-  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName, fairnessColor,
+  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
 } from "../utils/helpers";
-import { convertPrice } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
@@ -17,24 +17,7 @@ import VerificationBadge from "./VerificationBadge";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
 import { FlapText } from "./FlapBoard";
-
-function useFairnessLabel(score) {
-  const { t } = useI18n();
-  if (score >= 85) return { text: t("fairness.veryBalanced"),      color: fairnessColor(score) };
-  if (score >= 65) return { text: t("fairness.fairlyBalanced"),    color: fairnessColor(score) };
-  if (score >= 45) return { text: t("fairness.somewhatUnequal"),   color: fairnessColor(score) };
-  return             { text: t("fairness.unequal"),                 color: fairnessColor(score) };
-}
-
-// Colour a "who pays what" bar by how far this traveler's fare is from the
-// group's per-person average (cheaper/at-average = green, a bit over = amber,
-// well over = red). Real prices in, no invented data.
-function payColor(price, avg) {
-  const r = avg > 0 ? price / avg : 1;
-  if (r <= 1.05) return "var(--fair-high, #15803D)";
-  if (r <= 1.25) return "var(--fair-low, #B45309)";
-  return "var(--fair-bad, #DC2626)";
-}
+import { TravelerDot } from "./TravelerBits";
 
 // "HH:MM" de un instante ISO del proveedor (hora local de ese aeropuerto)
 function hhmm(at) {
@@ -42,9 +25,22 @@ function hhmm(at) {
   return m ? m[1] : "";
 }
 
-function airlineLogo(iata) {
-  if (!iata || iata.length < 2) return null;
-  return `https://images.kiwi.com/airlines/64/${iata}.png`;
+// Logo de aerolínea por código IATA. Primero el CDN de Aviasales (la misma
+// fuente que los precios: cubre los códigos que devuelve, p. ej. W4 o MW, que
+// en el de Kiwi no existen); si falla, el de Kiwi; si falla también, solo el
+// código en su ficha (nunca un icono roto).
+const AIRLINE_LOGO_SOURCES = [
+  (c) => `https://pics.avs.io/72/24/${c}@2x.png`,
+  (c) => `https://images.kiwi.com/airlines/64/${c}.png`,
+];
+function AirlineLogo({ code }) {
+  const [src, setSrc] = useState(0);
+  const iata = String(code || "").toUpperCase();
+  if (!/^[A-Z0-9]{2}$/.test(iata) || src >= AIRLINE_LOGO_SOURCES.length) return null;
+  return (
+    <img key={src} src={AIRLINE_LOGO_SOURCES[src](iata)} alt="" className={`wc-airline-logo wc-airline-logo--s${src}`}
+      loading="lazy" decoding="async" onError={() => setSrc((n) => n + 1)} />
+  );
 }
 
 // Frase traducida con la cifra dentro ("Media €52 por persona"): se traduce con
@@ -66,6 +62,7 @@ const WinnerCard = React.memo(function WinnerCard({
   searchBadges = [],
   isFav = false, onToggleFav,
   dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
+  mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -137,13 +134,14 @@ const WinnerCard = React.memo(function WinnerCard({
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
-      {/* Hero image */}
+      {/* Foto del destino + mapa de rutas, lado a lado (oct-2026): el mapa ya
+          no se esconde tras una pestaña al final de la página. */}
+      <div className={`wc-top${mapSlot ? " wc-top--map" : ""}`}>
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
-        {/* Duotono de marca (tinta → ámbar): capa que tiñe las luces de la foto
-            para que todas las ciudades compartan el mismo tratamiento. */}
-        <div className="wc-image-duo" aria-hidden="true" />
+        {/* Foto A COLOR con degradado oscuro abajo para leer el nombre (el
+            duotono amarillo hacía que todas las ciudades parecieran la misma). */}
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
           <div className="wc-badge-winner">{t("results.eyebrow")}</div>
@@ -171,6 +169,8 @@ const WinnerCard = React.memo(function WinnerCard({
             </span>
           )}
         </div>
+      </div>
+      {mapSlot && <div className="wc-map">{mapSlot}</div>}
       </div>
 
       {/* ══ Vuestros vuelos: lo que hay que comprar + el total del grupo ══
@@ -271,7 +271,10 @@ const WinnerCard = React.memo(function WinnerCard({
                       aria-expanded={routeOpen} aria-controls={`wc-fd-${origin}`}
                       onClick={() => setOpenRoute((r) => (r === origin ? null : origin))}>
                       <span className="wc-flight-endpoint">
-                        <span className="wc-flight-code">{countryFlag(origin)} {origin}</span>
+                        <span className="wc-flight-code">
+                          {!singleOrigin && <TravelerDot origins={cleanOrigins} code={origin} />}
+                          {countryFlag(origin)} {origin}
+                        </span>
                         <span className="wc-flight-city">{originCity}</span>
                       </span>
                       <span className="wc-flight-arrow-wrap" style={{ "--k": cardIdx }}>
@@ -330,7 +333,7 @@ const WinnerCard = React.memo(function WinnerCard({
                     {(airline || stops !== null || durationText) && (
                       <div className="wc-flight-meta">
                         <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.outbound")}</span>
-                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><img src={airlineLogo(airline)} alt={airline} className="wc-airline-logo" onError={(e) => { e.currentTarget.style.display = "none"; }} /><span className="wc-airline-badge">{airline}</span></span>}
+                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><AirlineLogo code={airline} /><span className="wc-airline-badge">{airline}</span></span>}
                         {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
                         {stops !== null && (
                           <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
@@ -543,9 +546,8 @@ export default WinnerCard;
 // la toma. Mismo criterio que el reparto "a partes iguales" de CostSplitCard.
 const ILS_EVEN = 2; // |desvío| < 2 € = centrado (igual que CostSplitCard)
 
-export function WhoPaysStrip({ dest, currency = "EUR" }) {
+export function WhoPaysStrip({ dest, currency = "EUR", origins = [] }) {
   const { t } = useI18n();
-  const fairness = useFairnessLabel(dest?.fairnessScore ?? 0);
   const [sel, setSel] = useState(null);
   const rows = (Array.isArray(dest?.flights) ? dest.flights : [])
     .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price) || 0, pax: Number(f.passengers) || 1 }))
@@ -554,6 +556,7 @@ export function WhoPaysStrip({ dest, currency = "EUR" }) {
   const avg = dest.averageCostPerTraveler || rows.reduce((a, r) => a + r.price, 0) / rows.length;
   const maxDev = Math.max(ILS_EVEN, ...rows.map((r) => Math.abs(r.price - avg)));
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
+  const order = origins.length ? origins : rows.map((r) => r.origin);
 
   const tower = (r) => {
     const dev = r.price - avg;
@@ -569,8 +572,10 @@ export function WhoPaysStrip({ dest, currency = "EUR" }) {
     <div className="wc-fs wc-ils">
       <div className="wc-fs-head">
         <span className="wc-fs-title">{t("results.whoPaysTitle")}</span>
-        <span className="wc-fs-verdict" style={{ color: fairness.color }}>
-          {t("results.whoPaysSpread", { amount: formatEur(dest.priceSpread ?? 0, 0) })} · {fairness.text}
+        {/* Dato neutro (la diferencia en €) en vez de un veredicto en rojo;
+            solo se destaca, en verde, cuando el reparto es parejo. */}
+        <span className={`wc-fs-verdict${(dest?.fairnessScore ?? 0) >= 65 ? " wc-fs-verdict--even" : ""}`}>
+          {(dest?.fairnessScore ?? 0) >= 65 ? t("board.payEven") : t("board.paySpread", { amount: money(paySpread(dest)) })}
         </span>
       </div>
       {/* Escala del localizador: paga menos ← media → paga más */}
@@ -584,12 +589,14 @@ export function WhoPaysStrip({ dest, currency = "EUR" }) {
           const dev = r.price - avg;
           const k = Math.max(-1, Math.min(1, dev / maxDev));
           const centered = Math.abs(dev) < ILS_EVEN;
-          const color = payColor(r.price, avg);
+          // Color = identidad del viajero (el mismo en toda la app), no un
+          // semáforo: quién paga más ya lo dice la posición del diamante.
+          const color = "var(--trav, var(--slate-500))";
           const open = sel === r.origin;
           const tw = open ? tower(r) : null;
           return (
             <React.Fragment key={r.origin}>
-              <button type="button" className={`wc-fs-row wc-ils-row${open ? " wc-ils-row--sel" : ""}`}
+              <button type="button" className={`wc-fs-row wc-ils-row trav-c${travelerSlot(order, r.origin)}${open ? " wc-ils-row--sel" : ""}`}
                 style={{ "--i": i }} aria-expanded={open} aria-controls={`wc-twr-${r.origin}`}
                 onClick={() => setSel((s) => (s === r.origin ? null : r.origin))}>
                 <span className="wc-fs-code">{countryFlag(r.origin)} {r.origin}</span>
