@@ -124,11 +124,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security headers (relax CSP in dev so the API is callable from Vite)
+// Cabeceras de seguridad. La API solo sirve JSON y las páginas OG (meta +
+// meta-refresh, sin scripts ni recursos), así que la CSP puede ser 'none'.
+// La CSP no afecta a quién puede LLAMAR a la API (eso es CORS).
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'none'"],
+        baseUri: ["'none'"],
+        formAction: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
   })
 );
 

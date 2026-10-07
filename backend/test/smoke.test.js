@@ -80,6 +80,13 @@ test("health endpoint reports mock mode", async () => {
   assert.equal(r.body.status, "healthy");
 });
 
+test("seguridad: la API manda una CSP estricta (default-src 'none')", async () => {
+  const r = await fetch(`${BASE}/api/ping`);
+  const csp = r.headers.get("content-security-policy") || "";
+  assert.match(csp, /default-src 'none'/);
+  assert.match(csp, /frame-ancestors 'none'/);
+});
+
 test("keep-alive: /api/ping responde a GET y HEAD sin caché", async () => {
   const get = await fetch(`${BASE}/api/ping`);
   assert.equal(get.status, 200);
