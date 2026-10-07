@@ -7,6 +7,11 @@ name: keep-alive
 #
 # NOTE: GitHub disables scheduled workflows after 60 days without
 # repo activity. Any push re-enables it.
+#
+# En la práctica GitHub retrasa mucho los cron gratuitos (oct-2026: una
+# ejecución cada 3-7 h en vez de cada 10 min), así que esto NO basta para
+# que Render no se duerma. Es solo respaldo del pinger externo (README,
+# «Mantener despierto el backend»).
 
 on:
   schedule:
