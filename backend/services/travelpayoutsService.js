@@ -404,17 +404,23 @@ async function findNeighborTicket(origin, destination, departureDate, options) {
   const retMonths = options.returnDate ? monthsInWindow(options.returnDate, DATE_FLEX_DAYS) : [null];
 
   const tickets = [];
+  let answered = 0;
+  let lastErr = null;
   for (const dm of depMonths) {
     for (const rm of retMonths) {
       const opts = { ...options, limit: 100 };
       if (rm) opts.returnDate = rm;
       try {
         tickets.push(...await fetchTickets(origin, destination, dm, opts));
-      } catch {
+        answered += 1;
+      } catch (err) {
         // un mes sin datos o con error no impide probar el resto
+        lastErr = err;
       }
     }
   }
+  // Ningún mes respondió: es un fallo del proveedor, no "sin precio".
+  if (answered === 0 && lastErr) throw lastErr;
   return pickNeighbor(tickets, departureDate, options.returnDate, DATE_FLEX_DAYS);
 }
 
@@ -449,6 +455,7 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
     return null;
   }
 
+  if (options.stats) options.stats.calls += 1;
   try {
     const tickets  = await fetchTickets(origin, destination, departureDate, options);
     const cheapest = pickCheapest(tickets, departureDate, options.returnDate);
@@ -492,6 +499,9 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
   } catch {
     // Contrato del proveedor: un fallo puntual en una ruta no
     // tumba la búsqueda multi-origen; el destino simplemente se descarta.
+    // options.stats (opcional) lo cuenta para que la ruta distinga
+    // "proveedor caído" de "sin vuelos".
+    if (options.stats) options.stats.errors += 1;
     return null;
   }
 }

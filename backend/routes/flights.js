@@ -71,6 +71,8 @@ const SEARCH_TIME_BUDGET_MS     = Number(process.env.SEARCH_TIME_BUDGET_MS || 25
 const SERPAPI_VERIFY_TIMEOUT_MS = Number(process.env.SERPAPI_VERIFY_TIMEOUT_MS || 20000);
 const VERIFY_MAX_LEGS           = MAX_ORIGINS; // mismo tope que la búsqueda
 
+const { providerHealth } = require("../utils/providerHealth");
+
 // ─── In-memory response cache with size guard ─────────────────────────────
 
 const { TtlCache } = require("../utils/ttlCache");
@@ -525,7 +527,8 @@ router.post("/multi-origin", async (req, res) => {
     }
 
     // ── Search: process destinations in parallel chunks (respect rate limits) ──────
-    const optionsBase = { nonStop, max: 5 };
+    const providerStats = { calls: 0, errors: 0 };
+    const optionsBase = { nonStop, max: 5, stats: providerStats };
     if (travelClass) optionsBase.travelClass = travelClass;
     const enriched    = [];
     const CHUNK_SIZE  = 3;
@@ -602,9 +605,23 @@ router.post("/multi-origin", async (req, res) => {
 
     console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados, ${destsTouched}/${destinationList.length} destinos consultados`);
 
+    const health = providerHealth(providerStats);
+    if (health !== "ok") {
+      console.warn(`[search] proveedor ${health}: ${providerStats.errors}/${providerStats.calls} consultas fallidas`);
+    }
+
     if (!enriched.length) {
+      // Si el proveedor ha fallado, "sin vuelos" sería falso: 502 explícito y
+      // sin cachear (un reintento en un minuto puede funcionar).
+      if (health === "down") {
+        res.set("X-Response-Time", `${Date.now() - startTime}ms`);
+        return res.status(502).json({
+          code: "PROVIDER_UNAVAILABLE",
+          message: "El proveedor de precios no responde. Inténtalo en unos minutos.",
+        });
+      }
       const payload = { flights: [], bestDestination: null, partial, provider: FLIGHT_PROVIDER };
-      setCached(cacheKey, payload);
+      if (health === "ok") setCached(cacheKey, payload);
       const duration = Date.now() - startTime;
       res.set("X-Response-Time", `${duration}ms`);
       return res.json(payload);
@@ -652,13 +669,16 @@ router.post("/multi-origin", async (req, res) => {
       flights:          enriched,
       bestDestination:  enriched[0],
       partial,
+      // Parte de las consultas al proveedor falló: puede faltar algún destino.
+      ...(health !== "ok" ? { degraded: true } : {}),
       provider:         FLIGHT_PROVIDER,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
     };
 
-    // Las respuestas parciales no se cachean: un reintento puede completarse
-    if (!partial) setCached(cacheKey, payload);
+    // Las respuestas parciales o con fallos del proveedor no se cachean: un
+    // reintento puede completarse
+    if (!partial && health === "ok") setCached(cacheKey, payload);
 
     const duration = Date.now() - startTime;
     res.set("X-Response-Time", `${duration}ms`);
