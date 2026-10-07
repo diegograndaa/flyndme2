@@ -501,7 +501,7 @@
   .sf-form .form-switch .form-check-input.form-check-input { transition: none; }
 }
 
-/* ══ 32. Ritmo editorial de resultados ═════════════════════════════════════
+/* ══ 33. Ritmo editorial de resultados ═════════════════════════════════════
    Cada zona es una columna con UN espaciado base (--rhythm) en vez de
    márgenes sueltos por pieza. Más aire tras la cabecera de zona y tras la
    tarjeta grande; las piezas secundarias (reparto, siguiente paso) van más
@@ -517,3 +517,11 @@
   .fm-decision, .fm-explore { --rhythm: 10px; }
   .fm-zone-perf.fm-zone-perf { margin: 30px 6px 26px; }
 }
+
+/* ══ 34. Vigilar precio ════════════════════════════════════════════════════
+   Activo = relleno de tinta (carbón / hueso según el tema), nunca amarillo:
+   el amarillo en resultados es solo para reservar. */
+.wc-actions .wc-action-btn.wc-action-btn--watch.wc-action-btn--on { background: var(--primary); color: var(--on-solid); border-color: var(--primary); }
+.wc-watch-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
+.fm-price-alerts { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.fm-price-alerts .fm-notice { margin: 0; }

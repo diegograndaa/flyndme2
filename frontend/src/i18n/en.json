@@ -718,6 +718,17 @@
     "textRoundtrip": "Leave on {{date}} and fly back on {{returnDate}} (same nights): the group pays {{total}} — save {{saving}}",
     "useRoundtrip": "Switch to these dates"
   },
+  "watch": {
+    "cta": "Watch price",
+    "on": "Watching price",
+    "hint": "We check it every time you open FlyndMe in this browser and let you know here if it drops. No emails or notifications.",
+    "added": "Watching the price: we'll let you know here if it drops when you're back.",
+    "removed": "You're no longer watching this price.",
+    "tag": "Watched price",
+    "dropText": "{{route}} → {{city}}: the group was paying {{before}}, now {{now}} (save {{saving}})",
+    "dropDetail": "Estimate based on recent searches. Check the live price before booking.",
+    "view": "See flights"
+  },
   "arrivalCoord": {
     "diffDays": "With the cheapest flights, you land on different days ({{time}} apart).",
     "close": "You all land close together: {{time}} between the first and last arrival.",

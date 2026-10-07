@@ -12,7 +12,7 @@ import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown } from "lucide-react";
+import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
@@ -61,6 +61,7 @@ const WinnerCard = React.memo(function WinnerCard({
   currency = "EUR",
   searchBadges = [],
   isFav = false, onToggleFav,
+  watched = false, onToggleWatch,
   dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
 }) {
@@ -519,7 +520,15 @@ const WinnerCard = React.memo(function WinnerCard({
               <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}
             </button>
           )}
+          {onToggleWatch && (
+            <button type="button" className={`wc-action-btn wc-action-btn--watch${watched ? " wc-action-btn--on" : ""}`}
+              onClick={onToggleWatch} aria-pressed={watched} title={t("watch.hint")}>
+              {watched ? <BellRing size={14} aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}
+              {" "}{watched ? t("watch.on") : t("watch.cta")}
+            </button>
+          )}
         </div>
+        {watched && <p className="wc-watch-note">{t("watch.hint")}</p>}
 
         {/* Search badges */}
         {searchBadges.length > 0 && (

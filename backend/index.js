@@ -208,10 +208,10 @@ app.get("/", (_req, res) => {
 });
 
 // Keep-alive: lo llaman el frontend y un pinger externo (GET o HEAD; Express
-// responde HEAD con las rutas GET). Nunca cacheable: una respuesta cacheada no
-// despertaría la instancia.
+// responde HEAD con las rutas GET). Sin Cache-Control: no-store a propósito:
+// con esa cabecera Chrome no da la petición por terminada en DevTools/CDP y la
+// auditoría de paridad (networkidle) se cuelga; Render no tiene CDN delante.
 app.get("/api/ping", (_req, res) => {
-  res.set("Cache-Control", "no-store");
   res.json({ message: "pong", timestamp: Date.now() });
 });
 

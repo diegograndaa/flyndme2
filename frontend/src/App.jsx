@@ -18,6 +18,7 @@ import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
+import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
@@ -272,6 +273,9 @@ export default function App() {
   const [optimizeBy,    setOptimizeBy]    = useState("total");
   // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
   const [cheaperDate,     setCheaperDate]     = useState(null);
+  // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
+  const [watches,         setWatches]         = useState(() => (typeof window === "undefined" ? [] : readWatches(window.localStorage)));
+  const [priceAlerts,     setPriceAlerts]     = useState([]);
   const [pendingResearch, setPendingResearch] = useState(false);
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudget,     setMaxBudget]     = useState(200);
@@ -870,6 +874,81 @@ export default function App() {
       .catch(() => { /* silencioso: el nudge es opcional */ });
   };
 
+  // ── Vigilar precio ──────────────────────────────────────────────────────────
+  // Al abrir la app se pregunta el precio de HOY de cada búsqueda vigilada (misma
+  // combinación exacta) y solo se avisa si ha bajado de forma apreciable. Se
+  // compara contra el precio de caché de entonces (cached* si se verificó en
+  // vivo): comparar Google Flights con la caché daría bajadas falsas.
+  const watchParamsFor = (dest) => ({
+    origins: cleanOrigins,
+    passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+    departureDate: dest.bestDate || departureDate,
+    returnDate: dest.bestReturnDate || returnDate,
+    tripType,
+    nonStop: directOnly,
+    destination: normalizeCode(dest.destination),
+  });
+  const isWatched = (dest) => !!dest && watches.some((w) => w.id === watchId(watchParamsFor(dest)));
+  const toggleWatch = (dest) => {
+    if (!dest) return;
+    const params = watchParamsFor(dest);
+    const id = watchId(params);
+    let next;
+    if (watches.some((w) => w.id === id)) {
+      next = removeWatch(watches, id);
+      setToast({ message: t("watch.removed"), type: "success" });
+    } else {
+      next = addWatch(watches, makeWatch(params, dest.cachedTotalCostEUR ?? dest.totalCostEUR));
+      setToast({ message: t("watch.added"), type: "success" });
+      trackEvent("price_watch_add", { origins: params.origins.length });
+    }
+    setWatches(next);
+    writeWatches(window.localStorage, next);
+  };
+  const openWatch = (w) => {
+    setPriceAlerts((prev) => prev.filter((a) => a.watch.id !== w.id));
+    setOrigins(w.origins);
+    setPassengers(w.passengers);
+    setTripType(w.tripType);
+    setDepartureDate(w.departureDate);
+    setReturnDate(w.returnDate || "");
+    setDirectOnly(!!w.nonStop);
+    trackEvent("price_drop_open", {});
+    setPendingResearch(true);
+  };
+  useEffect(() => {
+    const list = activeWatches(watches, todayISO());
+    if (list.length !== watches.length) { setWatches(list); writeWatches(window.localStorage, list); }
+    if (!list.length) return undefined;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const found = [];
+      for (const w of list) {
+        try {
+          const res = await groupFetch(`${API_BASE}/api/flights/price-check`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              origins: w.origins, passengers: w.passengers, destination: w.destination,
+              departureDate: w.departureDate, tripType: w.tripType,
+              ...(w.tripType === "roundtrip" ? { returnDate: w.returnDate } : {}),
+              ...(w.nonStop ? { nonStop: true } : {}),
+            }),
+          });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const drop = data?.result ? priceDrop(w.savedTotalEUR, data.result.totalCostEUR) : null;
+          if (drop) found.push({ watch: w, ...drop });
+        } catch { /* silencioso: el aviso es opcional */ }
+      }
+      if (!cancelled && found.length) {
+        setPriceAlerts(found);
+        trackEvent("price_drop_seen", { n: found.length });
+      }
+    }, 2500);
+    return () => { cancelled = true; clearTimeout(timer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
   const useCheaperDate = (date, newReturnDate) => {
@@ -1326,6 +1405,23 @@ export default function App() {
       <div id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
+          {priceAlerts.length > 0 && (
+            <div className="container fm-price-alerts" style={{ maxWidth: 1080 }} aria-live="polite">
+              {priceAlerts.map((a) => (
+                <Notice key={a.watch.id} variant="next" tag={t("watch.tag")}
+                  text={t("watch.dropText", {
+                    route: a.watch.origins.join(" · "),
+                    city: cityOf(a.watch.destination) || a.watch.destination,
+                    before: formatEur(a.watch.savedTotalEUR, 0),
+                    now: formatEur(a.currentTotalEUR, 0),
+                    saving: formatEur(a.savingEUR, 0),
+                  })}
+                  detail={t("watch.dropDetail")}
+                  actionLabel={t("watch.view")}
+                  onAction={() => openWatch(a.watch)} />
+              ))}
+            </div>
+          )}
           <Landing origins={cleanOrigins} searchForm={
             <SearchPage
               origins={origins}           setOrigins={setOrigins}
@@ -1465,6 +1561,8 @@ export default function App() {
             currency={currency}
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
+            watched={isWatched(bestDestination)}
+            onToggleWatch={() => toggleWatch(bestDestination)}
             dateHint={cheaperDate && cheaperDate.destination === normalizeCode(bestDestination.destination) ? {
               text: t(cheaperDate.returnDate ? "cheaperDate.textRoundtrip" : "cheaperDate.text", {
                 date: formatDate(cheaperDate.date),

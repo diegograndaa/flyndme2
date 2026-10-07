@@ -718,6 +718,17 @@
     "textRoundtrip": "Salid el {{date}} y volved el {{returnDate}} (mismas noches): el grupo paga {{total}} — ahorráis {{saving}}",
     "useRoundtrip": "Cambiar a estas fechas"
   },
+  "watch": {
+    "cta": "Vigilar precio",
+    "on": "Vigilando precio",
+    "hint": "Lo comprobamos cada vez que abres FlyndMe en este navegador y te avisamos aquí si baja. No enviamos emails ni notificaciones.",
+    "added": "Vigilando el precio: te avisaremos aquí si baja cuando vuelvas.",
+    "removed": "Has dejado de vigilar este precio.",
+    "tag": "Precio vigilado",
+    "dropText": "{{route}} → {{city}}: el grupo pagaba {{before}} y ahora {{now}} (ahorráis {{saving}})",
+    "dropDetail": "Estimación basada en búsquedas recientes. Comprobad el precio en vivo antes de reservar.",
+    "view": "Ver vuelos"
+  },
   "arrivalCoord": {
     "diffDays": "Con los vuelos más baratos, llegáis en días distintos ({{time}} de diferencia).",
     "close": "Llegáis casi a la vez: {{time}} entre la primera y la última llegada.",
