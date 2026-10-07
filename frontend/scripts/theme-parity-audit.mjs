@@ -17,6 +17,14 @@
 //   · Cartel de posición (opción/pestaña activa, pasos): NEGRO + amarillo en
 //     los dos temas; de noche lo dibuja su filete, no el contraste del fondo.
 //   · Fichas split-flap, tooltips y fichas del mapa: mismo objeto en ambos.
+//     Incluye las fichas de carbón añadidas después (nº de zona, nº de
+//     viajero, insignia sobre la foto, hueco de foto del panel de salidas) y
+//     las fichas/punto de encuentro del mapa de la portada (hm-chip, hm-dest):
+//     de noche llevan --ficha-canto en vez de cambiar de color. En SVG el
+//     script solo compara contra el fondo de página, no contra la ficha que
+//     hay debajo del texto, por eso esas piezas no se pueden medir aquí.
+//   · Placa blanca de los logos de aerolínea: los logos son imágenes sobre
+//     blanco y necesitan esa placa en los dos temas.
 const PLAYWRIGHT = process.env.PLAYWRIGHT || 'playwright';
 const CHROME = process.env.CHROME || undefined;
 const BASE = process.env.BASE_URL || 'http://localhost:5173';
@@ -106,7 +114,7 @@ const diffState = async (name) => {
     if (b.contraste && b.contraste < 4.5) diffs.push(`CONTRASTE oscuro ${b.contraste}`);
     // Aceptado por diseño: el cartel de posición es NEGRO en los dos temas (de noche lo dibuja su filete amarillo)
     const SIGN = /sf-pill--active|rv-tab--active|wc-criterion-pill--active|fm-split-pill--active|lp-step-num|cmp-rank|fm-notice-tag|fm-lang-btn--active|sf-ac-item--hl|sk-step-dot/;
-    const DECOR = /dm-tooltip|dm-key--dest|dm-key--origin|dm-chip-bg|dm-chip-text|dm-dot--best|fm-sticky-inner|cv-lit|cv-dest-pin|cv-origin-lit|fm-flight-head-arrow|wc-image-wrap|flap-cell|sf-summary-chip|sf-ac-code/;
+    const DECOR = /dm-tooltip|dm-key--dest|dm-key--origin|dm-chip-bg|dm-chip-text|dm-dot--best|fm-sticky-inner|cv-lit|cv-dest-pin|cv-origin-lit|fm-flight-head-arrow|wc-image-wrap|flap-cell|sf-summary-chip|sf-ac-code|fm-zone-num|sf-badge--set|wc-badge-winner|dep-thumb|hm-chip|hm-dest|wc-airline-logo/;
     for (let k = diffs.length - 1; k >= 0; k--) {
       if (SIGN.test(a.sig) && /^(fondo: neutro·FUERTE|outline|sombra)/.test(diffs[k])) diffs.splice(k, 1);
       else if (DECOR.test(a.sig)) diffs.splice(k, 1);
