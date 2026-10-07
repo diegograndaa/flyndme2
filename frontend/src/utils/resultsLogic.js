@@ -16,7 +16,8 @@ export function convertPrice(eur, currency) {
 // ── Coordenadas de aeropuertos (lat, lon) para distancias aproximadas ───────
 export const AIRPORT_COORDS = {
   MAD: [40.47, -3.56], BCN: [41.30, 2.08], AGP: [36.67, -4.49], PMI: [39.55, 2.74],
-  TFS: [28.04, -16.57], LON: [51.47, -0.46], EDI: [55.95, -3.37], PAR: [49.01, 2.55],
+  TFS: [28.04, -16.57], VLC: [39.49, -0.48], SVQ: [37.42, -5.90], BIO: [43.30, -2.91],
+  ALC: [38.28, -0.56], LON: [51.47, -0.46], EDI: [55.95, -3.37], PAR: [49.01, 2.55],
   ROM: [41.80, 12.25], MIL: [45.63, 8.72], NAP: [40.88, 14.29], BER: [52.36, 13.51],
   MUC: [48.35, 11.79], FRA: [50.03, 8.57], AMS: [52.31, 4.76], LIS: [38.77, -9.13],
   OPO: [41.24, -8.68], DUB: [53.42, -6.27], BRU: [50.90, 4.48], GVA: [46.24, 6.11],

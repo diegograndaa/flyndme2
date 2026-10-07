@@ -134,6 +134,18 @@ test("searchAirports: nombres en español, sin acentos y con alias visible", asy
   assert.equal(searchAirports("Madrid")[0].alias, undefined, "sin alias si casa el nombre del catálogo");
 });
 
+test("searchAirports: aeropuertos españoles secundarios (Valencia, Sevilla, Bilbao, Alicante)", async () => {
+  const { searchAirports, cityOf, setCityLang } = await import("../src/utils/helpers.js");
+  assert.equal(searchAirports("valencia")[0].code, "VLC");
+  assert.equal(searchAirports("València")[0].code, "VLC");
+  assert.equal(searchAirports("sevilla")[0].code, "SVQ");
+  assert.equal(searchAirports("bilbao")[0].code, "BIO");
+  assert.equal(searchAirports("alacant")[0].code, "ALC");
+  setCityLang("es");
+  try { assert.equal(cityOf("SVQ"), "Sevilla"); } finally { setCityLang("en"); }
+  assert.equal(cityOf("SVQ"), "Seville");
+});
+
 test("searchAirports: país, exclusiones y límite", async () => {
   const { searchAirports, POPULAR_ORIGINS, AIRPORT_MAP } = await import("../src/utils/helpers.js");
   const es = searchAirports("españa", { limit: 10 });

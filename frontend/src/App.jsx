@@ -156,6 +156,9 @@ const FOOTER_SEO_ROUTES = [
   { labelEs: "Múnich · Barcelona",          labelEn: "Munich · Barcelona",        es: "/quedar/munich-barcelona/",       en: "/meet/munich-barcelona/" },
   { labelEs: "Madrid · Berlín · Lisboa",    labelEn: "Madrid · Berlin · Lisbon",  es: "/quedar/madrid-berlin-lisboa/",   en: "/meet/madrid-berlin-lisbon/" },
   { labelEs: "Madrid · Londres · Berlín",   labelEn: "Madrid · London · Berlin",  es: "/quedar/madrid-londres-berlin/",  en: "/meet/madrid-london-berlin/" },
+  { labelEs: "París · Madrid",              labelEn: "Paris · Madrid",            es: "/quedar/paris-madrid/",           en: "/meet/paris-madrid/" },
+  { labelEs: "Valencia · Londres",          labelEn: "Valencia · London",         es: "/quedar/valencia-londres/",       en: "/meet/valencia-london/" },
+  { labelEs: "Sevilla · Barcelona",         labelEn: "Seville · Barcelona",       es: "/quedar/sevilla-barcelona/",      en: "/meet/seville-barcelona/" },
 ];
 const FOOTER_SEO_GUIDES = [
   { labelEs: "Despedidas",  labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },

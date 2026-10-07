@@ -7,6 +7,10 @@ export const AIRPORTS = [
   { code: "AGP", city: "Malaga",              country: "Spain" },
   { code: "PMI", city: "Palma de Mallorca",   country: "Spain" },
   { code: "TFS", city: "Tenerife",            country: "Spain" },
+  { code: "VLC", city: "Valencia",            country: "Spain" },
+  { code: "SVQ", city: "Seville",             country: "Spain" },
+  { code: "BIO", city: "Bilbao",              country: "Spain" },
+  { code: "ALC", city: "Alicante",            country: "Spain" },
   { code: "LON", city: "London",              country: "United Kingdom" },
   { code: "EDI", city: "Edinburgh",           country: "United Kingdom" },
   { code: "PAR", city: "Paris",               country: "France" },
@@ -91,6 +95,7 @@ export const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
 // o "Praga" debe encontrar su ciudad aunque el catálogo esté en inglés.
 const AIRPORT_ALIASES = {
   AGP: ["Málaga"], PMI: ["Palma", "Mallorca"], TFS: ["Tenerife Sur"],
+  VLC: ["València"], SVQ: ["Sevilla"], BIO: ["Bilbo"], ALC: ["Alacant"],
   LON: ["Londres"], EDI: ["Edimburgo"], PAR: ["París"], MRS: ["Marsella"],
   NCE: ["Niza"], ROM: ["Roma"], MIL: ["Milán", "Milano"], NAP: ["Nápoles", "Napoli"],
   BER: ["Berlín"], MUC: ["Múnich", "München"], FRA: ["Fráncfort"], AMS: ["Ámsterdam"],
@@ -174,7 +179,7 @@ export function setCityLang(lang) { cityLang = lang === "es" ? "es" : "en"; }
 
 // Nombres en español de las ciudades que cambian respecto al listado (inglés).
 const CITY_ES = {
-  AGP: "Málaga", LON: "Londres", EDI: "Edimburgo", PAR: "París", MRS: "Marsella",
+  AGP: "Málaga", SVQ: "Sevilla", LON: "Londres", EDI: "Edimburgo", PAR: "París", MRS: "Marsella",
   NCE: "Niza", ROM: "Roma", MIL: "Milán", NAP: "Nápoles", BER: "Berlín",
   MUC: "Múnich", FRA: "Fráncfort", AMS: "Ámsterdam", LIS: "Lisboa", OPO: "Oporto",
   DUB: "Dublín", BRU: "Bruselas", GVA: "Ginebra", ZRH: "Zúrich", VIE: "Viena",
@@ -315,6 +320,8 @@ export function countryFlag(code) {
 const DEST_INFO = {
   MAD: { tz: "+1", lang: "ES" }, BCN: { tz: "+1", lang: "ES/CA" }, AGP: { tz: "+1", lang: "ES" },
   PMI: { tz: "+1", lang: "ES/CA" }, TFS: { tz: "+0", lang: "ES" },
+  VLC: { tz: "+1", lang: "ES/CA" }, SVQ: { tz: "+1", lang: "ES" }, BIO: { tz: "+1", lang: "ES/EU" },
+  ALC: { tz: "+1", lang: "ES/CA" },
   LON: { tz: "+0", lang: "EN" }, EDI: { tz: "+0", lang: "EN" },
   PAR: { tz: "+1", lang: "FR" }, MRS: { tz: "+1", lang: "FR" }, NCE: { tz: "+1", lang: "FR" },
   ROM: { tz: "+1", lang: "IT" }, MIL: { tz: "+1", lang: "IT" }, NAP: { tz: "+1", lang: "IT" },
