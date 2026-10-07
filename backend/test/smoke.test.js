@@ -525,6 +525,35 @@ test("prod CORS: un origen no permitido recibe 403, no 500", async () => {
   }
 });
 
+test("price-check: devuelve el precio actual del mismo destino con la misma matemática que la búsqueda", async () => {
+  const body = { origins: ["MAD", "LON"], passengers: [2, 1], departureDate: futureDate(48), tripType: "oneway" };
+  const search = await post("/api/flights/multi-origin", { ...body, destinations: ["PAR"] });
+  assert.equal(search.status, 200);
+  const w = search.body.bestDestination;
+  assert.equal(w.destination, "PAR");
+
+  const r = await post("/api/flights/price-check", { ...body, destination: "PAR" });
+  assert.equal(r.status, 200);
+  const p = r.body.result;
+  assert.ok(p, "hay precio");
+  assert.equal(p.destination, "PAR");
+  assert.equal(p.totalPassengers, 3);
+  assert.equal(p.totalCostEUR, w.totalCostEUR, "mismo total que la búsqueda (mismos datos)");
+  const calc = p.flights.reduce((s, f) => s + f.price * f.passengers, 0);
+  assert.ok(Math.abs(p.totalCostEUR - calc) < 0.5);
+});
+
+test("price-check: valida la entrada", async () => {
+  const bad = await post("/api/flights/price-check", { origins: ["MAD"], destination: "MAD", departureDate: futureDate(48) });
+  assert.equal(bad.status, 400);
+  const past = await post("/api/flights/price-check", { origins: ["MAD"], destination: "PAR", departureDate: "2020-01-01" });
+  assert.equal(past.status, 400);
+  assert.equal(past.body.code, "DEPARTURE_DATE_IN_PAST");
+  const rt = await post("/api/flights/price-check", { origins: ["MAD"], destination: "PAR", departureDate: futureDate(48), tripType: "roundtrip" });
+  assert.equal(rt.status, 400);
+  assert.equal(rt.body.code, "INVALID_RETURN_DATE");
+});
+
 test("tiering: custom destinations bypass tier fallback", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "BCN"],

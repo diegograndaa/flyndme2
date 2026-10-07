@@ -753,6 +753,63 @@ router.post("/cheaper-date", async (req, res) => {
   }
 });
 
+// ─── POST /price-check — precio actual de UN destino ya elegido ──────────────
+// Para «vigilar precio»: el frontend guarda la búsqueda del ganador y, al volver,
+// pregunta cuánto cuesta HOY la misma combinación (orígenes, pasajeros, fechas,
+// destino). Misma lógica que la búsqueda (fetchDestDate): si a algún origen le
+// falta precio, no hay resultado — nunca un total parcial.
+router.post("/price-check", async (req, res) => {
+  try {
+    const { origins, passengers, destination, departureDate, returnDate, tripType, nonStop } = req.body || {};
+    const originList = [...new Set((Array.isArray(origins) ? origins : [])
+      .map((o) => String(o || "").trim().toUpperCase()).filter(isValidIata))];
+    const dest = String(destination || "").trim().toUpperCase();
+    if (originList.length === 0 || originList.length > MAX_ORIGINS || !isValidIata(dest) || originList.includes(dest)) {
+      return res.status(400).json({ code: "INVALID_ORIGINS", message: "origins/destination inválidos." });
+    }
+    if (passengers !== undefined && !Array.isArray(passengers)) {
+      return res.status(400).json({ code: "INVALID_PASSENGERS", message: "passengers debe ser un array alineado con origins." });
+    }
+    const originPax = buildOriginPax(origins, passengers, originList);
+    if (originPax.reduce((a, b) => a + b, 0) > TOTAL_PAX_CAP) {
+      return res.status(400).json({ code: "TOO_MANY_PASSENGERS", message: `Máximo ${TOTAL_PAX_CAP} pasajeros en total.` });
+    }
+    if (!departureDate || !isValidISODate(departureDate)) {
+      return res.status(400).json({ code: "INVALID_DEPARTURE_DATE", message: "Fecha de salida inválida. Usa YYYY-MM-DD." });
+    }
+    if (departureDate < toISODate(new Date())) {
+      return res.status(400).json({ code: "DEPARTURE_DATE_IN_PAST", message: "La fecha de salida ya ha pasado." });
+    }
+    const roundtrip = tripType === "roundtrip";
+    if (roundtrip && (!returnDate || !isValidISODate(returnDate) || returnDate <= departureDate)) {
+      return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "Fecha de vuelta inválida." });
+    }
+
+    // Mismo filtro de directos que la búsqueda vigilada: si no, un precio con
+    // escala parecería una bajada.
+    const options = { max: 5, ...(nonStop === true || nonStop === "true" ? { nonStop: true } : {}) };
+    const result = await fetchDestDate(originList, originPax, dest, departureDate, roundtrip ? returnDate : null, options, null);
+    if (!result) return res.json({ result: null });
+    return res.json({
+      result: {
+        destination:            result.destination,
+        totalCostEUR:           result.totalCostEUR,
+        averageCostPerTraveler: result.averageCostPerTraveler,
+        totalPassengers:        result.totalPassengers,
+        ...(result.hasDateFallback ? { hasDateFallback: true } : {}),
+        flights: result.flights.map((f) => ({
+          origin: f.origin, price: f.price, passengers: f.passengers,
+          ...(f.dateFallback ? { flightDate: f.flightDate, flightReturnDate: f.flightReturnDate || null } : {}),
+        })),
+        checkedAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[price-check] error:", err.message);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Error al comprobar el precio." });
+  }
+});
+
 router.post("/verify", async (req, res) => {
   try {
     const { destination, totalCostEUR, legs } = req.body || {};
