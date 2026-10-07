@@ -1,0 +1,98 @@
+# FlyndMe — reglas para Cursor
+
+Fuente de verdad del producto y la arquitectura: `CLAUDE.md`.
+`MEJORAS.md` y `README.md` están parcialmente obsoletos (hablan de Amadeus);
+ante conflicto, manda `CLAUDE.md`.
+
+## Producto
+
+PWA multi-origen → mejor destino común (coste total o equidad).
+Objetivo de Diego: **producto redondo** (UX cuidada, precios fiables) antes
+que ingresos o growth. Estilo de trabajo: shippear e iterar; **excepción
+innegociable**: todo lo que toque precios, datos o confianza del usuario se
+hace con rigor (tests + validación).
+
+Preguntar a Diego antes de: mergear a `main`, borrar código no trivial,
+cambios visuales grandes no pedidos, o tocar variables de prod (Render/Vercel).
+
+## Stack (no reinventar)
+
+- Frontend: React + Vite + Bootstrap (subset Sass) + CSS propio. Deploy Vercel.
+- Backend: Node + Express (CommonJS). Deploy Render.
+- Datos: Travelpayouts/Aviasales en prod; SerpAPI (capa 2) solo verifica el
+  ganador. Amadeus está eliminado — no resucitarlo.
+- `App.jsx` es el orquestador (estado + `fetch`). Componentes presentacionales:
+  props in, eventos out. Sin react-router, sin Redux, sin axios en el front.
+
+## Reglas duras
+
+1. **Nunca inventar precios ni fingir verificación.** Sin datos → sin resultados.
+2. Coste 0 en APIs del MVP: quota guard, caché agresiva, verificación solo finalistas.
+3. Cambios incrementales; no rewrites.
+4. Todo cambio de backend lleva tests unitarios **sin red**.
+5. `sw.js` solo se registra con `import.meta.env.PROD`.
+6. i18n: editar JSON a mano; nunca reformatear programáticamente.
+7. Tras mover código de `App.jsx`: verificar imports + tests + mirar en `dev`.
+8. No commitear `node_modules` ni symlinks dentro del repo.
+9. No commitear `.env` ni secretos.
+
+## Paridad claro / oscuro (innegociable desde 05-oct-2026)
+
+El tema **solo** cambia soporte (papel ↔ pantalla) y tinta (carbón ↔ hueso).
+El amarillo de señalética `#FFC20E` vive en **los mismos sitios** en ambos
+temas, vía `--sign` / `--coral` — nunca como `--primary` en oscuro.
+
+- Claro: `--primary` = tinta `#1A1A1A`.
+- Oscuro: `--primary` = hueso `#E6E8EC` (NO amarillo).
+- Tokens de apoyo: `--on-solid`, `--pos-bg`, `--sign`.
+- **Prohibido** escribir colores literales en reglas `[data-theme="dark"]`.
+  Si algo necesita otro valor de noche → token en `board.css`.
+- Tras cualquier cambio de color/tema, correr la auditoría:
+  `node frontend/scripts/theme-parity-audit.mjs 390` (y `1366`).
+  Requiere app local en mock + Playwright/Chrome externos (ver cabecera del script).
+  Éxito = **0** diferencias (exit 0). Excepciones documentadas en el script
+  (carteles de posición SIGN, decoración DECOR).
+
+Paleta terminal (resumen): claro crema `#F5F3EF` / papel `#FBF9F5`; oscuro
+FIDS `#121316`; tipografía IBM Plex Sans + Mono. Prohibido navy/violeta,
+gradientes estilo IA y `#0f172a` como base.
+
+## Móvil / iOS Safari
+
+- Inputs y campos de texto del formulario a **mínimo 16 px** (`font-size: 16px`).
+  Por debajo, iOS Safari hace zoom al enfocar.
+- Dianas táctiles ≥ 40–44 px.
+- En ≤600 px: un viajero = una línea (~44 px); barra inferior fija = **solo**
+  el CTA de buscar (no meter la invitación de grupo ahí).
+- Respetar `env(safe-area-inset-*)`. Verificar en dispositivo real cuando
+  el cambio afecte al teclado/zoom/barra inferior.
+
+## Tests — obligación antes de cerrar una tarea
+
+No dar por cerrada una tarea de código sin:
+
+1. `cd backend && npm test` (pasa).
+2. `cd frontend && npm test` (pasa).
+3. Si tocó build/CSS/JSX de producción: `cd frontend && npm run build`.
+4. Si tocó colores/tema: `theme-parity-audit.mjs` a 390 y 1366 → 0 diffs.
+5. Si tocó UI: smoke visual local con mock
+   (`USE_MOCK=true` backend + `VITE_API_BASE_URL=http://localhost:5000`).
+
+Si un test falla, arreglarlo o actualizar la expectativa a propósito —
+nunca saltarse la suite ni empujar a ciegas.
+
+## Diseño / UX
+
+- Precios siempre etiquetados como estimación / verificación honesta.
+- Equidad: no comunicar en negativo (nada de “DESIGUAL” en rojo); barras
+  “quién paga qué” + dato neutro.
+- Un color por viajero (`--trav-1…8`), mismo en form/mapa/tarjeta/comparador.
+- No resucitar widgets podados con datos inventados.
+- Iconos: `lucide-react` (`currentColor`); no emojis en UI viva.
+
+## Commits / git
+
+- No mergear a `main` sin OK de Diego.
+- Verificar deploys Vercel por **contenido** (grep de cadena única), no por hash.
+- Preguntar antes de tocar secretos o historial git (hay claves Amadeus viejas
+  en el historial — no reintroducir `.env`).
