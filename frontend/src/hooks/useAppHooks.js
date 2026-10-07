@@ -2,6 +2,7 @@
 // Extraídos de App.jsx (Mejora 28): tema, favoritos, preferencias de
 // accesibilidad y estado del backend.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readStoredList, isFavoriteEntry } from "../utils/storage";
 // useFavorites los usaba sin importar: el toggle de favoritos lanzaba
 // "normalizeCode is not defined" en runtime (los tests SSR no lo cazaban).
 import { normalizeCode, cityOf } from "../utils/helpers";
@@ -45,9 +46,7 @@ export function useTheme() {
 
 export function useFavorites() {
   const KEY = "flyndme_favorites";
-  const [favs, setFavs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
-  });
+  const [favs, setFavs] = useState(() => readStoredList(KEY, isFavoriteEntry));
 
   const toggle = useCallback((dest) => {
     setFavs((prev) => {
