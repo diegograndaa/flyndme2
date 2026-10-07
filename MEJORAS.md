@@ -1,5 +1,9 @@
 # MEJORAS.md — Registro de mejoras (sesión Cowork, 10 jun 2026)
 
+> **Histórico.** Este registro describe el estado de junio de 2026 (incluye
+> Amadeus, ya eliminado, y una arquitectura anterior). La fuente de verdad
+> actual es `CLAUDE.md`.
+
 ## Contexto del entorno de trabajo (importante)
 
 Esta sesión se ejecutó en un sandbox **sin acceso a npm/pip/CDNs** (red

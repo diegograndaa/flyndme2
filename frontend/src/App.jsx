@@ -156,6 +156,9 @@ const FOOTER_SEO_ROUTES = [
   { labelEs: "Múnich · Barcelona",          labelEn: "Munich · Barcelona",        es: "/quedar/munich-barcelona/",       en: "/meet/munich-barcelona/" },
   { labelEs: "Madrid · Berlín · Lisboa",    labelEn: "Madrid · Berlin · Lisbon",  es: "/quedar/madrid-berlin-lisboa/",   en: "/meet/madrid-berlin-lisbon/" },
   { labelEs: "Madrid · Londres · Berlín",   labelEn: "Madrid · London · Berlin",  es: "/quedar/madrid-londres-berlin/",  en: "/meet/madrid-london-berlin/" },
+  { labelEs: "París · Madrid",              labelEn: "Paris · Madrid",            es: "/quedar/paris-madrid/",           en: "/meet/paris-madrid/" },
+  { labelEs: "Valencia · Londres",          labelEn: "Valencia · London",         es: "/quedar/valencia-londres/",       en: "/meet/valencia-london/" },
+  { labelEs: "Sevilla · Barcelona",         labelEn: "Seville · Barcelona",       es: "/quedar/sevilla-barcelona/",      en: "/meet/seville-barcelona/" },
 ];
 const FOOTER_SEO_GUIDES = [
   { labelEs: "Despedidas",  labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },
@@ -283,6 +286,7 @@ export default function App() {
   // Results
   const [flights,         setFlights]         = useState([]);
   const [partialResults,  setPartialResults]  = useState(false);
+  const [providerDegraded, setProviderDegraded] = useState(false);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
@@ -996,6 +1000,7 @@ export default function App() {
 
           setFlights(adjusted);
           setPartialResults(Boolean(data.partial));
+          setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
@@ -1571,6 +1576,9 @@ export default function App() {
             sub={flights.length > 1 ? t("results.exploreSub") : t("results.exploreSubOne")} />
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
+          )}
+          {providerDegraded && (
+            <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.degradedNotice")} />
           )}
 
           {/* ── Salidas: todos los destinos encontrados en un panel de salidas
