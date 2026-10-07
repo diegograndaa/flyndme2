@@ -21,8 +21,12 @@ import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/ver
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
-import GroupPlanner from "./components/GroupPlanner";
-import WinnerCard, { WhoPaysStrip } from "./components/WinnerCard";
+// Solo hacen falta en vistas concretas: van en chunks aparte. WinnerCard se
+// precarga al buscar, al abrir un enlace compartido y en reposo tras cargar.
+const GroupPlanner = React.lazy(() => import("./components/GroupPlanner"));
+const loadWinnerCard = () => import("./components/WinnerCard");
+const WinnerCard = React.lazy(loadWinnerCard);
+const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m.WhoPaysStrip })));
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
@@ -393,6 +397,30 @@ export default function App() {
     if (outcome === "accepted") trackEvent("pwa_install");
   };
 
+  // Tras un despliegue, una pestaña abierta puede pedir un chunk que ya no
+  // existe: Vite emite vite:preloadError. Se recarga UNA vez (marca en
+  // sessionStorage) para traer la versión nueva; si vuelve a fallar, queda el
+  // ErrorBoundary con el resto de la página funcionando.
+  useEffect(() => {
+    const onPreloadError = () => {
+      try {
+        if (sessionStorage.getItem("flyndme_chunk_reload")) return;
+        sessionStorage.setItem("flyndme_chunk_reload", "1");
+      } catch { return; }
+      window.location.reload();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
+
+  // Precarga en reposo del chunk de resultados (la búsqueda tarda segundos,
+  // pero así ni siquiera el primer render de resultados espera).
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 2500));
+    const id = idle(() => { loadWinnerCard().catch(() => {}); });
+    return () => (window.cancelIdleCallback || clearTimeout)(id);
+  }, []);
+
   // Keep Render backend alive (free tier sleeps)
   useEffect(() => {
     const ping = () => fetch(`${API_BASE}/api/ping`, { cache: "no-store" }).catch(() => {});
@@ -409,6 +437,7 @@ export default function App() {
     const shareId = params.get("share");
     if (!shareId) return;
 
+    loadWinnerCard().catch(() => {});
     setLoading(true);
     fetch(`${API_BASE}/api/share/${shareId}`)
       .then((res) => {
@@ -1019,6 +1048,7 @@ export default function App() {
 
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
+    loadWinnerCard().catch(() => {});
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
     setCheaperDate(null);
@@ -1497,6 +1527,8 @@ export default function App() {
       {/* Collaborative group planning */}
       {view === "group" && group && (
         <div className="container py-4 view-enter" key="group" style={{ maxWidth: 720 }}>
+          <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+          <Suspense fallback={<div className="gp-loading" aria-hidden="true" />}>
           <GroupPlanner
             group={group}
             inviteUrl={groupInviteUrl}
@@ -1512,6 +1544,8 @@ export default function App() {
             loading={loading}
             busy={groupBusy}
           />
+          </Suspense>
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1580,6 +1614,8 @@ export default function App() {
           <section className="fm-decision" aria-labelledby="fm-decision-title">
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
+          <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+          <Suspense fallback={<ResultsSkeleton />}>
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -1627,6 +1663,8 @@ export default function App() {
               </ErrorBoundary>
             ) : null}
           />
+          </Suspense>
+          </ErrorBoundary>
 
           {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
               en un mismo bloque (sin sentido con un solo origen: todos salen de
@@ -1648,7 +1686,9 @@ export default function App() {
               </span>
             </summary>
             <div className="fm-split-body">
-            <WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} />
+            <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+              <Suspense fallback={null}><WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} /></Suspense>
+            </ErrorBoundary>
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos

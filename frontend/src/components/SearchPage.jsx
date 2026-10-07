@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
+  formatDate, todayISO, countryFlag, countryOf, searchAirports, foldText,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
