@@ -712,7 +712,9 @@
   },
   "cheaperDate": {
     "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
-    "use": "Switch to this date"
+    "use": "Switch to this date",
+    "textRoundtrip": "Leave on {{date}} and fly back on {{returnDate}} (same nights): the group pays {{total}} — save {{saving}}",
+    "useRoundtrip": "Switch to these dates"
   },
   "arrivalCoord": {
     "diffDays": "With the cheapest flights, you land on different days ({{time}} apart).",

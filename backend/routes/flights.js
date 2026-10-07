@@ -20,7 +20,7 @@ if (!PROVIDER_MODULES[FLIGHT_PROVIDER]) {
 const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.travelpayouts);
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
-const { findCheaperGroupDate } = require("../services/cheaperDate");
+const { findCheaperGroupDate, daysBetween } = require("../services/cheaperDate");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
 // oferta concreta: la verificación del ganador se omite ("skipped") y el
@@ -694,15 +694,14 @@ router.post("/multi-origin", async (req, res) => {
 // Enrichment para el ganador: ¿hay una fecha cercana donde el GRUPO pague menos?
 // Reusa la caché de prices_for_dates que la búsqueda ya consultó (coste API ~0),
 // agrega por día (todos los orígenes el mismo día) y devuelve UNA sugerencia si
-// el ahorro supera el umbral. Solo ida en v1 (roundtrip = espacio de 2 fechas).
+// el ahorro supera el umbral. En ida y vuelta conserva la duración del viaje
+// (mueve salida y vuelta a la vez) para que siga siendo UNA sugerencia.
 // El frontend lo llama en segundo plano tras pintar resultados.
 router.post("/cheaper-date", async (req, res) => {
   try {
     if (!getDatedPrices) return res.json({ betterDate: null, reason: "unsupported" });
 
-    const { origins, passengers, destination, departureDate, tripType, currentTotalEUR } = req.body || {};
-
-    if (tripType === "roundtrip") return res.json({ betterDate: null, reason: "roundtrip-unsupported" });
+    const { origins, passengers, destination, departureDate, returnDate, tripType, currentTotalEUR } = req.body || {};
 
     const originList = (Array.isArray(origins) ? origins : [])
       .map((o) => String(o || "").trim().toUpperCase())
@@ -718,11 +717,22 @@ router.post("/cheaper-date", async (req, res) => {
     if (!Number.isFinite(total) || total <= 0) {
       return res.status(400).json({ code: "INVALID_TOTAL", message: "currentTotalEUR inválido." });
     }
+    const roundtrip = tripType === "roundtrip";
+    let tripNights = null;
+    if (roundtrip) {
+      if (!returnDate || !isValidISODate(returnDate)) {
+        return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "Fecha de vuelta inválida. Usa YYYY-MM-DD." });
+      }
+      tripNights = daysBetween(returnDate, departureDate);
+      if (tripNights < 0) {
+        return res.status(400).json({ code: "INVALID_RETURN_DATE_ORDER", message: "La vuelta no puede ser antes de la ida." });
+      }
+    }
 
     const originPax = buildOriginPax(origins, passengers, originList);
     const perOrigin = await Promise.all(
       originList.map((o) =>
-        getDatedPrices(o, dest, departureDate, {}).catch(() => [])
+        getDatedPrices(o, dest, departureDate, roundtrip ? { returnDate } : {}).catch(() => [])
       )
     );
 
@@ -731,6 +741,7 @@ router.post("/cheaper-date", async (req, res) => {
       originPax,
       perOrigin,
       currentDate: departureDate,
+      tripNights,
       currentTotalEUR: total,
       today: new Date().toISOString().slice(0, 10),
     });

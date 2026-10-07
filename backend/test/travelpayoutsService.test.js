@@ -334,6 +334,39 @@ test("monthsInWindow: cruza el límite de mes solo cuando toca", () => {
   assert.deepEqual(monthsInWindow("2026-08-15", 2), ["2026-08"]);
 });
 
+// ─── getDatedPrices (nudge de fecha más barata) ─────────────────────────────
+
+test("getDatedPrices: ida y vuelta pide meses de ida × vuelta y devuelve pares", async () => {
+  const seen = [];
+  setTransport(async (url, config) => {
+    const p = config.params;
+    seen.push(`${p.departure_at}|${p.return_at}|${p.one_way}`);
+    return okResponse([
+      ticket({ price: 200, departure_at: `${addDays(D0, -3)}T08:00:00+02:00`, return_at: `${addDays(D0, 4)}T19:00:00+02:00` }),
+      ticket({ price: 180, departure_at: `${addDays(D0, -3)}T09:00:00+02:00`, return_at: `${addDays(D0, 4)}T20:00:00+02:00` }),
+      ticket({ price: 90,  departure_at: `${addDays(D0, -3)}T09:00:00+02:00`, return_at: undefined }), // sin vuelta → fuera
+    ]);
+  });
+  const out = await tp.getDatedPrices("MAD", "RTX", D0, { returnDate: addDays(D0, 7) });
+  assert.ok(seen.length >= 1);
+  for (const s of seen) {
+    const [dep, ret, oneWay] = s.split("|");
+    assert.match(dep, /^\d{4}-\d{2}$/, "consulta por mes de ida");
+    assert.match(ret, /^\d{4}-\d{2}$/, "consulta por mes de vuelta");
+    assert.ok(ret >= dep, "no pide meses de vuelta anteriores a la ida");
+    assert.equal(oneWay, "false");
+  }
+  assert.deepEqual(out, [{ date: addDays(D0, -3), returnDate: addDays(D0, 4), price: 180 }]);
+});
+
+test("getDatedPrices: solo ida sigue devolviendo {date, price}", async () => {
+  setTransport(async () => okResponse([
+    ticket({ price: 70, departure_at: `${addDays(D0, 2)}T08:00:00+02:00` }),
+  ]));
+  const out = await tp.getDatedPrices("MAD", "OWX", D0, {});
+  assert.deepEqual(out, [{ date: addDays(D0, 2), price: 70 }]);
+});
+
 // ─── buildAffiliateLink (monetización por afiliados) ─────────────────────────
 // TRAVELPAYOUTS_MARKER="738121.app" fijado arriba, antes del require.
 

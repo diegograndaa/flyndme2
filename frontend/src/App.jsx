@@ -838,9 +838,11 @@ export default function App() {
   };
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
-  // fecha cercana donde el GRUPO pague menos? Solo ida. Fallo silencioso.
+  // fecha cercana donde el GRUPO pague menos? En ida y vuelta el backend mueve
+  // las dos fechas conservando la duración. Fallo silencioso.
   const fetchCheaperDate = (winner, gen) => {
-    if (!winner || tripType !== "oneway" || !winner.totalCostEUR) return;
+    if (!winner || !winner.totalCostEUR) return;
+    if (tripType === "roundtrip" && !returnDate) return;
     fetch(`${API_BASE}/api/flights/cheaper-date`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -849,6 +851,7 @@ export default function App() {
         passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
         destination: winner.destination,
         departureDate,
+        ...(tripType === "roundtrip" ? { returnDate } : {}),
         tripType,
         currentTotalEUR: winner.totalCostEUR,
       }),
@@ -865,11 +868,12 @@ export default function App() {
 
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
-  const useCheaperDate = (date) => {
+  const useCheaperDate = (date, newReturnDate) => {
     if (!date) return;
-    trackEvent("cheaper_date_apply", { date });
+    trackEvent("cheaper_date_apply", { date, roundtrip: !!newReturnDate });
     setCheaperDate(null);
     setDepartureDate(date);
+    if (newReturnDate) setReturnDate(newReturnDate);
     setPendingResearch(true);
   };
 
@@ -1457,13 +1461,14 @@ export default function App() {
             isFav={isFav(bestDestination.destination)}
             onToggleFav={() => toggleFav(bestDestination)}
             dateHint={cheaperDate && cheaperDate.destination === normalizeCode(bestDestination.destination) ? {
-              text: t("cheaperDate.text", {
+              text: t(cheaperDate.returnDate ? "cheaperDate.textRoundtrip" : "cheaperDate.text", {
                 date: formatDate(cheaperDate.date),
+                returnDate: cheaperDate.returnDate ? formatDate(cheaperDate.returnDate) : "",
                 total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
                 saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
               }),
-              actionLabel: t("cheaperDate.use"),
-              onAction: () => useCheaperDate(cheaperDate.date),
+              actionLabel: t(cheaperDate.returnDate ? "cheaperDate.useRoundtrip" : "cheaperDate.use"),
+              onAction: () => useCheaperDate(cheaperDate.date, cheaperDate.returnDate),
             } : null}
             mapSlot={flights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
