@@ -1,19 +1,26 @@
 // ─── SearchPage ──────────────────────────────────────────────────────────────
 // Extraída de App.jsx (Mejora 20). Formulario de búsqueda completo: orígenes,
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
-import React, { useEffect, useMemo, useRef, useState, startTransition } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag, searchAirports, foldText,
+  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { tapHaptic } from "../utils/haptics";
+import { travelerSlot } from "../utils/resultsLogic";
+import DateField from "./DateField";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
 // único consumidor es este componente).
-const TYPING_EXAMPLES = ["Madrid", "London", "Berlin", "Rome", "Paris", "Lisbon", "MAD", "LON", "BCN"];
+// Ciudades por código → se teclean con el nombre del idioma de la interfaz
+// ("Londres", "Roma"…); los tres últimos enseñan que también vale el código.
+const TYPING_CODES = ["MAD", "LON", "BER", "ROM", "PAR", "LIS"];
+const TYPING_RAW = ["MAD", "LON", "BCN"];
+const TYPING_COUNT = TYPING_CODES.length + TYPING_RAW.length;
+const typingExample = (i) => (i < TYPING_CODES.length ? cityOf(TYPING_CODES[i]) : TYPING_RAW[i - TYPING_CODES.length]);
 
 // Resalta en la sugerencia lo que coincide con lo escrito (sin acentos).
 function MatchText({ text, q }) {
@@ -62,10 +69,10 @@ function useDateWarnings(departureDate, returnDate, tripType) {
 // Carrusel de tecleo COMPARTIDO: un único reloj (un setInterval) avanza un
 // `base` (qué palabra empieza la fila 0) y un `char` (progreso de tecleo)
 // comunes a TODOS los inputs vacíos. Cada fila `idx` muestra
-// TYPING_EXAMPLES[(base + idx) % N] cortada a `char`, así escriben a la vez
+// typingExample((base + idx) % N) cortada a `char`, así escriben a la vez
 // ciudades DISTINTAS y rotan en sincronía. Como N=9 > 8 orígenes máx, dos
 // filas vacías nunca enseñan la misma ciudad simultáneamente.
-const TYPING_MAXLEN = Math.max(...TYPING_EXAMPLES.map((w) => w.length));
+const TYPING_MAXLEN = 8; // "Londres"/"Lisbon" caben; el resto se completa antes
 const TYPING_TICK_MS = 120;      // ritmo del reloj (typewriter)
 const TYPING_HOLD_FULL = 7;      // pausa con la palabra completa (legible)
 const TYPING_HOLD_EMPTY = 2;     // pausa en blanco antes de la siguiente
@@ -96,7 +103,7 @@ function useTypingCarousel(active) {
         s.char -= 1;
         if (s.char <= 0) {
           s.char = 0;
-          s.base = (s.base + 1) % TYPING_EXAMPLES.length; // rota a la siguiente
+          s.base = (s.base + 1) % TYPING_COUNT; // rota a la siguiente
           s.typing = true;
           s.hold = TYPING_HOLD_EMPTY;
         }
@@ -140,9 +147,8 @@ const SearchPage = React.memo(function SearchPage({
   // Animated typing placeholder for ALL empty origin inputs, coordinated by a
   // single shared clock (every empty input shows a different rotating city).
   // El reloj se PAUSA mientras un input de origen está enfocado (acFocus >= 0):
-  // así no compite por re-renders con el typing del usuario (el update del
-  // input usa startTransition) y no distrae mientras escribe. Los spans siguen
-  // visibles (congelados) en los inputs vacíos no enfocados.
+  // así no distrae ni provoca re-renders mientras el usuario escribe. Los
+  // ejemplos siguen visibles (congelados) en los campos vacíos no enfocados.
   const showTyping = !loading && origins.some((o) => !o?.trim());
   const { base: typingBase, char: typingChar, typing: typingActive } = useTypingCarousel(showTyping && acFocus < 0);
 
@@ -181,6 +187,13 @@ const SearchPage = React.memo(function SearchPage({
     }
   };
 
+  // Ciudades ya reconocidas, en orden: cada una lleva su color de viajero
+  // (el mismo que tendrá después en el mapa y en los resultados).
+  const setCodes = useMemo(
+    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter((c) => AIRPORT_MAP[c]))],
+    [origins],
+  );
+
   // Memoize destination airports (excludes selected origins)
   const destAirports = useMemo(() => {
     const originCodes = new Set(origins.map(o => normalizeCode(o)));
@@ -197,7 +210,7 @@ const SearchPage = React.memo(function SearchPage({
   };
 
   return (
-    <div className="container py-4" style={{ maxWidth: 720 }}>
+    <div className="container py-4 sf-wrap" style={{ maxWidth: 720 }}>
       {/* Una sola columna: el selector lateral de aeropuertos se retiró (las
           sugerencias del propio campo ya cubren la búsqueda y la exploración). */}
       <div className="sf-grid">
@@ -232,49 +245,43 @@ const SearchPage = React.memo(function SearchPage({
               </div>
             )}
 
-            {/* Trip type + Dates combined */}
-            <div className="sf-section">
-              <div className="sf-label">{t("search.tripTypeLabel")}</div>
-              <div className="sf-pills" style={{ marginBottom: 16 }} role="group" aria-label={t("search.tripTypeLabel")}>
-                {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
-                  <button key={v} type="button"
-                    aria-pressed={tripType === v}
-                    className={`sf-pill fm-switch ${tripType === v ? "sf-pill--active" : ""}`}
-                    onClick={() => {
-                      tapHaptic();
-                      setTripType(v);
-                      // Auto-suggest return date when switching to roundtrip
-                      if (v === "roundtrip" && !returnDate && departureDate) {
-                        const d = new Date(departureDate + "T00:00:00");
-                        d.setDate(d.getDate() + 7);
-                        setReturnDate(d.toISOString().slice(0, 10));
-                      }
-                    }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
-                ))}
-              </div>
-
-              <div className="sf-label">{t("search.datesLabel")}</div>
-              <div className="row g-3">
-                <div className={tripType === "roundtrip" ? "col-sm-6" : "col-12"}>
-                  <label className="sf-input-label" htmlFor="sf-date-dep">{t("search.departure")}</label>
-                  <div className="sf-date-wrap">
-                    <input type="date" id="sf-date-dep" className="form-control sf-input"
-                      value={departureDate} min={todayISO()}
-                      onChange={(e) => setDepartureDate(e.target.value)} disabled={loading} />
-                    {departureDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(departureDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(departureDate)}</span>}
+            {/* Tipo de billete + fechas, en una sola fila en escritorio */}
+            <div className="sf-section sf-section--when">
+              <div className={`sf-when${tripType === "roundtrip" ? " sf-when--two" : ""}`}>
+                <div className="sf-when-type">
+                  <div className="sf-label">{t("search.tripTypeLabel")}</div>
+                  <div className="sf-pills" role="group" aria-label={t("search.tripTypeLabel")}>
+                    {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
+                      <button key={v} type="button"
+                        aria-pressed={tripType === v}
+                        className={`sf-pill fm-switch ${tripType === v ? "sf-pill--active" : ""}`}
+                        onClick={() => {
+                          tapHaptic();
+                          setTripType(v);
+                          // Auto-suggest return date when switching to roundtrip
+                          if (v === "roundtrip" && !returnDate && departureDate) {
+                            const d = new Date(departureDate + "T00:00:00");
+                            d.setDate(d.getDate() + 7);
+                            setReturnDate(d.toISOString().slice(0, 10));
+                          }
+                        }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
+                    ))}
                   </div>
                 </div>
-                {tripType === "roundtrip" && (
-                  <div className="col-sm-6 sf-ret-col">
-                    <label className="sf-input-label" htmlFor="sf-date-ret">{t("search.return")}</label>
-                    <div className="sf-date-wrap">
-                      <input type="date" id="sf-date-ret" className="form-control sf-input"
-                        value={returnDate} min={departureDate || todayISO()}
-                        onChange={(e) => setReturnDate(e.target.value)} disabled={loading} />
-                      {returnDate && <span className={`sf-weekday-badge${["Tue","Wed"].includes(weekdayOf(returnDate)) ? " sf-weekday-badge--cheap" : ""}`}>{weekdayOf(returnDate)}</span>}
-                    </div>
+                <div className={`sf-when-dates${tripType === "roundtrip" ? " sf-when-dates--two" : ""}`}>
+                  <div className="sf-when-date">
+                    <label className="sf-label" htmlFor="sf-date-dep">{tripType === "roundtrip" ? t("search.departure") : t("search.datesLabel")}</label>
+                    <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()}
+                      onChange={setDepartureDate} disabled={loading} />
                   </div>
-                )}
+                  {tripType === "roundtrip" && (
+                    <div className="sf-when-date sf-ret-col">
+                      <label className="sf-label" htmlFor="sf-date-ret">{t("search.return")}</label>
+                      <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate || todayISO()}
+                        onChange={setReturnDate} disabled={loading} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Date warnings */}
@@ -302,7 +309,7 @@ const SearchPage = React.memo(function SearchPage({
                 // Cada fila vacía teclea una ciudad distinta, desfasada por idx
                 // sobre el mismo reloj compartido (base 0 → Madrid/London/Berlin).
                 const typingSlice = empty && showTyping
-                  ? TYPING_EXAMPLES[(typingBase + idx) % TYPING_EXAMPLES.length].slice(0, typingChar)
+                  ? typingExample((typingBase + idx) % TYPING_COUNT).slice(0, typingChar)
                   : "";
                 return (
                   <div key={idx}
@@ -322,14 +329,17 @@ const SearchPage = React.memo(function SearchPage({
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
                     {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true"><GripVertical size={14} /></span>}
-                    <span className="sf-badge" title={t("search.travelerTooltip", { n: idx + 1 })}>
+                    <span className={`sf-badge${city && origin.trim() ? ` sf-badge--set trav-c${travelerSlot(setCodes, code)}` : ""}`} title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
                       {/* Typing placeholder animation (coordinated across all empty inputs) */}
-                      {empty && showTyping && typingSlice && acFocus !== idx && (
-                        <span className={`sf-typing-placeholder${typingActive ? " sf-typing-placeholder--active" : ""}`}>
-                          {typingSlice}
+                      {/* "p. ej." fijo delante: deja claro que es un EJEMPLO y no un
+                          valor ya rellenado (decorativo: el campo tiene aria-label) */}
+                      {empty && showTyping && acFocus !== idx && (
+                        <span className="sf-typing-placeholder" aria-hidden="true">
+                          <span className="sf-typing-lead">{t("search.exampleLead")}</span>
+                          <span className={`sf-typing-word${typingActive ? " sf-typing-word--active" : ""}`}>{typingSlice}</span>
                         </span>
                       )}
                       <input
@@ -345,12 +355,13 @@ const SearchPage = React.memo(function SearchPage({
                         ref={(el) => { inputRefs.current[idx] = el; }}
                         value={origin}
                         onChange={(e) => {
+                          // Actualización SÍNCRONA: con startTransition el campo
+                          // controlado volvía un instante al valor anterior y, al
+                          // teclear rápido, se perdían letras.
                           const val = e.target.value.toUpperCase();
-                          startTransition(() => {
-                            const copy = [...origins];
-                            copy[idx] = val;
-                            setOrigins(copy);
-                          });
+                          const copy = [...origins];
+                          copy[idx] = val;
+                          setOrigins(copy);
                           setAcFocus(idx);
                           setAcHighlight(0);
                         }}
@@ -385,10 +396,16 @@ const SearchPage = React.memo(function SearchPage({
                               onMouseEnter={() => setAcHighlight(ai)}>
                               <span className="sf-ac-code">{a.code}</span>
                               <span className="sf-ac-city">
-                                <MatchText text={a.city} q={acState.q} />
-                                {a.alias && <span className="sf-ac-alias"> · <MatchText text={a.alias} q={acState.q} /></span>}
+                                <MatchText text={cityOf(a.code)} q={acState.q} />
+                                {(() => {
+                                  // Segundo nombre: el que acertó la búsqueda si no es el mostrado
+                                  const shown = cityOf(a.code);
+                                  const other = a.alias && a.alias !== shown ? a.alias
+                                    : shown !== a.city && acState.q && foldText(a.city).includes(acState.q) && !foldText(shown).includes(acState.q) ? a.city : "";
+                                  return other ? <span className="sf-ac-alias"> · <MatchText text={other} q={acState.q} /></span> : null;
+                                })()}
                               </span>
-                              <span className="sf-ac-country">{countryFlag(a.code)} {a.country}</span>
+                              <span className="sf-ac-country">{countryFlag(a.code)} {countryOf(a.code)}</span>
                               <span className="sf-ac-go" aria-hidden="true"><Plane size={14} /></span>
                             </div>
                           ))}
@@ -657,7 +674,7 @@ const SearchPage = React.memo(function SearchPage({
                                 }
                               }} disabled={loading}>
                               <span className="sf-dest-chip-code">{a.code}</span>
-                              <span className="sf-dest-chip-city">{a.city}</span>
+                              <span className="sf-dest-chip-city">{cityOf(a.code)}</span>
                             </button>
                           );
                         })}

@@ -61,3 +61,14 @@ test("i18n: las interpolaciones {{var}} coinciden entre idiomas", () => {
     assert.deepEqual(esV, enV, `interpolaciones distintas en "${key}": en=[${enV}] es=[${esV}]`);
   }
 });
+
+test("i18n: el idioma de la primera visita sale del navegador", async () => {
+  const { detectLang } = await import("../src/i18n/useI18n.jsx");
+  assert.equal(detectLang(["es-ES", "en"]), "es");
+  assert.equal(detectLang(["es"]), "es");
+  assert.equal(detectLang(["ca-ES", "es-ES"]), "es"); // primer idioma que tengamos
+  assert.equal(detectLang(["en-GB"]), "en");
+  assert.equal(detectLang(["fr-FR", "de"]), "en");    // sin coincidencia → inglés
+  assert.equal(detectLang([]), "en");
+  assert.equal(detectLang(undefined), "en");
+});

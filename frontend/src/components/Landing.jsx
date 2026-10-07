@@ -3,10 +3,10 @@
 // fusionados, con "cómo funciona" y FAQ debajo. La antigua vista intermedia
 // de búsqueda desaparece: el formulario (SearchPage) se recibe como prop
 // `searchForm` y se renderiza directamente bajo el hero.
-import React, { useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-import ConvergenceHero from "./ConvergenceHero";
 import { MapPin, Search, Share2 } from "lucide-react";
+import { CITY_COORDS } from "../utils/geo";
 
 const STEP_ICONS = [MapPin, Search, Share2];
 
@@ -31,19 +31,36 @@ const FaqItem = React.memo(function FaqItem({ q, a, id }) {
   );
 });
 
-const Landing = React.memo(function Landing({ searchForm }) {
+// El mapa trae los geodatos de Europa: se carga aparte para no pesar en el
+// arranque. Mientras llega, un hueco con sus mismas proporciones (sin saltos).
+const HeroMap = React.lazy(() => import("./HeroMap"));
+const MapSlot = React.memo(function MapSlot({ origins, compact, idSuffix }) {
+  return (
+    <Suspense fallback={<div className={`hm hm--loading${compact ? " hm--compact" : ""}`} aria-hidden="true"><div className="hm-stage" /></div>}>
+      <HeroMap origins={origins} compact={compact} idSuffix={idSuffix} />
+    </Suspense>
+  );
+});
+
+const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
   const { t } = useI18n();
+  // El mapa solo se vuelve a pintar cuando cambia la lista de ciudades YA
+  // reconocidas (no en cada tecla): la clave es la lista de códigos válidos.
+  const mapKey = origins.filter((o) => CITY_COORDS[o]).join(",");
+  const mapOrigins = useMemo(() => (mapKey ? mapKey.split(",") : []), [mapKey]);
 
   const steps = t("landing.steps");
   const faqs  = t("landing.faqs");
 
   return (
     <>
-      {/* Hero: texto + diagrama de convergencia (la firma visual) */}
-      <section className="lp-hero lp-hero--merged">
-        <div className="container" style={{ maxWidth: 1080 }}>
-          <div className="lp-hero-grid">
-            <div className="lp-hero-text">
+      {/* Portada en dos columnas (oct-2026): titular + formulario a la izquierda
+          y el mapa vivo a la derecha, para que el botón de buscar quede en la
+          primera pantalla. En móvil: titular, mapa compacto y formulario. */}
+      <section className="hm-home lp-hero--merged">
+        <div className="container hm-home-grid" style={{ maxWidth: 1080 }}>
+          <div className="hm-home-main">
+            <div className="lp-hero-text hm-home-text">
               <span className="lp-eyebrow">{t("landing.eyebrow")}</span>
               <h1 className="lp-h1">{(() => {
                 const title = t("landing.title");
@@ -58,24 +75,18 @@ const Landing = React.memo(function Landing({ searchForm }) {
               })()}</h1>
               <p className="lp-lead">{t("landing.lead")}</p>
             </div>
-            <div className="lp-hero-visual">
-              <ConvergenceHero idSuffix="-d" />
+            <div className="hm-home-map-m">
+              <MapSlot origins={mapOrigins} compact idSuffix="-m" />
+            </div>
+            <div className="lp-search-section hm-home-form">
+              {searchForm}
             </div>
           </div>
+          <aside className="hm-home-map">
+            <MapSlot origins={mapOrigins} idSuffix="-d" />
+          </aside>
         </div>
       </section>
-
-      {/* Buscador (SearchPage) directamente bajo el hero */}
-      <section className="lp-search-section">
-        {searchForm}
-      </section>
-
-      {/* Firma de convergencia como remate visual BAJO el formulario (solo móvil,
-          ver .lp-hero-visual-m). En desktop la firma vive a la derecha del hero;
-          en móvil la acción (el form) va primero y el diagrama es el payoff. */}
-      <div className="lp-hero-visual-m">
-        <ConvergenceHero idSuffix="-m" />
-      </div>
 
       {/* Cómo funciona */}
       <section className="lp-how">

@@ -37,11 +37,21 @@ export const ScrollToTopBtn = React.memo(function ScrollToTopBtn() {
     return () => clearTimeout(id);
   }, [launch]);
 
+  // Solo aparece al desplazarse HACIA ARRIBA (es cuando se quiere volver) y se
+  // esconde al bajar o al llegar al pie: así no tapa precios, «Reservar» ni el
+  // copyright mientras se lee la página (antes flotaba siempre encima).
   useEffect(() => {
+    let lastY = window.scrollY;
     const onScroll = () => {
-      setVisible(window.scrollY > 400);
+      const y = window.scrollY;
       const docH = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docH > 0 ? Math.min(1, window.scrollY / docH) : 0);
+      const goingUp = y < lastY - 4;
+      const goingDown = y > lastY + 4;
+      const nearBottom = docH - y < 140;
+      if (y < 500 || nearBottom || goingDown) setVisible(false);
+      else if (goingUp) setVisible(true);
+      if (goingUp || goingDown) lastY = y;
+      setProgress(docH > 0 ? Math.min(1, y / docH) : 0);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

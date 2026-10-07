@@ -94,3 +94,39 @@ export function buildResultsCsv(flights, origins) {
   });
   return rows.map((r) => r.map(csvCell).join(",")).join("\n");
 }
+
+// ── "Quién paga qué" por viajero ─────────────────────────────────────────────
+// Hueco de color (1-8) de una ciudad de salida: su posición en la búsqueda.
+// El color sigue a la ciudad, nunca a su puesto ni al destino.
+export function travelerSlot(origins, code) {
+  const i = (origins || []).map((o) => String(o).toUpperCase()).indexOf(String(code).toUpperCase());
+  return ((i < 0 ? 0 : i) % 8) + 1;
+}
+
+// Lo que paga cada origen para un destino (precio real por persona), en el
+// orden de la búsqueda. Sin precio → fuera (nunca se rellena con nada).
+export function payRows(dest, origins) {
+  const list = (Array.isArray(dest?.flights) ? dest.flights : [])
+    .map((f) => ({ origin: String(f.origin).toUpperCase(), price: Number(f.price), pax: Number(f.passengers) || 1 }))
+    .filter((r) => Number.isFinite(r.price) && r.price > 0);
+  const order = (origins || []).map((o) => String(o).toUpperCase());
+  return list.sort((a, b) => {
+    const ia = order.indexOf(a.origin), ib = order.indexOf(b.origin);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+}
+
+// Diferencia entre quien más y quien menos paga (€ por persona). Usa el dato
+// del backend si viene; si no, lo calcula de los precios reales.
+export function paySpread(dest) {
+  if (typeof dest?.priceSpread === "number") return dest.priceSpread;
+  const p = payRows(dest).map((r) => r.price);
+  return p.length >= 2 ? Math.max(...p) - Math.min(...p) : 0;
+}
+
+// Precio individual más alto de una lista de destinos: escala común de barras.
+export function maxLegPrice(flights) {
+  let m = 0;
+  for (const f of flights || []) for (const r of payRows(f)) if (r.price > m) m = r.price;
+  return m;
+}

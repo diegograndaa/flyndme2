@@ -1000,28 +1000,11 @@
 .lp-faq-title.lp-faq-title,
 .gp-title.gp-title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
 
-/* ══ 15. Fotos de destino en duotono (tinta → amarillo señal) ════════════
-   Técnica de dos capas sin JS: fondo tinta + foto en gris con "screen"
-   (las sombras se vuelven tinta) + capa ámbar con "multiply" (las luces se
-   vuelven ámbar). Todas las fotos de Unsplash quedan con el mismo tono de
-   cartel de viaje en vez de parecer de banco de imágenes. */
-.wc-card .wc-image-wrap.wc-image-wrap {
-  --duo-dark: #1A1A1A;
-  --duo-light: #FFD65C;
-  background: var(--duo-dark);
-  isolation: isolate;
-}
-.wc-card .wc-image.wc-image {
-  filter: grayscale(1) contrast(1.12) brightness(1.04);
-  mix-blend-mode: screen;
-}
-.wc-image-duo {
-  position: absolute;
-  inset: 0;
-  background: var(--duo-light);
-  mix-blend-mode: multiply;
-  pointer-events: none;
-}
+/* ══ 15. Fotos de destino ═════════════════════════════════════════════════
+   A COLOR desde oct-2026: el duotono tinta→amarillo hacía que Milán y Roma
+   parecieran la misma imagen. Lo que unifica las fotos es el degradado
+   oscuro inferior (tinta), sobre el que se lee el nombre en fichas. */
+.wc-card .wc-image-wrap.wc-image-wrap { background: #1A1A1A; }
 /* Degradado inferior en tinta (antes azul del tema viejo) para leer el nombre */
 .wc-card .wc-image-overlay.wc-image-overlay {
   background: linear-gradient(to top, rgba(26,26,26,.88) 0%, rgba(26,26,26,.35) 42%, transparent 72%);
