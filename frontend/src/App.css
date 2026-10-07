@@ -3797,73 +3797,10 @@ html {
 /* Iconos Lucide: alineación con el texto en contextos inline; en flex se ignora */
 .lucide { vertical-align: -0.15em; flex-shrink: 0; }
 
-/* Diagrama de convergencia (firma). ESTÁTICO a propósito: cualquier animación
-   de entrada (stroke-dashoffset del arco, opacidad de los nodos, o un fade del
-   propio contenedor) se repintaba mal de forma intermitente en Chromium y
-   dejaba el diagrama —o partes— invisible al azar entre cargas. La única "vida"
-   es el pulso infinito del destino (.cv-dest-ring), que repinta sin parar y es
-   fiable. */
-.cv { position: relative; width: 100%; max-width: 560px; margin-inline: auto; }
-.cv-svg { width: 100%; height: auto; display: block; overflow: visible; }
-
-.cv-arc {
-  stroke: var(--primary);
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  opacity: .85;
-  /* Trazo SÓLIDO y estático. Cualquier animación de stroke-dashoffset del arco
-     se repintaba mal de forma intermitente en Chromium (arco invisible al
-     terminar, tanto con `forwards` como con `backwards`). La vida de entrada va
-     ahora en el fade del contenedor .cv. dasharray 320 > longitud real
-     (~306px) → trazo continuo sin depender de pathLength. */
-  stroke-dasharray: 320;
-  stroke-dashoffset: 0;
-}
-
-.cv-origin { opacity: 1; }
-.cv-origin-dot { fill: var(--white); stroke: var(--primary); stroke-width: 2.5; }
-.cv-origin-label {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  fill: var(--slate-700);
-  letter-spacing: .02em;
-}
-
-.cv-dest-dot { fill: var(--primary); }
-.cv-dest-pin { fill: #fff; }
-.cv-dest-ring {
-  stroke: var(--primary);
-  stroke-width: 2;
-  opacity: .6;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: cv-pulse 2.4s ease-out infinite;
-}
-@keyframes cv-pulse {
-  0%   { transform: scale(1);   opacity: .6; }
-  70%  { transform: scale(2.6); opacity: 0; }
-  100% { transform: scale(2.6); opacity: 0; }
-}
-.cv-meet {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(28px);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--primary);
-  white-space: nowrap;
-}
-
 /* Cifras tabulares para los precios (alinean en columnas) */
 .wc-flight-price-tag, .cmp-price {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cv-dest-ring { animation: none; }
 }
 
 /* Responsive del hero v2 — ACTION-FIRST en móvil (#4): el formulario va primero
@@ -3875,8 +3812,6 @@ html {
   .lp-hero-visual { display: none; }
   .lp-eyebrow { display: none; }
   .lp-hero-visual-m { display: block; padding: 4px 16px 0; }
-  .cv { max-width: 300px; }
-  .cv-meet { position: static; display: block; transform: none; text-align: center; margin-top: 2px; }
 }
 
 /* ── Hover micro-interactions ─────────────────────────────── */
