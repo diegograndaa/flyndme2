@@ -188,6 +188,60 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://flyndme2.vercel.app/quedar/paris-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://flyndme2.vercel.app/meet/paris-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://flyndme2.vercel.app/quedar/valencia-londres/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/valencia-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://flyndme2.vercel.app/meet/valencia-london/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/valencia-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://flyndme2.vercel.app/quedar/sevilla-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/sevilla-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://flyndme2.vercel.app/meet/seville-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/sevilla-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://flyndme2.vercel.app/quedar/despedida-soltero/</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/despedida-soltero/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/stag-hen-do/"/>
