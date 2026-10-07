@@ -2476,7 +2476,7 @@ html {
   animation: fadeInUp .4s ease .35s both;
 }
 
-/* ── Verification badge (price re-priced via Amadeus pricing) ──── */
+/* ── Verification badge (live price check, SerpAPI / Google Flights) ──── */
 .wc-verify-chip {
   display: inline-flex;
   align-items: center;
