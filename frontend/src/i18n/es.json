@@ -718,6 +718,13 @@
     "textRoundtrip": "Salid el {{date}} y volved el {{returnDate}} (mismas noches): el grupo paga {{total}} — ahorráis {{saving}}",
     "useRoundtrip": "Cambiar a estas fechas"
   },
+  "tripHint": {
+    "tag": "Otra duración",
+    "text": "Con {{nights}} noches (vuelta el {{date}}) sí hay {{count}} destinos con precio para todos, desde {{total}} el grupo.",
+    "textOne": "Con 1 noche (vuelta el {{date}}) sí hay {{count}} destinos con precio para todos, desde {{total}} el grupo.",
+    "detail": "Misma salida. Las búsquedas recientes tienen sobre todo escapadas cortas; es una estimación, comprobad el precio antes de reservar.",
+    "use": "Buscar con esa vuelta"
+  },
   "watch": {
     "cta": "Vigilar precio",
     "on": "Vigilando precio",

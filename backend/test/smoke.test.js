@@ -601,6 +601,29 @@ test("búsqueda normal: sin fallos del proveedor no marca degraded", async () =>
   assert.equal(r.body.degraded, undefined);
 });
 
+test("trip-length-hint: con la misma salida propone otra duración con destinos reales", async () => {
+  const dep = futureDate(50);
+  const r = await post("/api/flights/trip-length-hint", {
+    origins: ["MAD", "BCN"], passengers: [1, 1], departureDate: dep, returnDate: futureDate(57),
+  });
+  assert.equal(r.status, 200);
+  const s = r.body.suggestion;
+  assert.ok(s, "el mock tiene precios para cualquier fecha → hay sugerencia");
+  assert.equal(s.nights, 6, "primero la duración más cercana por debajo");
+  assert.equal(s.returnDate, futureDate(56));
+  assert.ok(s.destinationsCount >= 1);
+  assert.ok(s.cheapest.totalCostEUR > 0);
+  assert.ok(!["MAD", "BCN"].includes(s.cheapest.destination), "nunca propone un origen como destino");
+});
+
+test("trip-length-hint: valida la entrada", async () => {
+  const noRet = await post("/api/flights/trip-length-hint", { origins: ["MAD"], departureDate: futureDate(50) });
+  assert.equal(noRet.status, 400);
+  assert.equal(noRet.body.code, "INVALID_RETURN_DATE");
+  const noOrig = await post("/api/flights/trip-length-hint", { origins: [], departureDate: futureDate(50), returnDate: futureDate(55) });
+  assert.equal(noOrig.status, 400);
+});
+
 test("tiering: custom destinations bypass tier fallback", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "BCN"],
