@@ -233,10 +233,48 @@ test("mergeVerification: status 'verified' (precio igual) también promociona", 
 test("mergeVerification: respuesta sin legs ni agregados o destino nulo no rompe", () => {
   const dest = makeDest();
   const merged = mergeVerification(dest, { verificationStatus: "verified", verifiedAt: "x" });
-  assert.equal(merged.verificationStatus, "verified");
+  // Sin tramos verificados no se puede presentar como verificado (ver isFullyVerified)
+  assert.equal(merged.verificationStatus, "partial");
   // Sin agregados verificados no hay nada que promocionar → precio intacto
   assert.equal(merged.totalCostEUR, 420.5);
   assert.deepEqual(merged.flights, dest.flights);
   assert.equal(mergeVerification(null, { verificationStatus: "verified" }), null);
   assert.equal(mergeVerification(dest, null), dest);
+});
+
+test("mergeVerification: 'changed' pero sin precio verificado de algún tramo → NO promociona y baja a partial", () => {
+  const dest = makeDest();
+  const merged = mergeVerification(dest, {
+    verificationStatus: "changed",
+    verifiedTotalCostEUR: 452.0,
+    verifiedAveragePerTraveler: 150.67,
+    flights: [{ origin: "MAD", verifiedPrice: 130, totalForOrigin: 260 }], // falta LON
+  });
+  assert.equal(merged.totalCostEUR, dest.totalCostEUR, "el total mostrado sigue siendo el de caché");
+  assert.equal(merged.averageCostPerTraveler, dest.averageCostPerTraveler);
+  assert.equal(merged.cachedTotalCostEUR, undefined);
+  assert.equal(merged.flights[0].price, dest.flights[0].price, "ningún tramo se promociona");
+  assert.equal(merged.flights[0].verifiedPrice, 130, "el dato verificado se guarda aparte");
+  assert.equal(merged.verifiedTotalCostEUR, 452.0);
+  assert.equal(merged.verificationStatus, "partial", "el distintivo no puede decir verificado");
+});
+
+test("mergeVerification: 'verified' sin tramos en la respuesta → NO promociona y baja a partial", () => {
+  const dest = makeDest();
+  const merged = mergeVerification(dest, { verificationStatus: "verified", verifiedTotalCostEUR: 999 });
+  assert.equal(merged.totalCostEUR, dest.totalCostEUR);
+  assert.equal(merged.verificationStatus, "partial");
+});
+
+test("isFullyVerified: exige estado completo Y precio verificado en cada tramo", async () => {
+  const { isFullyVerified } = await import("../src/utils/verification.js");
+  const dest = makeDest();
+  const both = [{ origin: "MAD", verifiedPrice: 130 }, { origin: "lon", verifiedPrice: 96 }];
+  assert.equal(isFullyVerified(dest, { verificationStatus: "changed", flights: both }), true);
+  assert.equal(isFullyVerified(dest, { verificationStatus: "verified", legs: both }), true, "acepta legs además de flights");
+  assert.equal(isFullyVerified(dest, { verificationStatus: "partial", flights: both }), false);
+  assert.equal(isFullyVerified(dest, { verificationStatus: "changed", flights: both.slice(0, 1) }), false);
+  assert.equal(isFullyVerified(dest, { verificationStatus: "changed", flights: [{ origin: "MAD", verifiedPrice: null }, both[1]] }), false);
+  assert.equal(isFullyVerified(null, { verificationStatus: "verified" }), false);
+  assert.equal(isFullyVerified(dest, null), false);
 });

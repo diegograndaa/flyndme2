@@ -81,6 +81,23 @@ const PROMOTE_DEST = [
   ["fairnessScore", "verifiedFairnessScore", "cachedFairnessScore"],
 ];
 
+function legsByOrigin(verification) {
+  const vLegs = Array.isArray(verification?.flights)
+    ? verification.flights
+    : Array.isArray(verification?.legs) ? verification.legs : [];
+  return new Map(vLegs.filter((l) => l && l.origin).map((l) => [String(l.origin).toUpperCase(), l]));
+}
+
+// ¿Verificación COMPLETA? Estado verified/changed Y cada tramo del destino con
+// su precio verificado. Si faltara alguno, el total verificado no cuadraría con
+// los tramos que se enseñan: no se puede presentar como verificado.
+export function isFullyVerified(dest, verification) {
+  if (!dest || !verification || !FULLY_VERIFIED.has(verification.verificationStatus)) return false;
+  const byOrigin = legsByOrigin(verification);
+  return Array.isArray(dest.flights) && dest.flights.length > 0 &&
+    dest.flights.every((f) => Number.isFinite(byOrigin.get(String(f?.origin || "").toUpperCase())?.verifiedPrice));
+}
+
 // Devuelve una copia del destino con la verificación mergeada. Los campos
 // verified* se guardan SIEMPRE; además, si la verificación es COMPLETA
 // (verified/changed), el precio verificado pasa a ser el precio mostrado
@@ -94,7 +111,11 @@ export function mergeVerification(dest, verification) {
     if (verification[key] !== undefined) merged[key] = verification[key];
   }
 
-  const promote = FULLY_VERIFIED.has(verification.verificationStatus);
+  const byOrigin = legsByOrigin(verification);
+  const promote = isFullyVerified(dest, verification);
+  // Si el backend dice verified/changed pero faltan tramos, el distintivo
+  // tampoco puede decir "verificado" sobre precios de caché.
+  if (FULLY_VERIFIED.has(verification.verificationStatus) && !promote) merged.verificationStatus = "partial";
 
   if (promote) {
     for (const [shown, verified, cached] of PROMOTE_DEST) {
@@ -106,15 +127,7 @@ export function mergeVerification(dest, verification) {
     }
   }
 
-  const vLegs = Array.isArray(verification.flights)
-    ? verification.flights
-    : Array.isArray(verification.legs) ? verification.legs : [];
-  if (vLegs.length && Array.isArray(dest.flights)) {
-    const byOrigin = new Map(
-      vLegs
-        .filter((l) => l && l.origin)
-        .map((l) => [String(l.origin).toUpperCase(), l])
-    );
+  if (byOrigin.size && Array.isArray(dest.flights)) {
     merged.flights = dest.flights.map((f) => {
       const v = byOrigin.get(String(f?.origin || "").toUpperCase());
       if (!v) return f;
