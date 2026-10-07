@@ -77,8 +77,8 @@ Tras cambios de color o tema: `node frontend/scripts/theme-parity-audit.mjs 390`
 
 La instancia gratuita de Render se duerme tras 15 min sin tráfico y tarda
 30-60 s en despertar. El frontend lo absorbe (ping al cargar y reintentos),
-pero la primera búsqueda tras un rato sin visitas va lenta y las tarjetas OG
-de WhatsApp/Telegram pueden fallar. El cron de GitHub (`keep-alive.yml`) se
+pero la primera búsqueda, el primer enlace compartido o el primer grupo tras
+un rato sin visitas van lentos. El cron de GitHub (`keep-alive.yml`) se
 ejecuta con horas de retraso, así que hace falta un pinger externo gratuito:
 
 - **cron-job.org**: nuevo cronjob → URL `https://flyndme-backend.onrender.com/api/ping`,
