@@ -44,3 +44,27 @@ test("urlParams: direct solo acepta '1'", () => {
   assert.equal(parseSearchLinkParams("?o=MAD&direct=true").directOnly, undefined);
   assert.equal(parseSearchLinkParams("?o=MAD&direct=1").directOnly, true);
 });
+
+test("urlParams: como mucho 8 orígenes (el tope del backend)", async () => {
+  const { parseSearchLinkParams, MAX_LINK_ORIGINS } = await import("../src/utils/urlParams.js");
+  const q = "?" + ["MAD", "LON", "BER", "PAR", "ROM", "AMS", "MIL", "LIS", "DUB", "VIE", "PRG"].map((c) => `o=${c}`).join("&");
+  const r = parseSearchLinkParams(q);
+  assert.equal(r.origins.length, MAX_LINK_ORIGINS);
+  assert.deepEqual(r.origins.slice(0, 2), ["MAD", "LON"]);
+});
+
+test("urlParams: fechas que no existen en el calendario se descartan", async () => {
+  const { parseSearchLinkParams } = await import("../src/utils/urlParams.js");
+  for (const bad of ["2026-13-45", "2026-02-30", "2026-00-10", "2026-04-31"]) {
+    assert.equal(parseSearchLinkParams(`?o=MAD&dep=${bad}`).departureDate, undefined, bad);
+  }
+  assert.equal(parseSearchLinkParams("?o=MAD&dep=2028-02-29").departureDate, "2028-02-29", "bisiesto válido");
+});
+
+test("urlParams: una vuelta igual o anterior a la ida se descarta", async () => {
+  const { parseSearchLinkParams } = await import("../src/utils/urlParams.js");
+  assert.equal(parseSearchLinkParams("?o=MAD&dep=2026-12-10&ret=2026-12-05&trip=roundtrip").returnDate, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&dep=2026-12-10&ret=2026-12-10&trip=roundtrip").returnDate, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&dep=2026-12-10&ret=2026-12-14&trip=roundtrip").returnDate, "2026-12-14");
+  assert.equal(parseSearchLinkParams("?o=MAD&ret=2026-12-14").returnDate, "2026-12-14", "sin ida no se puede comparar");
+});

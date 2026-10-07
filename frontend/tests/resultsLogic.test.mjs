@@ -123,3 +123,15 @@ test("payRows / paySpread / maxLegPrice: solo precios reales, en el orden de la 
   assert.equal(maxLegPrice([dest, { flights: [{ origin: "MAD", price: 300 }] }]), 300);
   assert.deepEqual(payRows(null, []), []);
 });
+
+test("pickBest y sortByCriterion coinciden aunque falten fairnessScore o totalCostEUR", async () => {
+  const { pickBest, sortByCriterion } = await import("../src/utils/resultsLogic.js");
+  const lists = [
+    [{ destination: "A", totalCostEUR: 100 }, { destination: "B", fairnessScore: 0, totalCostEUR: 50 }],
+    [{ destination: "A", fairnessScore: 70 }, { destination: "B", fairnessScore: 70, totalCostEUR: 10 }],
+    [{ destination: "A", fairnessScore: 40, totalCostEUR: 90 }, { destination: "B", totalCostEUR: 20 }, { destination: "C", fairnessScore: 40, totalCostEUR: 80 }],
+  ];
+  for (const l of lists) for (const mode of ["total", "fairness"]) {
+    assert.equal(pickBest(l, mode).destination, sortByCriterion(l, mode)[0].destination, `${mode} ${JSON.stringify(l)}`);
+  }
+});
