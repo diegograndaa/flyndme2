@@ -18,7 +18,7 @@ import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
+import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
@@ -187,6 +187,9 @@ export default function App() {
   // Ref con la vista actual: la usan setView (prev sin updater) y el manejador
   // de teclado (closure registrado una sola vez).
   const viewRef = useRef(view);
+  // Parámetros de la búsqueda que produjo los resultados actuales (el formulario
+  // se puede editar después; «vigilar precio» debe guardar lo que se buscó).
+  const lastSearchRef = useRef(null);
   useEffect(() => { viewRef.current = view; }, [view]);
 
   // ── Browser history support (back/forward buttons) ──────────────────────
@@ -276,7 +279,7 @@ export default function App() {
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
-  const [watches,         setWatches]         = useState(() => (typeof window === "undefined" ? [] : readWatches(window.localStorage)));
+  const [watches,         setWatches]         = useState(() => readWatches(safeStorage()));
   const [priceAlerts,     setPriceAlerts]     = useState([]);
   const [pendingResearch, setPendingResearch] = useState(false);
   const [budgetEnabled, setBudgetEnabled] = useState(false);
@@ -419,6 +422,7 @@ export default function App() {
         const { results, searchParams } = data;
         if (results?.flights?.length) {
           setFlights(results.flights);
+          lastSearchRef.current = null;
           setBestByCriterion(results.bestByCriterion || {
             total: pickBest(results.flights, "total"),
             fairness: pickBest(results.flights, "fairness"),
@@ -860,8 +864,9 @@ export default function App() {
         origins: cleanOrigins,
         passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
         destination: winner.destination,
-        departureDate,
-        ...(tripType === "roundtrip" ? { returnDate } : {}),
+        // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
+        departureDate: winner.bestDate || departureDate,
+        ...(tripType === "roundtrip" ? { returnDate: winner.bestReturnDate || returnDate } : {}),
         tripType,
         currentTotalEUR: winner.totalCostEUR,
       }),
@@ -881,15 +886,20 @@ export default function App() {
   // combinación exacta) y solo se avisa si ha bajado de forma apreciable. Se
   // compara contra el precio de caché de entonces (cached* si se verificó en
   // vivo): comparar Google Flights con la caché daría bajadas falsas.
-  const watchParamsFor = (dest) => ({
-    origins: cleanOrigins,
-    passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
-    departureDate: dest.bestDate || departureDate,
-    returnDate: dest.bestReturnDate || returnDate,
-    tripType,
-    nonStop: directOnly,
-    destination: normalizeCode(dest.destination),
-  });
+  const watchParamsFor = (dest) => {
+    const s = lastSearchRef.current;
+    return {
+      origins: s ? s.origins : cleanOrigins,
+      passengers: s ? s.passengers : cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+      departureDate: dest.bestDate || (s ? s.departureDate : departureDate),
+      returnDate: dest.bestReturnDate || (s ? s.returnDate : returnDate),
+      tripType: s ? s.tripType : tripType,
+      nonStop: s ? !!s.nonStop : directOnly,
+      destination: normalizeCode(dest.destination),
+    };
+  };
+  // Importe en la divisa elegida (EUR es la canónica; GBP/USD solo de visualización)
+  const money = (eur) => (currency === "EUR" ? formatEur(eur, 0) : convertPrice(eur, currency));
   const isWatched = (dest) => !!dest && watches.some((w) => w.id === watchId(watchParamsFor(dest)));
   const toggleWatch = (dest) => {
     if (!dest) return;
@@ -905,7 +915,7 @@ export default function App() {
       trackEvent("price_watch_add", { origins: params.origins.length });
     }
     setWatches(next);
-    writeWatches(window.localStorage, next);
+    writeWatches(safeStorage(), next);
   };
   const openWatch = (w) => {
     setPriceAlerts((prev) => prev.filter((a) => a.watch.id !== w.id));
@@ -920,7 +930,7 @@ export default function App() {
   };
   useEffect(() => {
     const list = activeWatches(watches, todayISO());
-    if (list.length !== watches.length) { setWatches(list); writeWatches(window.localStorage, list); }
+    if (list.length !== watches.length) { setWatches(list); writeWatches(safeStorage(), list); }
     if (!list.length) return undefined;
     let cancelled = false;
     const timer = setTimeout(async () => {
@@ -1110,6 +1120,7 @@ export default function App() {
           const adjusted = arr;
 
           setFlights(adjusted);
+          lastSearchRef.current = body;
           setPartialResults(Boolean(data.partial));
           setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
@@ -1444,9 +1455,9 @@ export default function App() {
                   text={t("watch.dropText", {
                     route: a.watch.origins.join(" · "),
                     city: cityOf(a.watch.destination) || a.watch.destination,
-                    before: formatEur(a.watch.savedTotalEUR, 0),
-                    now: formatEur(a.currentTotalEUR, 0),
-                    saving: formatEur(a.savingEUR, 0),
+                    before: money(a.watch.savedTotalEUR),
+                    now: money(a.currentTotalEUR),
+                    saving: money(a.savingEUR),
                   })}
                   detail={t("watch.dropDetail")}
                   actionLabel={t("watch.view")}
@@ -1477,7 +1488,7 @@ export default function App() {
                   nights: tripHint.nights,
                   date: formatDate(tripHint.returnDate),
                   count: tripHint.destinationsCount,
-                  total: formatEur(tripHint.cheapest.totalCostEUR, 0),
+                  total: money(tripHint.cheapest.totalCostEUR),
                 }),
                 detail: t("tripHint.detail"),
                 actionLabel: t("tripHint.use"),

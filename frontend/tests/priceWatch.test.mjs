@@ -64,3 +64,16 @@ test("readWatches/writeWatches: sobrevive a datos corruptos", () => {
   writeWatches(storage, [w, { basura: true }]);
   assert.deepEqual(readWatches(storage).map((x) => x.id), [w.id]);
 });
+
+test("safeStorage: si leer localStorage lanza (cookies bloqueadas) devuelve null y nada rompe", async () => {
+  const { safeStorage, readWatches, writeWatches } = await import("../src/utils/priceWatch.js");
+  const blocked = {};
+  Object.defineProperty(blocked, "localStorage", { get() { throw new Error("SecurityError"); } });
+  assert.equal(safeStorage(blocked), null);
+  assert.deepEqual(readWatches(safeStorage(blocked)), []);
+  assert.doesNotThrow(() => writeWatches(safeStorage(blocked), []));
+  const store = new Map();
+  const ok = { localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) } };
+  assert.equal(safeStorage(ok), ok.localStorage);
+  assert.equal(safeStorage(undefined), null);
+});

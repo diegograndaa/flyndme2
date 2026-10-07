@@ -32,6 +32,20 @@ export function makeWatch(params, totalEUR, now = Date.now()) {
   return { ...w, id: watchId(w) };
 }
 
+/**
+ * localStorage o null. En algunos navegadores (cookies bloqueadas, modo
+ * privado estricto) LEER window.localStorage ya lanza SecurityError.
+ */
+export function safeStorage(win = typeof window === "undefined" ? undefined : window) {
+  try {
+    const s = win?.localStorage;
+    s?.getItem(WATCH_KEY);
+    return s || null;
+  } catch {
+    return null;
+  }
+}
+
 export function readWatches(storage) {
   try {
     const raw = storage?.getItem(WATCH_KEY);
