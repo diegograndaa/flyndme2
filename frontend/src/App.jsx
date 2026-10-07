@@ -1605,7 +1605,7 @@ export default function App() {
 
           {/* Pestañas: Comparar · Más opciones (el mapa de rutas vive ahora en la
               tarjeta ganadora, junto a la foto). */}
-          <div className="rv-tabs mt-4" ref={tabContentRef}>
+          <div className="rv-tabs" ref={tabContentRef}>
             {flights.length > 1 && (
             <>
               <button type="button"
@@ -1625,7 +1625,7 @@ export default function App() {
           </div>
 
           {showAlt === "compare" && flights.length > 1 && (
-            <div className="mt-3 view-enter" id="rv-panel-compare">
+            <div className="view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
                   <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1}
@@ -1637,7 +1637,7 @@ export default function App() {
 
           {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
           {showAlt === "more" && (
-            <div className="mt-3 view-enter fm-more" id="rv-panel-more">
+            <div className="view-enter fm-more" id="rv-panel-more">
               <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
 
               {/* Quick re-search: try nearby dates */}

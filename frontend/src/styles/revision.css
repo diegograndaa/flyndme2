@@ -499,3 +499,20 @@
   .hm-plane { display: none; }
   .sf-form .form-switch .form-check-input.form-check-input { transition: none; }
 }
+
+/* ══ 32. Ritmo editorial de resultados ═════════════════════════════════════
+   Cada zona es una columna con UN espaciado base (--rhythm) en vez de
+   márgenes sueltos por pieza. Más aire tras la cabecera de zona y tras la
+   tarjeta grande; las piezas secundarias (reparto, siguiente paso) van más
+   juntas entre sí para leerse como un grupo, no como parte de la tarjeta. */
+.fm-decision, .fm-explore { --rhythm: 12px; display: flex; flex-direction: column; gap: var(--rhythm); }
+.fm-decision.fm-decision > *, .fm-explore.fm-explore > * { margin-top: 0; margin-bottom: 0; }
+.fm-decision.fm-decision > .fm-zone-head + *,
+.fm-explore.fm-explore > .fm-zone-head + * { margin-top: calc(var(--rhythm) / 2); }
+.fm-decision.fm-decision > .wc-card + * { margin-top: var(--rhythm); }
+.fm-explore.fm-explore > .fm-board + * { margin-top: calc(var(--rhythm) * .75); }
+.fm-zone-perf.fm-zone-perf { margin: 40px 8px 36px; }
+@media (max-width: 600px) {
+  .fm-decision, .fm-explore { --rhythm: 10px; }
+  .fm-zone-perf.fm-zone-perf { margin: 30px 6px 26px; }
+}
