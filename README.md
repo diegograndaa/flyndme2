@@ -20,17 +20,24 @@ entre viajeros (fairness score).
 ```
 frontend/   React 18 + Vite + Bootstrap (PWA, i18n EN/ES)  → Vercel
 backend/    Node + Express                                  → Render
-            ├── routes/flights.js   búsqueda multi-origen por tiers de destinos
-            ├── routes/share.js     enlaces compartibles (TTL 48h, en memoria)
+            ├── routes/flights.js   búsqueda multi-origen por tiers, /verify, /cheaper-date
+            ├── routes/share.js     enlaces compartibles (TTL 48h)
+            ├── routes/groups.js    planificación de grupo (TTL 14 días)
             ├── services/travelpayoutsService.js  Aviasales Data API (rate limit, retry, cache)
+            ├── services/serpapiService.js        verificación bajo demanda (Google Flights)
             ├── services/mockFlightService.js     fixtures deterministas (USE_MOCK=true)
-            └── utils/ttlCache.js   cache en memoria con TTL compartida
+            └── utils/kvStore.js    store con TTL: Upstash Redis o memoria
 ```
 
 El backend busca por niveles (tiers) de destinos y corta en cuanto alcanza
-`TARGET_RESULTS`, verifica el precio del ganador vía el proveedor
-(`priceFlightOffer`) y etiqueta el resultado
-(`verified/changed/partial/failed/timeout/skipped`) sin re-rankear.
+`TARGET_RESULTS`. Los precios de Travelpayouts son una caché de búsquedas
+recientes: se muestran como estimación (`verificationStatus: "skipped"`) y el
+usuario puede comprobar el precio del ganador en vivo (`POST /api/flights/verify`,
+SerpAPI / Google Flights, con cupo vigilado). Nunca se re-ordena por la
+verificación.
+
+La documentación viva del proyecto (arquitectura, decisiones, backlog) está en
+`CLAUDE.md`.
 
 ## Desarrollo local
 
@@ -53,14 +60,18 @@ externas (datos deterministas).
 ## Tests
 
 ```bash
-cd backend
-npm test        # node --test (requiere npm install previo)
+cd backend  && npm test   # node --test, sin red (requiere npm install previo)
+cd frontend && npm test   # harness SSR propio (tests/_loader.mjs)
 ```
 
-62 tests: contrato de la API (smoke end-to-end en modo mock), matemática
+Backend: contrato de la API (smoke end-to-end en modo mock), matemática
 multi-pasajero, verificación de precios, deep links de afiliado, validaciones,
-rate limits, cache y unidades de TtlCache. En entornos sin acceso a npm, ver
-`backend/dev-shims/README.md`.
+rate limits, caché, grupos y el aviso de fecha más barata. Frontend: helpers,
+i18n, lógica de resultados y render completo de la App. En entornos sin acceso
+a npm, ver `backend/dev-shims/README.md`.
+
+Tras cambios de color o tema: `node frontend/scripts/theme-parity-audit.mjs 390`
+(y `1366`); requisitos en la cabecera del script.
 
 ## Variables de entorno
 
@@ -70,4 +81,5 @@ tuning de rate limit/cache, CORS) y `frontend/.env.production.example`
 
 ## Registro de cambios
 
-Ver `MEJORAS.md`.
+El historial actual está en `CLAUDE.md` (entradas «Hecho»). `MEJORAS.md` es
+un registro histórico de junio de 2026.
