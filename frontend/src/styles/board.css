@@ -1553,6 +1553,8 @@ button,
 .dm-dest--dim { opacity: .42; }
 .dm-dest--hover:not(.dm-dest--best) .dm-chip-bg { stroke: var(--sign); }
 .dm-dest:focus-visible .dm-chip-bg { stroke: var(--sign); stroke-width: 2.5; }
+/* El ganador ya es amarillo: su foco se dibuja con la tinta del tema */
+.dm-dest--best:focus-visible .dm-chip-bg { stroke: var(--primary); stroke-width: 3; }
 
 /* Ficha informativa */
 .dm-tooltip {

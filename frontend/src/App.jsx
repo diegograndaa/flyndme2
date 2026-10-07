@@ -1344,7 +1344,7 @@ export default function App() {
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
           <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("landing"); } }}>
-            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="FlyndMe" height={28}
+            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
             <span className="app-logo-sub">{t("header.tagline")}</span>
@@ -1434,7 +1434,7 @@ export default function App() {
       </div>
 
       {/* Views */}
-      <div id="main-content" tabIndex={-1}>
+      <main id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
           {priceAlerts.length > 0 && (
@@ -1530,7 +1530,7 @@ export default function App() {
       )}
 
       {view === "results" && bestDestination && (
-        <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+        <div className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
             {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
@@ -1826,9 +1826,9 @@ export default function App() {
             </div>
           )}
           </section>
-        </main>
+        </div>
       )}
-      </div>{/* /main-content */}
+      </main>{/* /main-content */}
 
       {/* Scroll progress bar */}
       <ScrollProgressBar />

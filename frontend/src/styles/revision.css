@@ -130,7 +130,7 @@
 /* Ejemplo animado de los campos: «p. ej.» fijo delante + ciudad en cursiva,
    para que no parezca un valor ya rellenado */
 .sf-typing-placeholder.sf-typing-placeholder { display: inline-flex; align-items: baseline; gap: 5px; color: var(--slate-400); font-style: italic; border-right: 0; animation: none; }
-.sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; opacity: .85; }
+.sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; }
 .sf-typing-word { border-right: 2px solid transparent; padding-right: 1px; }
 .sf-typing-word--active { animation: typingCursor .8s steps(1) infinite; }
 

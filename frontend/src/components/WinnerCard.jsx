@@ -426,6 +426,8 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
 
           {/* Fecha más barata para ESTE destino: cambia el total, así que va aquí */}
+          {/* Región viva siempre presente: el aviso llega en segundo plano */}
+          <div aria-live="polite">
           {dateHint && (
             <div className="wc-total-hint">
               <CalendarClock size={16} aria-hidden="true" />
@@ -433,6 +435,7 @@ const WinnerCard = React.memo(function WinnerCard({
               <button type="button" className="wc-total-hint-btn" onClick={dateHint.onAction}>{dateHint.actionLabel}</button>
             </div>
           )}
+          </div>
 
           {/* Estimación honesta + comprobación en vivo bajo demanda (#5) */}
           <div className="wc-total-foot" aria-live="polite">

@@ -170,8 +170,7 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
               <button type="button"
                 className={`dep-row${isCurrent ? " dep-row--current" : ""}`}
                 onClick={() => !isCurrent && onSelect && onSelect(f)}
-                aria-current={isCurrent ? "true" : undefined}
-                aria-label={isCurrent ? `${city} · ${t("board.selected")}` : t("board.select", { city })}>
+                aria-current={isCurrent ? "true" : undefined}>
                 <DestThumb code={code} />
                 <span className="dep-dest">
                   <FlapText text={code} size="sm" delay={120 + i * 110} />

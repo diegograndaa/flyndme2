@@ -275,7 +275,8 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
                 className={`dm-dest${d.isBest ? " dm-dest--best" : ""}${isHov ? " dm-dest--hover" : ""}${dim ? " dm-dest--dim" : ""}`}
                 role="button" tabIndex={0}
                 aria-current={d.isBest ? "true" : undefined}
-                aria-label={t(d.isBest ? "map.bestAria" : "map.selectAria", { city: d.city || d.code, price: money(d.avg) })}
+                // El nombre accesible empieza por el texto visible de la ficha (WCAG 2.5.3)
+                aria-label={`${c ? c.label.replace(/\s+/g, " ") + " · " : ""}${t(d.isBest ? "map.bestAria" : "map.selectAria", { city: d.city || d.code, price: money(d.avg) })}`}
                 onMouseEnter={() => setHovered(d.code)}
                 onMouseLeave={() => setHovered(null)}
                 onFocus={() => setHovered(d.code)}
