@@ -123,3 +123,10 @@ test("payRows / paySpread / maxLegPrice: solo precios reales, en el orden de la 
   assert.equal(maxLegPrice([dest, { flights: [{ origin: "MAD", price: 300 }] }]), 300);
   assert.deepEqual(payRows(null, []), []);
 });
+
+test("convertPrice: sin dato → «—», nunca NaN; el 0 real se convierte", async () => {
+  const { convertPrice } = await import("../src/utils/resultsLogic.js");
+  for (const v of [undefined, null, "", "abc", NaN, Infinity]) assert.equal(convertPrice(v, "GBP"), "—", String(v));
+  assert.equal(convertPrice(0, "USD"), "$0");
+  assert.equal(convertPrice("100", "GBP"), "£86");
+});

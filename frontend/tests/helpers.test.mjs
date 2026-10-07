@@ -45,7 +45,11 @@ test("formatEur: formatea con y sin decimales", () => {
   assert.ok(formatEur(123).includes("123"));
   assert.ok(formatEur(123).includes("€"));
   assert.ok(formatEur(99.4, 2).includes("99.40"));
-  assert.ok(formatEur(null).includes("0"));
+  // Sin dato no se inventa «€0»: se muestra «—» (un 0 real sí es «€0»)
+  assert.equal(formatEur(null), "—");
+  assert.equal(formatEur(undefined), "—");
+  assert.equal(formatEur("abc"), "—");
+  assert.ok(formatEur(0).includes("0"));
   assert.ok(formatEur("85").includes("85")); // strings numéricos
 });
 
