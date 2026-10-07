@@ -80,6 +80,20 @@ test("health endpoint reports mock mode", async () => {
   assert.equal(r.body.status, "healthy");
 });
 
+test("seguridad: la API manda una CSP estricta (default-src 'none')", async () => {
+  const r = await fetch(`${BASE}/api/ping`);
+  const csp = r.headers.get("content-security-policy") || "";
+  assert.match(csp, /default-src 'none'/);
+  assert.match(csp, /frame-ancestors 'none'/);
+});
+
+test("keep-alive: /api/ping responde a GET y HEAD", async () => {
+  const get = await fetch(`${BASE}/api/ping`);
+  assert.equal(get.status, 200);
+  const head = await fetch(`${BASE}/api/ping`, { method: "HEAD" });
+  assert.equal(head.status, 200);
+});
+
 test("version endpoint exposes commit + env without secrets", async () => {
   const r = await get("/api/version");
   assert.equal(r.status, 200);
@@ -552,6 +566,39 @@ test("price-check: valida la entrada", async () => {
   const rt = await post("/api/flights/price-check", { origins: ["MAD"], destination: "PAR", departureDate: futureDate(48), tripType: "roundtrip" });
   assert.equal(rt.status, 400);
   assert.equal(rt.body.code, "INVALID_RETURN_DATE");
+});
+
+test("proveedor caído: la búsqueda responde 502 PROVIDER_UNAVAILABLE, no 'sin vuelos'", async () => {
+  const DOWN_PORT = 5095;
+  const proc = spawn("node", [path.join(__dirname, "..", "index.js")], {
+    env: { ...process.env, PORT: String(DOWN_PORT), USE_MOCK: "true", NODE_ENV: "test", MOCK_PROVIDER_DOWN: "true", MOCK_DELAY_MS: "1" },
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+  try {
+    const base = `http://localhost:${DOWN_PORT}`;
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      try { if ((await fetch(`${base}/api/ping`)).ok) break; } catch { /* arrancando */ }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const r = await fetch(`${base}/api/flights/multi-origin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(44), tripType: "oneway" }),
+    });
+    assert.equal(r.status, 502);
+    assert.equal((await r.json()).code, "PROVIDER_UNAVAILABLE");
+  } finally {
+    proc.kill("SIGKILL");
+  }
+});
+
+test("búsqueda normal: sin fallos del proveedor no marca degraded", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(46), tripType: "oneway",
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.degraded, undefined);
 });
 
 test("tiering: custom destinations bypass tier fallback", async () => {

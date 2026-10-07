@@ -157,6 +157,9 @@ const FOOTER_SEO_ROUTES = [
   { labelEs: "Múnich · Barcelona",          labelEn: "Munich · Barcelona",        es: "/quedar/munich-barcelona/",       en: "/meet/munich-barcelona/" },
   { labelEs: "Madrid · Berlín · Lisboa",    labelEn: "Madrid · Berlin · Lisbon",  es: "/quedar/madrid-berlin-lisboa/",   en: "/meet/madrid-berlin-lisbon/" },
   { labelEs: "Madrid · Londres · Berlín",   labelEn: "Madrid · London · Berlin",  es: "/quedar/madrid-londres-berlin/",  en: "/meet/madrid-london-berlin/" },
+  { labelEs: "París · Madrid",              labelEn: "Paris · Madrid",            es: "/quedar/paris-madrid/",           en: "/meet/paris-madrid/" },
+  { labelEs: "Valencia · Londres",          labelEn: "Valencia · London",         es: "/quedar/valencia-londres/",       en: "/meet/valencia-london/" },
+  { labelEs: "Sevilla · Barcelona",         labelEn: "Seville · Barcelona",       es: "/quedar/sevilla-barcelona/",      en: "/meet/seville-barcelona/" },
 ];
 const FOOTER_SEO_GUIDES = [
   { labelEs: "Despedidas",  labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },
@@ -287,6 +290,7 @@ export default function App() {
   // Results
   const [flights,         setFlights]         = useState([]);
   const [partialResults,  setPartialResults]  = useState(false);
+  const [providerDegraded, setProviderDegraded] = useState(false);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
@@ -1075,6 +1079,7 @@ export default function App() {
 
           setFlights(adjusted);
           setPartialResults(Boolean(data.partial));
+          setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
@@ -1670,6 +1675,9 @@ export default function App() {
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
           )}
+          {providerDegraded && (
+            <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.degradedNotice")} />
+          )}
 
           {/* ── Salidas: todos los destinos encontrados en un panel de salidas
               (sustituye podio Top 3 + barra de stats + lista "otras opciones").
@@ -1703,7 +1711,7 @@ export default function App() {
 
           {/* Pestañas: Comparar · Más opciones (el mapa de rutas vive ahora en la
               tarjeta ganadora, junto a la foto). */}
-          <div className="rv-tabs mt-4" ref={tabContentRef}>
+          <div className="rv-tabs" ref={tabContentRef}>
             {flights.length > 1 && (
             <>
               <button type="button"
@@ -1723,7 +1731,7 @@ export default function App() {
           </div>
 
           {showAlt === "compare" && flights.length > 1 && (
-            <div className="mt-3 view-enter" id="rv-panel-compare">
+            <div className="view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
                   <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1}
@@ -1735,7 +1743,7 @@ export default function App() {
 
           {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
           {showAlt === "more" && (
-            <div className="mt-3 view-enter fm-more" id="rv-panel-more">
+            <div className="view-enter fm-more" id="rv-panel-more">
               <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
 
               {/* Quick re-search: try nearby dates */}

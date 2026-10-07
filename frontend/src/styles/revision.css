@@ -122,7 +122,7 @@
    los resultados). Antes se rellenaba de amarillo al reconocer la ciudad. */
 .sf-origin-row--set .sf-badge.sf-badge.sf-badge--set {
   background: var(--board-cell-bot, #18191C); color: #fff;
-  box-shadow: inset 4px 0 0 var(--trav, var(--sign));
+  box-shadow: inset 4px 0 0 var(--trav, var(--sign)), var(--ficha-canto);
   padding-left: 12px;
 }
 .sf-origin-row--set .sf-badge.sf-badge--set::after { border-color: var(--trav, var(--sign)); }
@@ -165,8 +165,10 @@
 }
 
 /* ══ 28. Mapa vivo de la portada ═══════════════════════════════════════════ */
-.hm { --hm-sea: var(--white); --hm-land: #E9E4DA; --hm-land-alt: #E3DDD1; --hm-border: #D2CBBD; --hm-route: var(--navy); }
-[data-theme="dark"] .hm { --hm-sea: #14161A; --hm-land: #1F2228; --hm-land-alt: #23272E; --hm-border: #30353E; --hm-route: #C9CDD4; }
+.hm { --hm-sea: var(--white); --hm-land: #E9E4DA; --hm-land-alt: #E3DDD1; --hm-border: #D2CBBD; --hm-route: var(--navy);
+  --hm-chip-fill: var(--board-cell-bot, #18191C); --hm-chip-line: var(--board-cell-bot, #18191C); }
+[data-theme="dark"] .hm { --hm-sea: #14161A; --hm-land: #1F2228; --hm-land-alt: #282C34; --hm-border: #30353E; --hm-route: #C9CDD4;
+  --hm-chip-fill: #2A2D34; --hm-chip-line: #474C57; }
 .hm-stage {
   position: relative; aspect-ratio: 610 / 448; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--radius-md, 8px); background: var(--hm-sea);
@@ -183,9 +185,8 @@
 .hm-plane path { fill: var(--hm-route); }
 .hm-origin-dot { fill: var(--hm-sea); stroke: var(--trav, var(--navy)); }
 .hm-origin--on .hm-origin-dot { fill: var(--trav, var(--navy)); }
-.hm-chip rect { fill: var(--board-cell-bot, #18191C); stroke: var(--board-cell-bot, #18191C); }
+.hm-chip rect { fill: var(--hm-chip-fill); stroke: var(--hm-chip-line); }
 .hm-chip text { fill: #fff; font-family: var(--font-mono); font-weight: 700; letter-spacing: .04em; }
-[data-theme="dark"] .hm-chip:not(.hm-chip--dest) rect { fill: #2A2D34; stroke: #474C57; }
 .hm-chip--dest rect { fill: var(--sign); stroke: var(--on-sign); }
 .hm-chip--dest text { fill: var(--on-sign); }
 .hm-dest-dot { fill: var(--sign); stroke: var(--on-sign); }
@@ -256,7 +257,7 @@
 .df--open .df-trigger { border-color: var(--navy); }
 .df-native {
   position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
-  -webkit-appearance: none; appearance: none; border: 0; padding: 0;
+  -webkit-appearance: none; appearance: none; border: 0; padding: 0; background: transparent;
 }
 .df-pop {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 292px; max-width: calc(100vw - 32px);
@@ -363,7 +364,7 @@
 .dep-row--current { border-left-color: var(--panel-ink); background: var(--panel-stub); cursor: default; }
 .dep-thumb {
   position: relative; display: grid; place-items: center; width: 96px; height: 64px; overflow: hidden;
-  border-radius: 4px; background: var(--board-cell-bot, #18191C);
+  border-radius: 4px; background: var(--board-cell-bot, #18191C); box-shadow: var(--ficha-canto);
 }
 .dep-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .4s var(--ease-out-expo); }
 .dep-row:hover:not(.dep-row--current) .dep-thumb img { transform: scale(1.06); }
@@ -430,10 +431,10 @@
    (los botones «Reservar»). Marco de la decisión, caja del total, aviso de
    fecha, «siguiente paso», fila elegida y botón de subir pasan a tinta/papel
    para que no compitan entre sí.                                          */
-.fm-zone-head--decision .fm-zone-num.fm-zone-num { background: var(--board-cell-bot, #18191C); color: #fff; box-shadow: none; }
+.fm-zone-head--decision .fm-zone-num.fm-zone-num { background: var(--board-cell-bot, #18191C); color: #fff; box-shadow: var(--ficha-canto); }
 [data-theme="dark"] .fm-decision { --decision-line: #3A3E47; }
-[data-theme="dark"] .wc-total { border-color: #3A3E47; }
-.wc-card .wc-badge-winner.wc-badge-winner { background: var(--board-cell-bot, #18191C); color: #fff; border-radius: 3px; }
+[data-theme="dark"] .wc-total { border-color: var(--decision-line); }
+.wc-card .wc-badge-winner.wc-badge-winner { background: var(--board-cell-bot, #18191C); color: #fff; border-radius: 3px; box-shadow: var(--ficha-canto); }
 .wc-total-hint.wc-total-hint { background: transparent; border: 1px dashed var(--slate-300); border-left: 1px dashed var(--slate-300); }
 .wc-total-hint-btn.wc-total-hint-btn { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
 :root:not([data-theme="dark"]) .wc-total-hint-btn.wc-total-hint-btn { color: var(--navy); }
@@ -500,7 +501,24 @@
   .sf-form .form-switch .form-check-input.form-check-input { transition: none; }
 }
 
-/* ══ 33. Vigilar precio ════════════════════════════════════════════════════
+/* ══ 33. Ritmo editorial de resultados ═════════════════════════════════════
+   Cada zona es una columna con UN espaciado base (--rhythm) en vez de
+   márgenes sueltos por pieza. Más aire tras la cabecera de zona y tras la
+   tarjeta grande; las piezas secundarias (reparto, siguiente paso) van más
+   juntas entre sí para leerse como un grupo, no como parte de la tarjeta. */
+.fm-decision, .fm-explore { --rhythm: 12px; display: flex; flex-direction: column; gap: var(--rhythm); }
+.fm-decision.fm-decision > *, .fm-explore.fm-explore > * { margin-top: 0; margin-bottom: 0; }
+.fm-decision.fm-decision > .fm-zone-head + *,
+.fm-explore.fm-explore > .fm-zone-head + * { margin-top: calc(var(--rhythm) / 2); }
+.fm-decision.fm-decision > .wc-card + * { margin-top: var(--rhythm); }
+.fm-explore.fm-explore > .fm-board + * { margin-top: calc(var(--rhythm) * .75); }
+.fm-zone-perf.fm-zone-perf { margin: 40px 8px 36px; }
+@media (max-width: 600px) {
+  .fm-decision, .fm-explore { --rhythm: 10px; }
+  .fm-zone-perf.fm-zone-perf { margin: 30px 6px 26px; }
+}
+
+/* ══ 34. Vigilar precio ════════════════════════════════════════════════════
    Activo = relleno de tinta (carbón / hueso según el tema), nunca amarillo:
    el amarillo en resultados es solo para reservar. */
 .wc-actions .wc-action-btn.wc-action-btn--watch.wc-action-btn--on { background: var(--primary); color: var(--on-solid); border-color: var(--primary); }
