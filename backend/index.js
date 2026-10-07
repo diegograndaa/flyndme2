@@ -162,7 +162,9 @@ app.use(
           if (!origin || allowedOrigins.includes(origin) || isVercelPreviewUrl(origin)) {
             return cb(null, true);
           }
-          cb(new Error(`CORS: origin '${origin}' not allowed`));
+          const err = new Error(`CORS: origin '${origin}' not allowed`);
+          err.code = "CORS_FORBIDDEN";
+          cb(err);
         },
     // DELETE: quitar un pasajero de un grupo (DELETE /api/groups/:id/members/:i).
     // Sin él, el preflight del navegador lo bloqueaba en prod (Node no hace
@@ -268,6 +270,15 @@ app.use((err, _req, res, _next) => {
     return res.status(413).json({
       code: "PAYLOAD_TOO_LARGE",
       message: "El cuerpo de la petición es demasiado grande.",
+    });
+  }
+  // Origen no permitido por CORS: es una petición rechazada, no un fallo del
+  // servidor → 403 (antes salía como 500 y ensuciaba los logs de error).
+  if (err.code === "CORS_FORBIDDEN") {
+    console.warn("[cors]", err.message);
+    return res.status(403).json({
+      code: "CORS_FORBIDDEN",
+      message: "Origen no permitido.",
     });
   }
   console.error("[Error]", err.message || err);

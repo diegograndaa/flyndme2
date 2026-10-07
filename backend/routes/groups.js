@@ -20,6 +20,8 @@ const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).c
 const GROUP_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days — planning spans weeks
 const MAX_GROUPS   = 1000;
 const MAX_MEMBERS  = 9;  // same ceiling as the multi-origin search
+// Igual que TOTAL_PAX_CAP de /multi-origin: un roster por encima no se podría buscar.
+const MAX_TOTAL_PAX = 16;
 const MAX_NAME_LEN = 40;
 const MAX_ORIGIN_LEN = 60;
 
@@ -50,6 +52,18 @@ function cleanMember(m) {
   if (pax > MAX_MEMBERS) pax = MAX_MEMBERS;
   const name = String(m.name == null ? "" : m.name).trim().slice(0, MAX_NAME_LEN);
   return { origin, passengers: pax, name };
+}
+
+function totalPax(members) {
+  return members.reduce((s, m) => s + m.passengers, 0);
+}
+
+function paxLimitBody(total) {
+  return {
+    code: "GROUP_PAX_LIMIT",
+    message: `A group can have at most ${MAX_TOTAL_PAX} passengers in total (would be ${total}).`,
+    maxTotal: MAX_TOTAL_PAX,
+  };
 }
 
 function publicView(id, g) {
@@ -101,6 +115,9 @@ router.post("/", createLimiter, asyncH(async (req, res) => {
     let cleaned = [];
     if (Array.isArray(members)) {
       cleaned = members.map(cleanMember).filter(Boolean).slice(0, MAX_MEMBERS);
+    }
+    if (totalPax(cleaned) > MAX_TOTAL_PAX) {
+      return res.status(400).json(paxLimitBody(totalPax(cleaned)));
     }
 
     const id = generateId();
@@ -217,6 +234,10 @@ router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
   }
   if (g.members.length >= MAX_MEMBERS) {
     return res.status(409).json({ code: "GROUP_FULL", message: `A group can have at most ${MAX_MEMBERS} travelers.` });
+  }
+  const nextTotal = totalPax(g.members) + member.passengers;
+  if (nextTotal > MAX_TOTAL_PAX) {
+    return res.status(409).json(paxLimitBody(nextTotal));
   }
   g.members.push(member);
   // Conserva el TTL restante: añadir un miembro NO reinicia la caducidad (14d).

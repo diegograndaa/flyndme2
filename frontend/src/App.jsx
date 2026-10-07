@@ -1102,7 +1102,11 @@ export default function App() {
         body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
       });
       if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
-      if (!res.ok) throw new Error("create failed");
+      if (!res.ok) {
+        const code = (await res.json().catch(() => ({}))).code;
+        if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
+        throw new Error("create failed");
+      }
       const { id } = await res.json();
       setGroup({ id, departureDate, returnDate, tripType, members });
       window.history.replaceState({}, "", `${window.location.pathname}?group=${id}`);
@@ -1125,7 +1129,12 @@ export default function App() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(member),
       });
-      if (!res.ok) throw new Error("add failed");
+      if (!res.ok) {
+        const code = (await res.json().catch(() => ({}))).code;
+        if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
+        if (code === "GROUP_FULL") { setToast({ message: t("group.full"), type: "error" }); return; }
+        throw new Error("add failed");
+      }
       setGroup(await res.json());
     } catch {
       setToast({ message: t("group.addError"), type: "error" });
