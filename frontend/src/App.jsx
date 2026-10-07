@@ -279,6 +279,8 @@ export default function App() {
   const [watches,         setWatches]         = useState(() => (typeof window === "undefined" ? [] : readWatches(window.localStorage)));
   const [priceAlerts,     setPriceAlerts]     = useState([]);
   const [pendingResearch, setPendingResearch] = useState(false);
+  // Abriendo una invitación ?group= (con Render dormido puede tardar ~30-60 s)
+  const [groupLoading,    setGroupLoading]    = useState(false);
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudget,     setMaxBudget]     = useState(200);
   const [flexEnabled,   setFlexEnabled]   = useState(false);
@@ -454,6 +456,7 @@ export default function App() {
     // Con el backend dormido el enlace de invitación decía «caducado» y se
     // borraba de la URL: ahora se despierta y reintenta, y solo un 404 real
     // cuenta como caducado (un fallo de red conserva ?group= para recargar).
+    setGroupLoading(true);
     groupFetch(`${API_BASE}/api/groups/${gid}`)
       .then((res) => {
         if (res.status === 404) { const e = new Error("Group not found"); e.expired = true; throw e; }
@@ -474,7 +477,8 @@ export default function App() {
         } else {
           setToast({ message: t("errors.connection"), type: "error" });
         }
-      });
+      })
+      .finally(() => setGroupLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1437,6 +1441,11 @@ export default function App() {
       <div id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
+          {groupLoading && (
+            <div className="container fm-price-alerts" style={{ maxWidth: 1080 }}>
+              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} detail={t("group.loadingDetail")} />
+            </div>
+          )}
           {priceAlerts.length > 0 && (
             <div className="container fm-price-alerts" style={{ maxWidth: 1080 }} aria-live="polite">
               {priceAlerts.map((a) => (
