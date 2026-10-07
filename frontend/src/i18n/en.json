@@ -718,6 +718,13 @@
     "textRoundtrip": "Leave on {{date}} and fly back on {{returnDate}} (same nights): the group pays {{total}} — save {{saving}}",
     "useRoundtrip": "Switch to these dates"
   },
+  "tripHint": {
+    "tag": "Another length",
+    "text": "With {{nights}} nights (back on {{date}}) there are {{count}} destinations priced for everyone, from {{total}} for the group.",
+    "textOne": "With 1 night (back on {{date}}) there are {{count}} destinations priced for everyone, from {{total}} for the group.",
+    "detail": "Same departure. Recent searches mostly cover short breaks; this is an estimate, check the price before booking.",
+    "use": "Search with that return"
+  },
   "watch": {
     "cta": "Watch price",
     "on": "Watching price",

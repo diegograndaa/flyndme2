@@ -525,3 +525,8 @@
 .wc-watch-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
 .fm-price-alerts { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 .fm-price-alerts .fm-notice { margin: 0; }
+
+/* ══ 35. Aviso bajo el error del formulario (otra duración) ════════════════
+   La columna del formulario es estrecha: etiqueta, texto y botón apilados. */
+.sf-form .fm-notice { flex-direction: column; align-items: flex-start; margin-top: 12px; }
+.sf-form .fm-notice .fm-notice-body { flex: 0 0 auto; width: 100%; }

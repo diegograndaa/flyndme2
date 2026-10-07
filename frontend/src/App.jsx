@@ -273,6 +273,8 @@ export default function App() {
   const [optimizeBy,    setOptimizeBy]    = useState("total");
   // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
   const [cheaperDate,     setCheaperDate]     = useState(null);
+  // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
+  const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
   const [watches,         setWatches]         = useState(() => (typeof window === "undefined" ? [] : readWatches(window.localStorage)));
   const [priceAlerts,     setPriceAlerts]     = useState([]);
@@ -949,6 +951,34 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // POST /api/flights/trip-length-hint — solo tras una ida y vuelta SIN resultados:
+  // misma salida, otra duración con destinos reales. Fallo silencioso.
+  const fetchTripHint = (searchBody, gen) => {
+    fetch(`${API_BASE}/api/flights/trip-length-hint`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        origins: searchBody.origins, passengers: searchBody.passengers,
+        departureDate: searchBody.departureDate, returnDate: searchBody.returnDate,
+        ...(searchBody.nonStop ? { nonStop: true } : {}),
+        ...(searchBody.destinations ? { destinations: searchBody.destinations } : {}),
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (searchGenRef.current !== gen || !data?.suggestion) return;
+        setTripHint(data.suggestion);
+        trackEvent("trip_hint_seen", { nights: data.suggestion.nights });
+      })
+      .catch(() => { /* opcional */ });
+  };
+  const useTripHint = (hint) => {
+    trackEvent("trip_hint_apply", { nights: hint.nights });
+    setTripHint(null);
+    setReturnDate(hint.returnDate);
+    setPendingResearch(true);
+  };
+
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
   const useCheaperDate = (date, newReturnDate) => {
@@ -992,6 +1022,7 @@ export default function App() {
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
     setCheaperDate(null);
+    setTripHint(null);
     setShowAlt(false);
     setLoading(true);
     setSearchDuration(0);
@@ -1070,6 +1101,7 @@ export default function App() {
                 ? t("errors.noResultsRoundtripMulti")
                 : t("errors.noResults");
             setError(noResMsg);
+            if (tripType === "roundtrip" && !budgetEnabled) fetchTripHint(body, searchGenRef.current);
             return;
           }
 
@@ -1439,6 +1471,18 @@ export default function App() {
               cabinClass={cabinClass}     setCabinClass={setCabinClass}
               currency={currency}         setCurrency={setCurrency}
               loading={loading}           error={error}
+              errorHint={tripHint ? {
+                tag: t("tripHint.tag"),
+                text: t(tripHint.nights === 1 ? "tripHint.textOne" : "tripHint.text", {
+                  nights: tripHint.nights,
+                  date: formatDate(tripHint.returnDate),
+                  count: tripHint.destinationsCount,
+                  total: formatEur(tripHint.cheapest.totalCostEUR, 0),
+                }),
+                detail: t("tripHint.detail"),
+                actionLabel: t("tripHint.use"),
+                onAction: () => useTripHint(tripHint),
+              } : null}
               onSubmit={handleSubmit}
               onCreateGroup={createGroup}
               groupBusy={groupBusy}

@@ -368,6 +368,29 @@ test("fallback ida y vuelta: pide el máximo de la API y encuentra el billete ce
   assert.equal(monthCalls, before, "la ventana filtrada se sirve de caché");
 });
 
+test("fallback ida y vuelta: otra duración con la misma salida reutiliza el mes ya descargado", async () => {
+  let monthCalls = 0;
+  setTransport(async (url, config) => {
+    const p = config.params;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(p.departure_at)) return okResponse([]); // fechas exactas: vacías
+    monthCalls += 1;
+    return okResponse([
+      ticket({ price: 120, departure_at: `${addDays(D0, 1)}T08:00:00+02:00`, return_at: `${addDays(D0, 8)}T19:00:00+02:00` }),
+      ticket({ price: 90,  departure_at: `${addDays(D0, 1)}T08:00:00+02:00`, return_at: `${addDays(D0, 4)}T19:00:00+02:00` }),
+      ticket({ price: 10,  departure_at: `${addDays(D0, 9)}T08:00:00+02:00`, return_at: `${addDays(D0, 12)}T19:00:00+02:00` }), // salida fuera de ventana
+    ]);
+  });
+  const week = await tp.getCheapestOffer("MAD", "RTD", D0, { returnDate: addDays(D0, 7) });
+  assert.equal(week.price, 120, "7 noches: el billete con vuelta a ±2 días");
+  const calls = monthCalls;
+  const short = await tp.getCheapestOffer("MAD", "RTD", D0, { returnDate: addDays(D0, 3) });
+  assert.equal(short.price, 90, "3 noches: otro billete de la MISMA ventana de salida");
+  assert.equal(short.offer.dateFallback.returnDate, addDays(D0, 4));
+  if (addDays(D0, 7).slice(0, 7) === addDays(D0, 3).slice(0, 7)) {
+    assert.equal(monthCalls, calls, "mismo mes de vuelta → sin nuevas consultas mensuales");
+  }
+});
+
 test("makeCacheKey: distingue el límite de la consulta", () => {
   assert.notEqual(
     makeCacheKey("MAD", "LIS", "2026-08", { returnDate: "2026-08", limit: 100 }),

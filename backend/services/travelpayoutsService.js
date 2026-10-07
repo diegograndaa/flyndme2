@@ -409,16 +409,23 @@ function inWindow(isoAt, center, flexDays) {
   return !!d && Math.abs(dayDiff(center, d)) <= flexDays;
 }
 
-async function fetchRoundtripWindow(origin, destination, depMonth, retMonth, options, departureDate, returnDate, flexDays) {
+// byDeparture: la caché guarda la ventana de SALIDA con cualquier vuelta del
+// mes y el filtro de vuelta se aplica al leer. Así, probar otra duración con la
+// misma salida (tripLengthHint) no vuelve a pedir el mes. Solo con ventanas
+// estrechas (±DATE_FLEX_DAYS): con ±14 días se guardaría casi el mes entero.
+async function fetchRoundtripWindow(origin, destination, depMonth, retMonth, options, departureDate, returnDate, flexDays, { byDeparture = false } = {}) {
   const opts = { ...options, returnDate: retMonth, limit: RT_MONTH_LIMIT };
-  const key = `win|${makeCacheKey(origin, destination, depMonth, opts)}|${departureDate}|${returnDate}|${flexDays}`;
-  const cached = searchCache.get(key);
-  if (cached) return cached;
-  const all = await fetchTickets(origin, destination, depMonth, opts, { bypassCache: true, store: false });
-  const kept = (Array.isArray(all) ? all : []).filter((t) =>
-    inWindow(t?.departure_at, departureDate, flexDays) && inWindow(t?.return_at, returnDate, flexDays));
-  searchCache.set(key, kept);
-  return kept;
+  const base = `win|${makeCacheKey(origin, destination, depMonth, opts)}|${departureDate}|${flexDays}`;
+  const key = byDeparture ? `${base}|dep` : `${base}|${returnDate}`;
+  const retOk = (t) => inWindow(t?.return_at, returnDate, flexDays);
+  let kept = searchCache.get(key);
+  if (!kept) {
+    const all = await fetchTickets(origin, destination, depMonth, opts, { bypassCache: true, store: false });
+    kept = (Array.isArray(all) ? all : []).filter((t) =>
+      inWindow(t?.departure_at, departureDate, flexDays) && (byDeparture || retOk(t)));
+    searchCache.set(key, kept);
+  }
+  return byDeparture ? kept.filter(retOk) : kept;
 }
 
 // Consulta el mes a granularidad de día (la API agrupa por fecha) y devuelve
@@ -437,7 +444,7 @@ async function findNeighborTicket(origin, destination, departureDate, options) {
       if (rm && rm < dm) continue;
       try {
         tickets.push(...(rm
-          ? await fetchRoundtripWindow(origin, destination, dm, rm, options, departureDate, options.returnDate, DATE_FLEX_DAYS)
+          ? await fetchRoundtripWindow(origin, destination, dm, rm, options, departureDate, options.returnDate, DATE_FLEX_DAYS, { byDeparture: true })
           : await fetchTickets(origin, destination, dm, { ...options, limit: 100 })));
         answered += 1;
       } catch (err) {

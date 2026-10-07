@@ -21,6 +21,7 @@ const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODU
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
 const { findCheaperGroupDate, daysBetween } = require("../services/cheaperDate");
+const { candidateNights } = require("../services/tripLength");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
 // oferta concreta: la verificación del ganador se omite ("skipped") y el
@@ -827,6 +828,70 @@ router.post("/price-check", async (req, res) => {
   } catch (err) {
     console.error("[price-check] error:", err.message);
     return res.status(500).json({ code: "INTERNAL_ERROR", message: "Error al comprobar el precio." });
+  }
+});
+
+// ─── POST /trip-length-hint — otra duración cuando la ida y vuelta sale vacía ─
+// La caché de Travelpayouts tiene sobre todo escapadas cortas: una semana entera
+// a menudo no tiene datos aunque 3-4 noches sí. Con la MISMA salida se prueban
+// otras duraciones (candidateNights) contra los destinos principales y se
+// devuelve la primera con algún destino con precio para TODOS los orígenes.
+// Reutiliza los calendarios mensuales ya descargados por la búsqueda fallida
+// (caché de ventana por salida), así que cada duración extra es barata.
+const TRIP_HINT_BUDGET_MS = 18000;
+router.post("/trip-length-hint", async (req, res) => {
+  try {
+    const { origins, passengers, departureDate, returnDate, nonStop, destinations } = req.body || {};
+    const originList = [...new Set((Array.isArray(origins) ? origins : [])
+      .map((o) => String(o || "").trim().toUpperCase()).filter(isValidIata))];
+    if (originList.length === 0 || originList.length > MAX_ORIGINS) {
+      return res.status(400).json({ code: "INVALID_ORIGINS", message: "origins inválidos." });
+    }
+    if (passengers !== undefined && !Array.isArray(passengers)) {
+      return res.status(400).json({ code: "INVALID_PASSENGERS", message: "passengers debe ser un array alineado con origins." });
+    }
+    const originPax = buildOriginPax(origins, passengers, originList);
+    if (originPax.reduce((a, b) => a + b, 0) > TOTAL_PAX_CAP) {
+      return res.status(400).json({ code: "TOO_MANY_PASSENGERS", message: `Máximo ${TOTAL_PAX_CAP} pasajeros en total.` });
+    }
+    if (!departureDate || !isValidISODate(departureDate) || departureDate < toISODate(new Date())) {
+      return res.status(400).json({ code: "INVALID_DEPARTURE_DATE", message: "Fecha de salida inválida." });
+    }
+    if (!returnDate || !isValidISODate(returnDate) || returnDate <= departureDate) {
+      return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "Fecha de vuelta inválida." });
+    }
+
+    const custom = (Array.isArray(destinations) ? destinations : [])
+      .map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata);
+    const dests = (custom.length ? custom : DEFAULT_DESTINATION_TIERS[0]).filter((d) => !originList.includes(d));
+    const options = { max: 5, ...(nonStop === true || nonStop === "true" ? { nonStop: true } : {}) };
+    const t0 = Date.now();
+
+    for (const nights of candidateNights(daysBetween(returnDate, departureDate))) {
+      if (Date.now() - t0 > TRIP_HINT_BUDGET_MS) return res.json({ suggestion: null, reason: "timeout" });
+      const ret = toISODate(addDays(parseISODate(departureDate), nights));
+      const found = [];
+      for (let i = 0; i < dests.length; i += 3) {
+        const chunk = await Promise.all(dests.slice(i, i + 3).map((d) =>
+          fetchDestDate(originList, originPax, d, departureDate, ret, options, null).catch(() => null)));
+        found.push(...chunk.filter(Boolean));
+      }
+      if (found.length) {
+        found.sort((a, b) => a.totalCostEUR - b.totalCostEUR);
+        return res.json({
+          suggestion: {
+            nights,
+            returnDate: ret,
+            destinationsCount: found.length,
+            cheapest: { destination: found[0].destination, totalCostEUR: found[0].totalCostEUR },
+          },
+        });
+      }
+    }
+    return res.json({ suggestion: null });
+  } catch (err) {
+    console.error("[trip-length-hint] error:", err.message);
+    return res.json({ suggestion: null, reason: "error" });
   }
 });
 

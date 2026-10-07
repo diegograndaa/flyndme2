@@ -9,6 +9,7 @@ import {
   formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
+import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
 import DateField from "./DateField";
@@ -132,7 +133,7 @@ const SearchPage = React.memo(function SearchPage({
   directOnly, setDirectOnly,
   cabinClass, setCabinClass,
   currency, setCurrency,
-  loading, error,
+  loading, error, errorHint = null, // { tag, text, detail, actionLabel, onAction }: alternativa real a un 0 resultados
   onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
 }) {
@@ -691,6 +692,7 @@ const SearchPage = React.memo(function SearchPage({
             )}
 
             {error && <FriendlyError message={error} onRetry={onSubmit} />}
+            {error && errorHint && <Notice variant="next" {...errorHint} />}
 
             {/* Traveler summary bar */}
             {origins.some((o) => o.trim()) && (
