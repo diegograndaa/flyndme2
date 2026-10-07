@@ -94,6 +94,7 @@
   --panel-shadow:  none;
   --board-cell-top: #2A2B30;
   --board-cell-bot: #18191C;
+  --ficha-canto: 0 0 0 0 transparent;
 }
 
 /* Terminal de NOCHE: pantalla FIDS/radar neutra (#121316), divisores
@@ -149,7 +150,7 @@
   --panel-stub:    #1A1C21;
   --panel-ink:     #E6E8EC;
   --panel-muted:   #9AA0AA;
-  --panel-faint:   #7C828E;
+  --panel-faint:   #858B97;   /* ≥4.5:1 también sobre --panel-stub */
   --panel-line:    #25282F;
   --panel-hover:   rgba(255,255,255,.04);
   --panel-track:   #25282F;
@@ -160,6 +161,8 @@
   --panel-shadow:  none;
   --board-cell-top: #454A54;
   --board-cell-bot: #30343C;
+  /* Canto claro de las fichas de carbón: de noche no se funden con la pantalla */
+  --ficha-canto: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.12);
   background: #121316;
 }
 [data-theme="dark"] body,
@@ -2734,7 +2737,7 @@ button,
 [data-theme="dark"] .flap-cell,
 [data-theme="dark"] .sf-summary-bar .sf-summary-chip.sf-summary-chip,
 [data-theme="dark"] .sf-ac-dropdown .sf-ac-code.sf-ac-code {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.12);
+  box-shadow: var(--ficha-canto);
 }
 
 /* Cabecera: papel/pantalla "elevada" + filete en los dos temas (en oscuro era
