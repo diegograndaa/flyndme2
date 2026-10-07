@@ -32,6 +32,7 @@ import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
+import { normalizeSharedFlights } from "./utils/sharedResults";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -417,12 +418,13 @@ export default function App() {
       })
       .then((data) => {
         const { results, searchParams } = data;
-        if (results?.flights?.length) {
-          setFlights(results.flights);
-          setBestByCriterion(results.bestByCriterion || {
-            total: pickBest(results.flights, "total"),
-            fairness: pickBest(results.flights, "fairness"),
-          });
+        const shared = normalizeSharedFlights(results?.flights);
+        if (shared.length) {
+          setFlights(shared);
+          // Se respeta el destino que el usuario tenía en su tarjeta al
+          // compartir, si existe entre los datos normalizados; si no, el mejor.
+          const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
+          setBestByCriterion({ total: keep("total"), fairness: keep("fairness") });
         }
         if (searchParams) {
           if (searchParams.origins?.length) setOrigins(searchParams.origins);
