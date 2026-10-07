@@ -348,6 +348,31 @@ test("groups: enforces the 9-traveler ceiling", async () => {
   assert.equal(overflow.body.code, "GROUP_FULL");
 });
 
+test("groups: el total de pasajeros no supera el tope de la búsqueda (16)", async () => {
+  const tooBig = await post("/api/groups", {
+    departureDate: futureDate(102),
+    members: [{ origin: "MAD", passengers: 9 }, { origin: "LON", passengers: 8 }],
+  });
+  assert.equal(tooBig.status, 400);
+  assert.equal(tooBig.body.code, "GROUP_PAX_LIMIT");
+  assert.equal(tooBig.body.maxTotal, 16);
+
+  const created = await post("/api/groups", {
+    departureDate: futureDate(102),
+    members: [{ origin: "MAD", passengers: 9 }, { origin: "LON", passengers: 6 }],
+  });
+  assert.equal(created.status, 200);
+  const id = created.body.id;
+
+  const overflow = await post(`/api/groups/${id}/members`, { origin: "BER", passengers: 2 });
+  assert.equal(overflow.status, 409);
+  assert.equal(overflow.body.code, "GROUP_PAX_LIMIT");
+
+  const fits = await post(`/api/groups/${id}/members`, { origin: "BER", passengers: 1 });
+  assert.equal(fits.status, 200);
+  assert.equal(fits.body.members.length, 3);
+});
+
 // ─── Loop metrics (/api/health → metrics) ────────────────────────────────
 // Va ANTES del test de rate-limit de shares para que el POST /api/share aquí
 // no salga 429. Usa deltas (antes/después) para ser robusto a lo que ya creó
@@ -466,6 +491,38 @@ test("prod startup: boots cleanly with USE_MOCK=true and explicit origins", asyn
   // Should still be running when the timeout kicks in (we wanted it to live)
   assert.equal(r.timedOut, true, "backend should keep running with valid config");
   assert.ok(r.stdout.includes("FlyndMe API"), "should have logged the ready banner");
+});
+
+test("prod CORS: un origen no permitido recibe 403, no 500", async () => {
+  const PROD_PORT = 5096;
+  const proc = spawn("node", [path.join(__dirname, "..", "index.js")], {
+    env: {
+      ...process.env,
+      NODE_ENV: "production",
+      PORT: String(PROD_PORT),
+      USE_MOCK: "true",
+      ALLOWED_ORIGINS: "https://example.com",
+      FRONTEND_URL: "https://example.com",
+    },
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+  try {
+    const base = `http://localhost:${PROD_PORT}`;
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      try { if ((await fetch(`${base}/api/ping`)).ok) break; } catch { /* arrancando */ }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const denied = await fetch(`${base}/api/ping`, { headers: { Origin: "https://evil.example.org" } });
+    assert.equal(denied.status, 403);
+    assert.equal((await denied.json()).code, "CORS_FORBIDDEN");
+
+    const allowed = await fetch(`${base}/api/ping`, { headers: { Origin: "https://example.com" } });
+    assert.equal(allowed.status, 200);
+    assert.equal(allowed.headers.get("access-control-allow-origin"), "https://example.com");
+  } finally {
+    proc.kill("SIGKILL");
+  }
 });
 
 test("tiering: custom destinations bypass tier fallback", async () => {
