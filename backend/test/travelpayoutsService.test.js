@@ -334,6 +334,47 @@ test("monthsInWindow: cruza el límite de mes solo cuando toca", () => {
   assert.deepEqual(monthsInWindow("2026-08-15", 2), ["2026-08"]);
 });
 
+// ─── Ida y vuelta: el respaldo mensual no se corta antes de las fechas pedidas ─
+
+test("fallback ida y vuelta: pide el máximo de la API y encuentra el billete cercano aunque haya cientos más baratos lejos", async () => {
+  let monthCalls = 0;
+  const limits = [];
+  setTransport(async (url, config) => {
+    const p = config.params;
+    if (p.departure_at === D0) return okResponse([]); // exacta: vacía
+    monthCalls += 1;
+    limits.push(p.limit);
+    // 300 combinaciones más baratas pero a 10+ días de lo pedido, y la buena al final
+    const far = Array.from({ length: 300 }, (_, i) => ticket({
+      price: 20 + i * 0.1,
+      departure_at: `${addDays(D0, 12)}T08:00:00+02:00`,
+      return_at:    `${addDays(D0, 19)}T19:00:00+02:00`,
+    }));
+    const near = ticket({ price: 140, departure_at: `${addDays(D0, 1)}T08:00:00+02:00`, return_at: `${addDays(D0, 8)}T19:00:00+02:00` });
+    return okResponse([...far, near].slice(0, p.limit));
+  });
+
+  const r = await tp.getCheapestOffer("MAD", "RTW", D0, { returnDate: addDays(D0, 7) });
+  assert.ok(r, "debe encontrar el billete dentro de ±2 días");
+  assert.equal(r.price, 140);
+  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
+  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
+  assert.ok(limits.every((l) => l === 1000), `límite pedido: ${limits}`);
+
+  // 2ª búsqueda idéntica: sale de la caché de ventana, sin red
+  const before = monthCalls;
+  const r2 = await tp.getCheapestOffer("MAD", "RTW", D0, { returnDate: addDays(D0, 7) });
+  assert.equal(r2.price, 140);
+  assert.equal(monthCalls, before, "la ventana filtrada se sirve de caché");
+});
+
+test("makeCacheKey: distingue el límite de la consulta", () => {
+  assert.notEqual(
+    makeCacheKey("MAD", "LIS", "2026-08", { returnDate: "2026-08", limit: 100 }),
+    makeCacheKey("MAD", "LIS", "2026-08", { returnDate: "2026-08", limit: 1000 }),
+  );
+});
+
 // ─── options.stats: distinguir "proveedor caído" de "sin vuelos" ────────────
 
 test("stats: un error de red cuenta como fallo; la respuesta sigue siendo null", async () => {

@@ -181,6 +181,9 @@ function makeCacheKey(origin, destination, departureDate, options) {
     o.nonStop === true ? "direct" : "",
     (o.currencyCode || "EUR").toUpperCase(),
     MARKET,
+    // El límite cambia la respuesta: dos consultas iguales con distinto
+    // límite no pueden compartir entrada.
+    o.limit || "",
   ].join("|");
 }
 
@@ -311,7 +314,7 @@ function mapTicketToOffer(ticket, { departureDate, returnDate, nonStop, currency
 
 // ─── Core fetch ───────────────────────────────────────────────────────────────
 
-async function fetchTickets(origin, destination, departureDate, options = {}, { bypassCache = false } = {}) {
+async function fetchTickets(origin, destination, departureDate, options = {}, { bypassCache = false, store = true } = {}) {
   if (!origin || !destination || !departureDate) {
     throw new Error("origin, destination y departureDate son obligatorios.");
   }
@@ -344,7 +347,7 @@ async function fetchTickets(origin, destination, departureDate, options = {}, { 
   }
 
   const tickets = Array.isArray(body.data) ? body.data : [];
-  searchCache.set(cacheKey, tickets);
+  if (store) searchCache.set(cacheKey, tickets);
   return tickets;
 }
 
@@ -395,6 +398,29 @@ function pickNeighbor(tickets, departureDate, returnDate, flexDays) {
   return best;
 }
 
+// Ida y vuelta por meses (one_way=false): la API devuelve combinaciones de todo
+// el mes ordenadas por precio, así que con un límite bajo los billetes cerca de
+// las fechas pedidas quedaban fuera del corte. Se pide el máximo de la API y se
+// guarda en caché SOLO lo que cae en la ventana (pocos billetes, memoria acotada).
+const RT_MONTH_LIMIT = 1000;
+
+function inWindow(isoAt, center, flexDays) {
+  const d = String(isoAt || "").slice(0, 10);
+  return !!d && Math.abs(dayDiff(center, d)) <= flexDays;
+}
+
+async function fetchRoundtripWindow(origin, destination, depMonth, retMonth, options, departureDate, returnDate, flexDays) {
+  const opts = { ...options, returnDate: retMonth, limit: RT_MONTH_LIMIT };
+  const key = `win|${makeCacheKey(origin, destination, depMonth, opts)}|${departureDate}|${returnDate}|${flexDays}`;
+  const cached = searchCache.get(key);
+  if (cached) return cached;
+  const all = await fetchTickets(origin, destination, depMonth, opts, { bypassCache: true, store: false });
+  const kept = (Array.isArray(all) ? all : []).filter((t) =>
+    inWindow(t?.departure_at, departureDate, flexDays) && inWindow(t?.return_at, returnDate, flexDays));
+  searchCache.set(key, kept);
+  return kept;
+}
+
 // Consulta el mes a granularidad de día (la API agrupa por fecha) y devuelve
 // el billete vecino más cercano, o null. Las consultas de mes pasan por la
 // misma caché local que las de fecha exacta (clave = mes), así que el coste
@@ -408,10 +434,11 @@ async function findNeighborTicket(origin, destination, departureDate, options) {
   let lastErr = null;
   for (const dm of depMonths) {
     for (const rm of retMonths) {
-      const opts = { ...options, limit: 100 };
-      if (rm) opts.returnDate = rm;
+      if (rm && rm < dm) continue;
       try {
-        tickets.push(...await fetchTickets(origin, destination, dm, opts));
+        tickets.push(...(rm
+          ? await fetchRoundtripWindow(origin, destination, dm, rm, options, departureDate, options.returnDate, DATE_FLEX_DAYS)
+          : await fetchTickets(origin, destination, dm, { ...options, limit: 100 })));
         answered += 1;
       } catch (err) {
         // un mes sin datos o con error no impide probar el resto
@@ -592,9 +619,12 @@ async function getDatedPrices(origin, destination, departureDate, options = {}) 
   for (const dm of depMonths) {
     for (const rm of retMonths) {
       if (rm && rm < dm) continue;
-      const opts = rm ? { ...options, returnDate: rm, limit: 500 } : options;
       let tickets = [];
-      try { tickets = await fetchTickets(origin, destination, dm, opts); } catch { continue; }
+      try {
+        tickets = rm
+          ? await fetchRoundtripWindow(origin, destination, dm, rm, options, departureDate, options.returnDate, DATE_NUDGE_DAYS)
+          : await fetchTickets(origin, destination, dm, options);
+      } catch { continue; }
       for (const t of Array.isArray(tickets) ? tickets : []) {
         const date = String(t?.departure_at || "").slice(0, 10);
         const ret = rm ? String(t?.return_at || "").slice(0, 10) : "";
