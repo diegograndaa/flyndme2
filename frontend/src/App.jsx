@@ -283,6 +283,7 @@ export default function App() {
   // Results
   const [flights,         setFlights]         = useState([]);
   const [partialResults,  setPartialResults]  = useState(false);
+  const [providerDegraded, setProviderDegraded] = useState(false);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
@@ -996,6 +997,7 @@ export default function App() {
 
           setFlights(adjusted);
           setPartialResults(Boolean(data.partial));
+          setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
@@ -1571,6 +1573,9 @@ export default function App() {
             sub={flights.length > 1 ? t("results.exploreSub") : t("results.exploreSubOne")} />
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
+          )}
+          {providerDegraded && (
+            <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.degradedNotice")} />
           )}
 
           {/* ── Salidas: todos los destinos encontrados en un panel de salidas

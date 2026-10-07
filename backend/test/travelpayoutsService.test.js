@@ -334,6 +334,40 @@ test("monthsInWindow: cruza el límite de mes solo cuando toca", () => {
   assert.deepEqual(monthsInWindow("2026-08-15", 2), ["2026-08"]);
 });
 
+// ─── options.stats: distinguir "proveedor caído" de "sin vuelos" ────────────
+
+test("stats: un error de red cuenta como fallo; la respuesta sigue siendo null", async () => {
+  setTransport(async () => { const e = new Error("boom"); e.response = { status: 400 }; throw e; });
+  const stats = { calls: 0, errors: 0 };
+  assert.equal(await tp.getCheapestOffer("MAD", "ST1", D0, { stats }), null);
+  assert.deepEqual(stats, { calls: 1, errors: 1 });
+});
+
+test("stats: caché vacía NO es un fallo", async () => {
+  setTransport(async () => okResponse([]));
+  const stats = { calls: 0, errors: 0 };
+  assert.equal(await tp.getCheapestOffer("MAD", "ST2", D0, { stats }), null);
+  assert.deepEqual(stats, { calls: 1, errors: 0 });
+});
+
+test("stats: fecha exacta vacía y todos los meses vecinos fallan → fallo", async () => {
+  setTransport(async (url, config) => {
+    if (config.params.departure_at === D0) return okResponse([]);
+    const e = new Error("down"); e.response = { status: 400 }; throw e;
+  });
+  const stats = { calls: 0, errors: 0 };
+  assert.equal(await tp.getCheapestOffer("MAD", "ST3", D0, { stats }), null);
+  assert.deepEqual(stats, { calls: 1, errors: 1 });
+});
+
+test("stats: respuesta válida no cuenta fallo", async () => {
+  setTransport(async () => okResponse([ticket({ price: 95, departure_at: `${D0}T08:30:00+02:00` })]));
+  const stats = { calls: 0, errors: 0 };
+  const r = await tp.getCheapestOffer("MAD", "ST4", D0, { stats });
+  assert.equal(r.price, 95);
+  assert.deepEqual(stats, { calls: 1, errors: 0 });
+});
+
 // ─── getDatedPrices (nudge de fecha más barata) ─────────────────────────────
 
 test("getDatedPrices: ida y vuelta pide meses de ida × vuelta y devuelve pares", async () => {

@@ -5,6 +5,8 @@
 const MOCK_DELAY_MS           = Number(process.env.MOCK_DELAY_MS           || 60);
 const MOCK_VERIFY_SUCCESS_RATE = Number(process.env.MOCK_VERIFY_SUCCESS_RATE || 0.95);
 const MOCK_VERIFY_CHANGE_RATE  = Number(process.env.MOCK_VERIFY_CHANGE_RATE  || 0.15);
+// Simula una caída del proveedor (cada consulta falla) para probar el 502.
+const MOCK_PROVIDER_DOWN       = process.env.MOCK_PROVIDER_DOWN === "true";
 
 const AIRLINES = ["IB", "BA", "AF", "LH", "KL", "FR", "U2", "VY", "TP", "LX", "AY", "SK"];
 
@@ -134,7 +136,12 @@ async function getCheapestPrice(origin, destination, departureDate, options = {}
 
 async function getCheapestOffer(origin, destination, departureDate, options = {}) {
   if (origin === destination) return null;
+  if (options.stats) options.stats.calls += 1;
   await sleep(MOCK_DELAY_MS);
+  if (MOCK_PROVIDER_DOWN) {
+    if (options.stats) options.stats.errors += 1;
+    return null;
+  }
   const price = mockPrice(origin, destination, departureDate);
   const offer = mockOffer(origin, destination, departureDate, options.returnDate, price);
   return { price, offer };

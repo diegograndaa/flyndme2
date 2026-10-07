@@ -525,6 +525,39 @@ test("prod CORS: un origen no permitido recibe 403, no 500", async () => {
   }
 });
 
+test("proveedor caído: la búsqueda responde 502 PROVIDER_UNAVAILABLE, no 'sin vuelos'", async () => {
+  const DOWN_PORT = 5095;
+  const proc = spawn("node", [path.join(__dirname, "..", "index.js")], {
+    env: { ...process.env, PORT: String(DOWN_PORT), USE_MOCK: "true", NODE_ENV: "test", MOCK_PROVIDER_DOWN: "true", MOCK_DELAY_MS: "1" },
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+  try {
+    const base = `http://localhost:${DOWN_PORT}`;
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      try { if ((await fetch(`${base}/api/ping`)).ok) break; } catch { /* arrancando */ }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const r = await fetch(`${base}/api/flights/multi-origin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(44), tripType: "oneway" }),
+    });
+    assert.equal(r.status, 502);
+    assert.equal((await r.json()).code, "PROVIDER_UNAVAILABLE");
+  } finally {
+    proc.kill("SIGKILL");
+  }
+});
+
+test("búsqueda normal: sin fallos del proveedor no marca degraded", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD", "LON"], passengers: [1, 1], departureDate: futureDate(46), tripType: "oneway",
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.degraded, undefined);
+});
+
 test("tiering: custom destinations bypass tier fallback", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "BCN"],
