@@ -80,6 +80,14 @@ test("health endpoint reports mock mode", async () => {
   assert.equal(r.body.status, "healthy");
 });
 
+test("keep-alive: /api/ping responde a GET y HEAD sin caché", async () => {
+  const get = await fetch(`${BASE}/api/ping`);
+  assert.equal(get.status, 200);
+  assert.equal(get.headers.get("cache-control"), "no-store");
+  const head = await fetch(`${BASE}/api/ping`, { method: "HEAD" });
+  assert.equal(head.status, 200);
+});
+
 test("version endpoint exposes commit + env without secrets", async () => {
   const r = await get("/api/version");
   assert.equal(r.status, 200);

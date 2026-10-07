@@ -197,7 +197,11 @@ app.get("/", (_req, res) => {
   });
 });
 
+// Keep-alive: lo llaman el frontend y un pinger externo (GET o HEAD; Express
+// responde HEAD con las rutas GET). Nunca cacheable: una respuesta cacheada no
+// despertaría la instancia.
 app.get("/api/ping", (_req, res) => {
+  res.set("Cache-Control", "no-store");
   res.json({ message: "pong", timestamp: Date.now() });
 });
 
