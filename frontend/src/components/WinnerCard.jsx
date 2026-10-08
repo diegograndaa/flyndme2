@@ -171,8 +171,9 @@ const WinnerCard = React.memo(function WinnerCard({
             </span>
           )}
           {savingsPct > 5 && (
-            <span className="wc-savings-chip">
+            <span className="wc-savings-chip" title={t("results.savingsPctHint", { n: allFlights.length })}>
               {t("results.savingsPct", { pct: savingsPct })}
+              <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
             </span>
           )}
         </div>
