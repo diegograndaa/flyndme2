@@ -4,11 +4,15 @@
 // lista deduplicada desalineaba los números (fila vacía o ciudad repetida).
 export const MAX_PAX_PER_ORIGIN = 9;
 
-export function paxByOrigin(origins = [], passengers = []) {
+const upperTrim = (o) => String(o || "").trim().toUpperCase();
+
+// `toCode` convierte lo escrito en cada fila en el código de ciudad: tiene que
+// ser el MISMO criterio con el que se construye cleanOrigins.
+export function paxByOrigin(origins = [], passengers = [], toCode = upperTrim) {
   const order = [];
   const sum = new Map();
   (origins || []).forEach((o, i) => {
-    const code = String(o || "").trim().toUpperCase();
+    const code = toCode(o);
     if (!code) return;
     const p = Math.max(1, Math.floor(Number(passengers?.[i])) || 1);
     if (!sum.has(code)) { order.push(code); sum.set(code, 0); }

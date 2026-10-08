@@ -56,6 +56,9 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
 // ─── Favorites (localStorage) ───────────────────────────────────────────────
 
+// Texto de una fila de origen → código de ciudad (el criterio de cleanOrigins).
+const toOriginCode = (o) => String(o || "").trim().toUpperCase();
+
 // ─── CSV export ─────────────────────────────────────────────────────────────
 
 function exportResultsCSV(flights, origins, currency) {
@@ -523,12 +526,10 @@ export default function App() {
     document.title = titles[view] || titles.landing;
   }, [view, bestDestination]);
 
-  const cleanOrigins = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
-    [origins]
-  );
-  // Viajeros alineados con cleanOrigins (suma las filas de una misma ciudad).
-  const originPax = useMemo(() => paxByOrigin(origins, passengers), [origins, passengers]);
+  // Ciudades sin repetir y sus viajeros salen de la MISMA pasada (paxByOrigin),
+  // así no se pueden desalinear (filas vacías o una ciudad en dos filas).
+  const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
+  const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
   const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
   // cabecera de vuelo de resultados.

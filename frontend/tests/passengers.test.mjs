@@ -22,3 +22,8 @@ test("paxByOrigin: valores ausentes o raros cuentan como 1; nada si no hay ciuda
   assert.deepEqual(paxByOrigin([], []), []);
   assert.deepEqual(paxByOrigin(undefined, undefined), []);
 });
+
+test("paxByOrigin: acepta el mismo criterio de código que la lista de ciudades", () => {
+  const toCode = (o) => ({ madrid: "MAD", mad: "MAD" }[String(o).trim().toLowerCase()] || String(o).trim().toUpperCase());
+  assert.deepEqual(paxByOrigin(["Madrid", "MAD", "LON"], [2, 1, 1], toCode), [{ origin: "MAD", passengers: 3 }, { origin: "LON", passengers: 1 }]);
+});
