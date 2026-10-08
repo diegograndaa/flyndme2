@@ -9,6 +9,7 @@ import {
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
 } from "../utils/helpers";
 import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
+import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
@@ -131,13 +132,13 @@ const WinnerCard = React.memo(function WinnerCard({
     || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
     || cleanOrigins.length;
   // Suma de lo que paga cada origen (precio × pasajeros) → total del grupo.
-  // Solo se enseña si cuadra con el total del backend (nunca un total propio).
-  const sumParts = (() => {
-    if (singleOrigin || breakdown.length < 2 || breakdown.length > 6) return null;
-    const parts = breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1));
-    const sum = parts.reduce((a2, v) => a2 + v, 0);
-    return Math.abs(sum - (dest.totalCostEUR || 0)) <= 1 ? parts : null;
-  })();
+  // Solo si cuadra con el total del backend Y con los enteros que se pintan
+  // (si no, «€11 + €11 = €21»). Con un solo origen no hay suma que enseñar.
+  const sumParts = singleOrigin ? null : visibleSumParts(
+    breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1)),
+    dest.totalCostEUR,
+    currency,
+  );
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
@@ -262,7 +263,9 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retTime = hhmm(retSegments[0]?.departure?.at);
                 const flightNo = segments[0]?.carrierCode && segments[0]?.number ? `${segments[0].carrierCode} ${segments[0].number}` : "";
                 const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
-                const legTotal = Number(finfo.totalForOrigin) || (typeof price === "number" ? price * pax : 0);
+                const legEq = typeof price === "number"
+                  ? legEquation(price, pax, finfo.totalForOrigin, currency)
+                  : null;
 
                 return (
                   <div key={origin} className="wc-flight-card">
@@ -334,7 +337,7 @@ const WinnerCard = React.memo(function WinnerCard({
                         {typeof price === "number" && (
                           <div className="wc-fd-item">
                             <dt>{t("results.fdTravelers")}</dt>
-                            <dd>{pax} × {money(price)} = <strong>{money(legTotal)}</strong></dd>
+                            <dd>{pax} × {money(price)}{legEq?.showProduct && <> = <strong>{money(legEq.total)}</strong></>}</dd>
                           </div>
                         )}
                       </dl>
