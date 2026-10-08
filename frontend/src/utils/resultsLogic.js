@@ -8,6 +8,13 @@ import { normalizeCode, cityOf } from "./helpers.js";
 export const FX_RATES = { EUR: 1, GBP: 0.86, USD: 1.09 };
 export const FX_SYMBOLS = { EUR: "€", GBP: "£", USD: "$" };
 
+// «1 € ≈ 1,09 $» con el separador decimal del idioma. null en euros (no hay conversión).
+export function fxRateLabel(currency, lang = "en") {
+  if (!currency || currency === "EUR" || !FX_RATES[currency]) return null;
+  const n = new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(FX_RATES[currency]);
+  return lang === "es" ? `1 € ≈ ${n} ${FX_SYMBOLS[currency]}` : `€1 ≈ ${FX_SYMBOLS[currency]}${n}`;
+}
+
 export function convertPrice(eur, currency) {
   // Sin dato → «—» (antes salía «£NaN»)
   if (eur === null || eur === undefined || eur === "" || !Number.isFinite(Number(eur))) return "—";

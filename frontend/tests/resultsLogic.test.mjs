@@ -142,3 +142,13 @@ test("convertPrice: sin dato → «—», nunca NaN; el 0 real se convierte", as
   assert.equal(convertPrice(0, "USD"), "$0");
   assert.equal(convertPrice("100", "GBP"), "£86");
 });
+
+test("fxRateLabel: cambio aproximado con el formato del idioma; null en euros", async () => {
+  const { fxRateLabel } = await import("../src/utils/resultsLogic.js");
+  assert.equal(fxRateLabel("EUR", "es"), null);
+  assert.equal(fxRateLabel(undefined, "es"), null);
+  assert.equal(fxRateLabel("XXX", "es"), null);
+  assert.equal(fxRateLabel("USD", "es"), "1 € ≈ 1,09 $");
+  assert.equal(fxRateLabel("USD", "en"), "€1 ≈ $1.09");
+  assert.equal(fxRateLabel("GBP", "en"), "€1 ≈ £0.86");
+});

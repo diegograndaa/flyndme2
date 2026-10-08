@@ -8,7 +8,7 @@ import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
 } from "../utils/helpers";
-import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
@@ -65,7 +65,7 @@ const WinnerCard = React.memo(function WinnerCard({
   dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [entered, setEntered] = useState(false);
   const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
   const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
@@ -471,6 +471,9 @@ const WinnerCard = React.memo(function WinnerCard({
               <span className="wc-verify-caption">{t("board.estimateNote")}</span>
             )}
           </div>
+          {fxRateLabel(currency, lang) && (
+            <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
+          )}
         </div>
       </div>
 

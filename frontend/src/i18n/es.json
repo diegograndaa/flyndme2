@@ -391,6 +391,7 @@
     "sharedNotice": "Resultado compartido el {{when}}.",
     "sharedDetail": "Los precios son los de ese momento (estimación) y pueden haber cambiado.",
     "sharedRefresh": "Buscar precios de hoy",
+    "fxNote": "Importes convertidos desde euros a un cambio fijo aproximado ({{rate}}); pagarás en la divisa de la web donde reserves.",
     "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa.",
     "degradedNotice": "Nuestro proveedor de precios ha fallado en parte de la búsqueda: puede faltar algún destino. Repite la búsqueda en unos minutos para verlos todos.",
     "dateFallbackBadge": "Fechas cercanas",
