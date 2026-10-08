@@ -449,6 +449,7 @@ const SearchPage = React.memo(function SearchPage({
                         disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
                       <span className="sf-pax-count" aria-live="polite">{passengers[idx] || 1}</span>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxIncrease")}
+                        title={headcount >= MAX_TOTAL_PAX ? t("search.paxAtCap") : undefined}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.min(MAX_PAX_PER_ORIGIN, (p[idx] || 1) + 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) >= MAX_PAX_PER_ORIGIN || headcount >= MAX_TOTAL_PAX}>+</button>
                     </div>
@@ -496,7 +497,7 @@ const SearchPage = React.memo(function SearchPage({
                 );
               })}
               <div className="sf-origin-actions">
-                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setPassengers([...passengers, 1]); }} disabled={loading || origins.length >= 8}>
+                <button type="button" className="sf-add-btn" onClick={() => { setOrigins([...origins, ""]); setPassengers([...passengers, 1]); }} disabled={loading || origins.length >= 8 || headcount >= MAX_TOTAL_PAX} title={headcount >= MAX_TOTAL_PAX ? t("search.paxAtCap") : undefined}>
                   {t("search.addTraveler")}
                 </button>
                 {origins.length === 1 && !origins[0].trim() && (
@@ -723,11 +724,11 @@ const SearchPage = React.memo(function SearchPage({
             <div aria-live="polite">{error && errorHint && <Notice variant="next" {...errorHint} />}</div>
 
             {/* Traveler summary bar */}
-            {headcount > MAX_TOTAL_PAX && (
-              <div className="sf-date-warnings" role="alert">
-                <div className="sf-date-warn sf-date-warn--error">
+            {headcount >= MAX_TOTAL_PAX && (
+              <div className="sf-date-warnings" role={headcount > MAX_TOTAL_PAX ? "alert" : "status"}>
+                <div className={`sf-date-warn sf-date-warn--${headcount > MAX_TOTAL_PAX ? "error" : "warn"}`}>
                   <span className="sf-date-warn-icon"><AlertTriangle size={15} aria-hidden="true" /></span>
-                  <span>{t("search.paxTotalCap")}</span>
+                  <span>{t(headcount > MAX_TOTAL_PAX ? "search.paxTotalCap" : "search.paxAtCap")}</span>
                 </div>
               </div>
             )}

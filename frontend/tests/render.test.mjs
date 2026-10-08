@@ -278,19 +278,21 @@ test("render: con 16 viajeros no se puede sumar otro; por encima se avisa", asyn
   };
   const full = renderWithI18n(React.createElement(SearchPage, {
     ...base,
-    origins: ["MAD", "LON", "BER", "PAR", "LIS", "ROM", "BCN", "VIE"], setOrigins: noop,
-    passengers: [2, 2, 2, 2, 2, 2, 2, 2], setPassengers: noop,
+    origins: ["MAD", "LON"], setOrigins: noop,
+    passengers: [9, 7], setPassengers: noop,
   }));
-  const increases = full.match(/One traveler more from this city/g) || [];
-  assert.equal(increases.length, 8);
-  assert.equal((full.match(/aria-label="One traveler more from this city" disabled/g) || []).length, 8);
-  assert.ok(!full.includes("most we can search"), "16 viajeros caben: no es un error");
+  const tags = full.match(/<button[^>]*aria-label="One traveler more from this city"[^>]*>/g) || [];
+  assert.equal(tags.length, 2);
+  assert.ok(tags.every((tag) => tag.includes("disabled")), "en el tope no se suma otro viajero");
+  assert.ok(full.includes("most we can search"), "en el tope se explica por qué no se puede sumar");
+  assert.ok(!full.includes("Lower the headcount"), "16 viajeros caben: no pide reducir");
+  assert.match(full, /sf-add-btn"[^>]*disabled/, "no se añade una ciudad que ya no cabe");
   const over = renderWithI18n(React.createElement(SearchPage, {
     ...base,
     origins: ["MAD", "LON"], setOrigins: noop,
     passengers: [9, 8], setPassengers: noop,
   }));
-  assert.ok(over.includes("most we can search"), "por encima de 16 se avisa antes de buscar");
+  assert.ok(over.includes("Lower the headcount"), "por encima de 16 se pide bajar el número");
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {

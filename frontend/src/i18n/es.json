@@ -229,6 +229,7 @@
     "paxGroupRow": "Viajeros de la fila {{n}}",
     "paxDecrease": "Un viajero menos desde esta ciudad",
     "paxIncrease": "Un viajero más desde esta ciudad",
+    "paxAtCap": "El máximo para buscar es 16 viajeros.",
     "paxTotalCap": "El máximo para buscar es 16 viajeros. Reduce el número.",
     "originAria": "Ciudad de salida del viajero {{n}}",
     "directOnly": "Solo vuelos directos",
