@@ -433,7 +433,6 @@ export default function App() {
           if (searchParams.uiCriterion) setUiCriterion(searchParams.uiCriterion);
         }
         setView("results");
-        document.title = "FlyndMe - Shared Results";
         // Clean URL without reload
         window.history.replaceState({}, "", window.location.pathname);
       })
@@ -512,15 +511,20 @@ export default function App() {
 
   // ── Dynamic document title per view ────────────────────────────────────
   useEffect(() => {
-    const titles = {
-      landing: "FlyndMe — Find the cheapest place to meet your group",
-      search: "FlyndMe — Search flights",
-      results: bestDestination
-        ? `FlyndMe — ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/pp`
-        : "FlyndMe — Results",
-    };
-    document.title = titles[view] || titles.landing;
-  }, [view, bestDestination]);
+    let title = t("pageTitle.landing");
+    if (view === "group") title = t("pageTitle.group");
+    else if (view === "results") {
+      title = bestDestination
+        ? t("pageTitle.resultsDest", {
+            city: cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination,
+            price: currency === "EUR"
+              ? formatEur(bestDestination.averageCostPerTraveler, 0)
+              : convertPrice(bestDestination.averageCostPerTraveler, currency),
+          })
+        : t("pageTitle.results");
+    }
+    document.title = title;
+  }, [view, bestDestination, t, lang, currency]);
 
   const cleanOrigins = useMemo(
     () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
@@ -1121,7 +1125,6 @@ export default function App() {
           });
 
           setView("results");
-          document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: scrollBehavior() });
           // Record search duration
           if (searchStartRef.current) {

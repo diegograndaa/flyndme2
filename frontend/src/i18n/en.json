@@ -1,4 +1,10 @@
 {
+  "pageTitle": {
+    "landing": "FlyndMe — Find the cheapest place to meet your group",
+    "results": "FlyndMe — Results",
+    "resultsDest": "FlyndMe — {{city}} · {{price}}/pp (estimate)",
+    "group": "FlyndMe — Group plan"
+  },
   "header": {
     "tagline": "Meeting points for groups",
     "newSearch": "New search",
