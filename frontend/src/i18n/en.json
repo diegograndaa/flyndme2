@@ -934,6 +934,7 @@
     "travelerN": "Traveler {{n}}",
     "travelers": "Travelers",
     "remove": "Remove",
+    "removeWho": "Remove {{who}} from the group",
     "addLabel": "Add your departure city",
     "namePlaceholder": "Your name (optional)",
     "cityPlaceholder": "City or airport",
