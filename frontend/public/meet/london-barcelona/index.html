@@ -207,12 +207,21 @@ h1,.faq h2,.related h2,.who-title{font-weight:700;letter-spacing:-.02em}
   .est-table tbody th,.est-table td{padding:10px 4px}
   .est-table tbody th{padding-left:8px}
   .est-table td:last-child,.est-table th[scope=col]:last-child{padding-right:8px}
+}
+/* Mínimos del proyecto: texto ≥ 12 px y dianas táctiles ≥ 40 px */
+.brand-tag,.eyebrow,.pill,.est-table th[scope=col]{font-size:12px}
+.est-live,.site-foot a{display:inline-flex;align-items:center;min-height:40px}
+.brand{min-height:40px}
+.faq summary{min-height:40px;align-items:center}
+@media (max-width:560px){
+  .est-table th[scope=col]{font-size:12px;letter-spacing:.02em}
+  .pill{white-space:nowrap;letter-spacing:.03em;margin-left:0}
 }</style>
 </head>
 <body>
   <div class="wrap">
     <header class="site-head">
-      <a class="brand" href="/" aria-label="FlyndMe — home">
+      <a class="brand" href="/" aria-label="FlyndMe group flights — home">
         <svg class="brand-mark" width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
           <rect width="32" height="32" rx="8" fill="#FFC20E"/>
           <path d="M6 8.5C13 8.8 19.5 11.5 23.5 16M5 16H23.5M6 23.5C13 23.2 19.5 20.5 23.5 16" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round"/>
