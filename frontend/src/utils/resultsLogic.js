@@ -9,7 +9,9 @@ export const FX_RATES = { EUR: 1, GBP: 0.86, USD: 1.09 };
 export const FX_SYMBOLS = { EUR: "€", GBP: "£", USD: "$" };
 
 export function convertPrice(eur, currency) {
-  const val = eur * (FX_RATES[currency] || 1);
+  // Sin dato → «—» (antes salía «£NaN»)
+  if (eur === null || eur === undefined || eur === "" || !Number.isFinite(Number(eur))) return "—";
+  const val = Number(eur) * (FX_RATES[currency] || 1);
   return `${FX_SYMBOLS[currency] || "€"}${val.toFixed(0)}`;
 }
 

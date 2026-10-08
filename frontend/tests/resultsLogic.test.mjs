@@ -135,3 +135,10 @@ test("pickBest y sortByCriterion coinciden aunque falten fairnessScore o totalCo
     assert.equal(pickBest(l, mode).destination, sortByCriterion(l, mode)[0].destination, `${mode} ${JSON.stringify(l)}`);
   }
 });
+
+test("convertPrice: sin dato → «—», nunca NaN; el 0 real se convierte", async () => {
+  const { convertPrice } = await import("../src/utils/resultsLogic.js");
+  for (const v of [undefined, null, "", "abc", NaN, Infinity]) assert.equal(convertPrice(v, "GBP"), "—", String(v));
+  assert.equal(convertPrice(0, "USD"), "$0");
+  assert.equal(convertPrice("100", "GBP"), "£86");
+});

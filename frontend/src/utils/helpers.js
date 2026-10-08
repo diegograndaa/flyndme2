@@ -208,8 +208,11 @@ export function destLabel(code) {
   return c ? `${normalizeCode(code)} · ${c}` : normalizeCode(code);
 }
 
+// Sin dato → «—». Nunca «€0» por un precio que no tenemos (regla dura #1).
+export const NO_PRICE = "—";
 export function formatEur(n, dec = 0) {
-  const v = typeof n === "number" ? n : Number(n || 0);
+  if (n === null || n === undefined || n === "" || !Number.isFinite(Number(n))) return NO_PRICE;
+  const v = Number(n);
   try {
     return new Intl.NumberFormat("en-GB", {
       style: "currency", currency: "EUR",
