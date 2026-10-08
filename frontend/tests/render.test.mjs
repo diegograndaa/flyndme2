@@ -164,6 +164,27 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("MAD"));
+  const ordered = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD", "LON"], setOrigins: noop,
+    tripType: "roundtrip", setTripType: noop,
+    departureDate: "2026-11-20", setDepartureDate: noop,
+    returnDate: "2026-11-15", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1, 1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
+  assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
