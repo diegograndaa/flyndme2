@@ -152,3 +152,33 @@ test("fxRateLabel: cambio aproximado con el formato del idioma; null en euros", 
   assert.equal(fxRateLabel("USD", "en"), "€1 ≈ $1.09");
   assert.equal(fxRateLabel("GBP", "en"), "€1 ≈ £0.86");
 });
+
+test("splitRows: a partes iguales por PERSONA; el bote cuadra con varios viajeros por ciudad", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  // MAD: 3 viajeros a 50 € (150) · BCN: 1 viajero a 80 € → 230 € entre 4 personas = 57,5 €/pp
+  const rows = splitRows({ flights: [
+    { origin: "MAD", price: 50, passengers: 3, totalForOrigin: 150 },
+    { origin: "BCN", price: 80, passengers: 1, totalForOrigin: 80 },
+  ] });
+  const mad = rows.find((r) => r.origin === "MAD"), bcn = rows.find((r) => r.origin === "BCN");
+  assert.equal(mad.fairPP, 57.5);
+  assert.equal(mad.fair, 172.5);
+  assert.equal(mad.diff, -22.5); // MAD debe 22,5 € (7,5 € por cabeza)
+  assert.equal(bcn.diff, 22.5);  // BCN recibe 22,5 €
+  assert.ok(Math.abs(rows.reduce((a, r) => a + r.diff, 0)) < 1e-9);
+});
+
+test("splitRows: con 1 viajero por ciudad coincide con dividir el total entre ciudades", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  const rows = splitRows({ flights: [{ origin: "MAD", price: 50, passengers: 1 }, { origin: "LON", price: 80, passengers: 1 }] });
+  assert.deepEqual(rows.map((r) => [r.origin, r.fairPP, r.diff]), [["MAD", 65, -15], ["LON", 65, 15]]);
+});
+
+test("splitRows: sin datos útiles → lista vacía; sin totalForOrigin usa precio × viajeros", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  assert.deepEqual(splitRows(null), []);
+  assert.deepEqual(splitRows({ flights: [{ origin: "MAD", price: 0 }] }), []);
+  const r = splitRows({ flights: [{ origin: "MAD", price: 40, passengers: 2 }, { origin: "LIS", price: 40, passengers: 2 }] });
+  assert.deepEqual(r.map((x) => x.paid), [80, 80]);
+  assert.deepEqual(r.map((x) => x.diff), [0, 0]);
+});

@@ -138,6 +138,26 @@ export function paySpread(dest) {
   return p.length >= 2 ? Math.max(...p) - Math.min(...p) : 0;
 }
 
+// Reparto a partes iguales POR PERSONA: cada ciudad es un grupo de `pax`
+// viajeros que ha pagado `paid` (sus billetes) y le tocaría `fair` (pax × media
+// por persona). diff > 0 = ha pagado de más y recibe; < 0 = debe. La suma de
+// diff es 0 (salvo céntimos), así que el bote cuadra.
+export function splitRows(dest) {
+  const legs = (Array.isArray(dest?.flights) ? dest.flights : [])
+    .map((f) => {
+      const pax = Math.max(1, Math.floor(Number(f.passengers)) || 1);
+      const pricePP = Number(f.price) || 0;
+      const paid = Number.isFinite(Number(f.totalForOrigin)) && Number(f.totalForOrigin) > 0 ? Number(f.totalForOrigin) : pricePP * pax;
+      return { origin: String(f.origin || "").toUpperCase(), pax, pricePP, paid };
+    })
+    .filter((r) => r.origin && r.paid > 0);
+  const people = legs.reduce((a, r) => a + r.pax, 0);
+  const total = legs.reduce((a, r) => a + r.paid, 0);
+  if (!people) return [];
+  const fairPP = total / people;
+  return legs.map((r) => ({ ...r, fairPP, fair: fairPP * r.pax, diff: r.paid - fairPP * r.pax }));
+}
+
 // Precio individual más alto de una lista de destinos: escala común de barras.
 export function maxLegPrice(flights) {
   let m = 0;
