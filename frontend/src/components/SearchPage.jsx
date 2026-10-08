@@ -56,10 +56,14 @@ function useDateWarnings(departureDate, returnDate, tripType) {
     }
 
     if (tripType === "roundtrip" && returnDate && departureDate) {
-      const ret = new Date(returnDate + "T00:00:00");
-      const tripLen = Math.round((ret - dep) / 86400000);
-      if (tripLen > 30) {
-        warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
+      if (returnDate <= departureDate) {
+        warnings.push({ key: "order", text: t("search.dateWarnOrder"), type: "error" });
+      } else {
+        const ret = new Date(returnDate + "T00:00:00");
+        const tripLen = Math.round((ret - dep) / 86400000);
+        if (tripLen > 30) {
+          warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
+        }
       }
     }
 

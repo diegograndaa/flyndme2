@@ -234,6 +234,7 @@
     "dateWarnFar": "Esta fecha es en más de 11 meses — puede que las aerolíneas aún no tengan horarios",
     "dateWarnSweet": "¡Buen momento! Reservar con 6-8 semanas de antelación suele dar los mejores precios",
     "dateWarnLong": "Tu viaje dura más de 30 días — algunas aerolíneas cobran diferente en viajes largos",
+    "dateWarnOrder": "La vuelta es el mismo día o antes que la ida. Elige una vuelta posterior.",
     "unknownAirport": "Aeropuerto desconocido — elige de la lista",
     "moveUp": "Subir",
     "moveDown": "Bajar",
