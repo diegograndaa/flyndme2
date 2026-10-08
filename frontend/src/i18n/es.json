@@ -586,6 +586,7 @@
     "linkCopied": "¡Enlace copiado! Compártelo con tu grupo.",
     "searchLinkCopied": "¡Enlace de búsqueda copiado!",
     "tapAgain": "Enlace listo. Pulsa Compartir otra vez para enviarlo.",
+    "fallbackSearchLink": "No hemos podido guardar el resultado: compartimos el enlace que repite esta búsqueda.",
     "expired": "Este enlace ha expirado o no existe.",
     "sharing": "Generando enlace…"
   },

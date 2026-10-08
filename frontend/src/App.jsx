@@ -691,7 +691,7 @@ export default function App() {
     }
     lines.push(`_${t("board.estimateNote")}_`);
     // Rich social preview (WhatsApp/Telegram/Twitter) comes from the OG link.
-    if (link) lines.push(`\n🔗 ${link.ogUrl}`);
+    lines.push(`\n🔗 ${link ? link.ogUrl : shareFallbackUrl()}`);
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
     goShareWindow(win, waUrl);
@@ -706,7 +706,7 @@ export default function App() {
     // Share the OG link so Telegram unfurls the result card, not the bare SPA URL.
     const win = openShareWindow(cachedShareLink());
     const link = await getShareLink();
-    const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : window.location.href)}&text=${encodeURIComponent(text)}`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : shareFallbackUrl())}&text=${encodeURIComponent(text)}`;
     goShareWindow(win, url);
     trackEvent("share_telegram", { destination: code });
   };
@@ -724,7 +724,7 @@ export default function App() {
       `${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
       t("board.estimateNote"),
       "",
-      link ? link.ogUrl : window.location.href,
+      link ? link.ogUrl : shareFallbackUrl(),
     ].join("\n");
     // mailto: no abre ventana, así que no lo frena el bloqueo de ventanas emergentes.
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -733,7 +733,7 @@ export default function App() {
 
   // ── Copy search params as URL ─────────────────────────────────────────────
 
-  const handleCopySearchLink = () => {
+  const searchLinkUrl = () => {
     const params = new URLSearchParams();
     cleanOrigins.forEach(o => params.append("o", o));
     if (departureDate) params.set("dep", departureDate);
@@ -743,7 +743,18 @@ export default function App() {
     if (directOnly) params.set("direct", "1");
     if (cabinClass !== "ECONOMY") params.set("cabin", cabinClass);
     if (currency !== "EUR") params.set("cur", currency);
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  // Si no se pudo guardar el resultado (backend caído), se comparte el enlace
+  // que repite la búsqueda: antes se mandaba la URL actual, que abre la portada vacía.
+  const shareFallbackUrl = () => {
+    setToast({ message: t("share.fallbackSearchLink"), type: "error" });
+    return searchLinkUrl();
+  };
+
+  const handleCopySearchLink = () => {
+    const url = searchLinkUrl();
     copyText(url);
     setToast({ message: t("share.searchLinkCopied"), type: "success" });
   };
@@ -760,7 +771,7 @@ export default function App() {
       await navigator.share({
         title: `FlyndMe — ${destName}`,
         text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}\n${t("board.estimateNote")}`,
-        url: link ? link.ogUrl : window.location.href,
+        url: link ? link.ogUrl : shareFallbackUrl(),
       });
       trackEvent("share_native", { destination: code });
     } catch (err) {
