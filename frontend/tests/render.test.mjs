@@ -277,3 +277,11 @@ test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión impo
     localStorage.removeItem("flyndme_favorites");
   }
 });
+
+test("toastDuration: 2,5 s los avisos cortos, más los largos, tope 8 s", async () => {
+  const { toastDuration } = await import("../src/components/ChromeBits.jsx");
+  assert.equal(toastDuration("¡Copiado!"), 2500);
+  assert.ok(toastDuration("x".repeat(100)) > 5000);
+  assert.equal(toastDuration("x".repeat(400)), 8000);
+  assert.equal(toastDuration(undefined), 2500);
+});

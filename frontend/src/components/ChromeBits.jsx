@@ -1,7 +1,7 @@
 // ─── Piezas del shell de la app ──────────────────────────────────────────────
 // Extraídas de App.jsx (Mejora 27): tema, idioma, toast, scroll-top y
 // esqueletos de carga. Sin estado de negocio.
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { scrollBehavior } from "../utils/helpers";
 import { Sun, Moon, ArrowUp, Check, X, Info, Lightbulb } from "lucide-react";
@@ -100,14 +100,25 @@ export const LangSelector = React.memo(function LangSelector() {
   );
 });
 
+// Tiempo en pantalla según lo que hay que leer: 2,5 s los avisos cortos y
+// hasta 8 s los largos (WCAG 2.2.1: dar tiempo suficiente para leerlos).
+export function toastDuration(message) {
+  return Math.min(8000, Math.max(2500, 1200 + String(message || "").length * 45));
+}
+
 export const Toast = React.memo(function Toast({ message, type = "success", onDone }) {
   const [exiting, setExiting] = useState(false);
+  // onDone llega como función nueva en cada render del padre: sin la ref, cada
+  // render reiniciaba los temporizadores.
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
 
   useEffect(() => {
-    const t1 = setTimeout(() => setExiting(true), 2200);
-    const t2 = setTimeout(() => onDone?.(), 2500);
+    const ms = toastDuration(message);
+    const t1 = setTimeout(() => setExiting(true), ms - 300);
+    const t2 = setTimeout(() => doneRef.current?.(), ms);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onDone]);
+  }, [message]);
 
   return (
     <div className={`fm-toast fm-toast--${type}${exiting ? " fm-toast--exit" : ""}`} role="status">
