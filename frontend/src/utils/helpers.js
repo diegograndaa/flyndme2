@@ -239,7 +239,7 @@ export function todayISO() {
 // Skyscanner affiliate ID — set via VITE_SKYSCANNER_AFFILIATE_ID env var
 const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SKYSCANNER_AFFILIATE_ID) || "";
 
-export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
+export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType, adults = 1 }) {
   const from = String(origin || "").toLowerCase();
   const to   = String(destination || "").toLowerCase();
   // Formato canónico de Skyscanner: yymmdd (260915), no yyyymmdd.
@@ -248,7 +248,9 @@ export function buildSkyscannerUrl({ origin, destination, departureDate, returnD
   if (!from || !to || !dep) return "";
   const base = "https://www.skyscanner.es/transport/flights";
   const path = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;
-  const params = new URLSearchParams({ adultsv2: "1", cabinclass: "economy", rtn: ret ? "1" : "0" });
+  // Los viajeros que salen de esa ciudad: así Skyscanner enseña el precio del grupo.
+  const nAdults = Math.min(9, Math.max(1, Math.floor(Number(adults)) || 1));
+  const params = new URLSearchParams({ adultsv2: String(nAdults), cabinclass: "economy", rtn: ret ? "1" : "0" });
   // Append affiliate tracking if configured
   if (SKYSCANNER_AFFILIATE_ID) {
     params.set("associateId", SKYSCANNER_AFFILIATE_ID);
