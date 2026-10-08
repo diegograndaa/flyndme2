@@ -237,17 +237,14 @@ async function verifyDestination(result) {
     return { ...result, verificationStatus: "timeout" };
   }
 
+  // El precio de la búsqueda (price / totalForOrigin) no se toca aquí.
+  // Si solo se reescribiera totalForOrigin, el detalle «1 × €128 = €134»
+  // no cuadraría y el total del grupo seguiría siendo el de la caché.
   const verifiedFlights = result.flights.map((f, i) => {
     const r = settled[i];
     const v = r && r.status === "fulfilled" ? r.value : null;
     const verifiedPrice = v?.price ?? null;
-    const effective = verifiedPrice ?? f.price;
-    const pax = f.passengers || 1;
-    return {
-      ...f,
-      verifiedPrice,
-      totalForOrigin: Number((effective * pax).toFixed(2)),
-    };
+    return { ...f, verifiedPrice };
   });
 
   // Build pax-aware effective flights and re-aggregate using the same helper as search.
@@ -271,9 +268,36 @@ async function verifyDestination(result) {
   else if (Math.abs(priceChangePct) >= VERIFY_PRICE_DELTA_PCT) verificationStatus = "changed";
   else verificationStatus = "verified";
 
+  // Verificación completa: el precio confirmado pasa a ser el mostrado
+  // (igual que mergeVerification en el front). Parcial o fallida: se queda
+  // el de la búsqueda; verifiedPrice va aparte y no se mezcla en el total.
+  const fully = verificationStatus === "verified" || verificationStatus === "changed";
+  const flights = fully
+    ? verifiedFlights.map((f) => {
+        const pax = f.passengers || 1;
+        return {
+          ...f,
+          cachedPrice: f.price,
+          cachedTotalForOrigin: f.totalForOrigin,
+          price: f.verifiedPrice,
+          totalForOrigin: Number((f.verifiedPrice * pax).toFixed(2)),
+        };
+      })
+    : verifiedFlights;
+
   return {
     ...result,
-    flights: verifiedFlights,
+    flights,
+    ...(fully ? {
+      cachedTotalCostEUR: result.totalCostEUR,
+      cachedAveragePerTraveler: result.averageCostPerTraveler,
+      cachedPriceSpread: result.priceSpread,
+      cachedFairnessScore: result.fairnessScore,
+      totalCostEUR: Number(total.toFixed(2)),
+      averageCostPerTraveler: Number(avg.toFixed(2)),
+      priceSpread: Number(spread.toFixed(2)),
+      fairnessScore: Number(fairness.toFixed(1)),
+    } : {}),
     verifiedAt: new Date().toISOString(),
     verifiedTotalCostEUR:        Number(total.toFixed(2)),
     verifiedAveragePerTraveler:  Number(avg.toFixed(2)),

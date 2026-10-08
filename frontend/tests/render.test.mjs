@@ -260,6 +260,41 @@ test("render: ThemeToggle expone aria-pressed según el tema resuelto", async ()
   assert.ok(dark.includes('aria-pressed="true"'), "oscuro: aria-pressed=true");
 });
 
+test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redondear", async () => {
+  const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
+  const noop = () => {};
+  const base = {
+    origins: ["MAD", "LON"], cleanOrigins: ["MAD", "LON"],
+    departureDate: "2026-09-15", tripType: "oneway", uiCriterion: "total",
+    onChangeCriterion: noop,
+  };
+  const cents = {
+    ...FIXTURE_DEST,
+    totalCostEUR: 21.2,
+    flights: [
+      { origin: "MAD", price: 10.6, passengers: 1, totalForOrigin: 10.6 },
+      { origin: "LON", price: 10.6, passengers: 1, totalForOrigin: 10.6 },
+    ],
+  };
+  const hidden = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: cents, currency: "EUR" }));
+  assert.ok(!hidden.includes("wc-total-sum"), "€11 + €11 = €21 no se pinta");
+  const shown = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: FIXTURE_DEST, currency: "EUR" }));
+  assert.ok(shown.includes("wc-total-sum"), "130 + 170 = 300 sí se pinta");
+  const gbp = renderWithI18n(React.createElement(WinnerCard, {
+    ...base,
+    currency: "GBP",
+    dest: {
+      ...FIXTURE_DEST,
+      totalCostEUR: 20,
+      flights: [
+        { origin: "MAD", price: 10, passengers: 1, totalForOrigin: 10 },
+        { origin: "LON", price: 10, passengers: 1, totalForOrigin: 10 },
+      ],
+    },
+  }));
+  assert.ok(!gbp.includes("wc-total-sum"), "£9 + £9 = £17 no se pinta");
+});
+
 test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión import roto)", async () => {
   // Con favoritos en localStorage, isFav ejecuta normalizeCode durante el
   // render; sin el import en useAppHooks.js lanzaba ReferenceError (solo se
