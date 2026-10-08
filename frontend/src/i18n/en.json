@@ -947,10 +947,11 @@
     "addError": "Couldn't update the group. Try again.",
     "rosterChanged": "The list had changed, so nobody was removed. It's up to date now: check who you want to remove.",
     "paxLimit": "A group can take at most 16 passengers in total. Reduce the number of travelers.",
-    "full": "The group already has 9 departure cities, the maximum.",
+    "full": "The group is full: 9 travelers signed up, the maximum.",
     "expired": "This group link has expired.",
     "loading": "Opening the group plan…",
     "loadingDetail": "If the server was asleep this can take a few seconds. No need to fill anything in yet.",
-    "datePast": "This group's date ({{date}}) has already passed. To search, go back to the search and create a new plan."
+    "datePast": "This group's date ({{date}}) has already passed. To search, go back to the search and create a new plan.",
+    "tooManyCities": "The group already departs from 8 different cities, the most we can search. People flying from one of those cities can still join."
   }
 }

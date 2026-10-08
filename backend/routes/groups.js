@@ -19,7 +19,10 @@ const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).c
 
 const GROUP_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days — planning spans weeks
 const MAX_GROUPS   = 1000;
-const MAX_MEMBERS  = 9;  // same ceiling as the multi-origin search
+const MAX_MEMBERS  = 9;  // entradas del roster (varias pueden ser de la misma ciudad)
+// Ciudades DISTINTAS: /multi-origin acepta como mucho 8 orígenes (MAX_ORIGINS);
+// un grupo con 9 ciudades distintas no se podría buscar.
+const MAX_CITIES   = 8;
 // Igual que TOTAL_PAX_CAP de /multi-origin: un roster por encima no se podría buscar.
 const MAX_TOTAL_PAX = 16;
 const MAX_NAME_LEN = 40;
@@ -78,6 +81,14 @@ function cleanMember(m) {
   if (pax > MAX_MEMBERS) pax = MAX_MEMBERS;
   const name = String(m.name == null ? "" : m.name).trim().slice(0, MAX_NAME_LEN);
   return { origin, passengers: pax, name };
+}
+
+const cityKey = (origin) => String(origin || "").trim().toUpperCase();
+function cityCount(members) {
+  return new Set(members.map((m) => cityKey(m.origin))).size;
+}
+function tooManyCitiesBody() {
+  return { code: "GROUP_TOO_MANY_CITIES", message: `A group can search from at most ${MAX_CITIES} different cities.`, maxCities: MAX_CITIES };
 }
 
 function totalPax(members) {
@@ -161,6 +172,9 @@ router.post("/", createLimiter, asyncH(async (req, res) => {
     }
     if (totalPax(cleaned) > MAX_TOTAL_PAX) {
       return res.status(400).json(paxLimitBody(totalPax(cleaned)));
+    }
+    if (cityCount(cleaned) > MAX_CITIES) {
+      return res.status(400).json(tooManyCitiesBody());
     }
 
     const id = generateId();
@@ -279,6 +293,9 @@ router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
     }
     if (g.members.length >= MAX_MEMBERS) {
       return res.status(409).json({ code: "GROUP_FULL", message: `A group can have at most ${MAX_MEMBERS} travelers.` });
+    }
+    if (!g.members.some((m) => cityKey(m.origin) === cityKey(member.origin)) && cityCount(g.members) >= MAX_CITIES) {
+      return res.status(409).json(tooManyCitiesBody());
     }
     const nextTotal = totalPax(g.members) + member.passengers;
     if (nextTotal > MAX_TOTAL_PAX) {

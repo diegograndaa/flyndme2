@@ -1437,6 +1437,7 @@ export default function App() {
         const code = (await res.json().catch(() => ({}))).code;
         if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
         if (code === "GROUP_FULL") { setToast({ message: t("group.full"), type: "error" }); return; }
+        if (code === "GROUP_TOO_MANY_CITIES") { setToast({ message: t("group.tooManyCities"), type: "error" }); return; }
         if (res.status === 404) { setToast({ message: t("group.expired"), type: "error" }); return; }
         if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
         throw new Error("add failed");
