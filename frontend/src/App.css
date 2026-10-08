@@ -1959,14 +1959,13 @@ body {
   gap: 0;
   margin-bottom: 24px;
 }
+/* Los pasos pendientes se distinguen por color (etiqueta en --slate-500,
+   punto sin relleno), no por opacidad: con opacity el texto bajaba de 4.5:1. */
 .sk-step {
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.35;
-  transition: opacity .4s;
 }
-.sk-step--active { opacity: 1; }
 .sk-step-dot {
   width: 28px;
   height: 28px;
