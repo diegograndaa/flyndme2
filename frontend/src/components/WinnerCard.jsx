@@ -224,7 +224,8 @@ const WinnerCard = React.memo(function WinnerCard({
                 // código de ciudad ROM/LON; Google Flights ni lo acepta).
                 const ssOrigin = offer?.tp?.originAirport || origin;
                 const ssDest   = offer?.tp?.destinationAirport || code;
-                const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
+                const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType,
+                  adults: Number(finfo.passengers) || Number(offer?.passengers) || 1 });
                 const gfUrl = buildGoogleFlightsUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
 
                 // Extract itinerary details (outbound)

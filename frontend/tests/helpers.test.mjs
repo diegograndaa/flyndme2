@@ -81,6 +81,12 @@ test("buildSkyscannerUrl: estructura, fechas y oneway/roundtrip", () => {
   assert.ok(ow.startsWith("https://www.skyscanner.es/transport/flights/mad/rom/260915/"));
   assert.ok(ow.includes("rtn=0"));
 
+  assert.ok(ow.includes("adultsv2=1"));
+  const group = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", tripType: "oneway", adults: 3 });
+  assert.ok(group.includes("adultsv2=3"));
+  assert.ok(buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", adults: 40 }).includes("adultsv2=9"));
+  assert.ok(buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", adults: "x" }).includes("adultsv2=1"));
+
   const rt = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", returnDate: "2026-09-20", tripType: "roundtrip" });
   assert.ok(rt.includes("/260915/260920/"));
   assert.ok(rt.includes("rtn=1"));
