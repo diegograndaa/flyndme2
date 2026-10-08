@@ -485,7 +485,7 @@ export default function App() {
     const parsed = parseSearchLinkParams(window.location.search);
     if (!parsed) return; // sin orígenes válidos o es un share link
     setOrigins(parsed.origins);
-    setPassengers(parsed.origins.map(() => 1));
+    setPassengers(parsed.passengers || parsed.origins.map(() => 1));
     if (parsed.departureDate) setDepartureDate(parsed.departureDate);
     if (parsed.returnDate) setReturnDate(parsed.returnDate);
     if (parsed.tripType) setTripType(parsed.tripType);
@@ -706,7 +706,12 @@ export default function App() {
 
   const handleCopySearchLink = () => {
     const params = new URLSearchParams();
-    cleanOrigins.forEach(o => params.append("o", o));
+    // Una fila = un ?o= con su ?p= en el mismo orden (solo si alguien viaja con más gente).
+    const rows = origins
+      .map((o, i) => ({ code: String(o || "").trim().toUpperCase(), pax: Math.max(1, Number(passengers[i]) || 1) }))
+      .filter((r) => r.code);
+    rows.forEach((r) => params.append("o", r.code));
+    if (rows.some((r) => r.pax > 1)) rows.forEach((r) => params.append("p", String(r.pax)));
     if (departureDate) params.set("dep", departureDate);
     if (tripType === "roundtrip" && returnDate) params.set("ret", returnDate);
     params.set("trip", tripType);

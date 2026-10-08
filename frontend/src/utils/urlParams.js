@@ -11,6 +11,8 @@ const CABINS = new Set(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]);
 const CURRENCIES = new Set(["EUR", "GBP", "USD"]);
 // Mismo tope que el backend (MAX_ORIGINS): más ciudades acabarían en un 400.
 export const MAX_LINK_ORIGINS = 8;
+// Mismo tope por origen que el backend (MAX_PAX_PER_ORIGIN).
+export const MAX_LINK_PAX = 9;
 
 // AAAA-MM-DD que además existe en el calendario (2026-13-45 o 2026-02-30 no).
 function isRealDate(s) {
@@ -28,13 +30,23 @@ export function parseSearchLinkParams(search) {
   const params = new URLSearchParams(search || "");
   if (params.has("share")) return null; // los share links van por otro flujo
 
-  const origins = params.getAll("o")
-    .map((s) => String(s).trim().toUpperCase())
-    .filter((s) => IATA_RE.test(s))
+  // ?p= va alineado con ?o= (mismo orden); se filtran los pares juntos para
+  // que un origen inválido no desplace los viajeros de los demás.
+  const rawPax = params.getAll("p");
+  const pairs = params.getAll("o")
+    .map((s, i) => ({ code: String(s).trim().toUpperCase(), pax: rawPax[i] }))
+    .filter((x) => IATA_RE.test(x.code))
     .slice(0, MAX_LINK_ORIGINS);
-  if (!origins.length) return null;
+  if (!pairs.length) return null;
+  const origins = pairs.map((x) => x.code);
 
   const out = { origins };
+  if (rawPax.length) {
+    out.passengers = pairs.map((x) => {
+      const n = Math.floor(Number(x.pax));
+      return Number.isFinite(n) ? Math.min(MAX_LINK_PAX, Math.max(1, n)) : 1;
+    });
+  }
 
   const dep = params.get("dep");
   if (isRealDate(dep)) out.departureDate = dep;
