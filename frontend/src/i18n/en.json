@@ -485,6 +485,7 @@
       "INVALID_RETURN_DATE_ORDER": "The return date must be after the departure date.",
       "TOO_MANY_COMBINATIONS": "Too many combinations. Use fewer cities, destinations, or less flexibility.",
       "INVALID_TRAVEL_CLASS": "That cabin class isn't available. Pick another.",
+      "TRAVEL_CLASS_UNSUPPORTED": "For now we only have economy prices. Switch the cabin to “Economy” under “More options” to search.",
       "MONTHLY_BUDGET_EXCEEDED": "We've reached this month's free search limit. Please try again next month.",
       "INTERNAL_ERROR": "Something went wrong on our side. Please try again.",
       "RATE_LIMITED": "You've run a lot of searches in a row. Wait a few minutes and try again.",
