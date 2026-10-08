@@ -491,7 +491,14 @@ export default function App() {
         const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
         setBestByCriterion({ total: keep("total"), fairness: keep("fairness") });
         if (searchParams) {
-          if (searchParams.origins?.length) setOrigins(searchParams.origins);
+          if (searchParams.origins?.length) {
+            setOrigins(searchParams.origins);
+            // searchParams no guarda los viajeros, pero cada tramo del resultado
+            // sí: así «Cambiar búsqueda» parte de los mismos números.
+            const legs = results?.flights?.[0]?.flights || [];
+            setPassengers(searchParams.origins.map((o) =>
+              Math.min(9, Math.max(1, Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1))));
+          }
           if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
           if (searchParams.returnDate) setReturnDate(searchParams.returnDate);
           if (searchParams.tripType) setTripType(searchParams.tripType);
