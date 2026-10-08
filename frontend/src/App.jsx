@@ -1265,7 +1265,8 @@ export default function App() {
             // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
             if (cancelled()) return;
-            fail(errorMessageForCode(data.code, data.message || data.error));
+            const which = Array.isArray(data.invalid) && data.invalid.length ? ` (${data.invalid.join(", ")})` : "";
+            fail(errorMessageForCode(data.code, data.message || data.error) + which);
             return;
           }
 
