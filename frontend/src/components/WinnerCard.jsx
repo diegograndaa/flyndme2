@@ -157,7 +157,7 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Savings + trip duration + countdown + vs last search chips */}
         <div className="wc-chips-overlay">
           {/* Verification badge (first so it's the most visible trust signal) */}
-          <VerificationBadge dest={dest} />
+          <VerificationBadge dest={dest} currency={currency} />
           {/* Algún origen usa precio de una fecha vecina (sin dato exacto) */}
           {dest.hasDateFallback && (
             <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
