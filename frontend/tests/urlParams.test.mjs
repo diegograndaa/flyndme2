@@ -89,3 +89,51 @@ test("urlParams: ?p= raros o fuera de rango se normalizan a 1..9", () => {
   const r = parseSearchLinkParams("?o=MAD&o=LON&o=BER&o=PAR&p=0&p=99&p=abc");
   assert.deepEqual(r.passengers, [1, 9, 1, 1]);
 });
+
+test("urlParams: flex y presupuesto válidos se leen", () => {
+  const p = parseSearchLinkParams("?o=MAD&flex=2&budget=150");
+  assert.equal(p.flexDays, 2);
+  assert.equal(p.maxBudget, 150);
+});
+
+test("urlParams: flex y presupuesto fuera del formulario se descartan", () => {
+  for (const q of ["flex=0", "flex=4", "flex=5", "flex=abc", "budget=20", "budget=155", "budget=810", "budget=150.5"]) {
+    const p = parseSearchLinkParams(`?o=MAD&${q}`);
+    assert.equal(p.flexDays, undefined, q);
+    assert.equal(p.maxBudget, undefined, q);
+  }
+  assert.equal(parseSearchLinkParams("?o=MAD").flexDays, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&budget=30").maxBudget, 30);
+  assert.equal(parseSearchLinkParams("?o=MAD&budget=800").maxBudget, 800);
+});
+
+test("urlParams: ?d= son los destinos elegidos, sin orígenes ni códigos de fuera del catálogo", () => {
+  const p = parseSearchLinkParams("?o=MAD&d=rom&d=MAD&d=XXX&d=LIS&d=LIS");
+  assert.deepEqual(p.destinations, ["ROM", "LIS"]);
+  assert.equal(parseSearchLinkParams("?o=MAD").destinations, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&d=NOPE").destinations, undefined);
+});
+
+test("urlParams: el enlace escrito con destinos se vuelve a leer igual", async () => {
+  const { appendDestinationParams, parseSearchLinkParams } = await import("../src/utils/urlParams.js");
+  const params = new URLSearchParams("o=MAD&o=LON");
+  appendDestinationParams(params, ["rom", "MAD", "LIS", "NOPE"], ["MAD", "LON"]);
+  const p = parseSearchLinkParams(`?${params.toString()}`);
+  assert.deepEqual(p.destinations, ["ROM", "LIS"]);
+  const all = new URLSearchParams("o=MAD");
+  appendDestinationParams(all, [], ["MAD"]);
+  assert.equal(all.has("d"), false);
+});
+
+test("urlParams: el enlace escrito con flex y presupuesto se vuelve a leer igual", async () => {
+  const { appendFlexBudgetParams, parseSearchLinkParams } = await import("../src/utils/urlParams.js");
+  const params = new URLSearchParams("o=MAD&o=LON&dep=2026-11-15&trip=oneway");
+  appendFlexBudgetParams(params, { flexEnabled: true, flexDays: 3, budgetEnabled: true, maxBudget: 200 });
+  const p = parseSearchLinkParams(`?${params.toString()}`);
+  assert.equal(p.flexDays, 3);
+  assert.equal(p.maxBudget, 200);
+  const off = new URLSearchParams("o=MAD");
+  appendFlexBudgetParams(off, { flexEnabled: false, flexDays: 3, budgetEnabled: false, maxBudget: 200 });
+  assert.equal(off.has("flex"), false);
+  assert.equal(off.has("budget"), false);
+});
