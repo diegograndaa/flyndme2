@@ -191,7 +191,7 @@ const SearchPage = React.memo(function SearchPage({
   // Ciudades ya reconocidas, en orden: cada una lleva su color de viajero
   // (el mismo que tendrá después en el mapa y en los resultados).
   const setCodes = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter((c) => AIRPORT_MAP[c]))],
+    () => [...new Set(origins.map(resolveOriginCode).filter((c) => AIRPORT_MAP[c]))],
     [origins],
   );
 
