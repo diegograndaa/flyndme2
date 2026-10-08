@@ -12,7 +12,7 @@ import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
-import { restoreFlexBudget } from "../utils/recentSearch";
+import { restoreFlexBudget, restoreDirectCabin } from "../utils/recentSearch";
 import DateField from "./DateField";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
@@ -230,6 +230,11 @@ const SearchPage = React.memo(function SearchPage({
               <div className="sf-recent-chips">
                 {recentSearches.map((r, i) => {
                   const extra = restoreFlexBudget(r);
+                  const cabin = restoreDirectCabin(r);
+                  const cabinLabel = cabin.cabinClass === "PREMIUM_ECONOMY" ? t("search.cabinPremium")
+                    : cabin.cabinClass === "BUSINESS" ? t("search.cabinBusiness")
+                    : cabin.cabinClass === "FIRST" ? t("search.cabinFirst")
+                    : "";
                   return (
                     <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
                       <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
@@ -237,6 +242,8 @@ const SearchPage = React.memo(function SearchPage({
                         {r.departureDate}{r.tripType === "roundtrip" ? ` ↔ ${r.returnDate}` : ""}
                         {extra.flexDays ? ` · ±${extra.flexDays}d` : ""}
                         {extra.maxBudget ? ` · ${formatEur(extra.maxBudget)}` : ""}
+                        {cabin.directOnly ? ` · ${t("recentSearches.direct")}` : ""}
+                        {cabinLabel ? ` · ${cabinLabel}` : ""}
                       </span>
                     </button>
                   );

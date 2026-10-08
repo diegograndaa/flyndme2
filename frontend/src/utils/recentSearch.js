@@ -8,6 +8,9 @@ const FLEX_DAYS = new Set([1, 2, 3]);
 const BUDGET_MIN = 30;
 const BUDGET_MAX = 800;
 const BUDGET_STEP = 10;
+// Las que el formulario puede dejar marcadas. FIRST la acepta el backend
+// (un enlace puede dejarla) aunque el formulario no tenga pastilla.
+const CABINS = new Set(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]);
 
 export function savedFlexDays(flexEnabled, flexDays) {
   const n = Number(flexDays);
@@ -21,6 +24,11 @@ export function savedBudget(budgetEnabled, maxBudget) {
     : 0;
 }
 
+export function savedCabin(cabinClass) {
+  const c = String(cabinClass || "").toUpperCase();
+  return CABINS.has(c) ? c : "ECONOMY";
+}
+
 /** @returns {{ flexDays: number|null, maxBudget: number|null }} null = apagado */
 export function restoreFlexBudget(entry) {
   const flex = Number(entry?.flexDays);
@@ -30,6 +38,15 @@ export function restoreFlexBudget(entry) {
     maxBudget: Number.isInteger(budget) && budget >= BUDGET_MIN && budget <= BUDGET_MAX && budget % BUDGET_STEP === 0
       ? budget
       : null,
+  };
+}
+
+/** Sin el campo (búsquedas viejas): directo apagado y turista. */
+export function restoreDirectCabin(entry) {
+  const cabin = String(entry?.cabinClass || "").toUpperCase();
+  return {
+    directOnly: entry?.directOnly === true,
+    cabinClass: CABINS.has(cabin) ? cabin : "ECONOMY",
   };
 }
 
@@ -52,5 +69,7 @@ export function recentSearchKey(entry) {
     entry?.returnDate || "",
     entry?.flexDays || 0,
     entry?.maxBudget || 0,
+    entry?.directOnly === true ? 1 : 0,
+    CABINS.has(String(entry?.cabinClass || "").toUpperCase()) ? String(entry.cabinClass).toUpperCase() : "ECONOMY",
   ].join("|");
 }

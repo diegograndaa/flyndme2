@@ -16,7 +16,7 @@ import {
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
-import { savedFlexDays, savedBudget, restoreFlexBudget, recentSearchKey } from "./utils/recentSearch";
+import { savedFlexDays, savedBudget, savedCabin, restoreFlexBudget, restoreDirectCabin, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
@@ -353,6 +353,8 @@ export default function App() {
         returnDate: params.returnDate,
         flexDays: params.flexDays || 0,
         maxBudget: params.maxBudget || 0,
+        directOnly: params.directOnly === true,
+        cabinClass: savedCabin(params.cabinClass),
         ts: Date.now(),
       };
       // Misma ruta con otra vuelta, otros viajeros, ±días o tope es otra búsqueda.
@@ -387,6 +389,9 @@ export default function App() {
     setFlexDays(extra.flexDays ?? 3);
     setBudgetEnabled(extra.maxBudget != null);
     setMaxBudget(extra.maxBudget ?? 200);
+    const cabin = restoreDirectCabin(entry);
+    setDirectOnly(cabin.directOnly);
+    setCabinClass(cabin.cabinClass);
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -1152,6 +1157,8 @@ export default function App() {
             returnDate,
             flexDays: savedFlexDays(flexEnabled, flexDays),
             maxBudget: savedBudget(budgetEnabled, maxBudget),
+            directOnly: directOnly === true,
+            cabinClass: savedCabin(cabinClass),
           });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
