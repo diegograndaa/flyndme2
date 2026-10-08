@@ -724,16 +724,16 @@ const SearchPage = React.memo(function SearchPage({
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
                 <div className="sf-summary-travelers">
-                  {origins.filter((o) => o.trim()).map((o, i) => {
+                  {origins.map((o, i) => {
+                    if (!o.trim()) return null;
                     const c = resolveOriginCode(o);
                     const flag = countryFlag(c);
+                    const pax = Math.max(1, Number(passengers[i]) || 1);
                     return (
                       <span key={`${c}-${i}`} className="sf-summary-chip" title={cityOf(c) || c}>
                         {flag && <span className="sf-summary-flag">{flag}</span>}
                         {c}
-                        {(passengers[origins.indexOf(o)] || 1) > 1 && (
-                          <span className="sf-summary-pax">×{passengers[origins.indexOf(o)]}</span>
-                        )}
+                        {pax > 1 ? <span className="sf-summary-pax">{`×${pax}`}</span> : null}
                       </span>
                     );
                   })}

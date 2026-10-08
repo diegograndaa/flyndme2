@@ -170,6 +170,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.ok(html.includes("sf-summary-dest"), "el resumen enseña que hay destinos elegidos");
   assert.ok(html.includes("Destinations to compare"), "el nombre accesible dice que son destinos");
   assert.match(html, /sf-summary-dest[\s\S]*ROM/);
+  assert.ok(html.includes("×2"), "la fila de Madrid enseña sus 2 viajeros");
   const ordered = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD", "LON"], setOrigins: noop,
     tripType: "roundtrip", setTripType: noop,
@@ -232,6 +233,27 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(!all.includes("sf-summary-dest"), "sin filtro no hay chip de destinos");
+  const dup = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD", "MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1, 3], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(dup.includes("×3"), "la segunda ciudad igual enseña sus propios viajeros");
+  assert.equal((dup.match(/class="sf-summary-pax"/g) || []).length, 1, "la primera fila, con 1 viajero, no lleva ×");
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
