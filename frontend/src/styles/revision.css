@@ -530,3 +530,22 @@
    La columna del formulario es estrecha: etiqueta, texto y botón apilados. */
 .sf-form .fm-notice { flex-direction: column; align-items: flex-start; margin-top: 12px; }
 .sf-form .fm-notice .fm-notice-body { flex: 0 0 auto; width: 100%; }
+
+/* ══ 36. Mínimos táctiles y de texto en móvil (360-390 px) ═════════════════
+   Reglas del proyecto: dianas ≥ 40 px y texto ≥ 12 px. Estas piezas se
+   habían quedado por debajo (medido a 360 y 390 px). */
+.app-header .fm-lang-btn.fm-lang-btn { min-width: 40px; height: 40px; }
+.gp-member-remove.gp-member-remove,
+.gp-pax-btn.gp-pax-btn { width: 40px; height: 40px; }
+.gp-exit.gp-exit { min-height: 40px; padding: 8px 12px; }
+.gp-eyebrow.gp-eyebrow,
+.gp-roster-title.gp-roster-title,
+.gp-add-label.gp-add-label,
+.gp-invite-label.gp-invite-label { font-size: 12px; }
+@media (max-width: 360px) {
+  .app-header .fm-lang-btn.fm-lang-btn { min-width: 40px; padding: 0 4px; }
+  .wc-card .wc-buy .wc-cta.wc-cta { font-size: 12px; }
+}
+@media (max-width: 340px) {
+  .wc-card .wc-buy .wc-cta.wc-cta { font-size: 12px; letter-spacing: 0; }
+}
