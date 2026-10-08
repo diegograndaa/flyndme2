@@ -925,6 +925,8 @@
     "addError": "Couldn't update the group. Try again.",
     "paxLimit": "A group can take at most 16 passengers in total. Reduce the number of travelers.",
     "full": "The group already has 9 departure cities, the maximum.",
-    "expired": "This group link has expired."
+    "expired": "This group link has expired.",
+    "loading": "Opening the group plan…",
+    "loadingDetail": "If the server was asleep this can take a few seconds. No need to fill anything in yet."
   }
 }
