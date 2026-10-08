@@ -37,6 +37,20 @@ const store = createStore({
   sweepEveryMs: 60 * 60 * 1000,
 });
 
+// Cola por grupo para los read-modify-write (añadir/quitar). Con Upstash, cada
+// get devuelve una copia: dos viajeros que añaden su ciudad a la vez leían la
+// misma lista y el segundo set borraba al primero. Serializa dentro del proceso
+// (Render free = una instancia); varias instancias necesitarían un lock en Redis.
+const groupLocks = new Map();
+function withGroupLock(id, fn) {
+  const prev = groupLocks.get(id) || Promise.resolve();
+  const run = prev.then(fn, fn);
+  const tail = run.then(() => {}, () => {});
+  groupLocks.set(id, tail);
+  tail.then(() => { if (groupLocks.get(id) === tail) groupLocks.delete(id); });
+  return run;
+}
+
 function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe
 }
@@ -225,26 +239,28 @@ router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  const g = await store.get(id);
-  if (!g || Date.now() > g.expiresAt) {
-    return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
-  }
-  const member = cleanMember(req.body);
-  if (!member) {
-    return res.status(400).json({ code: "INVALID_MEMBER", message: "A departure city is required." });
-  }
-  if (g.members.length >= MAX_MEMBERS) {
-    return res.status(409).json({ code: "GROUP_FULL", message: `A group can have at most ${MAX_MEMBERS} travelers.` });
-  }
-  const nextTotal = totalPax(g.members) + member.passengers;
-  if (nextTotal > MAX_TOTAL_PAX) {
-    return res.status(409).json(paxLimitBody(nextTotal));
-  }
-  g.members.push(member);
-  // Conserva el TTL restante: añadir un miembro NO reinicia la caducidad (14d).
-  await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
-  counters.incr("group_member_added"); // el multiplicador real del loop
-  return res.json(publicView(id, g));
+  return withGroupLock(id, async () => {
+    const g = await store.get(id);
+    if (!g || Date.now() > g.expiresAt) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
+    }
+    const member = cleanMember(req.body);
+    if (!member) {
+      return res.status(400).json({ code: "INVALID_MEMBER", message: "A departure city is required." });
+    }
+    if (g.members.length >= MAX_MEMBERS) {
+      return res.status(409).json({ code: "GROUP_FULL", message: `A group can have at most ${MAX_MEMBERS} travelers.` });
+    }
+    const nextTotal = totalPax(g.members) + member.passengers;
+    if (nextTotal > MAX_TOTAL_PAX) {
+      return res.status(409).json(paxLimitBody(nextTotal));
+    }
+    g.members.push(member);
+    // Conserva el TTL restante: añadir un miembro NO reinicia la caducidad (14d).
+    await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
+    counters.incr("group_member_added"); // el multiplicador real del loop
+    return res.json(publicView(id, g));
+  });
 }));
 
 // ─── DELETE /api/groups/:id/members/:index — remove a roster entry ──────────
@@ -254,30 +270,33 @@ router.delete("/:id/members/:index", memberLimiter, asyncH(async (req, res) => {
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  const g = await store.get(id);
-  if (!g || Date.now() > g.expiresAt) {
-    return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
-  }
-  const i = Number(index);
-  if (!Number.isInteger(i) || i < 0 || i >= g.members.length) {
-    return res.status(400).json({ code: "INVALID_INDEX", message: "No such member." });
-  }
-  // El índice viene de la lista que tenía el cliente; si otro viajero la ha
-  // cambiado entretanto, ese índice puede ser otra persona. Con ?origin= (y
-  // ?name=) el cliente dice a quién quiere quitar y, si no coincide, no se
-  // borra nada y se devuelve la lista actual.
-  const expectOrigin = req.query.origin;
-  const expectName = req.query.name;
-  const target = g.members[i];
-  if ((expectOrigin !== undefined && String(expectOrigin) !== target.origin)
-    || (expectName !== undefined && String(expectName) !== target.name)) {
-    return res.status(409).json({ code: "MEMBER_CHANGED", message: "The roster changed; nothing was removed.", group: publicView(id, g) });
-  }
-  g.members.splice(i, 1);
-  await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
-  return res.json(publicView(id, g));
+  return withGroupLock(id, async () => {
+    const g = await store.get(id);
+    if (!g || Date.now() > g.expiresAt) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
+    }
+    const i = Number(index);
+    if (!Number.isInteger(i) || i < 0 || i >= g.members.length) {
+      return res.status(400).json({ code: "INVALID_INDEX", message: "No such member." });
+    }
+    // El índice viene de la lista que tenía el cliente; si otro viajero la ha
+    // cambiado entretanto, ese índice puede ser otra persona. Con ?origin= (y
+    // ?name=) el cliente dice a quién quiere quitar y, si no coincide, no se
+    // borra nada y se devuelve la lista actual.
+    const expectOrigin = req.query.origin;
+    const expectName = req.query.name;
+    const target = g.members[i];
+    if ((expectOrigin !== undefined && String(expectOrigin) !== target.origin)
+      || (expectName !== undefined && String(expectName) !== target.name)) {
+      return res.status(409).json({ code: "MEMBER_CHANGED", message: "The roster changed; nothing was removed.", group: publicView(id, g) });
+    }
+    g.members.splice(i, 1);
+    await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
+    return res.json(publicView(id, g));
+  });
 }));
 
 module.exports = router;
 module.exports.cleanMember = cleanMember;
+module.exports.withGroupLock = withGroupLock;
 module.exports._store = store; // exposed for tests only
