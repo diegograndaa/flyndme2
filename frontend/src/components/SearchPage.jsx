@@ -261,9 +261,7 @@ const SearchPage = React.memo(function SearchPage({
                           setTripType(v);
                           // Auto-suggest return date when switching to roundtrip
                           if (v === "roundtrip" && !returnDate && departureDate) {
-                            const d = new Date(departureDate + "T00:00:00");
-                            d.setDate(d.getDate() + 7);
-                            setReturnDate(d.toISOString().slice(0, 10));
+                            setReturnDate(addDaysISO(departureDate, 7));
                           }
                         }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}
