@@ -17,7 +17,7 @@ import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/res
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
-import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
+import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
@@ -862,7 +862,8 @@ export default function App() {
     trackEvent("verify_click", { dest: code });
     setLiveCheck({ code, phase: "loading" });
 
-    const payload = buildVerifyPayload(winner, { departureDate, returnDate, tripType });
+    // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
+    const payload = buildVerifyPayload(winner, { departureDate: winner.bestDate || departureDate, returnDate: winner.bestReturnDate || returnDate, tripType });
     verifyAbortRef.current?.abort();
     const controller = new AbortController();
     verifyAbortRef.current = controller;
@@ -879,8 +880,7 @@ export default function App() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (searchGenRef.current !== gen) return; // búsqueda nueva: descartar
-        const status = data?.verificationStatus;
-        if (status === "verified" || status === "changed") {
+        if (isFullyVerified(winner, data)) {
           // Verificación COMPLETA: mergeVerification promociona el precio
           // verificado a mostrado y el badge pasa a ✓/↑↓. Quitamos el transitorio.
           applyVerification(winner.destination, data);
