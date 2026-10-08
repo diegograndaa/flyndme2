@@ -208,6 +208,7 @@
     "destLabel": "Destinations to compare",
     "destAll": "Searching all destinations",
     "destSelected": "{{n}} destinations selected",
+    "destSelectedOne": "1 destination selected",
     "destChoose": "Choose",
     "destHide": "Hide",
     "destCatAll": "All",

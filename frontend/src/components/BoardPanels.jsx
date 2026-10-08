@@ -46,7 +46,7 @@ export const FlightHeader = React.memo(function FlightHeader({
           <span className="fm-flight-head-arrow" aria-hidden="true">→</span>
           <span className="fm-flight-head-meta">
             {dates}
-            {travelers > 0 && <> · {t("board.travelers", { n: travelers })}</>}
+            {travelers > 0 && <> · {travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</>}
             {badges.map((b) => <span key={b} className="fm-flight-head-badge">{b}</span>)}
           </span>
         </div>
