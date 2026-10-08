@@ -565,7 +565,7 @@ const SearchPage = React.memo(function SearchPage({
                   {budgetEnabled && (
                     <div className="sf-budget-box mt-3">
                       <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
-                        aria-label={t("search.budgetLabel")}
+                        aria-label={t("search.budgetLabel")} aria-valuetext={formatEur(maxBudget)}
                         value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
                       <div className="d-flex justify-content-between small" style={{ color: "var(--slate-500)" }}>
                         <span>{formatEur(BUDGET_MIN)}</span>
