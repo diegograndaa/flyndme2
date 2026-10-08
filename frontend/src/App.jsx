@@ -10,7 +10,7 @@ const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, weekdayOf, todayISO, horizonISO, copyText,
+  formatEur, formatDate, weekdayOf, todayISO, horizonISO, addDaysISO, copyText,
   countryFlag, scrollBehavior, AIRPORT_MAP, resolveOriginCode
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
@@ -2092,18 +2092,17 @@ export default function App() {
                 <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
                 <div className="fm-quick-research-btns">
                   {[-1, 1, -2, 2].map((offset) => {
-                    const d = new Date((departureDate || todayISO()) + "T00:00:00");
-                    d.setDate(d.getDate() + offset);
-                    const iso = d.toISOString().slice(0, 10);
+                    // En UTC: con new Date("…T00:00:00") (hora local) y toISOString()
+                    // (UTC), en España «+1 día» volvía a buscar la misma fecha.
+                    const iso = addDaysISO(departureDate || todayISO(), offset);
+                    if (iso < todayISO()) return null; // una salida pasada no se puede buscar
                     const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
                     return (
                       <button key={offset} type="button" className="fm-quick-research-btn"
                         onClick={() => {
                           setDepartureDate(iso);
                           if (tripType === "roundtrip" && returnDate) {
-                            const r = new Date(returnDate + "T00:00:00");
-                            r.setDate(r.getDate() + offset);
-                            setReturnDate(r.toISOString().slice(0, 10));
+                            setReturnDate(addDaysISO(returnDate, offset));
                           }
                           setView("search");
                           setTimeout(() => {
