@@ -468,6 +468,7 @@
       "INVALID_RETURN_DATE_ORDER": "La fecha de vuelta debe ser posterior a la de ida.",
       "TOO_MANY_COMBINATIONS": "Demasiadas combinaciones. Usa menos ciudades, destinos o flexibilidad.",
       "INVALID_TRAVEL_CLASS": "Esa clase de cabina no está disponible. Elige otra.",
+      "TRAVEL_CLASS_UNSUPPORTED": "De momento solo tenemos precios de clase turista. Cambia la cabina a «Turista» en «Más opciones» para buscar.",
       "MONTHLY_BUDGET_EXCEEDED": "Hemos alcanzado el límite mensual de búsquedas gratuitas. Inténtalo el mes que viene.",
       "INTERNAL_ERROR": "Algo ha fallado por nuestra parte. Inténtalo de nuevo.",
       "PROVIDER_UNAVAILABLE": "Nuestro proveedor de precios no responde ahora mismo, así que no podemos saber si hay vuelos. Inténtalo de nuevo en unos minutos."

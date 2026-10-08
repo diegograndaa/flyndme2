@@ -28,6 +28,14 @@ const { candidateNights } = require("../services/tripLength");
 // frontend muestra el badge de "precios orientativos".
 const CAN_VERIFY = flightService.capabilities?.verification !== false;
 
+// Cabina que el proveedor no distingue (la caché de Aviasales solo tiene
+// turista): mejor decirlo que devolver «sin resultados». Sin lista declarada
+// (mock) se aceptan todas.
+function unsupportedTravelClass(travelClass, caps = flightService.capabilities) {
+  const list = caps?.travelClasses;
+  return Boolean(travelClass) && Array.isArray(list) && !list.includes(travelClass);
+}
+
 // Capa 2: verificación del destino ganador contra Google Flights vía SerpAPI
 // (endpoint dedicado POST /verify, ver abajo). Sin SERPAPI_KEY queda
 // deshabilitada y el endpoint responde "skipped" — nada cambia para el front.
@@ -377,6 +385,13 @@ router.post("/multi-origin", async (req, res) => {
       }
     } else {
       travelClass = undefined;
+    }
+    if (unsupportedTravelClass(travelClass)) {
+      return res.status(400).json({
+        code: "TRAVEL_CLASS_UNSUPPORTED",
+        message: "Por ahora solo hay precios de clase turista.",
+        supported: flightService.capabilities.travelClasses,
+      });
     }
 
     // ── Validate origins ──────────────────────────────────────────────────────
@@ -1102,3 +1117,4 @@ router.post("/verify", async (req, res) => {
 });
 
 module.exports = router;
+module.exports._unsupportedTravelClass = unsupportedTravelClass; // solo para tests
