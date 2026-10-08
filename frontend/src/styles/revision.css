@@ -132,7 +132,7 @@
 .sf-typing-placeholder.sf-typing-placeholder { display: inline-flex; align-items: baseline; gap: 5px; color: var(--slate-400); font-style: italic; border-right: 0; animation: none; }
 .sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; }
 .sf-typing-word { border-right: 2px solid transparent; padding-right: 1px; }
-.sf-typing-word--active { animation: typingCursor .8s steps(1) infinite; }
+.sf-typing-word--active { animation: none; }
 
 /* El grupo: enlace secundario bajo el botón (fuera de la barra fija) */
 .sf-form .sf-group-cta { margin-top: 8px; }
@@ -197,9 +197,9 @@
 .hm-pulse i {
   position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%;
   border: 2px solid var(--sign-line); opacity: 0;
-  animation: hm-pulse 2.4s ease-out infinite;
+  animation: hm-pulse 1.4s ease-out 1 forwards;
 }
-.hm-pulse i + i { animation-delay: 1.2s; }
+.hm-pulse i + i { animation-delay: .3s; }
 @keyframes hm-pulse {
   0%   { transform: scale(.6); opacity: .9; }
   100% { transform: scale(3.6); opacity: 0; }
@@ -231,7 +231,7 @@
 }
 .hm-state-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--slate-400); }
 .hm-state--live { color: var(--navy); border-color: var(--navy); }
-.hm-state--live .hm-state-dot { background: #1baf7a; animation: hm-live 1.6s ease-in-out infinite; }
+.hm-state--live .hm-state-dot { background: #1baf7a; }
 @keyframes hm-live { 50% { opacity: .35; } }
 
 .hm-foot { display: grid; gap: 6px; margin-top: 10px; }

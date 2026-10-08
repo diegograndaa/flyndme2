@@ -238,20 +238,21 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
             <path key={`pv-${o.code}`} d={flightArc(o.pos, previewPoint.pos)} className="dm-route dm-route--preview" vectorEffect="non-scaling-stroke" />
           ))}
 
-          {/* Rutas del grupo hacia el punto de encuentro + avión en bucle */}
+          {/* Rutas del grupo hacia el punto de encuentro. El avión las recorre
+              una vez cada vez que cambia el destino de la tarjeta. */}
           {bestPoint && originPoints.map((o, i) => {
             const id = `dm-route-${o.code}`;
             return (
-              <g key={id}>
+              <g key={`${id}-${bestPoint.code}`}>
                 <path id={id} d={flightArc(o.pos, bestPoint.pos)} className="dm-route" vectorEffect="non-scaling-stroke" />
                 <g className="dm-plane" opacity="0">
                   <path d={PLANE_D} transform={`scale(${(u * 1.05).toFixed(3)})`} />
-                  <animateMotion dur="3.4s" begin={`${(i * 0.9).toFixed(1)}s`} repeatCount="indefinite" rotate="auto"
+                  <animateMotion dur="3.4s" begin={`${(i * 0.9).toFixed(1)}s`} repeatCount="1" rotate="auto"
                     keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.45 0 0.25 1">
                     <mpath href={`#${id}`} />
                   </animateMotion>
                   <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1"
-                    dur="3.4s" begin={`${(i * 0.9).toFixed(1)}s`} repeatCount="indefinite" />
+                    dur="3.4s" begin={`${(i * 0.9).toFixed(1)}s`} repeatCount="1" />
                 </g>
               </g>
             );

@@ -15,10 +15,8 @@ import { travelerSlot } from "../utils/resultsLogic";
 import { restoreFlexBudget, restoreDirectCabin, restoreDestinations } from "../utils/recentSearch";
 import DateField from "./DateField";
 
-// Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
-// único consumidor es este componente).
-// Ciudades por código → se teclean con el nombre del idioma de la interfaz
-// ("Londres", "Roma"…); los tres últimos enseñan que también vale el código.
+// Placeholder del buscador: cada fila vacía enseña una ciudad distinta, fija
+// ("p. ej. Madrid"). El nombre sigue el idioma de la interfaz.
 const TYPING_CODES = ["MAD", "LON", "BER", "ROM", "PAR", "LIS"];
 const TYPING_RAW = ["MAD", "LON", "BCN"];
 const TYPING_COUNT = TYPING_CODES.length + TYPING_RAW.length;
@@ -72,57 +70,6 @@ function useDateWarnings(departureDate, returnDate, tripType) {
   }, [departureDate, returnDate, tripType, t]);
 }
 
-// Carrusel de tecleo COMPARTIDO: un único reloj (un setInterval) avanza un
-// `base` (qué palabra empieza la fila 0) y un `char` (progreso de tecleo)
-// comunes a TODOS los inputs vacíos. Cada fila `idx` muestra
-// typingExample((base + idx) % N) cortada a `char`, así escriben a la vez
-// ciudades DISTINTAS y rotan en sincronía. Como N=9 > 8 orígenes máx, dos
-// filas vacías nunca enseñan la misma ciudad simultáneamente.
-const TYPING_MAXLEN = 8; // "Londres"/"Lisbon" caben; el resto se completa antes
-const TYPING_TICK_MS = 120;      // ritmo del reloj (typewriter)
-const TYPING_HOLD_FULL = 7;      // pausa con la palabra completa (legible)
-const TYPING_HOLD_EMPTY = 2;     // pausa en blanco antes de la siguiente
-
-function useTypingCarousel(active) {
-  const [, force] = useState(0);
-  // base = índice de la palabra de la fila 0; char = letras visibles;
-  // typing = true mientras se TECLEA (cursor), false al borrar/en pausa;
-  // hold = ticks restantes de pausa.
-  const stateRef = useRef({ base: 0, char: 0, typing: true, hold: 0 });
-
-  useEffect(() => {
-    if (!active) return undefined;
-    stateRef.current = { base: 0, char: 0, typing: true, hold: 0 };
-    force((n) => n + 1);
-    const id = setInterval(() => {
-      const s = stateRef.current;
-      if (s.hold > 0) {
-        s.hold -= 1;
-      } else if (s.typing) {
-        s.char += 1;
-        if (s.char >= TYPING_MAXLEN) {
-          s.char = TYPING_MAXLEN;
-          s.typing = false;          // palabra completa → quita cursor y descansa
-          s.hold = TYPING_HOLD_FULL;
-        }
-      } else {
-        s.char -= 1;
-        if (s.char <= 0) {
-          s.char = 0;
-          s.base = (s.base + 1) % TYPING_COUNT; // rota a la siguiente
-          s.typing = true;
-          s.hold = TYPING_HOLD_EMPTY;
-        }
-      }
-      force((n) => n + 1);
-    }, TYPING_TICK_MS);
-    return () => clearInterval(id);
-  }, [active]);
-
-  const s = stateRef.current;
-  return { base: s.base, char: s.char, typing: s.typing };
-}
-
 const SearchPage = React.memo(function SearchPage({
   origins, setOrigins,
   tripType, setTripType,
@@ -149,14 +96,6 @@ const SearchPage = React.memo(function SearchPage({
   const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
   const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
   const [dragOver, setDragOver] = useState(-1);
-
-  // Animated typing placeholder for ALL empty origin inputs, coordinated by a
-  // single shared clock (every empty input shows a different rotating city).
-  // El reloj se PAUSA mientras un input de origen está enfocado (acFocus >= 0):
-  // así no distrae ni provoca re-renders mientras el usuario escribe. Los
-  // ejemplos siguen visibles (congelados) en los campos vacíos no enfocados.
-  const showTyping = !loading && origins.some((o) => !o?.trim());
-  const { base: typingBase, char: typingChar, typing: typingActive } = useTypingCarousel(showTyping && acFocus < 0);
 
   const dateWarnings = useDateWarnings(departureDate, returnDate, tripType);
 
@@ -327,11 +266,7 @@ const SearchPage = React.memo(function SearchPage({
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
                 const empty = !origin.trim();
-                // Cada fila vacía teclea una ciudad distinta, desfasada por idx
-                // sobre el mismo reloj compartido (base 0 → Madrid/London/Berlin).
-                const typingSlice = empty && showTyping
-                  ? typingExample((typingBase + idx) % TYPING_COUNT).slice(0, typingChar)
-                  : "";
+                const exampleCity = empty && !loading ? typingExample(idx % TYPING_COUNT) : "";
                 return (
                   <div key={idx}
                     className={`sf-origin-row${city && origin.trim() ? " sf-origin-row--set" : ""}${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
@@ -354,19 +289,18 @@ const SearchPage = React.memo(function SearchPage({
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
-                      {/* Typing placeholder animation (coordinated across all empty inputs) */}
-                      {/* "p. ej." fijo delante: deja claro que es un EJEMPLO y no un
-                          valor ya rellenado (decorativo: el campo tiene aria-label) */}
-                      {empty && showTyping && acFocus !== idx && (
+                      {/* "p. ej." + una ciudad fija por fila: ejemplo, no un valor
+                          rellenado (decorativo: el campo tiene aria-label). */}
+                      {exampleCity && acFocus !== idx && (
                         <span className="sf-typing-placeholder" aria-hidden="true">
                           <span className="sf-typing-lead">{t("search.exampleLead")}</span>
-                          <span className={`sf-typing-word${typingActive ? " sf-typing-word--active" : ""}`}>{typingSlice}</span>
+                          <span className="sf-typing-word">{exampleCity}</span>
                         </span>
                       )}
                       <input
                         type="text"
                         className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
-                        placeholder={empty && showTyping ? "" : t("search.placeholder")}
+                        placeholder={exampleCity ? "" : t("search.placeholder")}
                         aria-label={t("search.originAria", { n: idx + 1 })}
                         role="combobox"
                         aria-autocomplete="list"
