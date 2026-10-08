@@ -219,7 +219,11 @@ export default function App() {
     window.history.replaceState({ view: "landing" }, "", window.location.pathname + window.location.search);
 
     const onPopState = (e) => {
-      const target = e.state?.view || "landing";
+      let target = e.state?.view || "landing";
+      // Tras recargar, el historial conserva entradas de vistas cuyos datos ya
+      // no están en memoria: volver a ellas pintaba una página vacía.
+      if (target === "results" && !hasResultsRef.current) target = "search";
+      if (target === "group" && !hasGroupRef.current) target = "landing";
       skipHistoryPush.current = true;
       setView(target);
     };
@@ -229,6 +233,8 @@ export default function App() {
   }, []);
 
   const tabContentRef = useRef(null);
+  const hasResultsRef = useRef(false);
+  const hasGroupRef = useRef(false);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   // Los paneles se leen vía refs: el listener se registra una sola vez y un
@@ -499,6 +505,10 @@ export default function App() {
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+  useEffect(() => {
+    hasResultsRef.current = Boolean(bestDestination);
+    hasGroupRef.current = Boolean(group);
+  }, [bestDestination, group]);
 
   // PWA: invitar a instalar solo tras ver resultados (y sin interrumpir la
   // primera lectura de la tarjeta).
