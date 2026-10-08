@@ -61,6 +61,16 @@ test("formatDate / weekdayOf: fechas válidas e inválidas", () => {
   assert.equal(weekdayOf(""), "");
 });
 
+test("formatDate / weekdayOf: en el idioma de la interfaz", () => {
+  setCityLang("es");
+  try {
+    assert.equal(formatDate("2026-11-15"), "15 nov 2026");
+    assert.equal(weekdayOf("2026-11-15"), "dom");
+  } finally { setCityLang("en"); }
+  assert.equal(formatDate("2026-11-15"), "15 Nov 2026");
+  assert.equal(weekdayOf("2026-11-15"), "Sun");
+});
+
 test("todayISO devuelve YYYY-MM-DD", () => {
   assert.match(todayISO(), /^\d{4}-\d{2}-\d{2}$/);
 });
