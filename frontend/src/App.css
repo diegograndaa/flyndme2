@@ -4831,6 +4831,7 @@ html {
 .gp-member-remove:hover:not(:disabled) { background: rgba(var(--primary-rgb), .1); color: var(--primary); }
 .gp-member-remove:disabled { opacity: .4; cursor: default; }
 
+.gp-title:focus:not(:focus-visible) { outline: none; }
 .gp-add { margin-top: 18px; }
 .gp-add-label { font-weight: 700; color: var(--navy); font-size: 14px; margin-bottom: 8px; }
 .gp-add-warn { display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--slate-700); }

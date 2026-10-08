@@ -1442,6 +1442,12 @@ export default function App() {
       window.history.replaceState({}, "", `${window.location.pathname}?group=${id}`);
       setView("group");
       window.scrollTo(0, 0);
+      // El botón que se ha pulsado desaparece: el foco va al título del plan
+      // (si no, cae en <body> y el lector de pantalla no anuncia la vista nueva).
+      setTimeout(() => {
+        const h = document.getElementById("gp-title");
+        if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+      }, 80);
       trackEvent("group_create", { members: members.length });
     } catch {
       setToast({ message: t("group.createError"), type: "error" });
