@@ -925,6 +925,7 @@
     "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
     "paxLimit": "Un grupo puede llevar como máximo 16 pasajeros en total. Reduce el número de viajeros.",
     "full": "El grupo ya tiene 9 ciudades de salida, el máximo.",
-    "expired": "Este enlace de grupo ha caducado."
+    "expired": "Este enlace de grupo ha caducado.",
+    "datePast": "La fecha de este grupo ({{date}}) ya ha pasado. Para buscar, vuelve a la búsqueda y crea un plan nuevo."
   }
 }

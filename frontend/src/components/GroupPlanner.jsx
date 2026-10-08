@@ -8,7 +8,9 @@ import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
 import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
-import { AIRPORT_MAP, normalizeCode, cityOf, countryOf, formatDate, weekdayOf, countryFlag, searchAirports, foldText } from "../utils/helpers";
+import { AIRPORT_MAP, normalizeCode, cityOf, countryOf, countryFlag, searchAirports, foldText, todayISO } from "../utils/helpers";
+import { formatDateLong } from "./DateField";
+import { FriendlyError } from "./UiBits";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
 // can, so the search receives the same city codes the main form produces.
@@ -27,9 +29,9 @@ function GroupPlanner({
   group, inviteUrl, copied,
   onAddMember, onRemoveMember, onSearch, onCopyLink, onRefresh, onExit,
   onShareWhatsApp, onShareNative,
-  loading, busy,
+  loading, busy, error,
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   // The Web Share API only exists on (mostly mobile) clients; gate the native
   // button so it never renders during the SSR test harness or on desktop.
   const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
@@ -44,7 +46,9 @@ function GroupPlanner({
   const cityRef = useRef(null);
 
   const members = group?.members || [];
-  const canSearch = members.length >= 1 && !loading;
+  // Un grupo vive 14 días: su fecha puede pasar antes de que caduque el enlace.
+  const datePast = Boolean(group?.departureDate) && group.departureDate < todayISO();
+  const canSearch = members.length >= 1 && !loading && !datePast;
 
   // Misma búsqueda que el formulario: código, nombre, nombres en español, país.
   const suggestions = useMemo(() => searchAirports(city, { limit: 6 }), [city]);
@@ -88,7 +92,8 @@ function GroupPlanner({
       <p className="gp-sub">{t("group.subtitle")}</p>
 
       <div className="gp-facts">
-        <span className="gp-fact"><Calendar size={15} className="lucide" /> {formatDate(group?.departureDate)} · {weekdayOf(group?.departureDate)}</span>
+        <span className="gp-fact"><Calendar size={15} className="lucide" /> {formatDateLong(group?.departureDate, lang)}
+          {group?.tripType === "roundtrip" && group?.returnDate ? ` – ${formatDateLong(group.returnDate, lang)}` : ""}</span>
         <span className="gp-fact-sep" aria-hidden="true">·</span>
         <span className="gp-fact">{tripLabel}</span>
       </div>
@@ -202,6 +207,14 @@ function GroupPlanner({
           </p>
         )}
       </form>
+
+      {datePast && (
+        <p className="gp-add-warn gp-date-past" role="status">
+          <AlertTriangle size={15} aria-hidden="true" />
+          <span>{t("group.datePast", { date: formatDateLong(group.departureDate, lang) })}</span>
+        </p>
+      )}
+      {error && !loading && <FriendlyError message={error} />}
 
       {/* Search */}
       <button type="button" className="btn-fm-primary gp-search" onClick={onSearch} disabled={!canSearch}>
