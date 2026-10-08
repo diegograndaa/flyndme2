@@ -111,6 +111,14 @@ test("render: VerificationBadge en todos los estados", async () => {
     }));
     assert.ok(html.length > 10, `badge vacío para ${status}`);
   }
+  // El detalle (precio anterior) va como texto, en la divisa elegida
+  const changed = renderWithI18n(React.createElement(VerificationBadge, {
+    dest: { verificationStatus: "changed", priceChangePct: -10, cachedAveragePerTraveler: 100 },
+    currency: "USD",
+  }));
+  assert.match(changed, /class="sr-only"/);
+  assert.match(changed, /\$\d+/);
+  assert.doesNotMatch(changed, /aria-label=/);
   // Sin estado → no renderiza nada
   const empty = renderWithI18n(React.createElement(VerificationBadge, { dest: {} }));
   assert.equal(empty, "");
