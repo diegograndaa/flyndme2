@@ -340,6 +340,7 @@ export default function App() {
   // Capa 2 de verificación (POST /api/flights/verify): generación de búsqueda
   // para descartar respuestas tardías + AbortController de la petición en vuelo.
   const searchGenRef = useRef(0);
+  const searchAbortRef = useRef(null);
   const verifyAbortRef = useRef(null);
 
   // Verificación bajo demanda (#5): estado del control "Comprobar precio en vivo"
@@ -802,13 +803,14 @@ export default function App() {
 
   // ── Ensure backend is awake before searching ─────────────────────────────────
 
-  async function ensureBackendAwake() {
+  async function ensureBackendAwake(isCancelled = () => false) {
     const PING_URL = `${API_BASE}/api/ping`;
     const MAX_WAKE = 15;           // up to 15 attempts = ~60 s
     const WAKE_DELAY = 4000;
 
     for (let i = 0; i < MAX_WAKE; i++) {
       if (isOffline()) return false;
+      if (isCancelled()) return false;
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 5000);
@@ -1098,13 +1100,16 @@ export default function App() {
     searchStartRef.current = Date.now();
     // Nueva búsqueda: invalida cualquier verificación en vuelo de la anterior
     searchGenRef.current += 1;
+    const gen = searchGenRef.current;
+    const cancelled = () => searchGenRef.current !== gen;
     verifyAbortRef.current?.abort();
     verifyAbortRef.current = null;
     setLiveCheck({ code: null, phase: null });
 
     try {
       // Step 1: wake backend if needed (ping is lightweight)
-      const awake = await ensureBackendAwake();
+      const awake = await ensureBackendAwake(cancelled);
+      if (cancelled()) return;
       if (!awake) {
         setError(t(isOffline() ? "errors.offline" : "errors.serverWaking"));
         return;
@@ -1134,6 +1139,7 @@ export default function App() {
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
           const controller = new AbortController();
+          searchAbortRef.current = controller;
           const timeout = setTimeout(() => controller.abort(), 45000);
 
           const res = await fetch(API_URL, {
@@ -1143,9 +1149,11 @@ export default function App() {
             signal: controller.signal,
           });
           clearTimeout(timeout);
+          if (cancelled()) return;
 
           if (res.status === 503 && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            if (cancelled()) return;
             continue;
           }
 
@@ -1153,11 +1161,13 @@ export default function App() {
             // 400/429 deterministas: no se reintentan. Mapeamos el code del
             // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
+            if (cancelled()) return;
             setError(errorMessageForCode(data.code, data.message || data.error));
             return;
           }
 
           const data = await res.json();
+          if (cancelled()) return;
           const arr  = Array.isArray(data.flights) ? data.flights : [];
 
           if (!arr.length) {
@@ -1221,9 +1231,11 @@ export default function App() {
           fetchCheaperDate(winner, searchGenRef.current);
           return;
         } catch (err) {
+          if (cancelled()) return;
           const isTransient = err instanceof TypeError || err.name === "AbortError";
           if (isTransient && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            if (cancelled()) return;
             continue;
           }
           if (!isTransient) break;
@@ -1235,8 +1247,18 @@ export default function App() {
       // → mostramos un motivo de conexión claro en su lugar.
       setError(t(isOffline() ? "errors.offline" : "errors.connection"));
     } finally {
-      setLoading(false);
+      if (!cancelled()) setLoading(false);
     }
+  };
+
+  // Un arranque en frío del backend + reintentos puede tener al usuario más de
+  // un minuto en el panel de carga: permitir volver al formulario sin esperar.
+  const cancelSearch = () => {
+    searchGenRef.current += 1;
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
+    setLoading(false);
+    setToast({ message: t("loading.cancelled"), type: "success" });
   };
 
   // Relanza la búsqueda cuando "Usar esta fecha" ya ha actualizado departureDate
@@ -1480,7 +1502,7 @@ export default function App() {
       )}
 
       {/* Loading bar */}
-      <SearchProgress loading={loading} origins={cleanOrigins} />
+      <SearchProgress loading={loading} origins={cleanOrigins} onCancel={cancelSearch} />
 
       {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}

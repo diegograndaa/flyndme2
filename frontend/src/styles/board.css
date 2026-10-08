@@ -488,6 +488,24 @@
 }
 .fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .fm-searching-board-arrow { color: var(--sign-line); font-size: 22px; font-weight: 800; }
+.fm-searching-cancel {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panel-muted);
+  background: transparent;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fm-searching-cancel:hover { color: var(--panel-ink); border-color: var(--panel-muted); }
+.fm-searching-cancel:focus-visible { outline: 2px solid var(--panel-ink); outline-offset: 2px; }
 
 /* ══ 7. Tarjeta ganadora → tarjeta de embarque ═══════════════════════════ */
 /* Nombre del destino en panel sobre la foto */
