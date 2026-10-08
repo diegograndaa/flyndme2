@@ -420,11 +420,12 @@ const SearchPage = React.memo(function SearchPage({
                       )}
                     </div>
                     {/* Passenger count stepper */}
-                    <div className="sf-pax" title={t("search.paxTooltip")} role="group" aria-label={t("search.paxTooltip")}>
+                    <div className="sf-pax" title={t("search.paxTooltip")} role="group"
+                      aria-label={city ? t("search.paxGroupCity", { city }) : t("search.paxGroupRow", { n: idx + 1 })}>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxDecrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.max(1, (p[idx] || 1) - 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
-                      <span className="sf-pax-count">{passengers[idx] || 1}</span>
+                      <span className="sf-pax-count" aria-live="polite">{passengers[idx] || 1}</span>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxIncrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
@@ -432,7 +433,7 @@ const SearchPage = React.memo(function SearchPage({
                     {/* Reorder + remove */}
                     <div className="sf-origin-actions-inline">
                       {origins.length > 1 && idx > 0 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")} aria-label={t("search.moveUp")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")} aria-label={`${t("search.moveUp")}: ${t("search.originAria", { n: idx + 1 })}`}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
@@ -441,7 +442,7 @@ const SearchPage = React.memo(function SearchPage({
                           }} aria-hidden="false"><ArrowUp size={15} /></button>
                       )}
                       {origins.length > 1 && idx < origins.length - 1 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={t("search.moveDown")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={`${t("search.moveDown")}: ${t("search.originAria", { n: idx + 1 })}`}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
@@ -454,15 +455,19 @@ const SearchPage = React.memo(function SearchPage({
                       <button
                         type="button"
                         className="sf-remove"
-                        onClick={() => {
+                        onClick={(e) => {
                           const copy = origins.filter((_, i) => i !== idx);
                           const pCopy = passengers.filter((_, i) => i !== idx);
                           setOrigins(copy.length ? copy : [""]);
                           setPassengers(pCopy.length ? pCopy : [1]);
+                          // El botón desaparece con su fila: el foco pasa a «Añadir viajero»
+                          // (enfocar un campo abriría sus sugerencias).
+                          const form = e.currentTarget.closest("form");
+                          setTimeout(() => form?.querySelector(".sf-add-btn")?.focus(), 0);
                         }}
                         disabled={loading}
                         title={t("search.removeTitle")}
-                        aria-label={t("search.removeTitle")}
+                        aria-label={`${t("search.removeTitle")} ${idx + 1}${city ? ` (${city})` : ""}`}
                       ><X size={16} /></button>
                     )}
                   </div>
