@@ -13,6 +13,32 @@ const CURRENCIES = new Set(["EUR", "GBP", "USD"]);
 export const MAX_LINK_ORIGINS = 8;
 // Mismo tope por origen que el backend (MAX_PAX_PER_ORIGIN).
 export const MAX_LINK_PAX = 9;
+// El formulario solo ofrece ±1, ±2 o ±3. El backend acepta hasta 5, pero un
+// enlace con otro valor no se puede enseñar en las pastillas: se descarta.
+const FLEX_DAYS = new Set([1, 2, 3]);
+// Mismo rango y paso que el deslizador del formulario (SearchPage).
+const BUDGET_MIN = 30;
+const BUDGET_MAX = 800;
+const BUDGET_STEP = 10;
+
+function validFlexDays(raw) {
+  const n = Number(raw);
+  return FLEX_DAYS.has(n) ? n : null;
+}
+
+function validBudget(raw) {
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < BUDGET_MIN || n > BUDGET_MAX || n % BUDGET_STEP !== 0) return null;
+  return n;
+}
+
+/** Añade ?flex= y ?budget= solo cuando esas opciones están activas y son válidas. */
+export function appendFlexBudgetParams(params, { flexEnabled, flexDays, budgetEnabled, maxBudget } = {}) {
+  const flex = flexEnabled ? validFlexDays(flexDays) : null;
+  if (flex != null) params.set("flex", String(flex));
+  const budget = budgetEnabled ? validBudget(maxBudget) : null;
+  if (budget != null) params.set("budget", String(budget));
+}
 
 // AAAA-MM-DD que además existe en el calendario (2026-13-45 o 2026-02-30 no).
 function isRealDate(s) {
@@ -67,6 +93,12 @@ export function parseSearchLinkParams(search) {
 
   const cur = (params.get("cur") || "").toUpperCase();
   if (CURRENCIES.has(cur)) out.currency = cur;
+
+  const flex = validFlexDays(params.get("flex"));
+  if (flex != null) out.flexDays = flex;
+
+  const budget = validBudget(params.get("budget"));
+  if (budget != null) out.maxBudget = budget;
 
   return out;
 }
