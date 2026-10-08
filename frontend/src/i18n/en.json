@@ -225,6 +225,8 @@
     "acMatches": "Matching airports",
     "paxLabel": "travelers",
     "paxTooltip": "Number of travelers from this city",
+    "paxGroupCity": "Travelers from {{city}}",
+    "paxGroupRow": "Travelers in row {{n}}",
     "paxDecrease": "One traveler less from this city",
     "paxIncrease": "One traveler more from this city",
     "originAria": "Departure city for traveler {{n}}",

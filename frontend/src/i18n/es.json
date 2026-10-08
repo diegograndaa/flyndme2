@@ -225,6 +225,8 @@
     "acMatches": "Aeropuertos que coinciden",
     "paxLabel": "viajeros",
     "paxTooltip": "Número de viajeros desde esta ciudad",
+    "paxGroupCity": "Viajeros desde {{city}}",
+    "paxGroupRow": "Viajeros de la fila {{n}}",
     "paxDecrease": "Un viajero menos desde esta ciudad",
     "paxIncrease": "Un viajero más desde esta ciudad",
     "originAria": "Ciudad de salida del viajero {{n}}",
