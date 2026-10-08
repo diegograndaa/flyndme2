@@ -496,6 +496,7 @@
     "boardTitle": "Buscando vuestro punto de encuentro",
     "cancel": "Cancelar búsqueda",
     "cancelled": "Búsqueda cancelada",
+    "waking": "Arrancando el servidor: puede tardar hasta un minuto",
     "messages": [
       "Encendiendo el panel de salidas…",
       "Consultando las salidas de cada ciudad…",
