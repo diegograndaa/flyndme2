@@ -585,6 +585,7 @@
     "perOrigin": "Por origen: {{details}}",
     "linkCopied": "¡Enlace copiado! Compártelo con tu grupo.",
     "searchLinkCopied": "¡Enlace de búsqueda copiado!",
+    "tapAgain": "Enlace listo. Pulsa Compartir otra vez para enviarlo.",
     "expired": "Este enlace ha expirado o no existe.",
     "sharing": "Generando enlace…"
   },

@@ -596,6 +596,28 @@ export default function App() {
     };
   };
 
+  // El enlace compartido se guarda una vez por resultado mostrado: así el
+  // segundo toque comparte sin esperar a la red. navigator.share y window.open
+  // exigen un gesto reciente del usuario, y crear el enlace con el backend en
+  // frío tarda más de lo que dura ese gesto.
+  const shareLinkCacheRef = useRef({ key: "", link: null });
+  const shareKey = () => `${searchGenRef.current}|${normalizeCode(bestDestination?.destination)}|${uiCriterion}`;
+  const cachedShareLink = () => (shareLinkCacheRef.current.key === shareKey() ? shareLinkCacheRef.current.link : null);
+  const getShareLink = async () => {
+    const cached = cachedShareLink();
+    if (cached) return cached;
+    const key = shareKey();
+    const link = await createShareLink();
+    if (link) shareLinkCacheRef.current = { key, link };
+    return link;
+  };
+  // Ventana abierta DENTRO del gesto; se navega cuando el enlace está listo.
+  const openShareWindow = (cached) => (cached ? null : window.open("", "_blank"));
+  const goShareWindow = (win, url) => {
+    if (win && !win.closed) { win.opener = null; win.location.href = url; }
+    else window.open(url, "_blank", "noopener");
+  };
+
   // ── Share (copies a shareable link) ─────────────────────────────────────────
 
   const handleShare = async () => {
@@ -603,7 +625,7 @@ export default function App() {
     setShareStatus("saving");
 
     try {
-      const link = await createShareLink();
+      const link = await getShareLink();
       if (!link) throw new Error("Failed to save");
       const { shareUrl } = link;
 
@@ -620,6 +642,7 @@ export default function App() {
         const lines = [
           t("share.title", { dest: destLabel(code) }),
           t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
+          t("board.estimateNote"),
           `🔗 ${shareUrl}`,
         ];
         await copyText(lines.join("\n"));
@@ -635,6 +658,7 @@ export default function App() {
         t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
         t("share.fairness", { score: (bd.fairnessScore ?? 0).toFixed(0) }),
         t("share.date", { date: `${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}` }),
+        t("board.estimateNote"),
       ];
       if (Array.isArray(bd.flights) && bd.flights.length) {
         lines.push(t("share.perOrigin", { details: bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · ") }));
@@ -655,7 +679,8 @@ export default function App() {
     const destName = destLabel(code);
 
     // Persist the result so the link unfurls the dynamic OG card.
-    const link = await createShareLink();
+    const win = openShareWindow(cachedShareLink());
+    const link = await getShareLink();
 
     const lines = [
       `✈ *FlyndMe* — ${destName}`,
@@ -664,11 +689,12 @@ export default function App() {
     if (Array.isArray(bd.flights) && bd.flights.length) {
       lines.push(bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
     }
+    lines.push(`_${t("board.estimateNote")}_`);
     // Rich social preview (WhatsApp/Telegram/Twitter) comes from the OG link.
     if (link) lines.push(`\n🔗 ${link.ogUrl}`);
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
-    window.open(waUrl, "_blank");
+    goShareWindow(win, waUrl);
     trackEvent("share_whatsapp", { destination: code });
   };
 
@@ -676,11 +702,12 @@ export default function App() {
     if (!bestDestination) return;
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
-    const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}`;
+    const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}\n${t("board.estimateNote")}`;
     // Share the OG link so Telegram unfurls the result card, not the bare SPA URL.
-    const link = await createShareLink();
+    const win = openShareWindow(cachedShareLink());
+    const link = await getShareLink();
     const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : window.location.href)}&text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    goShareWindow(win, url);
     trackEvent("share_telegram", { destination: code });
   };
 
@@ -689,16 +716,18 @@ export default function App() {
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
     // Persist first so the emailed link previews the result card where supported.
-    const link = await createShareLink();
+    const link = await getShareLink();
     const subject = `FlyndMe — ${t("results.eyebrow")}: ${destName}`;
     const body = [
       `✈ ${destName}`,
       `${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}`,
       `${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
+      t("board.estimateNote"),
       "",
       link ? link.ogUrl : window.location.href,
     ].join("\n");
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    // mailto: no abre ventana, así que no lo frena el bloqueo de ventanas emergentes.
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     trackEvent("share_email", { destination: code });
   };
 
@@ -726,15 +755,19 @@ export default function App() {
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
     // Persist first so the shared link unfurls the dynamic OG card, not the bare SPA URL.
-    const link = await createShareLink();
+    const link = await getShareLink();
     try {
       await navigator.share({
         title: `FlyndMe — ${destName}`,
-        text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
+        text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}\n${t("board.estimateNote")}`,
         url: link ? link.ogUrl : window.location.href,
       });
       trackEvent("share_native", { destination: code });
-    } catch { /* user cancelled */ }
+    } catch (err) {
+      // El gesto caducó mientras se creaba el enlace: ya está guardado, así
+      // que el siguiente toque comparte al instante.
+      if (err?.name === "NotAllowedError" && link) setToast({ message: t("share.tapAgain"), type: "success" });
+    }
   };
 
   // ── Analítica (Vercel Web Analytics, ver utils/analytics.js) ──────────────
