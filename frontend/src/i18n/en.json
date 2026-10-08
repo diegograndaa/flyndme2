@@ -524,7 +524,8 @@
   "recentSearches": {
     "title": "Recent searches",
     "clear": "Clear all",
-    "direct": "direct"
+    "direct": "direct",
+    "destCount": "{{n}} destinations"
   },
   "map": {
     "title": "Route map",

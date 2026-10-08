@@ -16,7 +16,7 @@ import {
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
-import { savedFlexDays, savedBudget, savedCabin, restoreFlexBudget, restoreDirectCabin, recentSearchKey } from "./utils/recentSearch";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
@@ -355,6 +355,7 @@ export default function App() {
         maxBudget: params.maxBudget || 0,
         directOnly: params.directOnly === true,
         cabinClass: savedCabin(params.cabinClass),
+        destinations: params.destinations || [],
         ts: Date.now(),
       };
       // Misma ruta con otra vuelta, otros viajeros, ±días o tope es otra búsqueda.
@@ -392,6 +393,8 @@ export default function App() {
     const cabin = restoreDirectCabin(entry);
     setDirectOnly(cabin.directOnly);
     setCabinClass(cabin.cabinClass);
+    // Sin destinos guardados: el pool. Si no, se quedarían los de la búsqueda anterior.
+    setSelectedDests(restoreDestinations(entry));
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -1159,6 +1162,7 @@ export default function App() {
             maxBudget: savedBudget(budgetEnabled, maxBudget),
             directOnly: directOnly === true,
             cabinClass: savedCabin(cabinClass),
+            destinations: savedDestinations(selectedDests, cleanOrigins),
           });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");

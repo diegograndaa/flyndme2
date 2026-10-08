@@ -4,6 +4,8 @@
 // Una búsqueda guardada antes de tener estos campos no los trae: se abre
 // en el día exacto y sin tope, que es lo que el formulario enseña por defecto.
 
+import { AIRPORT_MAP } from "./helpers.js";
+
 const FLEX_DAYS = new Set([1, 2, 3]);
 const BUDGET_MIN = 30;
 const BUDGET_MAX = 800;
@@ -11,6 +13,9 @@ const BUDGET_STEP = 10;
 // Las que el formulario puede dejar marcadas. FIRST la acepta el backend
 // (un enlace puede dejarla) aunque el formulario no tenga pastilla.
 const CABINS = new Set(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]);
+
+// El formulario elige destinos del catálogo. Vacío = el pool por defecto.
+const MAX_DESTS = Object.keys(AIRPORT_MAP).length;
 
 export function savedFlexDays(flexEnabled, flexDays) {
   const n = Number(flexDays);
@@ -29,6 +34,19 @@ export function savedCabin(cabinClass) {
   return CABINS.has(c) ? c : "ECONOMY";
 }
 
+/** Destinos del catálogo, sin orígenes ni repetidos. [] = pool por defecto. */
+export function savedDestinations(destinations, origins) {
+  const skip = new Set((origins || []).map((c) => String(c || "").trim().toUpperCase()));
+  const out = [];
+  for (const raw of destinations || []) {
+    const code = String(raw || "").trim().toUpperCase();
+    if (!AIRPORT_MAP[code] || skip.has(code) || out.includes(code)) continue;
+    out.push(code);
+    if (out.length >= MAX_DESTS) break;
+  }
+  return out;
+}
+
 /** @returns {{ flexDays: number|null, maxBudget: number|null }} null = apagado */
 export function restoreFlexBudget(entry) {
   const flex = Number(entry?.flexDays);
@@ -39,6 +57,11 @@ export function restoreFlexBudget(entry) {
       ? budget
       : null,
   };
+}
+
+/** Sin el campo (búsquedas viejas): el pool por defecto. */
+export function restoreDestinations(entry) {
+  return savedDestinations(entry?.destinations, entry?.origins);
 }
 
 /** Sin el campo (búsquedas viejas): directo apagado y turista. */
@@ -71,5 +94,6 @@ export function recentSearchKey(entry) {
     entry?.maxBudget || 0,
     entry?.directOnly === true ? 1 : 0,
     CABINS.has(String(entry?.cabinClass || "").toUpperCase()) ? String(entry.cabinClass).toUpperCase() : "ECONOMY",
+    restoreDestinations(entry).slice().sort().join(","),
   ].join("|");
 }

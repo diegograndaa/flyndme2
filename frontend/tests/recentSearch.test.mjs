@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { savedFlexDays, savedBudget, savedCabin, restoreFlexBudget, restoreDirectCabin, recentSearchKey } from "../src/utils/recentSearch.js";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "../src/utils/recentSearch.js";
 
 test("recentSearch: solo se guarda un margen que el formulario enseña", () => {
   assert.equal(savedFlexDays(true, 2), 2);
@@ -39,6 +39,14 @@ test("recentSearch: directo y cabina se guardan solo si el formulario los admite
   });
 });
 
+test("recentSearch: los destinos guardados son del catálogo y no son orígenes", () => {
+  assert.deepEqual(savedDestinations(["rom", "MAD", "XXX", "LIS", "lis"], ["MAD", "LON"]), ["ROM", "LIS"]);
+  assert.deepEqual(savedDestinations([], ["MAD"]), []);
+  assert.deepEqual(savedDestinations(undefined, ["MAD"]), []);
+  assert.deepEqual(restoreDestinations({}), []);
+  assert.deepEqual(restoreDestinations({ origins: ["MAD"], destinations: ["ROM", "MAD", "NOPE"] }), ["ROM"]);
+});
+
 test("recentSearch: la clave distingue vuelta, viajeros, margen y tope", () => {
   const base = { origins: ["MAD", "LON"], passengers: [1, 1], departureDate: "2026-11-15", tripType: "oneway", flexDays: 0, maxBudget: 0 };
   assert.equal(recentSearchKey(base), recentSearchKey({ ...base }));
@@ -47,6 +55,12 @@ test("recentSearch: la clave distingue vuelta, viajeros, margen y tope", () => {
   assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, passengers: [2, 1] }));
   assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, directOnly: true }));
   assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, cabinClass: "BUSINESS" }));
+  assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, destinations: ["ROM", "LIS"] }));
+  assert.equal(
+    recentSearchKey({ ...base, destinations: ["LIS", "ROM"] }),
+    recentSearchKey({ ...base, destinations: ["ROM", "LIS"] }),
+  );
+  assert.equal(recentSearchKey(base), recentSearchKey({ ...base, destinations: [] }));
   assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, tripType: "roundtrip", returnDate: "2026-11-22" }));
   // Una reciente vieja, sin viajeros ni extras, es la misma que 1 por ciudad en día exacto.
   assert.equal(

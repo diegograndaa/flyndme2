@@ -12,7 +12,7 @@ import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
-import { restoreFlexBudget, restoreDirectCabin } from "../utils/recentSearch";
+import { restoreFlexBudget, restoreDirectCabin, restoreDestinations } from "../utils/recentSearch";
 import DateField from "./DateField";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
@@ -231,6 +231,7 @@ const SearchPage = React.memo(function SearchPage({
                 {recentSearches.map((r, i) => {
                   const extra = restoreFlexBudget(r);
                   const cabin = restoreDirectCabin(r);
+                  const dests = restoreDestinations(r);
                   const cabinLabel = cabin.cabinClass === "PREMIUM_ECONOMY" ? t("search.cabinPremium")
                     : cabin.cabinClass === "BUSINESS" ? t("search.cabinBusiness")
                     : cabin.cabinClass === "FIRST" ? t("search.cabinFirst")
@@ -244,6 +245,8 @@ const SearchPage = React.memo(function SearchPage({
                         {extra.maxBudget ? ` · ${formatEur(extra.maxBudget)}` : ""}
                         {cabin.directOnly ? ` · ${t("recentSearches.direct")}` : ""}
                         {cabinLabel ? ` · ${cabinLabel}` : ""}
+                        {dests.length > 0 && dests.length <= 3 ? ` · ${dests.join(" · ")}` : ""}
+                        {dests.length > 3 ? ` · ${t("recentSearches.destCount", { n: dests.length })}` : ""}
                       </span>
                     </button>
                   );
