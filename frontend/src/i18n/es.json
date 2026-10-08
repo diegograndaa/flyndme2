@@ -609,8 +609,10 @@
     "skipToContent": "Ir al contenido",
     "scrollToTop": "Ir arriba",
     "close": "Cerrar",
-    "resultsAnnounce": "{{n}} destinos encontrados. Recomendado: {{dest}}, {{price}} por persona (estimación).",
-    "resultsAnnounceVerified": "{{n}} destinos encontrados. Recomendado: {{dest}}, {{price}} por persona.",
+    "resultsAnnounce": "{{found}}. Recomendado: {{dest}}, {{price}} por persona (estimación).",
+    "resultsAnnounceVerified": "{{found}}. Recomendado: {{dest}}, {{price}} por persona.",
+    "foundOne": "1 destino encontrado",
+    "foundMany": "{{n}} destinos encontrados",
     "priceVerified": "El precio recomendado se ha vuelto a comprobar."
   },
   "shortcuts": {

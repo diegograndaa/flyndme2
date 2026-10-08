@@ -1424,7 +1424,7 @@ export default function App() {
               const verified = bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed";
               return [
                 t(verified ? "a11y.resultsAnnounceVerified" : "a11y.resultsAnnounce", {
-                  n: flights.length,
+                  found: flights.length === 1 ? t("a11y.foundOne") : t("a11y.foundMany", { n: flights.length }),
                   dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
                   price: currency === "EUR"
                     ? formatEur(bestDestination.averageCostPerTraveler, 0)
