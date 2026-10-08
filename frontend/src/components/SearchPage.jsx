@@ -692,7 +692,8 @@ const SearchPage = React.memo(function SearchPage({
             )}
 
             {error && <FriendlyError message={error} onRetry={onSubmit} />}
-            {error && errorHint && <Notice variant="next" {...errorHint} />}
+            {/* Región viva siempre presente: la sugerencia llega en segundo plano */}
+            <div aria-live="polite">{error && errorHint && <Notice variant="next" {...errorHint} />}</div>
 
             {/* Traveler summary bar */}
             {origins.some((o) => o.trim()) && (
