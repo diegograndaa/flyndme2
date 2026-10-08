@@ -834,6 +834,9 @@ export default function App() {
     verifyAbortRef.current?.abort();
     const controller = new AbortController();
     verifyAbortRef.current = controller;
+    // Sin respuesta en 35 s (el backend corta a los 20 s y Render a los ~30 s):
+    // se aborta y el botón pasa a «no se pudo comprobar» en vez de quedarse girando.
+    const verifyTimer = setTimeout(() => controller.abort(), 35000);
 
     fetch(`${API_BASE}/api/flights/verify`, {
       method: "POST",
@@ -859,7 +862,8 @@ export default function App() {
       .catch(() => {
         if (searchGenRef.current !== gen) return; // abortada por búsqueda nueva
         setLiveCheck({ code, phase: "unavailable" });
-      });
+      })
+      .finally(() => clearTimeout(verifyTimer));
   };
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
