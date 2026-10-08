@@ -1677,6 +1677,8 @@ button,
   --decision-bg: #0D0E11;
   --decision-line: #E6E8EC;
 }
+/* Recibe el foco por programa tras buscar (tabIndex -1): no es un control */
+.fm-decision:focus { outline: none; }
 .fm-decision .wc-card.wc-card { margin: 0; }
 .fm-decision .fm-group-block { margin: 14px 0 0; }
 .fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 14px; }

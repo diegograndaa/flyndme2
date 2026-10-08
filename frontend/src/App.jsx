@@ -1183,6 +1183,9 @@ export default function App() {
           });
 
           setView("results");
+          // Foco al principio de los resultados (el botón de buscar desaparece y
+          // el foco caía en <body>): teclado y lector de pantalla siguen desde aquí.
+          setTimeout(() => document.querySelector(".fm-decision")?.focus({ preventScroll: true }), 80);
           document.title = "FlyndMe - Flight Results";
           window.scrollTo({ top: 0, behavior: scrollBehavior() });
           // Record search duration
@@ -1648,7 +1651,7 @@ export default function App() {
           {/* ══ 01 · DECISIÓN FINAL ══ Lo que os conviene reservar, separado de
               la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
               decisión) + reparto del grupo + siguiente paso. */}
-          <section className="fm-decision" aria-labelledby="fm-decision-title">
+          <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
           <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
