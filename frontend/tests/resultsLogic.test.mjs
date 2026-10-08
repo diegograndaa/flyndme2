@@ -78,7 +78,8 @@ test("buildResultsCsv: cabecera, filas y precios por origen", () => {
   const csv = buildResultsCsv(RESULTS, ["MAD", "LON"]);
   const lines = csv.split("\n");
   assert.equal(lines.length, 4); // cabecera + 3 destinos
-  assert.ok(lines[0].includes('"MAD price"'));
+  assert.ok(lines[0].includes('"MAD price/person estimate (EUR)"'));
+  assert.ok(lines[0].includes('"Total estimate (EUR)"'));
   assert.ok(lines[1].includes('"ROM"'));
   assert.ok(lines[1].includes('"Rome"'));
   assert.ok(lines[1].includes('"100.00"'));

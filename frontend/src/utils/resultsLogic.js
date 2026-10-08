@@ -79,7 +79,8 @@ function csvCell(c) {
 }
 
 export function buildResultsCsv(flights, origins) {
-  const rows = [["Destination", "City", "Total (EUR)", "Avg/person (EUR)", "Fairness", ...origins.map((o) => `${o} price`)]];
+  // Las cabeceras dicen que son estimaciones: el CSV circula sin la app al lado.
+  const rows = [["Destination", "City", "Total estimate (EUR)", "Avg/person estimate (EUR)", "Fairness (0-100)", ...origins.map((o) => `${o} price/person estimate (EUR)`)]];
   (flights || []).forEach((f) => {
     const code = normalizeCode(f.destination);
     const priceMap = {};
