@@ -36,14 +36,17 @@ import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
+import { resolveApiBase } from "./utils/apiBase";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "")
-  || "https://flyndme-backend.onrender.com";
+const API_BASE = resolveApiBase(import.meta.env);
+if (import.meta.env && !import.meta.env.VITE_API_BASE_URL && !import.meta.env.PROD) {
+  console.warn(`[FlyndMe] VITE_API_BASE_URL no definida: usando ${API_BASE} (backend local).`);
+}
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
 

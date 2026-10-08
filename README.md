@@ -89,6 +89,19 @@ ejecuta con horas de retraso, así que hace falta un pinger externo gratuito:
 el mes consume ~744 de las 750 horas gratuitas de Render: vale para un único
 servicio gratuito en la cuenta.
 
+**`keep-alive.yml` se apaga solo:** GitHub desactiva los workflows programados
+tras 60 días sin actividad en el repo (ya pasó el 30-ago-2026). Para volver a
+encenderlo: Actions → keep-alive → «Enable workflow» (o cualquier push). Con el
+pinger externo dado de alta deja de importar; si no lo hay, revisa en Actions
+que el workflow siga activo cuando el repo lleve semanas sin pushes.
+
+## URL del backend en el frontend
+
+`VITE_API_BASE_URL` (sin barra final). Si falta, un build de producción usa
+`https://flyndme-backend.onrender.com` como respaldo y `npm run dev` usa
+`http://localhost:5000` con un aviso en consola: el desarrollo nunca llama a
+producción por accidente (`src/utils/apiBase.js`).
+
 ## Variables de entorno
 
 Ver `backend/.env.example` (servidor, mock, token y marker de Travelpayouts,
