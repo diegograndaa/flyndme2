@@ -151,11 +151,14 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     cabinClass: "ECONOMY", setCabinClass: noop,
     currency: "EUR", setCurrency: noop,
     loading: false, error: "", onSubmit: noop,
-    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    recentSearches: [{ origins: ["MAD", "LON"], departureDate: "2026-11-15", tripType: "oneway", flexDays: 2, maxBudget: 150 }],
+    onLoadRecent: noop, onClearRecent: noop,
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("MAD"));
+  assert.ok(html.includes("±2d"), "la reciente enseña el margen de fechas");
+  assert.ok(html.includes("150"), "la reciente enseña el tope");
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
