@@ -924,6 +924,7 @@
     "addLabel": "Añade tu ciudad de salida",
     "namePlaceholder": "Tu nombre (opcional)",
     "cityPlaceholder": "Ciudad o aeropuerto",
+    "unknownCity": "No reconocemos «{{code}}». Elige tu ciudad de la lista; si es el código de tu aeropuerto, pulsa Añadir otra vez.",
     "add": "Añadir",
     "findDestination": "Buscar el mejor destino",
     "searchHint": "Cualquiera del grupo puede lanzar la búsqueda.",
