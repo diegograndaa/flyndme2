@@ -192,10 +192,9 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   assert.ok(html.includes("Rome") || html.includes("ROM"));
 });
 
-test("render: instrumentos de cabina (odómetro, ILS, radar, conmutadores)", async () => {
+test("render: instrumentos de cabina (odómetro, ILS, conmutadores)", async () => {
   const { Odometer } = await import("../src/components/Odometer.jsx");
   const { WhoPaysStrip } = await import("../src/components/WinnerCard.jsx");
-  const { default: ConvergenceHero } = await import("../src/components/ConvergenceHero.jsx");
   const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
   // Odómetro: el texto accesible es SIEMPRE el valor real (las cintas arrancan
   // en 0 en el primer frame de cliente y suben hasta él)
@@ -208,11 +207,6 @@ test("render: instrumentos de cabina (odómetro, ILS, radar, conmutadores)", asy
   assert.equal((ils.match(/wc-ils-diamond/g) || []).length, 2);
   assert.ok(ils.includes("translateX(-42.00%)") && ils.includes("translateX(42.00%)"), "MAD por debajo y LON por encima de la media");
   assert.ok(!ils.includes('class="wc-twr'), "la torre solo aparece al tocar una fila");
-  // Radar: tres aeropuertos pulsables con distancia y tiempo estimado
-  const hero = renderWithI18n(React.createElement(ConvergenceHero, { idSuffix: "-t" }));
-  assert.equal((hero.match(/class="cv-hit"/g) || []).length, 3);
-  assert.ok(hero.includes("cv-sweep") && (hero.match(/cv-ping/g) || []).length === 3);
-  assert.ok(/km/.test(hero), "la etiqueta accesible incluye los km");
   // Conmutadores: criterio con micro-LED y ruta pulsable (cerrada) con estrobo
   const noop = () => {};
   const card = renderWithI18n(React.createElement(WinnerCard, {

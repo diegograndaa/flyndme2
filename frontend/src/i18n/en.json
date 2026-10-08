@@ -8,7 +8,6 @@
   "header": {
     "tagline": "Meeting points for groups",
     "newSearch": "New search",
-    "home": "Home",
     "serverOnline": "Server online",
     "serverWaking": "Server waking up…"
   },
@@ -417,24 +416,14 @@
     "verifiedAt": "Verified at {{time}}",
     "indicativeHint": "Live re-pricing was unavailable; showing original search price."
   },
-  "vs": {
-    "title": "Compare destinations",
-    "totalCost": "Total group cost",
-    "avgPerPerson": "Avg per person",
-    "fairness": "Fairness score"
-  },
   "board": {
     "flightHead": "Group flight",
     "travelers": "{{n}} travelers",
-    "announcements": "Notices",
-    "tagDate": "Date",
-    "tagGroup": "Group",
     "tagNotice": "Notice",
     "departures": "Departures",
     "departuresSub": "{{n}} destinations for your group · tap one to see it",
     "colDest": "Destination",
     "colPrice": "Per person",
-    "colFair": "Fairness",
     "colPay": "Who pays what",
     "travLegend": "Colour of each departure city",
     "payAria": "What each traveller pays: {{list}}",
@@ -492,25 +481,6 @@
       "PROVIDER_UNAVAILABLE": "Our price provider isn't responding right now, so we can't tell whether there are flights. Please try again in a few minutes."
     }
   },
-  "alt": {
-    "recommended": "Recommended",
-    "groupTotal": "Group total",
-    "perPerson": "Per person",
-    "fairness": "Fairness",
-    "hideBreakdown": "Hide breakdown ▲",
-    "viewBreakdown": "View prices per origin ▼",
-    "bookOn": "Search on",
-    "noData": "No data",
-    "noAlternatives": "No alternatives available",
-    "budgetActive": "Active budget: max. {{amount}} per person.",
-    "budgetFilter": "Active filter: max. {{amount}} per person.",
-    "noMore": "No more alternatives to show.",
-    "noAltSuggestion": "Try adding more origins or using flexible dates to find alternatives.",
-    "season.summer": "Summer",
-    "season.winter": "Winter",
-    "season.spring": "Spring",
-    "season.autumn": "Autumn"
-  },
   "loading": {
     "boardTitle": "Finding your meeting point",
     "cancel": "Cancel search",
@@ -557,8 +527,8 @@
     "meetPoint": "Meeting point",
     "showCard": "View pass",
     "tapHint": "Tap to put it on your pass",
-    "selectAria": "{{city}}: {{price}} per person (estimate). Put it on your pass",
-    "bestAria": "{{city}}: {{price}} per person (estimate). Meeting point on your pass",
+    "selectAria": "{{city}}: {{price}} per person. Put it on your pass",
+    "bestAria": "{{city}}: {{price}} per person. Meeting point on your pass",
     "best": "Best",
     "groupTotal": "Group total",
     "ariaLabel": "Map of European destinations with flight prices"
@@ -572,11 +542,6 @@
     "best": "Best",
     "bestFair": "Most even"
   },
-  "social": {
-    "counter": "{{n}} groups have searched today",
-    "counterSub": "Join them and find your best meeting point"
-  },
-  "footer": "FlyndMe — Find where to meet your group at the best price.",
   "footerBrand": "FlyndMe",
   "footerTagline": "Find the cheapest place to meet your group.",
   "footerHow": "How it works",
@@ -615,8 +580,7 @@
   },
   "theme": {
     "light": "Light mode",
-    "dark": "Dark mode",
-    "system": "System"
+    "dark": "Dark mode"
   },
   "favorites": {
     "title": "Saved destinations",
@@ -625,11 +589,6 @@
     "open": "View {{city}} details",
     "notInResults": "{{city}} isn't in the current results. Run a search to see its details.",
     "priceNote": "Estimated price on the day you saved it. Search again to see today's."
-  },
-  "breadcrumb": {
-    "home": "Home",
-    "search": "Search",
-    "results": "Results"
   },
   "a11y": {
     "skipToContent": "Skip to content",
@@ -653,99 +612,6 @@
     "on": "on",
     "off": "off",
     "charKeysHint": "Turn them off if you use voice control or trigger them by accident. Escape keeps working."
-  },
-  "checklist": {
-    "title": "Travel preparation checklist",
-    "passport": "Check passport validity",
-    "insurance": "Get travel insurance",
-    "accommodation": "Book accommodation",
-    "transport": "Plan airport transfer",
-    "currency": "Check local currency & payments",
-    "charger": "Pack adapter/charger",
-    "returnConfirm": "Confirm return flight details"
-  },
-  "radar": {
-    "title": "Top 2 destinations compared",
-    "price": "Price",
-    "fairness": "Fairness",
-    "popularity": "Coverage",
-    "value": "Value"
-  },
-  "history": {
-    "title": "Your recent searches",
-    "clear": "Clear all"
-  },
-  "facts": {
-    "title": "Quick facts about your destination",
-    "language": "Language",
-    "timezone": "Timezone",
-    "currency": "Currency",
-    "plugType": "Plug type"
-  },
-  "countdown": {
-    "days": "d",
-    "hours": "h",
-    "mins": "m",
-    "until": "until departure"
-  },
-  "co2": {
-    "perPerson": "person",
-    "groupTotal": "total group",
-    "tree": "tree",
-    "trees": "trees",
-    "toOffset": "to offset/year"
-  },
-  "popularity": {
-    "title": "Destination insights",
-    "rank": "of {{total}} destinations",
-    "routes": "routes with data",
-    "coverage": "coverage"
-  },
-  "groupChat": {
-    "title": "Share with your group",
-    "sub": "Send the trip summary to your group chat",
-    "header": "Group trip found!",
-    "destination": "Destination",
-    "origins": "Origins",
-    "copy": "Copy message"
-  },
-  "baggage": {
-    "title": "Baggage heads-up",
-    "hint": "Some flights use budget carriers ({{airlines}}) — check carry-on and checked bag policies before booking"
-  },
-  "originTable": {
-    "title": "Price ranking by origin",
-    "byPrice": "By price",
-    "byOrigin": "By city"
-  },
-  "tripInsight": {
-    "roundtripSaving": "Round trip saves ~{{pct}}% compared to booking two separate one-way flights"
-  },
-  "altDates": {
-    "title": "Flexible dates tip",
-    "hint": "Flying on {{day}} could save you {{saving}} on average — midweek flights are usually cheaper"
-  },
-  "duration": {
-    "title": "Travel time comparison",
-    "flying": "Flying",
-    "layover": "Layover"
-  },
-  "fxCalc": {
-    "title": "Currency converter",
-    "note": "Approximate rates — check current rates before traveling"
-  },
-  "bookWindow": {
-    "title": "Booking timing",
-    "lastMinute": "Only {{days}} days away — last-minute prices may be higher, book now if you can",
-    "soon": "{{days}} days to departure — good time to lock in your fare before prices rise",
-    "ideal": "{{days}} days out — this is the sweet spot for booking European flights",
-    "early": "{{days}} days ahead — prices may drop closer to departure, but booking now guarantees availability",
-    "veryEarly": "{{days}} days away — you're very early! Consider setting a price alert"
-  },
-  "shareLink": {
-    "label": "Share this search with your group",
-    "copy": "Copy link",
-    "copied": "Copied!"
   },
   "cheaperDate": {
     "text": "Meet on {{date}} and the group pays {{total}} — save {{saving}}",
@@ -781,151 +647,6 @@
     "dayOne": "1 day",
     "dayMany": "{{d}} days",
     "daysAndHours": "{{days}} {{h}}h"
-  },
-  "stopover": {
-    "title": "Stopovers",
-    "allDirect": "All direct flights!",
-    "direct": "Direct",
-    "oneStop": "1 stop",
-    "stops": "stops"
-  },
-  "airlines": {
-    "label": "Airlines on this route:"
-  },
-  "priceHint": {
-    "rising": "Prices are likely rising — last-minute fares tend to increase significantly",
-    "risingModerate": "Prices may start climbing — consider booking soon to lock in current rates",
-    "stable": "Current prices look reasonable for this timeframe",
-    "goodWindow": "You're in a good booking window — prices are typically stable at this range",
-    "mayDrop": "Prices may still drop as the date approaches — but availability could decrease"
-  },
-  "budgetGauge": {
-    "title": "Group budget tracker",
-    "remaining": "{{amount}} remaining"
-  },
-  "visa": {
-    "schengen": "Schengen area — EU/EEA citizens travel freely, others may need a Schengen visa",
-    "euEea": "EU/EEA country — free movement for EU citizens, check requirements for others",
-    "uk": "United Kingdom — EU citizens may need to check post-Brexit entry requirements",
-    "turkey": "Turkey — many nationalities need an e-visa (quick online application)",
-    "morocco": "Morocco — visa requirements vary by nationality, check before booking",
-    "other": "Check visa requirements for your nationality before booking"
-  },
-  "returnFlight": {
-    "title": "Return flights"
-  },
-  "destEvent": {
-    "title": "What's happening there"
-  },
-  "priceBreakdown": {
-    "title": "Price breakdown by origin",
-    "origin": "Origin",
-    "base": "Base fare",
-    "taxes": "Taxes",
-    "total": "Total"
-  },
-  "groupSize": {
-    "travelers": "travelers",
-    "total": "Group total",
-    "perPerson": "Per person"
-  },
-  "searchSpeed": {
-    "fast": "Lightning fast",
-    "normal": "Normal speed",
-    "slow": "Took a while"
-  },
-  "nearby": {
-    "title": "Nearby airports to check",
-    "also": "also try"
-  },
-  "timezone": {
-    "title": "Timezone difference at destination",
-    "same": "Same timezone"
-  },
-  "flightClass": {
-    "economy": "Economy",
-    "premEconomy": "Premium Economy",
-    "business": "Business",
-    "first": "First Class"
-  },
-  "tripExport": {
-    "header": "FlyndMe Trip Summary",
-    "dest": "Destination",
-    "origins": "Origins",
-    "via": "Found via",
-    "copy": "Copy trip summary",
-    "copied": "Copied!"
-  },
-  "extCompare": {
-    "label": "Verify prices on:"
-  },
-  "safety": {
-    "title": "Travel safety",
-    "veryHigh": "Very high",
-    "high": "High",
-    "moderate": "Moderate"
-  },
-  "connWarn": {
-    "title": "Tight connection warning",
-    "min": " min layover",
-    "at": "at"
-  },
-  "season": {
-    "title": "Seasonal demand",
-    "peakSummer": "Peak summer season — expect higher prices and crowds",
-    "peakWinter": "Peak winter/holiday season — popular time, book early",
-    "shoulder": "Shoulder season — good balance of prices and weather",
-    "offSeason": "Off-season — lower prices and fewer tourists"
-  },
-  "distMap": {
-    "title": "Distance from each origin"
-  },
-  "bookmark": {
-    "save": "Bookmark this result",
-    "saved": "Bookmarked!"
-  },
-  "dep24": {
-    "text": "First departure in {{hours}}h {{mins}}m — don't forget to check in!"
-  },
-  "soloSave": {
-    "title": "Group search advantage",
-    "text": "By comparing together, your group saves an estimated {{amount}} vs searching individually"
-  },
-  "transport": {
-    "title": "Local transport",
-    "tip": "Tip"
-  },
-  "multiCity": {
-    "title": "Also explore nearby"
-  },
-  "codeshare": {
-    "title": "Codeshare flights detected",
-    "operatedBy": "operated by"
-  },
-  "food": {
-    "title": "Must-try local dish",
-    "tryIt": "Don't miss"
-  },
-  "wifi": {
-    "title": "WiFi & connectivity",
-    "excellent": "Excellent coverage",
-    "good": "Good coverage",
-    "average": "Average coverage",
-    "limited": "Limited coverage",
-    "poor": "Poor coverage"
-  },
-  "perDay": {
-    "title": "Flight cost per day",
-    "text": "Based on {{days}} trip days, flights cost ~{{amount}} per person per day"
-  },
-  "earlyAm": {
-    "title": "Early departure alert",
-    "text": "{{origins}} have departures before 7:00 AM — plan transport to the airport the night before"
-  },
-  "phrase": {
-    "title": "Useful local phrases",
-    "hello": "Hello",
-    "thanks": "Thanks"
   },
   "group": {
     "cta": "Planning with others? Invite your group",
