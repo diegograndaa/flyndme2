@@ -3,6 +3,8 @@
 // que la app realmente acepta: una URL manipulada o con typos ya no inyecta
 // estado inválido (p. ej. ?cabin=FOO acababa en un 400 del backend).
 
+import { AIRPORT_MAP } from "./helpers.js";
+
 const IATA_RE = /^[A-Z]{3}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TRIP_TYPES = new Set(["oneway", "roundtrip"]);
@@ -30,6 +32,26 @@ function validBudget(raw) {
   const n = Number(raw);
   if (!Number.isInteger(n) || n < BUDGET_MIN || n > BUDGET_MAX || n % BUDGET_STEP !== 0) return null;
   return n;
+}
+
+// El formulario elige destinos del catálogo (54). Vacío = el pool por defecto.
+const MAX_LINK_DESTS = Object.keys(AIRPORT_MAP).length;
+
+function knownDestinations(codes, origins) {
+  const skip = new Set((origins || []).map((c) => String(c || "").trim().toUpperCase()));
+  const out = [];
+  for (const raw of codes || []) {
+    const code = String(raw || "").trim().toUpperCase();
+    if (!AIRPORT_MAP[code] || skip.has(code) || out.includes(code)) continue;
+    out.push(code);
+    if (out.length >= MAX_LINK_DESTS) break;
+  }
+  return out;
+}
+
+/** ?d=ROM&d=LIS. Sin destinos válidos no añade nada (la búsqueda usa el pool). */
+export function appendDestinationParams(params, destinations, origins) {
+  for (const code of knownDestinations(destinations, origins)) params.append("d", code);
 }
 
 /** Añade ?flex= y ?budget= solo cuando esas opciones están activas y son válidas. */
@@ -99,6 +121,9 @@ export function parseSearchLinkParams(search) {
 
   const budget = validBudget(params.get("budget"));
   if (budget != null) out.maxBudget = budget;
+
+  const destinations = knownDestinations(params.getAll("d"), origins);
+  if (destinations.length) out.destinations = destinations;
 
   return out;
 }

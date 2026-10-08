@@ -15,7 +15,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { parseSearchLinkParams, appendFlexBudgetParams } from "./utils/urlParams";
+import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
@@ -495,6 +495,7 @@ export default function App() {
     if (parsed.currency) setCurrency(parsed.currency);
     if (parsed.flexDays) { setFlexEnabled(true); setFlexDays(parsed.flexDays); }
     if (parsed.maxBudget) { setBudgetEnabled(true); setMaxBudget(parsed.maxBudget); }
+    if (parsed.destinations) setSelectedDests(parsed.destinations);
     setView("search");
     window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -722,6 +723,7 @@ export default function App() {
     if (cabinClass !== "ECONOMY") params.set("cabin", cabinClass);
     if (currency !== "EUR") params.set("cur", currency);
     appendFlexBudgetParams(params, { flexEnabled, flexDays, budgetEnabled, maxBudget });
+    appendDestinationParams(params, selectedDests, rows.map((r) => r.code));
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     copyText(url);
     setToast({ message: t("share.searchLinkCopied"), type: "success" });
