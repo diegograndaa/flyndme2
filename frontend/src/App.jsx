@@ -1386,21 +1386,28 @@ export default function App() {
               <div className="fm-fav-panel-list">
                 {favs.map((f) => (
                   <div key={f.code} className="fm-fav-panel-item">
-                    <button type="button" className="fm-fav-panel-open"
-                      onClick={() => openFavorite(f)}
-                      aria-label={t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}>
-                      <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
+                    <button type="button" className="fm-fav-panel-open" onClick={() => openFavorite(f)}>
+                      <span className="sr-only">{t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}: </span>
+                      <span className="fm-fav-panel-flag" aria-hidden="true">{countryFlag(f.code)}</span>
                       <span className="fm-fav-panel-info">
                         <span className="fm-fav-panel-code">{f.code}</span>
                         <span className="fm-fav-panel-city">{cityOf(f.code) || f.city}</span>
                       </span>
-                      <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
+                      <span className="fm-fav-panel-price">
+                        {formatEur(f.price, 0)}/pp
+                        {Number(f.ts) > 0 && (
+                          <span className="fm-fav-panel-date">
+                            {new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short" }).format(new Date(Number(f.ts)))}
+                          </span>
+                        )}
+                      </span>
                       <ChevronRight size={16} className="fm-fav-panel-chevron lucide" aria-hidden="true" />
                     </button>
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: cityOf(f.code) || f.city || f.code })}
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
+                <p className="fm-fav-panel-note">{t("favorites.priceNote")}</p>
               </div>
             )}
           </div>
