@@ -470,6 +470,7 @@
       "INVALID_TRAVEL_CLASS": "Esa clase de cabina no está disponible. Elige otra.",
       "MONTHLY_BUDGET_EXCEEDED": "Hemos alcanzado el límite mensual de búsquedas gratuitas. Inténtalo el mes que viene.",
       "INTERNAL_ERROR": "Algo ha fallado por nuestra parte. Inténtalo de nuevo.",
+      "RATE_LIMITED": "Has hecho muchas búsquedas seguidas. Espera unos minutos y vuelve a intentarlo.",
       "PROVIDER_UNAVAILABLE": "Nuestro proveedor de precios no responde ahora mismo, así que no podemos saber si hay vuelos. Inténtalo de nuevo en unos minutos."
     }
   },
