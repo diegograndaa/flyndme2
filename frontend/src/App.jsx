@@ -39,6 +39,7 @@ import { getCityImage } from "./utils/cityImages";
 import { resolveApiBase } from "./utils/apiBase";
 import { downloadText } from "./utils/download";
 import { readStoredList, isRecentSearchEntry } from "./utils/storage";
+import { normalizeSharedFlights } from "./utils/sharedResults";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -453,13 +454,14 @@ export default function App() {
       })
       .then((data) => {
         const { results, searchParams } = data;
-        if (!results?.flights?.length) { const e = new Error("empty"); e.expired = true; throw e; }
-        setFlights(results.flights);
+        const shared = normalizeSharedFlights(results?.flights);
+        if (!shared.length) { const e = new Error("empty"); e.expired = true; throw e; }
+        setFlights(shared);
         lastSearchRef.current = null;
-        setBestByCriterion(results.bestByCriterion || {
-          total: pickBest(results.flights, "total"),
-          fairness: pickBest(results.flights, "fairness"),
-        });
+        // Se respeta el destino que el usuario tenía en su tarjeta al
+        // compartir, si existe entre los datos normalizados; si no, el mejor.
+        const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
+        setBestByCriterion({ total: keep("total"), fairness: keep("fairness") });
         if (searchParams) {
           if (searchParams.origins?.length) setOrigins(searchParams.origins);
           if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
