@@ -12,7 +12,7 @@ import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
+import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
@@ -68,6 +68,12 @@ const WinnerCard = React.memo(function WinnerCard({
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
   const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
+  const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
+  useEffect(() => {
+    if (!copied) return undefined;
+    const id = setTimeout(() => setCopied(null), 2000);
+    return () => clearTimeout(id);
+  }, [copied]);
 
   useEffect(() => {
     if (dest) {
@@ -178,6 +184,7 @@ const WinnerCard = React.memo(function WinnerCard({
           Es el centro de la decisión (antes iba debajo de la matriz de precios,
           el reparto y el troquel, y además plegable). */}
       <div className="wc-buy">
+        <span className="sr-only" role="status">{copied ? t(copied.ok ? "results.copied" : "results.copyFailed") : ""}</span>
         <div className="wc-buy-head">
           <div className="wc-buy-heading">
             <span className="wc-buy-kicker">
@@ -390,11 +397,13 @@ const WinnerCard = React.memo(function WinnerCard({
                           Google Flights
                         </a>
                       )}
-                      <button type="button" className="wc-cta wc-cta--copy" onClick={() => {
-                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""}`;
-                        copyText(txt);
+                      <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
+                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
+                        setCopied({ origin, ok: await copyText(txt) });
                       }} title={t("results.copyFlight")} aria-label={t("results.copyFlight")}>
-                        <Copy size={15} aria-hidden="true" />
+                        {copied?.origin === origin && copied.ok
+                          ? <Check size={15} aria-hidden="true" />
+                          : <Copy size={15} aria-hidden="true" />}
                       </button>
                     </div>
                   </div>
