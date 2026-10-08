@@ -4397,6 +4397,22 @@ html {
   font-size: 13px;
   color: var(--slate-600);
 }
+.fm-shortcuts-charkeys { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.fm-shortcuts-toggle {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: transparent;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fm-shortcuts-toggle[aria-pressed="false"] { color: var(--slate-700); }
+.fm-shortcuts-hint { font-size: 12px; line-height: 1.45; color: var(--slate-500); }
 [data-theme="dark"] .fm-shortcuts-modal {
   background: #25282F;
   box-shadow: none;

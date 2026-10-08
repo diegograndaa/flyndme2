@@ -617,7 +617,11 @@
     "escape": "Go back / close panel",
     "help": "Show this help",
     "home": "Go to home page",
-    "search": "Go to search"
+    "search": "Go to search",
+    "charKeys": "Single-key shortcuts (H, S, ?)",
+    "on": "on",
+    "off": "off",
+    "charKeysHint": "Turn them off if you use voice control or trigger them by accident. Escape keeps working."
   },
   "checklist": {
     "title": "Travel preparation checklist",

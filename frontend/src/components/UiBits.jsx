@@ -39,7 +39,7 @@ export function ScrollProgressBar() {
 }
 
 // Overlay de atajos de teclado
-export function KeyboardShortcutsOverlay({ show, onClose, t }) {
+export function KeyboardShortcutsOverlay({ show, onClose, t, charKeys = true, onToggleCharKeys }) {
   // Focus-trap (a11y): debe llamarse antes del early return (reglas de hooks).
   const trapRef = useFocusTrap(show, onClose);
   if (!show) return null;
@@ -63,6 +63,14 @@ export function KeyboardShortcutsOverlay({ show, onClose, t }) {
               <span className="fm-shortcuts-desc">{s.desc}</span>
             </div>
           ))}
+          {onToggleCharKeys && (
+            <div className="fm-shortcuts-charkeys">
+              <button type="button" className="fm-shortcuts-toggle" aria-pressed={charKeys} onClick={onToggleCharKeys}>
+                {t("shortcuts.charKeys")}: {charKeys ? t("shortcuts.on") : t("shortcuts.off")}
+              </button>
+              <span className="fm-shortcuts-hint">{t("shortcuts.charKeysHint")}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
