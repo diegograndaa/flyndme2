@@ -724,12 +724,17 @@ router.post("/cheaper-date", async (req, res) => {
 
     const { origins, passengers, destination, departureDate, returnDate, tripType, currentTotalEUR } = req.body || {};
 
-    const originList = (Array.isArray(origins) ? origins : [])
+    // Mismos topes que /multi-origin: cada origen son 1-2 consultas al
+    // calendario del proveedor, así que sin tope el endpoint amplificaría.
+    const originList = [...new Set((Array.isArray(origins) ? origins : [])
       .map((o) => String(o || "").trim().toUpperCase())
-      .filter(isValidIata);
+      .filter(isValidIata))];
     const dest = String(destination || "").trim().toUpperCase();
-    if (originList.length === 0 || !isValidIata(dest)) {
+    if (originList.length === 0 || originList.length > MAX_ORIGINS || !isValidIata(dest) || originList.includes(dest)) {
       return res.status(400).json({ code: "INVALID_ORIGINS", message: "origins/destination inválidos." });
+    }
+    if (passengers !== undefined && !Array.isArray(passengers)) {
+      return res.status(400).json({ code: "INVALID_PASSENGERS", message: "passengers debe ser un array alineado con origins." });
     }
     if (!departureDate || !isValidISODate(departureDate)) {
       return res.status(400).json({ code: "INVALID_DEPARTURE_DATE", message: "Fecha inválida. Usa YYYY-MM-DD." });
@@ -751,6 +756,9 @@ router.post("/cheaper-date", async (req, res) => {
     }
 
     const originPax = buildOriginPax(origins, passengers, originList);
+    if (originPax.reduce((a, b) => a + b, 0) > TOTAL_PAX_CAP) {
+      return res.status(400).json({ code: "TOO_MANY_PASSENGERS", message: `Máximo ${TOTAL_PAX_CAP} pasajeros en total.` });
+    }
     const perOrigin = await Promise.all(
       originList.map((o) =>
         getDatedPrices(o, dest, departureDate, roundtrip ? { returnDate } : {}).catch(() => [])
@@ -861,9 +869,14 @@ router.post("/trip-length-hint", async (req, res) => {
       return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "Fecha de vuelta inválida." });
     }
 
-    const custom = (Array.isArray(destinations) ? destinations : [])
-      .map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata);
+    const custom = [...new Set((Array.isArray(destinations) ? destinations : [])
+      .map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata))];
     const dests = (custom.length ? custom : DEFAULT_DESTINATION_TIERS[0]).filter((d) => !originList.includes(d));
+    // Cada duración candidata repite orígenes × destinos: mismo tope que una
+    // búsqueda de una sola fecha en /multi-origin.
+    if (originList.length * dests.length > MAX_COMBINATIONS) {
+      return res.status(400).json({ code: "TOO_MANY_COMBINATIONS", message: "Demasiadas combinaciones. Reduce orígenes o destinos." });
+    }
     const options = { max: 5, ...(nonStop === true || nonStop === "true" ? { nonStop: true } : {}) };
     const t0 = Date.now();
 
@@ -872,6 +885,7 @@ router.post("/trip-length-hint", async (req, res) => {
       const ret = toISODate(addDays(parseISODate(departureDate), nights));
       const found = [];
       for (let i = 0; i < dests.length; i += 3) {
+        if (Date.now() - t0 > TRIP_HINT_BUDGET_MS) break;
         const chunk = await Promise.all(dests.slice(i, i + 3).map((d) =>
           fetchDestDate(originList, originPax, d, departureDate, ret, options, null).catch(() => null)));
         found.push(...chunk.filter(Boolean));
