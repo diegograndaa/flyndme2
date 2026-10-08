@@ -586,7 +586,8 @@
     "linkCopied": "¡Enlace copiado! Compártelo con tu grupo.",
     "searchLinkCopied": "¡Enlace de búsqueda copiado!",
     "expired": "Este enlace ha expirado o no existe.",
-    "sharing": "Generando enlace…"
+    "sharing": "Generando enlace…",
+    "copyError": "No se pudo copiar el enlace. Cópialo a mano desde el campo de arriba."
   },
   "theme": {
     "light": "Modo claro",
