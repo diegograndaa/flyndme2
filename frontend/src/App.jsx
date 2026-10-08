@@ -38,6 +38,7 @@ import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits"
 import { getCityImage } from "./utils/cityImages";
 import { resolveApiBase } from "./utils/apiBase";
 import { downloadText } from "./utils/download";
+import { readStoredList, isRecentSearchEntry } from "./utils/storage";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -346,9 +347,7 @@ export default function App() {
   const RECENT_KEY = "flyndme_recent";
   const MAX_RECENT = 5;
 
-  const [recentSearches, setRecentSearches] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
-  });
+  const [recentSearches, setRecentSearches] = useState(() => readStoredList(RECENT_KEY, isRecentSearchEntry));
 
   const saveRecentSearch = useCallback((params) => {
     setRecentSearches((prev) => {
