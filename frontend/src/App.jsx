@@ -1127,8 +1127,11 @@ export default function App() {
           });
           if (!res.ok) continue;
           const data = await res.json();
-          checks[wid] = { at: Date.now(), totalEUR: data?.result?.totalCostEUR ?? null };
-          const drop = data?.result ? priceDrop(w.savedTotalEUR, data.result.totalCostEUR) : null;
+          // Solo cuenta un precio de HOY para las mismas fechas: si a algún
+          // origen le faltaba dato y se usó una fecha vecina, no es comparable.
+          const exact = data?.result && !data.result.hasDateFallback ? data.result.totalCostEUR : null;
+          checks[wid] = { at: Date.now(), totalEUR: exact };
+          const drop = exact ? priceDrop(w.savedTotalEUR, exact) : null;
           if (drop) found.push({ watch: w, ...drop });
         } catch { /* silencioso: el aviso es opcional */ }
       }
