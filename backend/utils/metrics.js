@@ -13,8 +13,9 @@ const { createCounters } = require("./kvStore");
 //   *_landing           → alguien ABRIÓ ese enlace y el SPA cargó los datos = visita
 //   group_member_added  → un viajero se sumó al grupo (el multiplicador real del loop)
 //
-// Nota honesta de medición: group_landing cuenta cada GET /api/groups/:id, lo que
-// incluye los refrescos del propio organizador → es una cota SUPERIOR de "aperturas".
+// Nota honesta de medición: group_landing cuenta cada GET /api/groups/:id SIN
+// ?refresh=1 (los refrescos de quien ya tiene la vista abierta no suman), así que
+// se acerca a "aperturas" pero aún incluye recargas de página.
 // group_member_added, en cambio, es inequívoco. share_landing es limpio (el SPA
 // carga un share una sola vez, sin polling).
 const METRIC_NAMES = [
