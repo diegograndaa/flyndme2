@@ -494,6 +494,8 @@
   },
   "loading": {
     "boardTitle": "Finding your meeting point",
+    "cancel": "Cancel search",
+    "cancelled": "Search cancelled",
     "messages": [
       "Powering up the departures board…",
       "Checking departures from each city…",

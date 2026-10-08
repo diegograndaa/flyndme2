@@ -494,6 +494,8 @@
   },
   "loading": {
     "boardTitle": "Buscando vuestro punto de encuentro",
+    "cancel": "Cancelar búsqueda",
+    "cancelled": "Búsqueda cancelada",
     "messages": [
       "Encendiendo el panel de salidas…",
       "Consultando las salidas de cada ciudad…",
