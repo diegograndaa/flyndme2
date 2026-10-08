@@ -50,19 +50,19 @@
     "faqs": [
       {
         "q": "Does FlyndMe sell tickets?",
-        "a": "No. We recommend the best destination, then you book directly on Skyscanner or another search engine."
+        "a": "No. We recommend the best destination and each traveler books their own flight directly on Aviasales, Skyscanner or Google Flights."
       },
       {
-        "q": "What is the fairness score?",
-        "a": "It measures from 0 to 100 how equally each traveler pays. The higher, the fairer."
+        "q": "How do you know if a destination is fair for everyone?",
+        "a": "We compare what each traveler pays: you'll see one bar per city and the gap between who pays most and least. With “Most balanced” we rank by the most even split, even if the total is a bit higher."
       },
       {
         "q": "How many travelers can I add?",
-        "a": "Up to 8 travelers from different cities. The more, the more useful FlyndMe becomes."
+        "a": "Up to 8 departure cities and 16 travelers in total (up to 9 from the same city)."
       },
       {
         "q": "Are the prices exact?",
-        "a": "They're real flight prices, but may vary slightly at the time of booking."
+        "a": "No. They're estimates based on recent searches and may have changed. Before booking you can check the recommended destination's price live, and the final price is the one on the site where you book."
       }
     ],
     "testimonialsTitle": "What travelers say",

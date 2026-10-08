@@ -50,19 +50,19 @@
     "faqs": [
       {
         "q": "¿FlyndMe vende billetes?",
-        "a": "No. Te recomienda el mejor destino y luego reservas directamente en Skyscanner u otro buscador."
+        "a": "No. Te recomienda el mejor destino y cada viajero reserva su vuelo directamente en Aviasales, Skyscanner o Google Flights."
       },
       {
-        "q": "¿Qué es el índice de equidad?",
-        "a": "Mide del 0 al 100 si todos los viajeros pagan un precio parecido. Cuanto más alto, más justo."
+        "q": "¿Cómo sabéis si un destino es justo para todos?",
+        "a": "Comparamos lo que paga cada viajero: verás una barra por ciudad y la diferencia entre quien más y quien menos paga. Con «Más equitativo» ordenamos por el reparto más parejo, aunque el total salga algo más caro."
       },
       {
         "q": "¿Cuántos viajeros puedo añadir?",
-        "a": "Hasta 8 viajeros desde ciudades diferentes. Cuantos más, más útil es FlyndMe."
+        "a": "Hasta 8 ciudades de salida y 16 viajeros en total (hasta 9 desde una misma ciudad)."
       },
       {
         "q": "¿Los precios son exactos?",
-        "a": "Son precios reales de vuelos, pero pueden variar ligeramente en el momento de reservar."
+        "a": "No. Son estimaciones basadas en búsquedas recientes y pueden haber cambiado. Antes de reservar puedes comprobar en vivo el precio del destino recomendado, y el precio final es el de la web donde reserves."
       }
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",
