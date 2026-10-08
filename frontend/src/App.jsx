@@ -1381,6 +1381,7 @@ export default function App() {
 
   const createGroup = useCallback(async () => {
     if (!departureDate) { setToast({ message: t("group.needDate"), type: "error" }); return; }
+    if (tripType === "roundtrip" && !returnDate) { setToast({ message: t("errors.noReturn"), type: "error" }); return; }
     setGroupBusy(true);
     try {
       const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
@@ -1392,6 +1393,9 @@ export default function App() {
       if (!res.ok) {
         const code = (await res.json().catch(() => ({}))).code;
         if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
+        if (code && t(`errors.codes.${code}`) !== `errors.codes.${code}`) {
+          setToast({ message: t(`errors.codes.${code}`), type: "error" }); return;
+        }
         throw new Error("create failed");
       }
       const { id } = await res.json();

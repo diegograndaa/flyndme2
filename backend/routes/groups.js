@@ -27,6 +27,18 @@ const MAX_ORIGIN_LEN = 60;
 
 const GROUP_ID_RE = /^[A-Za-z0-9_-]{4,24}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// Mismo horizonte que /multi-origin: un grupo con una fecha que la búsqueda
+// rechazaría no sirve para nada.
+const MAX_HORIZON_DAYS = 360;
+
+function isRealDate(s) {
+  if (!DATE_RE.test(s)) return false;
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+const isoToday = () => new Date().toISOString().slice(0, 10);
+const isoHorizon = () => new Date(Date.now() + MAX_HORIZON_DAYS * 86_400_000).toISOString().slice(0, 10);
 
 // Store con TTL: in-memory por defecto; persistente (Upstash Redis) si están
 // UPSTASH_REDIS_REST_URL/TOKEN. El barrido y la evicción los gestiona el store.
@@ -124,6 +136,23 @@ router.post("/", createLimiter, asyncH(async (req, res) => {
     returnDate = tripType === "roundtrip" ? String(returnDate || "") : "";
     if (returnDate && !DATE_RE.test(returnDate)) {
       return res.status(400).json({ code: "INVALID_DATE", message: "returnDate must be YYYY-MM-DD." });
+    }
+    if (!isRealDate(departureDate)) {
+      return res.status(400).json({ code: "INVALID_DEPARTURE_DATE", message: "departureDate is not a real date." });
+    }
+    if (departureDate < isoToday()) {
+      return res.status(400).json({ code: "DEPARTURE_DATE_IN_PAST", message: "departureDate is in the past." });
+    }
+    if (tripType === "roundtrip") {
+      if (!returnDate || !isRealDate(returnDate)) {
+        return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "A round trip needs a valid returnDate." });
+      }
+      if (returnDate <= departureDate) {
+        return res.status(400).json({ code: "INVALID_RETURN_DATE_ORDER", message: "returnDate must be after departureDate." });
+      }
+    }
+    if ((returnDate || departureDate) > isoHorizon()) {
+      return res.status(400).json({ code: "DATE_TOO_FAR", message: `Dates must be within ${MAX_HORIZON_DAYS} days.` });
     }
 
     let cleaned = [];
