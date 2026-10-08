@@ -12,6 +12,7 @@ import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
+import { totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "../utils/passengers";
 import { restoreFlexBudget, restoreDirectCabin, restoreDestinations } from "../utils/recentSearch";
 import DateField from "./DateField";
 
@@ -143,6 +144,7 @@ const SearchPage = React.memo(function SearchPage({
   recentSearches, onLoadRecent, onClearRecent,
 }) {
   const { t } = useI18n();
+  const headcount = totalPax(origins, passengers);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
@@ -447,8 +449,8 @@ const SearchPage = React.memo(function SearchPage({
                         disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
                       <span className="sf-pax-count" aria-live="polite">{passengers[idx] || 1}</span>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxIncrease")}
-                        onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
-                        disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
+                        onClick={() => { const p = [...passengers]; p[idx] = Math.min(MAX_PAX_PER_ORIGIN, (p[idx] || 1) + 1); setPassengers(p); }}
+                        disabled={loading || (passengers[idx] || 1) >= MAX_PAX_PER_ORIGIN || headcount >= MAX_TOTAL_PAX}>+</button>
                     </div>
                     {/* Reorder + remove */}
                     <div className="sf-origin-actions-inline">
@@ -721,6 +723,14 @@ const SearchPage = React.memo(function SearchPage({
             <div aria-live="polite">{error && errorHint && <Notice variant="next" {...errorHint} />}</div>
 
             {/* Traveler summary bar */}
+            {headcount > MAX_TOTAL_PAX && (
+              <div className="sf-date-warnings" role="alert">
+                <div className="sf-date-warn sf-date-warn--error">
+                  <span className="sf-date-warn-icon"><AlertTriangle size={15} aria-hidden="true" /></span>
+                  <span>{t("search.paxTotalCap")}</span>
+                </div>
+              </div>
+            )}
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
                 <div className="sf-summary-travelers">

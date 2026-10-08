@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { paxByOrigin } from "../src/utils/passengers.js";
+import { paxByOrigin, totalPax, MAX_TOTAL_PAX } from "../src/utils/passengers.js";
 
 test("paxByOrigin: alinea con las ciudades sin repetir y en su orden", () => {
   assert.deepEqual(paxByOrigin(["MAD", "LON"], [2, 3]), [{ origin: "MAD", passengers: 2 }, { origin: "LON", passengers: 3 }]);
@@ -21,6 +21,14 @@ test("paxByOrigin: valores ausentes o raros cuentan como 1; nada si no hay ciuda
   assert.deepEqual(paxByOrigin(["MAD"], [0]), [{ origin: "MAD", passengers: 1 }]);
   assert.deepEqual(paxByOrigin([], []), []);
   assert.deepEqual(paxByOrigin(undefined, undefined), []);
+});
+
+test("totalPax: solo cuenta filas con ciudad y el tope es 16", () => {
+  assert.equal(totalPax(["MAD", "", "LON"], [9, 9, 8]), 17);
+  assert.equal(totalPax(["MAD", "LON"], [8, 8]), 16);
+  assert.equal(MAX_TOTAL_PAX, 16);
+  assert.ok(totalPax(["MAD", "LON"], [8, 8]) <= MAX_TOTAL_PAX);
+  assert.ok(totalPax(["MAD", "", "LON"], [9, 9, 8]) > MAX_TOTAL_PAX);
 });
 
 test("paxByOrigin: acepta el mismo criterio de código que la lista de ciudades", () => {

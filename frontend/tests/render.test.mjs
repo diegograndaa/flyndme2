@@ -256,6 +256,43 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.equal((dup.match(/class="sf-summary-pax"/g) || []).length, 1, "la primera fila, con 1 viajero, no lleva ×");
 });
 
+test("render: con 16 viajeros no se puede sumar otro; por encima se avisa", async () => {
+  const { default: SearchPage } = await import("../src/components/SearchPage.jsx");
+  const noop = () => {};
+  const base = {
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  };
+  const full = renderWithI18n(React.createElement(SearchPage, {
+    ...base,
+    origins: ["MAD", "LON", "BER", "PAR", "LIS", "ROM", "BCN", "VIE"], setOrigins: noop,
+    passengers: [2, 2, 2, 2, 2, 2, 2, 2], setPassengers: noop,
+  }));
+  const increases = full.match(/One traveler more from this city/g) || [];
+  assert.equal(increases.length, 8);
+  assert.equal((full.match(/aria-label="One traveler more from this city" disabled/g) || []).length, 8);
+  assert.ok(!full.includes("most we can search"), "16 viajeros caben: no es un error");
+  const over = renderWithI18n(React.createElement(SearchPage, {
+    ...base,
+    origins: ["MAD", "LON"], setOrigins: noop,
+    passengers: [9, 8], setPassengers: noop,
+  }));
+  assert.ok(over.includes("most we can search"), "por encima de 16 se avisa antes de buscar");
+});
+
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
   const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
   const noop = () => {};

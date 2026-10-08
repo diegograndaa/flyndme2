@@ -229,6 +229,7 @@
     "paxGroupRow": "Travelers in row {{n}}",
     "paxDecrease": "One traveler less from this city",
     "paxIncrease": "One traveler more from this city",
+    "paxTotalCap": "16 travelers is the most we can search. Lower the headcount.",
     "originAria": "Departure city for traveler {{n}}",
     "directOnly": "Direct flights only",
     "directHint": "Show only non-stop flights",

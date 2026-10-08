@@ -3,6 +3,16 @@
 // en varias filas suma sus viajeros: indexar `passengers` con el índice de la
 // lista deduplicada desalineaba los números (fila vacía o ciudad repetida).
 export const MAX_PAX_PER_ORIGIN = 9;
+// Mismo tope que /multi-origin (TOTAL_PAX_CAP). Por encima la búsqueda se rechaza.
+export const MAX_TOTAL_PAX = 16;
+
+/** Suma de viajeros de las filas con ciudad. Una fila vacía no cuenta. */
+export function totalPax(origins = [], passengers = []) {
+  return (origins || []).reduce((sum, o, i) => {
+    if (!String(o || "").trim()) return sum;
+    return sum + Math.max(1, Math.floor(Number(passengers?.[i])) || 1);
+  }, 0);
+}
 
 const upperTrim = (o) => String(o || "").trim().toUpperCase();
 
