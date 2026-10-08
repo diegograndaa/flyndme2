@@ -17,6 +17,7 @@ import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/res
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
+import { paxByOrigin, MAX_PAX_PER_ORIGIN } from "./utils/passengers";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
@@ -526,6 +527,9 @@ export default function App() {
     () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
     [origins]
   );
+  // Viajeros alineados con cleanOrigins (suma las filas de una misma ciudad).
+  const originPax = useMemo(() => paxByOrigin(origins, passengers), [origins, passengers]);
+  const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
   // cabecera de vuelo de resultados.
   const totalTravelers = useMemo(
@@ -858,7 +862,7 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         origins: cleanOrigins,
-        passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+        passengers: cleanPax,
         destination: winner.destination,
         departureDate,
         ...(tripType === "roundtrip" ? { returnDate } : {}),
@@ -883,7 +887,7 @@ export default function App() {
   // vivo): comparar Google Flights con la caché daría bajadas falsas.
   const watchParamsFor = (dest) => ({
     origins: cleanOrigins,
-    passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+    passengers: cleanPax,
     departureDate: dest.bestDate || departureDate,
     returnDate: dest.bestReturnDate || returnDate,
     tripType,
@@ -1017,6 +1021,12 @@ export default function App() {
       if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
     }
 
+    const crowded = originPax.find((x) => x.passengers > MAX_PAX_PER_ORIGIN);
+    if (crowded) {
+      setError(t("errors.paxPerCity", { city: cityOf(crowded.origin) || crowded.origin, n: crowded.passengers, max: MAX_PAX_PER_ORIGIN }));
+      return;
+    }
+
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
     setFlights([]);
@@ -1043,7 +1053,7 @@ export default function App() {
 
       // Step 2: actual search (backend is now warm)
       // Backend does all pax math (totals, fairness, share/OG) — see chore: backend hardening commit.
-      const paxForReq = cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1)));
+      const paxForReq = cleanPax;
       const body = {
         origins: cleanOrigins,
         passengers: paxForReq,
@@ -1216,7 +1226,9 @@ export default function App() {
     if (!departureDate) { setToast({ message: t("group.needDate"), type: "error" }); return; }
     setGroupBusy(true);
     try {
-      const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
+      const members = origins
+        .map((o, i) => ({ origin: String(o || "").trim().toUpperCase(), passengers: Math.max(1, Number(passengers[i]) || 1) }))
+        .filter((m) => m.origin);
       const res = await groupFetch(`${API_BASE}/api/groups`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
