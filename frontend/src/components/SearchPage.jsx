@@ -715,7 +715,7 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
                 <div className="sf-summary-meta">
                   {(() => {
-                    const totalPax = origins.filter(o => o.trim()).reduce((s, o, i) => s + (passengers[i] || 1), 0);
+                    const totalPax = origins.reduce((s, o, i) => (o.trim() ? s + (passengers[i] || 1) : s), 0);
                     return totalPax > 1 ? <span className="sf-summary-pax-total"><Users size={14} aria-hidden="true" /> {totalPax} {t("search.paxLabel")}</span> : null;
                   })()}
                   {departureDate && <span>{formatDate(departureDate)}</span>}

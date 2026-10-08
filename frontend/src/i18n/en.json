@@ -461,6 +461,7 @@
     "connection": "Couldn't reach the server. Check your connection and try again.",
     "offline": "You're offline. Prices need internet: reconnect and search again.",
     "departurePast": "The departure date has already passed. Pick a future one.",
+    "paxPerCity": "At most {{max}} travelers per departure city: {{city}} adds up to {{n}}.",
     "noResultsRoundtripMulti": "No round-trip results for those cities and dates. Round-trip data across several cities is thinner, so try flexible dates, fewer cities, or search one-way.",
     "friendlyTitle": "Oops, something went wrong",
     "tryAgain": "Try again",

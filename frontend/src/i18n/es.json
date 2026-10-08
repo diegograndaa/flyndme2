@@ -461,6 +461,7 @@
     "connection": "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
     "offline": "Estás sin conexión. Los precios necesitan internet: conéctate y vuelve a buscar.",
     "departurePast": "La fecha de ida ya ha pasado. Elige una futura.",
+    "paxPerCity": "Como máximo {{max}} viajeros por ciudad de salida: {{city}} suma {{n}}.",
     "noResultsRoundtripMulti": "Sin resultados de ida y vuelta para esas ciudades y fechas. Los datos de ida y vuelta para varias ciudades son más limitados, así que prueba con fechas flexibles, menos ciudades o busca solo ida.",
     "friendlyTitle": "Vaya, algo salió mal",
     "tryAgain": "Intentar de nuevo",

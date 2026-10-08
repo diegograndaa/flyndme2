@@ -20,6 +20,7 @@ import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage } from "./utils/priceWatch";
 import { isOffline } from "./utils/network";
+import { paxByOrigin, MAX_PAX_PER_ORIGIN } from "./utils/passengers";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 // Solo hacen falta en vistas concretas: van en chunks aparte. WinnerCard se
@@ -65,6 +66,9 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 // ─── Toast notification ──────────────────────────────────────────────────────
 
 // ─── Favorites (localStorage) ───────────────────────────────────────────────
+
+// Texto de una fila de origen → código de ciudad (el criterio de cleanOrigins).
+const toOriginCode = (o) => String(o || "").trim().toUpperCase();
 
 // ─── CSV export ─────────────────────────────────────────────────────────────
 
@@ -591,10 +595,11 @@ export default function App() {
     document.title = title;
   }, [view, bestDestination, t, lang, currency]);
 
-  const cleanOrigins = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
-    [origins]
-  );
+  // Ciudades sin repetir y sus viajeros salen de la MISMA pasada (paxByOrigin),
+  // así no se pueden desalinear (filas vacías o una ciudad en dos filas).
+  const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
+  const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
+  const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
   // cabecera de vuelo de resultados.
   const totalTravelers = useMemo(
@@ -973,7 +978,7 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         origins: cleanOrigins,
-        passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+        passengers: cleanPax,
         destination: winner.destination,
         // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
         departureDate: winner.bestDate || departureDate,
@@ -1001,7 +1006,7 @@ export default function App() {
     const s = lastSearchRef.current;
     return {
       origins: s ? s.origins : cleanOrigins,
-      passengers: s ? s.passengers : cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+      passengers: s ? s.passengers : cleanPax,
       departureDate: dest.bestDate || (s ? s.departureDate : departureDate),
       returnDate: dest.bestReturnDate || (s ? s.returnDate : returnDate),
       tripType: s ? s.tripType : tripType,
@@ -1159,6 +1164,12 @@ export default function App() {
     }
     if (isOffline()) { fail(t("errors.offline")); return; }
 
+    const crowded = originPax.find((x) => x.passengers > MAX_PAX_PER_ORIGIN);
+    if (crowded) {
+      fail(t("errors.paxPerCity", { city: cityOf(crowded.origin) || crowded.origin, n: crowded.passengers, max: MAX_PAX_PER_ORIGIN }));
+      return;
+    }
+
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
     loadWinnerCard().catch(() => {});
@@ -1190,7 +1201,7 @@ export default function App() {
 
       // Step 2: actual search (backend is now warm)
       // Backend does all pax math (totals, fairness, share/OG) — see chore: backend hardening commit.
-      const paxForReq = cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1)));
+      const paxForReq = cleanPax;
       const body = {
         origins: cleanOrigins,
         passengers: paxForReq,
@@ -1384,7 +1395,9 @@ export default function App() {
     if (tripType === "roundtrip" && !returnDate) { setToast({ message: t("errors.noReturn"), type: "error" }); return; }
     setGroupBusy(true);
     try {
-      const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
+      const members = origins
+        .map((o, i) => ({ origin: String(o || "").trim().toUpperCase(), passengers: Math.max(1, Number(passengers[i]) || 1) }))
+        .filter((m) => m.origin);
       const res = await groupFetch(`${API_BASE}/api/groups`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
