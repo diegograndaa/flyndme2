@@ -643,7 +643,11 @@
     "escape": "Volver / cerrar panel",
     "help": "Mostrar esta ayuda",
     "home": "Ir a inicio",
-    "search": "Ir a búsqueda"
+    "search": "Ir a búsqueda",
+    "charKeys": "Atajos de una tecla (H, S, ?)",
+    "on": "activados",
+    "off": "desactivados",
+    "charKeysHint": "Desactívalos si usas control por voz o se te activan sin querer. Escape sigue funcionando."
   },
   "checklist": {
     "title": "Checklist de preparación del viaje",

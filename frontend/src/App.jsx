@@ -254,6 +254,17 @@ export default function App() {
   // nunca cerraba los paneles porque "veía" showShortcuts/showFavPanel = false).
   const showShortcutsRef = useRef(false);
   const showFavPanelRef  = useRef(false);
+  // WCAG 2.1.4: los atajos de una sola tecla (H, S, ?) se pueden desactivar
+  // (control por voz, pulsaciones sin querer). Se recuerda en este navegador.
+  const [charKeys, setCharKeys] = useState(() => {
+    try { return window.localStorage.getItem("flyndme_char_shortcuts") !== "off"; } catch { return true; }
+  });
+  const charKeysRef = useRef(charKeys);
+  useEffect(() => { charKeysRef.current = charKeys; }, [charKeys]);
+  const toggleCharKeys = () => setCharKeys((on) => {
+    try { window.localStorage.setItem("flyndme_char_shortcuts", on ? "off" : "on"); } catch { /* sin almacenamiento */ }
+    return !on;
+  });
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -264,6 +275,7 @@ export default function App() {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       // Escape que ya cerró una ventana emergente (calendario, cajón…) no navega
       if (e.defaultPrevented || e.target?.closest?.('[role="dialog"]')) return;
+      if (e.key.length === 1 && !charKeysRef.current) return;
 
       // Escape: close panels first, then go back
       if (e.key === "Escape") {
@@ -1682,7 +1694,8 @@ export default function App() {
       {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
 
       {/* Keyboard shortcuts overlay */}
-      <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t} />
+      <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t}
+        charKeys={charKeys} onToggleCharKeys={toggleCharKeys} />
 
       {/* Live region (a11y): anuncia la llegada de resultados y la verificación
           asíncrona del precio del ganador (el badge cambia sin recargar). */}
@@ -2181,6 +2194,7 @@ export default function App() {
               <button type="button" className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</button>
               <button type="button" className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: scrollBehavior() }); }, 100); }}>{t("footerFaq")}</button>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
+              <button type="button" className="app-footer-link" onClick={() => setShowShortcuts(true)}>{t("shortcuts.title")}</button>
             </nav>
             <span className="app-footer-copy">{t("footerCopy")}</span>
           </div>
