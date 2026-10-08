@@ -4863,7 +4863,7 @@ html {
   text-align: left;
   font-family: var(--font);
 }
-.gp-ac-item:hover { background: rgba(var(--primary-rgb), .07); }
+.gp-ac-item:hover, .gp-ac-item--hl { background: rgba(var(--primary-rgb), .07); }
 .gp-ac-code { font-weight: 800; color: var(--navy); font-size: 13px; width: 34px; flex-shrink: 0; }
 .gp-ac-city { color: var(--navy); font-size: 13px; flex: 1; }
 .gp-ac-country { color: var(--slate-400); font-size: 12px; }

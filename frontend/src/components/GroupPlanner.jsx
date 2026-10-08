@@ -37,6 +37,7 @@ function GroupPlanner({
   const [city, setCity] = useState("");
   const [pax, setPax] = useState(1);
   const [acOpen, setAcOpen] = useState(false);
+  const [hl, setHl] = useState(0);
   const cityRef = useRef(null);
 
   const members = group?.members || [];
@@ -49,6 +50,15 @@ function GroupPlanner({
     setCity(a.code);
     setAcOpen(false);
     cityRef.current?.focus();
+  }
+
+  const listOpen = acOpen && suggestions.length > 0;
+  function onCityKey(e) {
+    if (!listOpen) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setHl((h) => Math.min(h + 1, suggestions.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setHl((h) => Math.max(h - 1, 0)); }
+    else if (e.key === "Enter" && suggestions[hl]) { e.preventDefault(); pickSuggestion(suggestions[hl]); }
+    else if (e.key === "Escape") { e.preventDefault(); setAcOpen(false); }
   }
 
   function submitMember(e) {
@@ -137,22 +147,28 @@ function GroupPlanner({
         <div className="gp-add-row">
           <input className="gp-input gp-input-name" type="text" value={name}
             onChange={(e) => setName(e.target.value)} placeholder={t("group.namePlaceholder")}
+            aria-label={t("group.namePlaceholder")} autoComplete="given-name"
             maxLength={40} />
           <div className="gp-city-wrap">
             <input ref={cityRef} className="gp-input gp-input-city" type="text" value={city}
-              onChange={(e) => { setCity(e.target.value); setAcOpen(true); }}
-              onFocus={() => setAcOpen(true)}
+              onChange={(e) => { setCity(e.target.value); setAcOpen(true); setHl(0); }}
+              onFocus={() => { setAcOpen(true); setHl(0); }}
               onBlur={() => setTimeout(() => setAcOpen(false), 120)}
-              placeholder={t("group.cityPlaceholder")} autoComplete="off" />
-            {acOpen && suggestions.length > 0 && (
-              <ul className="gp-ac">
-                {suggestions.map((a) => (
-                  <li key={a.code}>
-                    <button type="button" className="gp-ac-item" onMouseDown={(e) => { e.preventDefault(); pickSuggestion(a); }}>
-                      <span className="gp-ac-code">{a.code}</span>
-                      <span className="gp-ac-city">{cityOf(a.code) || a.city}</span>
-                      <span className="gp-ac-country">{countryOf(a.code) || a.country}</span>
-                    </button>
+              onKeyDown={onCityKey}
+              placeholder={t("group.cityPlaceholder")} autoComplete="off"
+              aria-label={t("group.cityPlaceholder")}
+              role="combobox" aria-autocomplete="list" aria-expanded={listOpen} aria-controls="gp-ac-list"
+              aria-activedescendant={listOpen && suggestions[hl] ? `gp-ac-${suggestions[hl].code}` : undefined} />
+            {listOpen && (
+              <ul className="gp-ac" role="listbox" id="gp-ac-list" aria-label={t("search.acMatches")}>
+                {suggestions.map((a, i) => (
+                  <li key={a.code} id={`gp-ac-${a.code}`} role="option" aria-selected={i === hl}
+                    className={`gp-ac-item${i === hl ? " gp-ac-item--hl" : ""}`}
+                    onMouseDown={(e) => { e.preventDefault(); pickSuggestion(a); }}
+                    onMouseEnter={() => setHl(i)}>
+                    <span className="gp-ac-code">{a.code}</span>
+                    <span className="gp-ac-city">{cityOf(a.code) || a.city}</span>
+                    <span className="gp-ac-country">{countryOf(a.code) || a.country}</span>
                   </li>
                 ))}
               </ul>
