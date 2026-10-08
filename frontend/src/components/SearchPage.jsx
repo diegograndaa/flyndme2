@@ -746,6 +746,14 @@ const SearchPage = React.memo(function SearchPage({
                   {departureDate && <span>{formatDate(departureDate)}</span>}
                   {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
                   {flexEnabled && <span className="sf-summary-flex">±{flexDays}d</span>}
+                  {selectedDests.length > 0 && (
+                    <span className="sf-summary-flex sf-summary-dest">
+                      <span className="sr-only">{t("search.destLabel")}: </span>
+                      {selectedDests.length <= 3
+                        ? selectedDests.join(" · ")
+                        : t("search.destSelected", { n: selectedDests.length })}
+                    </span>
+                  )}
                 </div>
               </div>
             )}

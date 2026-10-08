@@ -167,6 +167,9 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.ok(html.includes("MAD"));
   assert.ok(html.includes("±2d"), "la reciente enseña el margen de fechas");
   assert.ok(html.includes("150"), "la reciente enseña el tope");
+  assert.ok(html.includes("sf-summary-dest"), "el resumen enseña que hay destinos elegidos");
+  assert.ok(html.includes("Destinations to compare"), "el nombre accesible dice que son destinos");
+  assert.match(html, /sf-summary-dest[\s\S]*ROM/);
   const ordered = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD", "LON"], setOrigins: noop,
     tripType: "roundtrip", setTripType: noop,
@@ -188,6 +191,47 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   }));
   assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
   assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
+  const many = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: ["ROM", "LIS", "PAR", "VIE"], setSelectedDests: noop,
+    passengers: [1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(many.includes("4 destinations selected"));
+  assert.ok(!many.includes("sf-summary-dest\">ROM"), "con más de tres no se listan los códigos");
+  const all = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(!all.includes("sf-summary-dest"), "sin filtro no hay chip de destinos");
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
