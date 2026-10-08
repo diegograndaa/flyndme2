@@ -240,6 +240,10 @@ test("render: ChromeBits y ResultsPanels extraídos", async () => {
   // Paneles de resultados
   assert.ok(renderWithI18n(React.createElement(CostSplitCard, { bestDest: FIXTURE_DEST, origins: ["MAD", "LON"], currency: "EUR", t })).length > 100);
   assert.ok(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "", t })).length > 50);
+  // El enlace de hoteles lleva el número real de viajeros (Booking abre con 2 si no)
+  const plan = renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "2026-09-18", travelers: 5, t }));
+  assert.match(plan, /group_adults=5/);
+  assert.doesNotMatch(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", t })), /group_adults/);
   // Zonas de resultados y avisos en línea
   assert.ok(renderWithI18n(React.createElement(ZoneHead, { id: "z", num: "01", title: "Decisión final", variant: "decision" })).includes("fm-zone-head--decision"));
   const notice = renderWithI18n(React.createElement(Notice, { variant: "next", tag: "Siguiente paso", text: "Plan", actionLabel: "Crear", onAction: noop }));
