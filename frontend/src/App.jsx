@@ -308,6 +308,9 @@ export default function App() {
   const [group, setGroup] = useState(null);     // { id, departureDate, tripType, members }
   const [groupBusy, setGroupBusy] = useState(false);
   const [groupCopied, setGroupCopied] = useState(false);
+  // Momento en que se guardó un resultado abierto con ?share= (sus precios son
+  // de entonces). null = resultados de una búsqueda propia.
+  const [sharedAt, setSharedAt] = useState(null);
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
@@ -418,6 +421,7 @@ export default function App() {
       .then((data) => {
         const { results, searchParams } = data;
         if (results?.flights?.length) {
+          setSharedAt(Number(data.createdAt) || Date.now());
           setFlights(results.flights);
           setBestByCriterion(results.bestByCriterion || {
             total: pickBest(results.flights, "total"),
@@ -979,6 +983,16 @@ export default function App() {
     setPendingResearch(true);
   };
 
+  // Un compartido no guarda los pasajeros por origen en searchParams, pero cada
+  // tramo del resultado sí los lleva: se recuperan para buscar lo mismo hoy.
+  const refreshShared = () => {
+    const legs = bestDestination?.flights || [];
+    const paxFor = (o) => Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1;
+    setPassengers(origins.map(paxFor));
+    trackEvent("shared_refresh", {});
+    setPendingResearch(true);
+  };
+
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
   const useCheaperDate = (date, newReturnDate) => {
@@ -1028,6 +1042,7 @@ export default function App() {
 
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
+    setSharedAt(null);
     setCheaperDate(null);
     setTripHint(null);
     setShowAlt(false);
@@ -1587,6 +1602,15 @@ export default function App() {
           <section className="fm-decision" aria-labelledby="fm-decision-title">
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
+          {sharedAt && (
+            <Notice variant="partial" tag={t("board.tagNotice")}
+              text={t("results.sharedNotice", {
+                when: new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(sharedAt)),
+              })}
+              detail={t("results.sharedDetail")}
+              actionLabel={t("results.sharedRefresh")}
+              onAction={refreshShared} disabled={loading} />
+          )}
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
