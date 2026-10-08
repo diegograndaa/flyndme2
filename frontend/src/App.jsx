@@ -325,7 +325,10 @@ export default function App() {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
-  const [toast,       setToast]       = useState(null); // { message, type }
+  const [toast,       setToastRaw]    = useState(null); // { message, type, id }
+  // Cada aviso lleva su id: uno nuevo (aunque repita texto) monta un Toast
+  // nuevo en vez de heredar el estado «saliendo» del anterior.
+  const setToast = useCallback((next) => setToastRaw(next ? { ...next, id: Date.now() + Math.random() } : null), []);
   const [showFavPanel, setShowFavPanel] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   // Collaborative group planning (?group=ID)
@@ -1674,7 +1677,7 @@ export default function App() {
       <SearchProgress loading={loading} origins={cleanOrigins} onCancel={cancelSearch} />
 
       {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
 
       {/* Keyboard shortcuts overlay */}
       <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t} />
