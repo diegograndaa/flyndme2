@@ -10,19 +10,26 @@ const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, weekdayOf, todayISO, copyText,
-  countryFlag, scrollBehavior
+  formatEur, formatDate, weekdayOf, todayISO, horizonISO, addDaysISO, copyText,
+  countryFlag, scrollBehavior, AIRPORT_MAP, resolveOriginCode
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { parseSearchLinkParams } from "./utils/urlParams";
+import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
-import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
+import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
+import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
+import { isOffline } from "./utils/network";
+import { paxByOrigin, MAX_PAX_PER_ORIGIN } from "./utils/passengers";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
-import GroupPlanner from "./components/GroupPlanner";
-import WinnerCard, { WhoPaysStrip } from "./components/WinnerCard";
+// Solo hacen falta en vistas concretas: van en chunks aparte. WinnerCard se
+// precarga al buscar, al abrir un enlace compartido y en reposo tras cargar.
+const GroupPlanner = React.lazy(() => import("./components/GroupPlanner"));
+const loadWinnerCard = () => import("./components/WinnerCard");
+const WinnerCard = React.lazy(loadWinnerCard);
+const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m.WhoPaysStrip })));
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
@@ -31,15 +38,21 @@ import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
-import { getCityImage } from "./utils/cityImages";
+import { getCityImage, imagePreloadCount } from "./utils/cityImages";
+import { resolveApiBase } from "./utils/apiBase";
+import { downloadText } from "./utils/download";
+import { readStoredList, isRecentSearchEntry } from "./utils/storage";
+import { normalizeSharedFlights } from "./utils/sharedResults";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "")
-  || "https://flyndme-backend.onrender.com";
+const API_BASE = resolveApiBase(import.meta.env);
+if (import.meta.env && !import.meta.env.VITE_API_BASE_URL && !import.meta.env.PROD) {
+  console.warn(`[FlyndMe] VITE_API_BASE_URL no definida: usando ${API_BASE} (backend local).`);
+}
 
 const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
@@ -55,17 +68,14 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
 // ─── Favorites (localStorage) ───────────────────────────────────────────────
 
+// Texto de una fila de origen → código de ciudad (el criterio de cleanOrigins):
+// el mismo que enseña la ficha del formulario ("Madrid" → MAD, "Dubrovnik" → DBV).
+const toOriginCode = resolveOriginCode;
+
 // ─── CSV export ─────────────────────────────────────────────────────────────
 
-function exportResultsCSV(flights, origins, currency) {
-  const csv = buildResultsCsv(flights, origins);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `flyndme-results-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+function exportResultsCSV(flights, origins) {
+  downloadText(`flyndme-results-${new Date().toISOString().slice(0, 10)}.csv`, buildResultsCsv(flights, origins));
 }
 
 // ─── Friendly error display ─────────────────────────────────────────────────
@@ -187,6 +197,9 @@ export default function App() {
   // Ref con la vista actual: la usan setView (prev sin updater) y el manejador
   // de teclado (closure registrado una sola vez).
   const viewRef = useRef(view);
+  // Parámetros de la búsqueda que produjo los resultados actuales (el formulario
+  // se puede editar después; «vigilar precio» debe guardar lo que se buscó).
+  const lastSearchRef = useRef(null);
   useEffect(() => { viewRef.current = view; }, [view]);
 
   // ── Browser history support (back/forward buttons) ──────────────────────
@@ -219,7 +232,11 @@ export default function App() {
     window.history.replaceState({ view: "landing" }, "", window.location.pathname + window.location.search);
 
     const onPopState = (e) => {
-      const target = e.state?.view || "landing";
+      let target = e.state?.view || "landing";
+      // Tras recargar, el historial conserva entradas de vistas cuyos datos ya
+      // no están en memoria: volver a ellas pintaba una página vacía.
+      if (target === "results" && !hasResultsRef.current) target = "search";
+      if (target === "group" && !hasGroupRef.current) target = "landing";
       skipHistoryPush.current = true;
       setView(target);
     };
@@ -229,6 +246,8 @@ export default function App() {
   }, []);
 
   const tabContentRef = useRef(null);
+  const hasResultsRef = useRef(false);
+  const hasGroupRef = useRef(false);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   // Los paneles se leen vía refs: el listener se registra una sola vez y un
@@ -236,12 +255,28 @@ export default function App() {
   // nunca cerraba los paneles porque "veía" showShortcuts/showFavPanel = false).
   const showShortcutsRef = useRef(false);
   const showFavPanelRef  = useRef(false);
+  // WCAG 2.1.4: los atajos de una sola tecla (H, S, ?) se pueden desactivar
+  // (control por voz, pulsaciones sin querer). Se recuerda en este navegador.
+  const [charKeys, setCharKeys] = useState(() => {
+    try { return window.localStorage.getItem("flyndme_char_shortcuts") !== "off"; } catch { return true; }
+  });
+  const charKeysRef = useRef(charKeys);
+  useEffect(() => { charKeysRef.current = charKeys; }, [charKeys]);
+  const toggleCharKeys = () => setCharKeys((on) => {
+    try { window.localStorage.setItem("flyndme_char_shortcuts", on ? "off" : "on"); } catch { /* sin almacenamiento */ }
+    return !on;
+  });
 
   useEffect(() => {
     const onKeyDown = (e) => {
       // Ignore if user is typing in an input
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      // Atajos del navegador/sistema (Ctrl+S, Cmd+H…) no son atajos de la app
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Escape que ya cerró una ventana emergente (calendario, cajón…) no navega
+      if (e.defaultPrevented || e.target?.closest?.('[role="dialog"]')) return;
+      if (e.key.length === 1 && !charKeysRef.current) return;
 
       // Escape: close panels first, then go back
       if (e.key === "Escape") {
@@ -276,9 +311,11 @@ export default function App() {
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
-  const [watches,         setWatches]         = useState(() => (typeof window === "undefined" ? [] : readWatches(window.localStorage)));
+  const [watches,         setWatches]         = useState(() => readWatches(safeStorage()));
   const [priceAlerts,     setPriceAlerts]     = useState([]);
   const [pendingResearch, setPendingResearch] = useState(false);
+  // Abriendo una invitación ?group= (con Render dormido puede tardar ~30-60 s)
+  const [groupLoading,    setGroupLoading]    = useState(false);
   const [budgetEnabled, setBudgetEnabled] = useState(false);
   const [maxBudget,     setMaxBudget]     = useState(200);
   const [flexEnabled,   setFlexEnabled]   = useState(false);
@@ -301,13 +338,22 @@ export default function App() {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState("");
   const [shareStatus, setShareStatus] = useState("");
-  const [toast,       setToast]       = useState(null); // { message, type }
+  const [toast,       setToastRaw]    = useState(null); // { message, type, id }
+  // Cada aviso lleva su id: uno nuevo (aunque repita texto) monta un Toast
+  // nuevo en vez de heredar el estado «saliendo» del anterior.
+  const setToast = useCallback((next) => setToastRaw(next ? { ...next, id: Date.now() + Math.random() } : null), []);
   const [showFavPanel, setShowFavPanel] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   // Collaborative group planning (?group=ID)
   const [group, setGroup] = useState(null);     // { id, departureDate, tripType, members }
   const [groupBusy, setGroupBusy] = useState(false);
   const [groupCopied, setGroupCopied] = useState(false);
+  // El error se pinta también en la vista de grupo: uno que venga de la
+  // búsqueda individual no debe aparecer al abrir el grupo.
+  useEffect(() => { if (view === "group") setError(""); }, [view]);
+  // Momento en que se guardó un resultado abierto con ?share= (sus precios son
+  // de entonces). null = resultados de una búsqueda propia.
+  const [sharedAt, setSharedAt] = useState(null);
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
@@ -327,6 +373,8 @@ export default function App() {
   // Capa 2 de verificación (POST /api/flights/verify): generación de búsqueda
   // para descartar respuestas tardías + AbortController de la petición en vuelo.
   const searchGenRef = useRef(0);
+  const searchAbortRef = useRef(null);
+  const [backendWaking, setBackendWaking] = useState(false);
   const verifyAbortRef = useRef(null);
 
   // Verificación bajo demanda (#5): estado del control "Comprobar precio en vivo"
@@ -338,22 +386,26 @@ export default function App() {
   const RECENT_KEY = "flyndme_recent";
   const MAX_RECENT = 5;
 
-  const [recentSearches, setRecentSearches] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
-  });
+  const [recentSearches, setRecentSearches] = useState(() => readStoredList(RECENT_KEY, isRecentSearchEntry));
 
   const saveRecentSearch = useCallback((params) => {
     setRecentSearches((prev) => {
       const entry = {
         origins: params.origins,
+        passengers: params.passengers,
         tripType: params.tripType,
         departureDate: params.departureDate,
         returnDate: params.returnDate,
+        flexDays: params.flexDays || 0,
+        maxBudget: params.maxBudget || 0,
+        directOnly: params.directOnly === true,
+        cabinClass: savedCabin(params.cabinClass),
+        destinations: params.destinations || [],
         ts: Date.now(),
       };
-      // De-duplicate by origins+date combo
-      const key = `${entry.origins.join(",")}_${entry.departureDate}_${entry.tripType}`;
-      const filtered = prev.filter((r) => `${r.origins.join(",")}_${r.departureDate}_${r.tripType}` !== key);
+      // Misma ruta con otra vuelta, otros viajeros, ±días o tope es otra búsqueda.
+      const key = recentSearchKey(entry);
+      const filtered = prev.filter((r) => recentSearchKey(r) !== key);
       const updated = [entry, ...filtered].slice(0, MAX_RECENT);
       try { localStorage.setItem(RECENT_KEY, JSON.stringify(updated)); } catch { /* quota */ }
       return updated;
@@ -367,9 +419,27 @@ export default function App() {
 
   const loadRecentSearch = useCallback((entry) => {
     setOrigins(entry.origins);
+    // Las búsquedas guardadas antes de oct-2026 no traen viajeros: 1 por ciudad
+    // (antes se quedaban los de la búsqueda anterior, desalineados).
+    const pax = Array.isArray(entry.passengers) && entry.passengers.length === entry.origins.length
+      ? entry.passengers.map((p) => Math.min(9, Math.max(1, Math.floor(Number(p)) || 1)))
+      : entry.origins.map(() => 1);
+    setPassengers(pax);
     setTripType(entry.tripType);
     setDepartureDate(entry.departureDate);
-    if (entry.returnDate) setReturnDate(entry.returnDate);
+    setReturnDate(entry.tripType === "roundtrip" ? (entry.returnDate || "") : "");
+    // Sin el campo (búsquedas viejas) o con un valor que el formulario no enseña:
+    // día exacto y sin tope. Si no, se quedarían los de la búsqueda anterior.
+    const extra = restoreFlexBudget(entry);
+    setFlexEnabled(extra.flexDays != null);
+    setFlexDays(extra.flexDays ?? 3);
+    setBudgetEnabled(extra.maxBudget != null);
+    setMaxBudget(extra.maxBudget ?? 200);
+    const cabin = restoreDirectCabin(entry);
+    setDirectOnly(cabin.directOnly);
+    setCabinClass(cabin.cabinClass);
+    // Sin destinos guardados: el pool. Si no, se quedarían los de la búsqueda anterior.
+    setSelectedDests(restoreDestinations(entry));
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -393,6 +463,30 @@ export default function App() {
     if (outcome === "accepted") trackEvent("pwa_install");
   };
 
+  // Tras un despliegue, una pestaña abierta puede pedir un chunk que ya no
+  // existe: Vite emite vite:preloadError. Se recarga UNA vez (marca en
+  // sessionStorage) para traer la versión nueva; si vuelve a fallar, queda el
+  // ErrorBoundary con el resto de la página funcionando.
+  useEffect(() => {
+    const onPreloadError = () => {
+      try {
+        if (sessionStorage.getItem("flyndme_chunk_reload")) return;
+        sessionStorage.setItem("flyndme_chunk_reload", "1");
+      } catch { return; }
+      window.location.reload();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
+
+  // Precarga en reposo del chunk de resultados (la búsqueda tarda segundos,
+  // pero así ni siquiera el primer render de resultados espera).
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 2500));
+    const id = idle(() => { loadWinnerCard().catch(() => {}); });
+    return () => (window.cancelIdleCallback || clearTimeout)(id);
+  }, []);
+
   // Keep Render backend alive (free tier sleeps)
   useEffect(() => {
     const ping = () => fetch(`${API_BASE}/api/ping`, { cache: "no-store" }).catch(() => {});
@@ -409,23 +503,37 @@ export default function App() {
     const shareId = params.get("share");
     if (!shareId) return;
 
+    loadWinnerCard().catch(() => {});
     setLoading(true);
-    fetch(`${API_BASE}/api/share/${shareId}`)
+    // Render free puede estar dormido: despertar y reintentar como en grupos.
+    // Solo 404/410 significan "caducado"; un fallo de red o un 5xx conserva el
+    // ?share= en la URL para que recargar vuelva a intentarlo.
+    groupFetch(`${API_BASE}/api/share/${shareId}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Share not found");
+        if (res.status === 404 || res.status === 410) { const e = new Error("expired"); e.expired = true; throw e; }
+        if (!res.ok) throw new Error("connection");
         return res.json();
       })
       .then((data) => {
         const { results, searchParams } = data;
-        if (results?.flights?.length) {
-          setFlights(results.flights);
-          setBestByCriterion(results.bestByCriterion || {
-            total: pickBest(results.flights, "total"),
-            fairness: pickBest(results.flights, "fairness"),
-          });
-        }
+        const shared = normalizeSharedFlights(results?.flights);
+        if (!shared.length) { const e = new Error("empty"); e.expired = true; throw e; }
+        setSharedAt(Number(data.createdAt) || Date.now());
+        setFlights(shared);
+        lastSearchRef.current = null;
+        // Se respeta el destino que el usuario tenía en su tarjeta al
+        // compartir, si existe entre los datos normalizados; si no, el mejor.
+        const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
+        setBestByCriterion({ total: keep("total"), fairness: keep("fairness") });
         if (searchParams) {
-          if (searchParams.origins?.length) setOrigins(searchParams.origins);
+          if (searchParams.origins?.length) {
+            setOrigins(searchParams.origins);
+            // searchParams no guarda los viajeros, pero cada tramo del resultado
+            // sí: así «Cambiar búsqueda» parte de los mismos números.
+            const legs = results?.flights?.[0]?.flights || [];
+            setPassengers(searchParams.origins.map((o) =>
+              Math.min(9, Math.max(1, Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1))));
+          }
           if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
           if (searchParams.returnDate) setReturnDate(searchParams.returnDate);
           if (searchParams.tripType) setTripType(searchParams.tripType);
@@ -433,13 +541,16 @@ export default function App() {
           if (searchParams.uiCriterion) setUiCriterion(searchParams.uiCriterion);
         }
         setView("results");
-        document.title = "FlyndMe - Shared Results";
         // Clean URL without reload
         window.history.replaceState({}, "", window.location.pathname);
       })
-      .catch(() => {
-        setToast({ message: t("share.expired"), type: "error" });
-        window.history.replaceState({}, "", window.location.pathname);
+      .catch((err) => {
+        if (err?.expired) {
+          setToast({ message: t("share.expired"), type: "error" });
+          window.history.replaceState({}, "", window.location.pathname);
+        } else {
+          setToast({ message: t("errors.connection"), type: "error" });
+        }
       })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -454,6 +565,7 @@ export default function App() {
     // Con el backend dormido el enlace de invitación decía «caducado» y se
     // borraba de la URL: ahora se despierta y reintenta, y solo un 404 real
     // cuenta como caducado (un fallo de red conserva ?group= para recargar).
+    setGroupLoading(true);
     groupFetch(`${API_BASE}/api/groups/${gid}`)
       .then((res) => {
         if (res.status === 404) { const e = new Error("Group not found"); e.expired = true; throw e; }
@@ -474,7 +586,8 @@ export default function App() {
         } else {
           setToast({ message: t("errors.connection"), type: "error" });
         }
-      });
+      })
+      .finally(() => setGroupLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -485,7 +598,7 @@ export default function App() {
     const parsed = parseSearchLinkParams(window.location.search);
     if (!parsed) return; // sin orígenes válidos o es un share link
     setOrigins(parsed.origins);
-    setPassengers(parsed.origins.map(() => 1));
+    setPassengers(parsed.passengers || parsed.origins.map(() => 1));
     if (parsed.departureDate) setDepartureDate(parsed.departureDate);
     if (parsed.returnDate) setReturnDate(parsed.returnDate);
     if (parsed.tripType) setTripType(parsed.tripType);
@@ -493,12 +606,19 @@ export default function App() {
     if (parsed.directOnly) setDirectOnly(true);
     if (parsed.cabinClass) setCabinClass(parsed.cabinClass);
     if (parsed.currency) setCurrency(parsed.currency);
+    if (parsed.flexDays) { setFlexEnabled(true); setFlexDays(parsed.flexDays); }
+    if (parsed.maxBudget) { setBudgetEnabled(true); setMaxBudget(parsed.maxBudget); }
+    if (parsed.destinations) setSelectedDests(parsed.destinations);
     setView("search");
     window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+  useEffect(() => {
+    hasResultsRef.current = Boolean(bestDestination);
+    hasGroupRef.current = Boolean(group);
+  }, [bestDestination, group]);
 
   // PWA: invitar a instalar solo tras ver resultados (y sin interrumpir la
   // primera lectura de la tarjeta).
@@ -512,20 +632,26 @@ export default function App() {
 
   // ── Dynamic document title per view ────────────────────────────────────
   useEffect(() => {
-    const titles = {
-      landing: "FlyndMe — Find the cheapest place to meet your group",
-      search: "FlyndMe — Search flights",
-      results: bestDestination
-        ? `FlyndMe — ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/pp`
-        : "FlyndMe — Results",
-    };
-    document.title = titles[view] || titles.landing;
-  }, [view, bestDestination]);
+    let title = t("pageTitle.landing");
+    if (view === "group") title = t("pageTitle.group");
+    else if (view === "results") {
+      title = bestDestination
+        ? t("pageTitle.resultsDest", {
+            city: cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination,
+            price: currency === "EUR"
+              ? formatEur(bestDestination.averageCostPerTraveler, 0)
+              : convertPrice(bestDestination.averageCostPerTraveler, currency),
+          })
+        : t("pageTitle.results");
+    }
+    document.title = title;
+  }, [view, bestDestination, t, lang, currency]);
 
-  const cleanOrigins = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
-    [origins]
-  );
+  // Ciudades sin repetir y sus viajeros salen de la MISMA pasada (paxByOrigin),
+  // así no se pueden desalinear (filas vacías o una ciudad en dos filas).
+  const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
+  const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
+  const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
   // cabecera de vuelo de resultados.
   const totalTravelers = useMemo(
@@ -552,7 +678,7 @@ export default function App() {
   // share channel — not just WhatsApp — surface the rich result card.
   const createShareLink = async () => {
     if (!bestDestination) return null;
-    const res = await fetch(`${API_BASE}/api/share`, {
+    const req = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -566,7 +692,11 @@ export default function App() {
           uiCriterion,
         },
       }),
-    }).catch(() => null);
+    };
+    // Intento directo (rápido: el menú de compartir nativo necesita el gesto del
+    // usuario reciente); solo si falla, despertar el backend y reintentar.
+    let res = await fetch(`${API_BASE}/api/share`, req).catch(() => null);
+    if (!res || [502, 503, 504].includes(res.status)) res = await groupFetch(`${API_BASE}/api/share`, req).catch(() => null);
     if (!res || !res.ok) return null;
     const { id } = await res.json();
     // OG preview now served from a WARM Vercel edge function (frontend/api/sog.js)
@@ -596,6 +726,28 @@ export default function App() {
     };
   };
 
+  // El enlace compartido se guarda una vez por resultado mostrado: así el
+  // segundo toque comparte sin esperar a la red. navigator.share y window.open
+  // exigen un gesto reciente del usuario, y crear el enlace con el backend en
+  // frío tarda más de lo que dura ese gesto.
+  const shareLinkCacheRef = useRef({ key: "", link: null });
+  const shareKey = () => `${searchGenRef.current}|${normalizeCode(bestDestination?.destination)}|${uiCriterion}`;
+  const cachedShareLink = () => (shareLinkCacheRef.current.key === shareKey() ? shareLinkCacheRef.current.link : null);
+  const getShareLink = async () => {
+    const cached = cachedShareLink();
+    if (cached) return cached;
+    const key = shareKey();
+    const link = await createShareLink();
+    if (link) shareLinkCacheRef.current = { key, link };
+    return link;
+  };
+  // Ventana abierta DENTRO del gesto; se navega cuando el enlace está listo.
+  const openShareWindow = (cached) => (cached ? null : window.open("", "_blank"));
+  const goShareWindow = (win, url) => {
+    if (win && !win.closed) { win.opener = null; win.location.href = url; }
+    else window.open(url, "_blank", "noopener");
+  };
+
   // ── Share (copies a shareable link) ─────────────────────────────────────────
 
   const handleShare = async () => {
@@ -603,7 +755,7 @@ export default function App() {
     setShareStatus("saving");
 
     try {
-      const link = await createShareLink();
+      const link = await getShareLink();
       if (!link) throw new Error("Failed to save");
       const { shareUrl } = link;
 
@@ -620,6 +772,7 @@ export default function App() {
         const lines = [
           t("share.title", { dest: destLabel(code) }),
           t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
+          t("board.estimateNote"),
           `🔗 ${shareUrl}`,
         ];
         await copyText(lines.join("\n"));
@@ -635,6 +788,7 @@ export default function App() {
         t("share.totalAvg", { total: formatEur(bd.totalCostEUR, 2), avg: formatEur(bd.averageCostPerTraveler, 2) }),
         t("share.fairness", { score: (bd.fairnessScore ?? 0).toFixed(0) }),
         t("share.date", { date: `${bd.bestDate || departureDate}${tripType === "roundtrip" ? ` → ${bd.bestReturnDate || returnDate}` : ""}` }),
+        t("board.estimateNote"),
       ];
       if (Array.isArray(bd.flights) && bd.flights.length) {
         lines.push(t("share.perOrigin", { details: bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · ") }));
@@ -655,7 +809,8 @@ export default function App() {
     const destName = destLabel(code);
 
     // Persist the result so the link unfurls the dynamic OG card.
-    const link = await createShareLink();
+    const win = openShareWindow(cachedShareLink());
+    const link = await getShareLink();
 
     const lines = [
       `✈ *FlyndMe* — ${destName}`,
@@ -664,11 +819,12 @@ export default function App() {
     if (Array.isArray(bd.flights) && bd.flights.length) {
       lines.push(bd.flights.map((f) => `${f.origin}: ${formatEur(f.price, 0)}`).join(" · "));
     }
+    lines.push(`_${t("board.estimateNote")}_`);
     // Rich social preview (WhatsApp/Telegram/Twitter) comes from the OG link.
-    if (link) lines.push(`\n🔗 ${link.ogUrl}`);
+    lines.push(`\n🔗 ${link ? link.ogUrl : shareFallbackUrl()}`);
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
-    window.open(waUrl, "_blank");
+    goShareWindow(win, waUrl);
     trackEvent("share_whatsapp", { destination: code });
   };
 
@@ -676,11 +832,12 @@ export default function App() {
     if (!bestDestination) return;
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
-    const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}`;
+    const text = `✈ FlyndMe — ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)} · ${formatEur(bestDestination.averageCostPerTraveler, 0)}/${t("results.avgPerPerson").toLowerCase()}\n${t("board.estimateNote")}`;
     // Share the OG link so Telegram unfurls the result card, not the bare SPA URL.
-    const link = await createShareLink();
-    const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : window.location.href)}&text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    const win = openShareWindow(cachedShareLink());
+    const link = await getShareLink();
+    const url = `https://t.me/share/url?url=${encodeURIComponent(link ? link.ogUrl : shareFallbackUrl())}&text=${encodeURIComponent(text)}`;
+    goShareWindow(win, url);
     trackEvent("share_telegram", { destination: code });
   };
 
@@ -689,24 +846,31 @@ export default function App() {
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
     // Persist first so the emailed link previews the result card where supported.
-    const link = await createShareLink();
+    const link = await getShareLink();
     const subject = `FlyndMe — ${t("results.eyebrow")}: ${destName}`;
     const body = [
       `✈ ${destName}`,
       `${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}`,
       `${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
+      t("board.estimateNote"),
       "",
-      link ? link.ogUrl : window.location.href,
+      link ? link.ogUrl : shareFallbackUrl(),
     ].join("\n");
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    // mailto: no abre ventana, así que no lo frena el bloqueo de ventanas emergentes.
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     trackEvent("share_email", { destination: code });
   };
 
   // ── Copy search params as URL ─────────────────────────────────────────────
 
-  const handleCopySearchLink = () => {
+  const searchLinkUrl = () => {
     const params = new URLSearchParams();
-    cleanOrigins.forEach(o => params.append("o", o));
+    // Una fila = un ?o= con su ?p= en el mismo orden (solo si alguien viaja con más gente).
+    const rows = origins
+      .map((o, i) => ({ code: toOriginCode(o), pax: Math.max(1, Number(passengers[i]) || 1) }))
+      .filter((r) => r.code);
+    rows.forEach((r) => params.append("o", r.code));
+    if (rows.some((r) => r.pax > 1)) rows.forEach((r) => params.append("p", String(r.pax)));
     if (departureDate) params.set("dep", departureDate);
     if (tripType === "roundtrip" && returnDate) params.set("ret", returnDate);
     params.set("trip", tripType);
@@ -714,9 +878,24 @@ export default function App() {
     if (directOnly) params.set("direct", "1");
     if (cabinClass !== "ECONOMY") params.set("cabin", cabinClass);
     if (currency !== "EUR") params.set("cur", currency);
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    copyText(url);
-    setToast({ message: t("share.searchLinkCopied"), type: "success" });
+    appendFlexBudgetParams(params, { flexEnabled, flexDays, budgetEnabled, maxBudget });
+    appendDestinationParams(params, selectedDests, rows.map((r) => r.code));
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  // Si no se pudo guardar el resultado (backend caído), se comparte el enlace
+  // que repite la búsqueda: antes se mandaba la URL actual, que abre la portada vacía.
+  const shareFallbackUrl = () => {
+    setToast({ message: t("share.fallbackSearchLink"), type: "error" });
+    return searchLinkUrl();
+  };
+
+  const handleCopySearchLink = async () => {
+    const url = searchLinkUrl();
+    const ok = await copyText(url);
+    setToast(ok
+      ? { message: t("share.searchLinkCopied"), type: "success" }
+      : { message: t("results.copyFailed"), type: "error" });
   };
 
   // ── Native Web Share API (mobile) ──────────────────────────────────────────
@@ -726,15 +905,19 @@ export default function App() {
     const code = normalizeCode(bestDestination.destination);
     const destName = destLabel(code);
     // Persist first so the shared link unfurls the dynamic OG card, not the bare SPA URL.
-    const link = await createShareLink();
+    const link = await getShareLink();
     try {
       await navigator.share({
         title: `FlyndMe — ${destName}`,
-        text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}`,
-        url: link ? link.ogUrl : window.location.href,
+        text: `✈ ${destName}\n${t("results.groupTotal")}: ${formatEur(bestDestination.totalCostEUR, 0)}\n${t("results.avgPerPerson")}: ${formatEur(bestDestination.averageCostPerTraveler, 0)}\n${t("board.estimateNote")}`,
+        url: link ? link.ogUrl : shareFallbackUrl(),
       });
       trackEvent("share_native", { destination: code });
-    } catch { /* user cancelled */ }
+    } catch (err) {
+      // El gesto caducó mientras se creaba el enlace: ya está guardado, así
+      // que el siguiente toque comparte al instante.
+      if (err?.name === "NotAllowedError" && link) setToast({ message: t("share.tapAgain"), type: "success" });
+    }
   };
 
   // ── Analítica (Vercel Web Analytics, ver utils/analytics.js) ──────────────
@@ -747,22 +930,31 @@ export default function App() {
 
   // ── Ensure backend is awake before searching ─────────────────────────────────
 
-  async function ensureBackendAwake() {
+  async function ensureBackendAwake(isCancelled = () => false) {
     const PING_URL = `${API_BASE}/api/ping`;
     const MAX_WAKE = 15;           // up to 15 attempts = ~60 s
     const WAKE_DELAY = 4000;
 
-    for (let i = 0; i < MAX_WAKE; i++) {
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 5000);
-        const res = await fetch(PING_URL, { cache: "no-store", signal: ctrl.signal });
-        clearTimeout(t);
-        if (res.ok) return true;    // backend is alive
-      } catch { /* network error or timeout — keep trying */ }
-      await new Promise((r) => setTimeout(r, WAKE_DELAY));
+    try {
+      for (let i = 0; i < MAX_WAKE; i++) {
+        if (isOffline()) return false;
+        if (isCancelled()) return false;
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 5000);
+          const res = await fetch(PING_URL, { cache: "no-store", signal: ctrl.signal });
+          clearTimeout(t);
+          if (res.ok) return true;    // backend is alive
+        } catch { /* network error or timeout — keep trying */ }
+        // El primer ping no ha respondido: el servidor (Render free) estaba
+        // dormido. Se dice en el panel de carga, que si no parece colgado.
+        setBackendWaking(true);
+        await new Promise((r) => setTimeout(r, WAKE_DELAY));
+      }
+      return false;                    // gave up
+    } finally {
+      setBackendWaking(false);
     }
-    return false;                    // gave up
   }
 
   // Peticiones del plan de grupo: el backend (Render free) se duerme tras unos
@@ -770,6 +962,7 @@ export default function App() {
   // grupo» / «el grupo ha caducado» (falso). Igual que la búsqueda: despertarlo
   // primero y reintentar ante 502/503/504 o error de red.
   async function groupFetch(url, opts = {}) {
+    if (isOffline()) throw new Error("offline");
     await ensureBackendAwake();
     let last = null;
     for (let i = 0; i < 3; i++) {
@@ -815,10 +1008,14 @@ export default function App() {
     trackEvent("verify_click", { dest: code });
     setLiveCheck({ code, phase: "loading" });
 
-    const payload = buildVerifyPayload(winner, { departureDate, returnDate, tripType });
+    // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
+    const payload = buildVerifyPayload(winner, { departureDate: winner.bestDate || departureDate, returnDate: winner.bestReturnDate || returnDate, tripType });
     verifyAbortRef.current?.abort();
     const controller = new AbortController();
     verifyAbortRef.current = controller;
+    // Sin respuesta en 35 s (el backend corta a los 20 s y Render a los ~30 s):
+    // se aborta y el botón pasa a «no se pudo comprobar» en vez de quedarse girando.
+    const verifyTimer = setTimeout(() => controller.abort(), 35000);
 
     fetch(`${API_BASE}/api/flights/verify`, {
       method: "POST",
@@ -829,8 +1026,7 @@ export default function App() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (searchGenRef.current !== gen) return; // búsqueda nueva: descartar
-        const status = data?.verificationStatus;
-        if (status === "verified" || status === "changed") {
+        if (isFullyVerified(winner, data)) {
           // Verificación COMPLETA: mergeVerification promociona el precio
           // verificado a mostrado y el badge pasa a ✓/↑↓. Quitamos el transitorio.
           applyVerification(winner.destination, data);
@@ -844,7 +1040,8 @@ export default function App() {
       .catch(() => {
         if (searchGenRef.current !== gen) return; // abortada por búsqueda nueva
         setLiveCheck({ code, phase: "unavailable" });
-      });
+      })
+      .finally(() => clearTimeout(verifyTimer));
   };
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
@@ -858,10 +1055,11 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         origins: cleanOrigins,
-        passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
+        passengers: cleanPax,
         destination: winner.destination,
-        departureDate,
-        ...(tripType === "roundtrip" ? { returnDate } : {}),
+        // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
+        departureDate: winner.bestDate || departureDate,
+        ...(tripType === "roundtrip" ? { returnDate: winner.bestReturnDate || returnDate } : {}),
         tripType,
         currentTotalEUR: winner.totalCostEUR,
       }),
@@ -881,15 +1079,20 @@ export default function App() {
   // combinación exacta) y solo se avisa si ha bajado de forma apreciable. Se
   // compara contra el precio de caché de entonces (cached* si se verificó en
   // vivo): comparar Google Flights con la caché daría bajadas falsas.
-  const watchParamsFor = (dest) => ({
-    origins: cleanOrigins,
-    passengers: cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1))),
-    departureDate: dest.bestDate || departureDate,
-    returnDate: dest.bestReturnDate || returnDate,
-    tripType,
-    nonStop: directOnly,
-    destination: normalizeCode(dest.destination),
-  });
+  const watchParamsFor = (dest) => {
+    const s = lastSearchRef.current;
+    return {
+      origins: s ? s.origins : cleanOrigins,
+      passengers: s ? s.passengers : cleanPax,
+      departureDate: dest.bestDate || (s ? s.departureDate : departureDate),
+      returnDate: dest.bestReturnDate || (s ? s.returnDate : returnDate),
+      tripType: s ? s.tripType : tripType,
+      nonStop: s ? !!s.nonStop : directOnly,
+      destination: normalizeCode(dest.destination),
+    };
+  };
+  // Importe en la divisa elegida (EUR es la canónica; GBP/USD solo de visualización)
+  const money = (eur) => (currency === "EUR" ? formatEur(eur, 0) : convertPrice(eur, currency));
   const isWatched = (dest) => !!dest && watches.some((w) => w.id === watchId(watchParamsFor(dest)));
   const toggleWatch = (dest) => {
     if (!dest) return;
@@ -905,7 +1108,7 @@ export default function App() {
       trackEvent("price_watch_add", { origins: params.origins.length });
     }
     setWatches(next);
-    writeWatches(window.localStorage, next);
+    writeWatches(safeStorage(), next);
   };
   const openWatch = (w) => {
     setPriceAlerts((prev) => prev.filter((a) => a.watch.id !== w.id));
@@ -920,12 +1123,21 @@ export default function App() {
   };
   useEffect(() => {
     const list = activeWatches(watches, todayISO());
-    if (list.length !== watches.length) { setWatches(list); writeWatches(window.localStorage, list); }
+    if (list.length !== watches.length) { setWatches(list); writeWatches(safeStorage(), list); }
     if (!list.length) return undefined;
     let cancelled = false;
     const timer = setTimeout(async () => {
       const found = [];
+      const store = safeStorage();
+      const checks = readChecks(store);
       for (const w of list) {
+        const wid = w.id || watchId(w);
+        // Comprobada hace poco: se reutiliza su resultado sin volver a llamar.
+        if (!isCheckDue(checks[wid])) {
+          const drop = checks[wid].totalEUR ? priceDrop(w.savedTotalEUR, checks[wid].totalEUR) : null;
+          if (drop) found.push({ watch: w, ...drop });
+          continue;
+        }
         try {
           const res = await groupFetch(`${API_BASE}/api/flights/price-check`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -938,10 +1150,15 @@ export default function App() {
           });
           if (!res.ok) continue;
           const data = await res.json();
-          const drop = data?.result ? priceDrop(w.savedTotalEUR, data.result.totalCostEUR) : null;
+          // Solo cuenta un precio de HOY para las mismas fechas: si a algún
+          // origen le faltaba dato y se usó una fecha vecina, no es comparable.
+          const exact = data?.result && !data.result.hasDateFallback ? data.result.totalCostEUR : null;
+          checks[wid] = { at: Date.now(), totalEUR: exact };
+          const drop = exact ? priceDrop(w.savedTotalEUR, exact) : null;
           if (drop) found.push({ watch: w, ...drop });
         } catch { /* silencioso: el aviso es opcional */ }
       }
+      writeChecks(store, checks, list.map((w) => w.id || watchId(w)));
       if (!cancelled && found.length) {
         setPriceAlerts(found);
         trackEvent("price_drop_seen", { n: found.length });
@@ -979,6 +1196,16 @@ export default function App() {
     setPendingResearch(true);
   };
 
+  // Un compartido no guarda los pasajeros por origen en searchParams, pero cada
+  // tramo del resultado sí los lleva: se recuperan para buscar lo mismo hoy.
+  const refreshShared = () => {
+    const legs = bestDestination?.flights || [];
+    const paxFor = (o) => Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1;
+    setPassengers(origins.map(paxFor));
+    trackEvent("shared_refresh", {});
+    setPendingResearch(true);
+  };
+
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
   const useCheaperDate = (date, newReturnDate) => {
@@ -1008,19 +1235,38 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    // Relanzada desde resultados («Cambiar a esta fecha», «Buscar de nuevo»):
+    // el error solo se pinta en el formulario, y los resultados ya se han
+    // vaciado, así que hay que volver a él o la página queda en blanco.
+    const fail = (msg) => {
+      setError(msg);
+      if (viewRef.current === "results") setView("search");
+    };
 
-    if (!cleanOrigins.length) { setError(t("errors.noOrigin")); return; }
-    if (!departureDate)        { setError(t("errors.noDeparture")); return; }
-    if (departureDate < todayISO()) { setError(t("errors.departurePast")); return; }
+    if (!cleanOrigins.length) { fail(t("errors.noOrigin")); return; }
+    if (!departureDate)        { fail(t("errors.noDeparture")); return; }
+    if (departureDate < todayISO()) { fail(t("errors.departurePast")); return; }
+    if ((tripType === "roundtrip" && returnDate > departureDate ? returnDate : departureDate) > horizonISO()) {
+      fail(t("errors.codes.DATE_TOO_FAR")); return;
+    }
     if (tripType === "roundtrip") {
-      if (!returnDate)               { setError(t("errors.noReturn")); return; }
-      if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
+      if (!returnDate)               { fail(t("errors.noReturn")); return; }
+      if (returnDate <= departureDate) { fail(t("errors.returnBeforeDep")); return; }
+    }
+    if (isOffline()) { fail(t("errors.offline")); return; }
+
+    const crowded = originPax.find((x) => x.passengers > MAX_PAX_PER_ORIGIN);
+    if (crowded) {
+      fail(t("errors.paxPerCity", { city: cityOf(crowded.origin) || crowded.origin, n: crowded.passengers, max: MAX_PAX_PER_ORIGIN }));
+      return;
     }
 
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
+    loadWinnerCard().catch(() => {});
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
+    setSharedAt(null);
     setCheaperDate(null);
     setTripHint(null);
     setShowAlt(false);
@@ -1029,21 +1275,24 @@ export default function App() {
     searchStartRef.current = Date.now();
     // Nueva búsqueda: invalida cualquier verificación en vuelo de la anterior
     searchGenRef.current += 1;
+    const gen = searchGenRef.current;
+    const cancelled = () => searchGenRef.current !== gen;
     verifyAbortRef.current?.abort();
     verifyAbortRef.current = null;
     setLiveCheck({ code: null, phase: null });
 
     try {
       // Step 1: wake backend if needed (ping is lightweight)
-      const awake = await ensureBackendAwake();
+      const awake = await ensureBackendAwake(cancelled);
+      if (cancelled()) return;
       if (!awake) {
-        setError(t("errors.serverWaking"));
+        fail(t(isOffline() ? "errors.offline" : "errors.serverWaking"));
         return;
       }
 
       // Step 2: actual search (backend is now warm)
       // Backend does all pax math (totals, fairness, share/OG) — see chore: backend hardening commit.
-      const paxForReq = cleanOrigins.map((_, i) => Math.max(1, Math.min(9, Number(passengers[i]) || 1)));
+      const paxForReq = cleanPax;
       const body = {
         origins: cleanOrigins,
         passengers: paxForReq,
@@ -1065,6 +1314,7 @@ export default function App() {
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
           const controller = new AbortController();
+          searchAbortRef.current = controller;
           const timeout = setTimeout(() => controller.abort(), 45000);
 
           const res = await fetch(API_URL, {
@@ -1074,9 +1324,13 @@ export default function App() {
             signal: controller.signal,
           });
           clearTimeout(timeout);
+          if (cancelled()) return;
 
-          if (res.status === 503 && attempt < MAX_RETRIES) {
+          // 502/504 son del proxy de Render mientras el servicio arranca o se
+          // reinicia: transitorios, como el 503.
+          if ([502, 503, 504].includes(res.status) && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            if (cancelled()) return;
             continue;
           }
 
@@ -1084,11 +1338,14 @@ export default function App() {
             // 400/429 deterministas: no se reintentan. Mapeamos el code del
             // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
-            setError(errorMessageForCode(data.code, data.message || data.error));
+            if (cancelled()) return;
+            const which = Array.isArray(data.invalid) && data.invalid.length ? ` (${data.invalid.join(", ")})` : "";
+            fail(errorMessageForCode(data.code, data.message || data.error) + which);
             return;
           }
 
           const data = await res.json();
+          if (cancelled()) return;
           const arr  = Array.isArray(data.flights) ? data.flights : [];
 
           if (!arr.length) {
@@ -1100,7 +1357,12 @@ export default function App() {
               : (tripType === "roundtrip" && cleanOrigins.length >= 2)
                 ? t("errors.noResultsRoundtripMulti")
                 : t("errors.noResults");
-            setError(noResMsg);
+            // Un código que no está en nuestra lista suele ser una errata, y basta
+            // un origen sin precios para descartar todos los destinos.
+            const unknown = cleanOrigins.filter((o) => !AIRPORT_MAP[o]);
+            fail(unknown.length
+              ? `${noResMsg} ${t("errors.unknownOriginsHint", { codes: unknown.join(", ") })}`
+              : noResMsg);
             if (tripType === "roundtrip" && !budgetEnabled) fetchTripHint(body, searchGenRef.current);
             return;
           }
@@ -1110,24 +1372,38 @@ export default function App() {
           const adjusted = arr;
 
           setFlights(adjusted);
+          lastSearchRef.current = body;
           setPartialResults(Boolean(data.partial));
           setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
-          adjusted.slice(0, 6).forEach((d) => {
+          adjusted.slice(0, imagePreloadCount(typeof navigator !== "undefined" ? navigator.connection : null)).forEach((d) => {
             const img = new Image();
             img.src = getCityImage(normalizeCode(d.destination), getBaseUrl(), { w: 1200, h: 500 });
           });
 
           setView("results");
-          document.title = "FlyndMe - Flight Results";
+          // Foco al principio de los resultados (el botón de buscar desaparece y
+          // el foco caía en <body>): teclado y lector de pantalla siguen desde aquí.
+          setTimeout(() => document.querySelector(".fm-decision")?.focus({ preventScroll: true }), 80);
           window.scrollTo({ top: 0, behavior: scrollBehavior() });
           // Record search duration
           if (searchStartRef.current) {
             setSearchDuration(((Date.now() - searchStartRef.current) / 1000).toFixed(1));
           }
-          saveRecentSearch({ origins: cleanOrigins, tripType, departureDate, returnDate });
+          saveRecentSearch({
+            origins: cleanOrigins,
+            passengers: body.passengers,
+            tripType,
+            departureDate,
+            returnDate,
+            flexDays: savedFlexDays(flexEnabled, flexDays),
+            maxBudget: savedBudget(budgetEnabled, maxBudget),
+            directOnly: directOnly === true,
+            cabinClass: savedCabin(cabinClass),
+            destinations: savedDestinations(selectedDests, cleanOrigins),
+          });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
           if (bestTotal?.averageCostPerTraveler) {
@@ -1149,9 +1425,11 @@ export default function App() {
           fetchCheaperDate(winner, searchGenRef.current);
           return;
         } catch (err) {
+          if (cancelled()) return;
           const isTransient = err instanceof TypeError || err.name === "AbortError";
           if (isTransient && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            if (cancelled()) return;
             continue;
           }
           if (!isTransient) break;
@@ -1161,10 +1439,20 @@ export default function App() {
       // Solo se llega aquí tras agotar reintentos por error de red/timeout
       // (TypeError/AbortError), cuyo message sería técnico ("Failed to fetch")
       // → mostramos un motivo de conexión claro en su lugar.
-      setError(t("errors.connection"));
+      fail(t(isOffline() ? "errors.offline" : "errors.connection"));
     } finally {
-      setLoading(false);
+      if (!cancelled()) setLoading(false);
     }
+  };
+
+  // Un arranque en frío del backend + reintentos puede tener al usuario más de
+  // un minuto en el panel de carga: permitir volver al formulario sin esperar.
+  const cancelSearch = () => {
+    searchGenRef.current += 1;
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
+    setLoading(false);
+    setToast({ message: t("loading.cancelled"), type: "success" });
   };
 
   // Relanza la búsqueda cuando "Usar esta fecha" ya ha actualizado departureDate
@@ -1214,9 +1502,12 @@ export default function App() {
 
   const createGroup = useCallback(async () => {
     if (!departureDate) { setToast({ message: t("group.needDate"), type: "error" }); return; }
+    if (tripType === "roundtrip" && !returnDate) { setToast({ message: t("errors.noReturn"), type: "error" }); return; }
     setGroupBusy(true);
     try {
-      const members = cleanOrigins.map((o, i) => ({ origin: o, passengers: passengers[i] || 1 }));
+      const members = origins
+        .map((o, i) => ({ origin: String(o || "").trim().toUpperCase(), passengers: Math.max(1, Number(passengers[i]) || 1) }))
+        .filter((m) => m.origin);
       const res = await groupFetch(`${API_BASE}/api/groups`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ departureDate, returnDate: tripType === "roundtrip" ? returnDate : "", tripType, members }),
@@ -1225,6 +1516,9 @@ export default function App() {
       if (!res.ok) {
         const code = (await res.json().catch(() => ({}))).code;
         if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
+        if (code && t(`errors.codes.${code}`) !== `errors.codes.${code}`) {
+          setToast({ message: t(`errors.codes.${code}`), type: "error" }); return;
+        }
         throw new Error("create failed");
       }
       const { id } = await res.json();
@@ -1232,6 +1526,12 @@ export default function App() {
       window.history.replaceState({}, "", `${window.location.pathname}?group=${id}`);
       setView("group");
       window.scrollTo(0, 0);
+      // El botón que se ha pulsado desaparece: el foco va al título del plan
+      // (si no, cae en <body> y el lector de pantalla no anuncia la vista nueva).
+      setTimeout(() => {
+        const h = document.getElementById("gp-title");
+        if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+      }, 80);
       trackEvent("group_create", { members: members.length });
     } catch {
       setToast({ message: t("group.createError"), type: "error" });
@@ -1253,6 +1553,9 @@ export default function App() {
         const code = (await res.json().catch(() => ({}))).code;
         if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
         if (code === "GROUP_FULL") { setToast({ message: t("group.full"), type: "error" }); return; }
+        if (code === "GROUP_TOO_MANY_CITIES") { setToast({ message: t("group.tooManyCities"), type: "error" }); return; }
+        if (res.status === 404) { setToast({ message: t("group.expired"), type: "error" }); return; }
+        if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
         throw new Error("add failed");
       }
       setGroup(await res.json());
@@ -1268,8 +1571,20 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("remove failed");
+      const m = group.members?.[index] || {};
+      const q = new URLSearchParams({ origin: m.origin || "", name: m.name || "" });
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}?${q}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        if (body.code === "MEMBER_CHANGED" && body.group) {
+          setGroup(body.group);
+          setToast({ message: t("group.rosterChanged"), type: "error" });
+          return;
+        }
+        if (res.status === 404) { setToast({ message: t("group.expired"), type: "error" }); return; }
+        if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
+        throw new Error("remove failed");
+      }
       setGroup(await res.json());
     } catch {
       setToast({ message: t("group.addError"), type: "error" });
@@ -1283,11 +1598,36 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}`);
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}?refresh=1`);
       if (res.ok) setGroup(await res.json());
     } catch { /* keep current roster */ }
     finally { setGroupBusy(false); }
   }, [group]);
+
+  // Al volver a la pestaña del grupo, traer las ciudades que hayan añadido los
+  // demás sin tener que pulsar «Sincronizar». Silencioso y como mucho cada 15 s;
+  // no pisa una operación en curso (añadir/quitar).
+  const groupBusyRef = useRef(false);
+  useEffect(() => { groupBusyRef.current = groupBusy; }, [groupBusy]);
+  const groupId = group?.id;
+  useEffect(() => {
+    if (view !== "group" || !groupId) return undefined;
+    let last = Date.now();
+    const onReturn = () => {
+      if (document.visibilityState !== "visible" || groupBusyRef.current || Date.now() - last < 15000) return;
+      last = Date.now();
+      fetch(`${API_BASE}/api/groups/${groupId}?refresh=1`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((g) => { if (g?.id === groupId && !groupBusyRef.current) setGroup(g); })
+        .catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+    return () => {
+      document.removeEventListener("visibilitychange", onReturn);
+      window.removeEventListener("focus", onReturn);
+    };
+  }, [view, groupId]);
 
   const copyGroupLink = useCallback(async () => {
     const ok = await copyText(groupInviteUrl);
@@ -1344,7 +1684,7 @@ export default function App() {
       <header className="app-header">
         <div className="container d-flex align-items-center justify-content-between" style={{ maxWidth: 1080 }}>
           <div className="app-logo" onClick={() => { setView("landing"); setFlights([]); setBestByCriterion({ total: null, fairness: null }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setView("landing"); } }}>
-            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="FlyndMe" height={28}
+            <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
             <span className="app-logo-sub">{t("header.tagline")}</span>
@@ -1386,21 +1726,28 @@ export default function App() {
               <div className="fm-fav-panel-list">
                 {favs.map((f) => (
                   <div key={f.code} className="fm-fav-panel-item">
-                    <button type="button" className="fm-fav-panel-open"
-                      onClick={() => openFavorite(f)}
-                      aria-label={t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}>
-                      <span className="fm-fav-panel-flag">{countryFlag(f.code)}</span>
+                    <button type="button" className="fm-fav-panel-open" onClick={() => openFavorite(f)}>
+                      <span className="sr-only">{t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}: </span>
+                      <span className="fm-fav-panel-flag" aria-hidden="true">{countryFlag(f.code)}</span>
                       <span className="fm-fav-panel-info">
                         <span className="fm-fav-panel-code">{f.code}</span>
                         <span className="fm-fav-panel-city">{cityOf(f.code) || f.city}</span>
                       </span>
-                      <span className="fm-fav-panel-price">{formatEur(f.price, 0)}/pp</span>
+                      <span className="fm-fav-panel-price">
+                        {formatEur(f.price, 0)}/pp
+                        {Number(f.ts) > 0 && (
+                          <span className="fm-fav-panel-date">
+                            {new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short" }).format(new Date(Number(f.ts)))}
+                          </span>
+                        )}
+                      </span>
                       <ChevronRight size={16} className="fm-fav-panel-chevron lucide" aria-hidden="true" />
                     </button>
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: cityOf(f.code) || f.city || f.code })}
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
+                <p className="fm-fav-panel-note">{t("favorites.priceNote")}</p>
               </div>
             )}
           </div>
@@ -1408,35 +1755,44 @@ export default function App() {
       )}
 
       {/* Loading bar */}
-      <SearchProgress loading={loading} origins={cleanOrigins} />
+      <SearchProgress loading={loading} origins={cleanOrigins} onCancel={cancelSearch} waking={backendWaking} />
 
       {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
 
       {/* Keyboard shortcuts overlay */}
-      <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t} />
+      <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t}
+        charKeys={charKeys} onToggleCharKeys={toggleCharKeys} />
 
       {/* Live region (a11y): anuncia la llegada de resultados y la verificación
           asíncrona del precio del ganador (el badge cambia sin recargar). */}
       <div className="sr-only" role="status" aria-live="polite">
         {view === "results" && bestDestination
-          ? [
-              t("a11y.resultsAnnounce", {
-                n: flights.length,
-                dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
-                price: formatEur(bestDestination.averageCostPerTraveler, 0),
-              }),
-              (bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed")
-                ? t("a11y.priceVerified")
-                : "",
-            ].join(" ").trim()
+          ? (() => {
+              const verified = bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed";
+              return [
+                t(verified ? "a11y.resultsAnnounceVerified" : "a11y.resultsAnnounce", {
+                  found: flights.length === 1 ? t("a11y.foundOne") : t("a11y.foundMany", { n: flights.length }),
+                  dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
+                  price: currency === "EUR"
+                    ? formatEur(bestDestination.averageCostPerTraveler, 0)
+                    : convertPrice(bestDestination.averageCostPerTraveler, currency),
+                }),
+                verified ? t("a11y.priceVerified") : "",
+              ].join(" ").trim();
+            })()
           : ""}
       </div>
 
       {/* Views */}
-      <div id="main-content" tabIndex={-1}>
+      <main id="main-content" tabIndex={-1}>
       {(view === "landing" || view === "search") && (
         <div className="view-enter" key="home">
+          {groupLoading && (
+            <div className="container fm-price-alerts" style={{ maxWidth: 1080 }}>
+              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} detail={t("group.loadingDetail")} />
+            </div>
+          )}
           {priceAlerts.length > 0 && (
             <div className="container fm-price-alerts" style={{ maxWidth: 1080 }} aria-live="polite">
               {priceAlerts.map((a) => (
@@ -1444,9 +1800,9 @@ export default function App() {
                   text={t("watch.dropText", {
                     route: a.watch.origins.join(" · "),
                     city: cityOf(a.watch.destination) || a.watch.destination,
-                    before: formatEur(a.watch.savedTotalEUR, 0),
-                    now: formatEur(a.currentTotalEUR, 0),
-                    saving: formatEur(a.savingEUR, 0),
+                    before: money(a.watch.savedTotalEUR),
+                    now: money(a.currentTotalEUR),
+                    saving: money(a.savingEUR),
                   })}
                   detail={t("watch.dropDetail")}
                   actionLabel={t("watch.view")}
@@ -1477,7 +1833,7 @@ export default function App() {
                   nights: tripHint.nights,
                   date: formatDate(tripHint.returnDate),
                   count: tripHint.destinationsCount,
-                  total: formatEur(tripHint.cheapest.totalCostEUR, 0),
+                  total: money(tripHint.cheapest.totalCostEUR),
                 }),
                 detail: t("tripHint.detail"),
                 actionLabel: t("tripHint.use"),
@@ -1497,6 +1853,8 @@ export default function App() {
       {/* Collaborative group planning */}
       {view === "group" && group && (
         <div className="container py-4 view-enter" key="group" style={{ maxWidth: 720 }}>
+          <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+          <Suspense fallback={<div className="gp-loading" aria-hidden="true" />}>
           <GroupPlanner
             group={group}
             inviteUrl={groupInviteUrl}
@@ -1511,7 +1869,10 @@ export default function App() {
             onShareNative={handleGroupShareNative}
             loading={loading}
             busy={groupBusy}
+            error={error}
           />
+          </Suspense>
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1530,7 +1891,7 @@ export default function App() {
       )}
 
       {view === "results" && bestDestination && (
-        <main className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+        <div className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
             {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
@@ -1577,9 +1938,20 @@ export default function App() {
           {/* ══ 01 · DECISIÓN FINAL ══ Lo que os conviene reservar, separado de
               la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
               decisión) + reparto del grupo + siguiente paso. */}
-          <section className="fm-decision" aria-labelledby="fm-decision-title">
+          <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
+          {sharedAt && (
+            <Notice variant="partial" tag={t("board.tagNotice")}
+              text={t("results.sharedNotice", {
+                when: new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(sharedAt)),
+              })}
+              detail={t("results.sharedDetail")}
+              actionLabel={t("results.sharedRefresh")}
+              onAction={refreshShared} disabled={loading} />
+          )}
+          <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+          <Suspense fallback={<ResultsSkeleton />}>
           <WinnerCard
             dest={bestDestination}
             origins={cleanOrigins}
@@ -1627,6 +1999,8 @@ export default function App() {
               </ErrorBoundary>
             ) : null}
           />
+          </Suspense>
+          </ErrorBoundary>
 
           {/* ── Reparto del grupo: quién debe a quién + coordinación de llegadas,
               en un mismo bloque (sin sentido con un solo origen: todos salen de
@@ -1648,7 +2022,9 @@ export default function App() {
               </span>
             </summary>
             <div className="fm-split-body">
-            <WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} />
+            <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+              <Suspense fallback={null}><WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} /></Suspense>
+            </ErrorBoundary>
             <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
@@ -1788,25 +2164,25 @@ export default function App() {
           {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
           {showAlt === "more" && (
             <div className="view-enter fm-more" id="rv-panel-more">
-              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")}
+                travelers={bestDestination.totalPassengers || totalTravelers} t={t} />
 
               {/* Quick re-search: try nearby dates */}
               <div className="fm-quick-research">
                 <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
                 <div className="fm-quick-research-btns">
                   {[-1, 1, -2, 2].map((offset) => {
-                    const d = new Date((departureDate || todayISO()) + "T00:00:00");
-                    d.setDate(d.getDate() + offset);
-                    const iso = d.toISOString().slice(0, 10);
+                    // En UTC: con new Date("…T00:00:00") (hora local) y toISOString()
+                    // (UTC), en España «+1 día» volvía a buscar la misma fecha.
+                    const iso = addDaysISO(departureDate || todayISO(), offset);
+                    if (iso < todayISO()) return null; // una salida pasada no se puede buscar
                     const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
                     return (
                       <button key={offset} type="button" className="fm-quick-research-btn"
                         onClick={() => {
                           setDepartureDate(iso);
                           if (tripType === "roundtrip" && returnDate) {
-                            const r = new Date(returnDate + "T00:00:00");
-                            r.setDate(r.getDate() + offset);
-                            setReturnDate(r.toISOString().slice(0, 10));
+                            setReturnDate(addDaysISO(returnDate, offset));
                           }
                           setView("search");
                           setTimeout(() => {
@@ -1820,15 +2196,15 @@ export default function App() {
                 </div>
               </div>
 
-              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)}>
+              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins)}>
                 <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}
               </button>
             </div>
           )}
           </section>
-        </main>
+        </div>
       )}
-      </div>{/* /main-content */}
+      </main>{/* /main-content */}
 
       {/* Scroll progress bar */}
       <ScrollProgressBar />
@@ -1885,6 +2261,7 @@ export default function App() {
               <button type="button" className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</button>
               <button type="button" className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: scrollBehavior() }); }, 100); }}>{t("footerFaq")}</button>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
+              <button type="button" className="app-footer-link" onClick={() => setShowShortcuts(true)}>{t("shortcuts.title")}</button>
             </nav>
             <span className="app-footer-copy">{t("footerCopy")}</span>
           </div>

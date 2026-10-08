@@ -55,7 +55,7 @@ function cityName(code, lang) {
 const UI = {
   es: {
     htmlLang: "es", ogLocale: "es_ES",
-    home: "Inicio", homeAria: "FlyndMe — inicio", brandTag: "vuelos de grupo",
+    home: "Inicio", homeAria: "FlyndMe vuelos de grupo — inicio", brandTag: "vuelos de grupo",
     eyebrowPair: "Coste total + reparto justo", eyebrowUsecase: "Guía",
     cachedLabel: (m) => `Estimación en caché · precios consultados ${m}`,
     travelLabel: (d) => `Precios para viajar alrededor del ${d}`,
@@ -77,7 +77,7 @@ const UI = {
   },
   en: {
     htmlLang: "en", ogLocale: "en_US",
-    home: "Home", homeAria: "FlyndMe — home", brandTag: "group flights",
+    home: "Home", homeAria: "FlyndMe group flights — home", brandTag: "group flights",
     eyebrowPair: "Total cost + fair split", eyebrowUsecase: "Guide",
     cachedLabel: (m) => `Cached estimate · prices checked ${m}`,
     travelLabel: (d) => `Prices for travel around ${d}`,
@@ -476,6 +476,15 @@ h1,.faq h2,.related h2,.who-title{font-weight:700;letter-spacing:-.02em}
   .est-table tbody th,.est-table td{padding:10px 4px}
   .est-table tbody th{padding-left:8px}
   .est-table td:last-child,.est-table th[scope=col]:last-child{padding-right:8px}
+}
+/* Mínimos del proyecto: texto ≥ 12 px y dianas táctiles ≥ 40 px */
+.brand-tag,.eyebrow,.pill,.est-table th[scope=col]{font-size:12px}
+.est-live,.site-foot a{display:inline-flex;align-items:center;min-height:40px}
+.brand{min-height:40px}
+.faq summary{min-height:40px;align-items:center}
+@media (max-width:560px){
+  .est-table th[scope=col]{font-size:12px;letter-spacing:.02em}
+  .pill{white-space:nowrap;letter-spacing:.03em;margin-left:0}
 }`.trim();
 
 // ─── Plantilla de página ─────────────────────────────────────────────────────

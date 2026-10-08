@@ -8,8 +8,17 @@ import { normalizeCode, cityOf } from "./helpers.js";
 export const FX_RATES = { EUR: 1, GBP: 0.86, USD: 1.09 };
 export const FX_SYMBOLS = { EUR: "€", GBP: "£", USD: "$" };
 
+// «1 € ≈ 1,09 $» con el separador decimal del idioma. null en euros (no hay conversión).
+export function fxRateLabel(currency, lang = "en") {
+  if (!currency || currency === "EUR" || !FX_RATES[currency]) return null;
+  const n = new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(FX_RATES[currency]);
+  return lang === "es" ? `1 € ≈ ${n} ${FX_SYMBOLS[currency]}` : `€1 ≈ ${FX_SYMBOLS[currency]}${n}`;
+}
+
 export function convertPrice(eur, currency) {
-  const val = eur * (FX_RATES[currency] || 1);
+  // Sin dato → «—» (antes salía «£NaN»)
+  if (eur === null || eur === undefined || eur === "" || !Number.isFinite(Number(eur))) return "—";
+  const val = Number(eur) * (FX_RATES[currency] || 1);
   return `${FX_SYMBOLS[currency] || "€"}${val.toFixed(0)}`;
 }
 
@@ -47,13 +56,17 @@ export function approxDistKm(code1, code2) {
 // backend al ordenar).
 export function pickBest(arr, mode) {
   if (!arr?.length) return null;
+  // Sin dato cuenta como 0, igual que sortByCriterion: el ganador de la
+  // tarjeta tiene que ser el primero del panel de salidas.
+  const fair = (d) => d.fairnessScore ?? 0;
+  const cost = (d) => d.totalCostEUR ?? 0;
   return arr.reduce((best, cur) => {
     if (mode === "fairness") {
-      if (cur.fairnessScore > best.fairnessScore) return cur;
-      if (cur.fairnessScore === best.fairnessScore && cur.totalCostEUR < best.totalCostEUR) return cur;
+      if (fair(cur) > fair(best)) return cur;
+      if (fair(cur) === fair(best) && cost(cur) < cost(best)) return cur;
       return best;
     }
-    return cur.totalCostEUR < best.totalCostEUR ? cur : best;
+    return cost(cur) < cost(best) ? cur : best;
   });
 }
 
@@ -79,7 +92,8 @@ function csvCell(c) {
 }
 
 export function buildResultsCsv(flights, origins) {
-  const rows = [["Destination", "City", "Total (EUR)", "Avg/person (EUR)", "Fairness", ...origins.map((o) => `${o} price`)]];
+  // Las cabeceras dicen que son estimaciones: el CSV circula sin la app al lado.
+  const rows = [["Destination", "City", "Total estimate (EUR)", "Avg/person estimate (EUR)", "Fairness (0-100)", ...origins.map((o) => `${o} price/person estimate (EUR)`)]];
   (flights || []).forEach((f) => {
     const code = normalizeCode(f.destination);
     const priceMap = {};
@@ -123,6 +137,26 @@ export function paySpread(dest) {
   if (typeof dest?.priceSpread === "number") return dest.priceSpread;
   const p = payRows(dest).map((r) => r.price);
   return p.length >= 2 ? Math.max(...p) - Math.min(...p) : 0;
+}
+
+// Reparto a partes iguales POR PERSONA: cada ciudad es un grupo de `pax`
+// viajeros que ha pagado `paid` (sus billetes) y le tocaría `fair` (pax × media
+// por persona). diff > 0 = ha pagado de más y recibe; < 0 = debe. La suma de
+// diff es 0 (salvo céntimos), así que el bote cuadra.
+export function splitRows(dest) {
+  const legs = (Array.isArray(dest?.flights) ? dest.flights : [])
+    .map((f) => {
+      const pax = Math.max(1, Math.floor(Number(f.passengers)) || 1);
+      const pricePP = Number(f.price) || 0;
+      const paid = Number.isFinite(Number(f.totalForOrigin)) && Number(f.totalForOrigin) > 0 ? Number(f.totalForOrigin) : pricePP * pax;
+      return { origin: String(f.origin || "").toUpperCase(), pax, pricePP, paid };
+    })
+    .filter((r) => r.origin && r.paid > 0);
+  const people = legs.reduce((a, r) => a + r.pax, 0);
+  const total = legs.reduce((a, r) => a + r.paid, 0);
+  if (!people) return [];
+  const fairPP = total / people;
+  return legs.map((r) => ({ ...r, fairPP, fair: fairPP * r.pax, diff: r.paid - fairPP * r.pax }));
 }
 
 // Precio individual más alto de una lista de destinos: escala común de barras.

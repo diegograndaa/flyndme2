@@ -119,6 +119,149 @@ Backlog técnico original VACÍO (capturas README, vite@8, SEO, analítica y pro
 2. **Candidatos de mejora abiertos**: verificar (capa 2) más allá del ganador vigilando el cupo de SerpAPI; WinnerCard más celebratorio (Diego lo descartó explícitamente — no retomar sin que lo pida).
 3. **Ideas "qué implementar / qué mejorar" (jun-2026)** alineadas con el alma del producto (grupo + equidad, datos honestos, coste 0). HECHAS: planificación colaborativa de grupo y **equidad legible "Who pays what"** (ver entradas "Hecho 25-jun"). Quedan: **#2 aviso de bajada de precio** ("vigilad este destino", re-enganche — esfuerzo mayor: persistencia + email + re-chequeo honesto contra el calendario de Travelpayouts); **#3 round-trip + "semana más barata"** en el nudge de fecha (hoy solo ida — incremento de bajo riesgo); **endurecer el grupo** persistiendo el store (hoy in-memory → se pierde si Render reinicia); y mejoras estéticas de profundidad propuestas pero no hechas: **convergencia como hilo visual** más allá del hero, y **ritmo editorial** de la página de resultados (jerarquía + aire entre paneles).
 
+Hecho (08-oct-2026, sesión de 15 horas de Cursor — **mergeado a `main` el mismo día**, a petición explícita): una mejora por rama `cursor/<nombre>-7b25`. Los borradores #21–#116 entraron juntos en `main` (antes `e32cbf6`, merge del #20). No se ha tocado Render, Vercel, `.env` ni el historial. Precios solo con el mock (`USE_MOCK`); no se ha llamado a Travelpayouts, SerpAPI ni `seo:build`. Pasada conjunta antes del push: backend 223/223, frontend 185/185, `npm run build` OK. La poda del #31 iba en la referencia de integración y entra con el resto.
+
+**Orden en el que se juntaron.** Cada pila, de izquierda a derecha. El resto, en cualquier orden, con las salvedades de debajo.
+
+| Pila | Orden |
+|---|---|
+| Enlace de búsqueda | #32 → #77 → #109 → #112 |
+| Búsquedas recientes | #78 → #110 → #111 → #113 |
+| Vigilar precio | #21 → #99 → #105 |
+| Plan de grupo (teclado y origen) | #47 → #53 → #54 → #55 → #89 → #96 |
+| Plan de grupo (quitar) | #70 → #71 → #76 |
+| Compartido que se vuelve a abrir | #67 → #68 → #79 |
+| Compartir si falla el guardado | #56 → #100 |
+| Calendario y huso | #52 → #95 |
+| FAQ y meta | #74 → #91 |
+| Cancelar búsqueda | #51 → #104 |
+| Atajos de teclado | #37 → #98 |
+
+Salvedades al juntar:
+
+- **#94** (fecha legible en la ficha reciente) pisa la misma línea que **#111** y **#113**. Conservar `formatDate` y los sufijos (margen, tope, directo, cabina, destinos). #110, si se mergea sin #111, sigue mostrando la fecha en `AAAA-MM-DD`.
+- **#75** y **#89**: al unir el alineado de viajeros con la resolución del origen escrito, `toOriginCode = resolveOriginCode`.
+- **#67**: los `setError` nuevos dentro de `handleSubmit` pasan a `fail()`.
+- **#114** (chip de destinos en la barra) y **#115** (viajeros por fila, ya no `indexOf`) tocan `SearchPage` en sitios distintos. **#75** cambia el `reduce` del total de esa misma barra: conservar las tres cosas.
+- **#59, #80, #101 y #107** tocan `WinnerCard` en zonas distintas.
+- **#62** (tokens del modo oscuro) va el último entre los PR de CSS. **#31** (poda de claves i18n) va el último de todos; después tiene que seguir pasando el test de **#45** (toda clave usada con `t()` existe).
+- **#108** es independiente. Comparte `SearchPage` con #52, #75, #89, #94, #95, #97, #113, #114 y #115, en otras zonas.
+- **#24** y **#39** también tocan compartir, fuera de la pila #67 → #68 → #79. Al juntarlos, el enlace caído no debe dejar la página en blanco ni perder el reintento con el backend dormido.
+
+**Cómo se juntó.** `cursor/integracion-referencia-7b25` (`192c42d`) ya tenía #21–#106 (pasada previa: backend 223/223, frontend 167/167, paridad 0 a 390 y 1366, axe 0). Encima, en `cursor/merge-a-main-7b25`, entraron #107–#116. Conflictos resueltos a mano: imports de `WinnerCard` (#107 conserva `fxRateLabel` y la suma visible), el enlace de búsqueda (#112 añade flex, presupuesto y destinos sin perder el aviso si no hay enlace guardado), la ficha reciente (#113 conserva `formatDate` y los sufijos) y la barra del formulario (#114 destinos, #115 viajeros por fila, #75 el total).
+
+**Abandonada.** `cursor/logo-teclado-coherente-7b25` (borrada, nunca pusheada).
+
+**Para Diego, sin implementar en esta tanda.**
+
+- #107 promociona el precio verificado al total mostrado solo si el estado es `verified` o `changed`, y no reordena. En el mock el ganador cambia de cifra. En producción Travelpayouts sigue en `skipped` (`capabilities.verification === false`) y no cambia.
+- Las recientes y el enlace copiado no guardan `optimizeBy`: ordena la lista, no cambia las tarifas pedidas.
+- La divisa del formulario es un cambio de presentación (EUR canónico, GBP/USD a 0,86 / 1,09). El enlace ya puede llevar `cur`. Las recientes no restauran la divisa.
+- Una reciente vieja, sin los campos nuevos, abre el formulario por defecto (día exacto, sin tope, turista, con escalas, pool de destinos).
+- Siguen siendo decisión de producto, no de este pase: checkout de ida vacía, adultos de Aviasales, viajeros en Google Flights, ocultar cabinas que el proveedor no tarifa, de dónde sale el cambio de divisa, CORS `*.vercel.app`, forma del payload al compartir, el fallback de `API_BASE` a producción, y las barras rojas de equidad en la imagen OG. La estrella del comparador se dejó como está. `todayISO()` sigue en UTC (coincide con Render). No borrar `verifyDestination` / `priceFlightOffer`.
+
+**PRs incluidos (#21–#115).**
+
+| PR | Rama | Qué |
+|---|---|---|
+| 21 | `cursor/casos-limite-avisos-7b25` | fix: casos límite de vigilar precio y avisos (localStorage bloqueado, divisa, búsqueda real) |
+| 22 | `cursor/tests-faltan-7b25` | test: validaciones y límites de flights/groups/share + coherencia del catálogo |
+| 23 | `cursor/accesibilidad-aa-7b25` | a11y: WCAG 2.1 AA a 0 violaciones + foco del ganador en el mapa + regiones vivas |
+| 24 | `cursor/robustez-compartir-7b25` | fix(compartir): enlaces compartidos robustos con el backend dormido |
+| 25 | `cursor/verify-timeout-7b25` | fix(verify): límite de 35 s en la comprobación de precio en vivo |
+| 26 | `cursor/rate-limit-traducido-7b25` | fix: el límite de búsquedas (429) devuelve un código traducible |
+| 27 | `cursor/movil-minimos-7b25` | fix(móvil): dianas de 40 px y texto de 12 px donde faltaban (360-390 px) |
+| 28 | `cursor/rendimiento-7b25` | perf: tarjeta del ganador y plan de grupo bajo demanda (−6 KB gzip de JS inicial) |
+| 29 | `cursor/deuda-api-base-7b25` | chore(deuda): el desarrollo ya no cae al backend de producción; documenta keep-alive |
+| 30 | `cursor/seo-a11y-7b25` | fix(seo): texto ≥12 px, dianas ≥40 px y nombre accesible de la marca en las 30 páginas |
+| 31 | `cursor/poda-decide-diego-7b25` | PODA (decide Diego) |
+| 32 | `cursor/url-params-limites-7b25` | fix: límites de los enlaces de búsqueda y ganador coherente con el panel |
+| 33 | `cursor/verificacion-estricta-7b25` | fix(verificación): solo se presenta como verificado si cada tramo trae su precio verificado |
+| 34 | `cursor/tests-pasajeros-7b25` | test: contrato de saneado de origins/passengers en /multi-origin |
+| 35 | `cursor/tests-og-seguridad-7b25` | test(seguridad): regresión de escapado en las páginas OG + sog.js valida el id entero |
+| 36 | `cursor/csv-excel-7b25` | fix(csv): BOM UTF-8 para Excel y descarga compatible con Firefox/Safari |
+| 37 | `cursor/atajos-teclado-7b25` | fix(teclado): los atajos globales ignoran Ctrl/Cmd/Alt y el Escape de las ventanas emergentes |
+| 38 | `cursor/localstorage-robusto-7b25` | fix: favoritos y búsquedas recientes corruptos en localStorage ya no dejan la app en blanco |
+| 39 | `cursor/compartidos-normalizados-7b25` | fix(compartir): un enlace con datos mal formados ya no deja la app en blanco |
+| 40 | `cursor/grupo-cargando-7b25` | fix(grupo): aviso de carga al abrir una invitación ?group= |
+| 41 | `cursor/matriz-render-7b25` | fix(precios): un importe ausente se muestra «—», nunca «€0» ni «£NaN» + matriz de render |
+| 42 | `cursor/test-assets-pwa-7b25` | test(pwa): los archivos que citan manifest, sw.js e index.html existen |
+| 43 | `cursor/foco-tras-busqueda-7b25` | a11y: tras buscar, el foco va a la zona de decisión (antes caía en <body>) |
+| 44 | `cursor/test-paginas-seo-7b25` | test(seo): regresión de las 30 páginas estáticas |
+| 45 | `cursor/i18n-claves-usadas-7b25` | fix(i18n): falta share.copyError + test de que toda clave usada con t() existe |
+| 46 | `cursor/tests-cors-limites-7b25` | test: CORS en producción y límites de creación de grupos/enlaces |
+| 47 | `cursor/a11y-grupo-presupuesto-7b25` | a11y: botones −/+ del plan de grupo con nombre y límites; presupuesto con aria-valuetext |
+| 48 | `cursor/titulos-pagina-i18n-7b25` | i18n: título de la pestaña traducido, en la divisa elegida y etiquetado como estimación |
+| 49 | `cursor/sin-conexion-busqueda-7b25` | UX: sin conexión, la búsqueda avisa al instante (antes esperaba ~1 min y culpaba al servidor) |
+| 50 | `cursor/limites-endpoints-segundo-plano-7b25` | Backend: mismos topes que la búsqueda en /cheaper-date y /trip-length-hint |
+| 51 | `cursor/cancelar-busqueda-7b25` | UX: «Cancelar búsqueda» en el panel de carga |
+| 52 | `cursor/fechas-limites-calendario-7b25` | UX: el calendario solo ofrece fechas que el backend acepta |
+| 53 | `cursor/grupo-autocompletado-teclado-7b25` | a11y: autocompletado del plan de grupo usable con teclado (apilado sobre #47) |
+| 54 | `cursor/grupo-origen-desconocido-7b25` | UX: el plan de grupo pide confirmar un origen que no reconoce (apilado sobre #53 → #47) |
+| 55 | `cursor/grupo-errores-visibles-7b25` | UX: la vista de grupo enseña los errores de búsqueda y avisa si su fecha ya pasó (apilado sobre #54) |
+| 56 | `cursor/compartir-gesto-estimacion-7b25` | Compartir: no perder el gesto mientras se crea el enlace + textos con la etiqueta de estimación |
+| 57 | `cursor/precarga-fotos-ahorro-7b25` | Rendimiento: precargar 3 fotos de destino (no 6) y ninguna con ahorro de datos |
+| 58 | `cursor/i18n-idioma-arrastre-7b25` | i18n/a11y: selector de idioma y asa de arrastre sin textos fijos en inglés |
+| 59 | `cursor/insignia-verificacion-accesible-7b25` | a11y: la insignia de verificación da su detalle como texto, en la divisa y el idioma de la app |
+| 60 | `cursor/copiar-con-confirmacion-7b25` | UX: «copiar vuelo» y «copiar enlace de búsqueda» confirman o avisan del fallo |
+| 61 | `cursor/auditoria-paridad-mas-vistas-7b25` | Tema: la auditoría de paridad cubre carga, error y grupo (+ arreglo de los campos del grupo) |
+| 62 | `cursor/tokens-tema-oscuro-7b25` | Tema: 125 colores literales del modo oscuro pasan a tokens (sin cambio visual) |
+| 63 | `cursor/anuncios-precio-estimacion-7b25` | a11y: precios anunciados al lector de pantalla etiquetados como estimación y en la divisa elegida |
+| 64 | `cursor/historial-vista-vacia-7b25` | Fix: atrás/adelante tras recargar ya no deja la página en blanco |
+| 65 | `cursor/tests-endpoints-estado-7b25` | Tests: endpoints de estado (forma de la respuesta y sin secretos) |
+| 66 | `cursor/grupo-refresco-al-volver-7b25` | Grupo: el roster se actualiza al volver a la pestaña; los refrescos no inflan group_landing |
+| 67 | `cursor/relanzar-desde-resultados-error-7b25` | Fix: una búsqueda relanzada desde resultados que falla ya no deja la página en blanco |
+| 68 | `cursor/compartido-precios-de-entonces-7b25` | Honestidad: un resultado compartido dice de cuándo son sus precios y permite buscar los de hoy (apilado sobre #67) |
+| 69 | `cursor/favoritos-precio-fechado-7b25` | Favoritos: el precio dice de cuándo es + quitar con diana de 40 px y nombre accesible coherente |
+| 70 | `cursor/grupo-quitar-seguro-7b25` | Grupo: quitar a un viajero ya no puede borrar a otra persona si la lista cambió |
+| 71 | `cursor/grupo-sin-perder-viajeros-7b25` | Grupo: añadir o quitar viajeros a la vez ya no pierde cambios (apilado sobre #70) |
+| 72 | `cursor/grupo-fechas-validas-7b25` | Grupo: no se crean grupos con fechas que la búsqueda rechazaría |
+| 73 | `cursor/calendario-teclado-tab-7b25` | a11y: el calendario se recorre como los selectores de fecha estándar (Tab sale, flechas dentro) |
+| 74 | `cursor/faq-honesta-7b25` | Honestidad: el FAQ deja de decir que los precios son «reales» y describe lo que la app hace hoy |
+| 75 | `cursor/viajeros-por-ciudad-alineados-7b25` | Fix (precios): los viajeros por ciudad se desalineaban con una fila vacía o una ciudad repetida |
+| 76 | `cursor/grupo-max-ciudades-7b25` | Grupo: máximo 8 ciudades distintas, el tope de la búsqueda (apilado sobre #71 → #70) |
+| 77 | `cursor/enlace-busqueda-viajeros-7b25` | Enlace de búsqueda: incluye los viajeros de cada ciudad (?p=) (apilado sobre #32) |
+| 78 | `cursor/recientes-con-viajeros-7b25` | Fix (precios): una búsqueda reciente recupera sus viajeros en vez de heredar los del formulario |
+| 79 | `cursor/compartido-viajeros-formulario-7b25` | Fix (precios): abrir un compartido deja en el formulario los viajeros de esa búsqueda (apilado sobre #68 → #67) |
+| 80 | `cursor/divisa-cambio-aproximado-7b25` | Honestidad: en £ o $ se avisa de que es una conversión aproximada desde euros, y a qué cambio |
+| 81 | `cursor/fechas-en-espanol-7b25` | i18n: las fechas salen en español con la app en español («15 nov 2026», no «15 Nov 2026») |
+| 82 | `cursor/pasos-carga-contraste-7b25` | a11y: los pasos pendientes del esqueleto de carga cumplen 4.5:1 (color en vez de opacidad) |
+| 83 | `cursor/sin-resultados-origen-desconocido-7b25` | UX: sin resultados con una ciudad desconocida, el error dice cuál revisar |
+| 84 | `cursor/reparto-con-pasajeros-7b25` | Fix (precios): «Quién debe a quién» reparte por persona, no por ciudad |
+| 85 | `cursor/csv-etiqueta-estimacion-7b25` | Honestidad: las cabeceras del CSV dicen que los importes son estimaciones |
+| 86 | `cursor/hoteles-con-viajeros-7b25` | UX: «Planifica tu viaje → Hoteles» abre Booking con el número real de viajeros |
+| 87 | `cursor/skyscanner-adultos-7b25` | UX: el enlace a Skyscanner de cada ciudad lleva sus viajeros (no siempre 1 adulto) |
+| 88 | `cursor/origen-invalido-no-se-ignora-7b25` | Fix (precios): un origen inválido ya no se ignora en silencio (la búsqueda salía sin ese viajero) |
+| 89 | `cursor/origen-escrito-se-resuelve-7b25` | Fix (precios): lo escrito en un origen se resuelve al código que enseña la ficha (apilado sobre #55) |
+| 90 | `cursor/foco-al-crear-grupo-7b25` | a11y: al crear el plan de grupo, el foco va a su título |
+| 91 | `cursor/meta-sin-precios-reales-7b25` | Honestidad: fuera «precios reales» de la meta, el JSON-LD y los pies del formulario (apilado sobre #74) |
+| 92 | `cursor/toast-legible-7b25` | UX: un aviso que llega justo tras otro ya no sale invisible, y los largos duran lo que se tarda en leerlos |
+| 93 | `cursor/reintento-502-504-7b25` | Robustez: la búsqueda reintenta también ante 502/504 del proxy de Render |
+| 94 | `cursor/recientes-fecha-legible-7b25` | UX: las búsquedas recientes muestran la fecha legible en vez de AAAA-MM-DD |
+| 95 | `cursor/fechas-cercanas-zona-horaria-7b25` | Fix: «fechas cercanas» y la vuelta sugerida se desplazaban un día en España (apilado sobre #52) |
+| 96 | `cursor/grupo-quitar-nombre-accesible-7b25` | a11y: cada botón «quitar» del grupo dice a quién quita (apilado sobre #89) |
+| 97 | `cursor/formulario-filas-nombres-7b25` | a11y: los controles de cada fila de origen dicen de qué ciudad son; quitar una fila no pierde el foco |
+| 98 | `cursor/atajos-una-tecla-desactivables-7b25` | a11y (WCAG 2.1.4): los atajos de una tecla se pueden desactivar (apilado sobre #37) |
+| 99 | `cursor/vigilar-precio-sin-repetir-7b25` | Vigilar precio: cada búsqueda vigilada se consulta como mucho cada 30 min (apilado sobre #21) |
+| 100 | `cursor/compartir-sin-enlace-avisa-7b25` | Compartir: si no se puede guardar el resultado, se comparte el enlace que repite la búsqueda (apilado sobre #56) |
+| 101 | `cursor/ahorro-media-contexto-7b25` | Copy: el chip «X% más barato que la media» dice de qué media habla |
+| 102 | `cursor/plurales-singular-7b25` | i18n: singular correcto en «1 viajero» (cabecera de vuelo) y «1 destino seleccionado» |
+| 103 | `cursor/cabina-no-soportada-7b25` | Honestidad: pedir business o primera da un aviso claro en vez de «sin resultados» |
+| 104 | `cursor/aviso-servidor-arrancando-7b25` | UX: si el servidor estaba dormido, el panel de carga lo dice (apilado sobre #51) |
+| 105 | `cursor/vigilar-precio-misma-fecha-7b25` | Honestidad: «vigilar precio» solo avisa de bajadas con precios de las mismas fechas (apilado sobre #99 → #21) |
+| 106 | `cursor/boton-fecha-hover-legible-7b25` | Fix (tema): en claro, «Cambiar a esta fecha» se volvía un rectángulo negro al pasar el ratón |
+| 107 | `cursor/suma-redondeada-cuadra-7b25` | Honestidad: la suma que se ve cuadra con los precios pintados |
+| 108 | `cursor/vuelta-antes-de-ida-7b25` | Aviso si la vuelta queda en o antes de la ida |
+| 109 | `cursor/enlace-flex-presupuesto-7b25` | El enlace de búsqueda conserva fechas flexibles y presupuesto |
+| 110 | `cursor/recientes-flex-presupuesto-7b25` | Una búsqueda reciente recupera fechas flexibles y presupuesto |
+| 111 | `cursor/recientes-directo-cabina-7b25` | Una búsqueda reciente recupera directo y cabina |
+| 112 | `cursor/enlace-destinos-7b25` | fix: el enlace de búsqueda conserva los destinos elegidos |
+| 113 | `cursor/recientes-destinos-7b25` | fix: una búsqueda reciente recupera los destinos elegidos |
+| 114 | `cursor/resumen-destinos-7b25` | ux: el resumen del formulario muestra los destinos elegidos |
+| 115 | `cursor/resumen-viajeros-fila-7b25` | fix: el resumen asigna los viajeros a su fila |
+
+Este texto salió en el PR #116 (`cursor/sesion-15h-documentacion-7b25`) y se actualizó al mergear: describe la tanda ya en `main`. No cambia la app.
+
 Hecho (05-oct-2026, PARTE 14 — MÓVIL COMPACTO + PARIDAD CLARO/OSCURO; rama `claude/movil-y-paridad-temas`, **MERGEADO a main el 07-oct-2026 (PR diegograndaa/flyndme2#7)**): Diego: «la versión móvil no me gusta: la distribución y las cruces y número de usuario ocupan varias líneas; además hay varias diferencias visuales entre oscuro y claro que no deberían ser así». FRONTEND-ONLY (CSS + 3 retoques de marcado), 78/78 tests, build OK. **(1) Móvil** (`board.css` sección 26, `@media (max-width:600px)`): el formulario perdía **150 px de 390** en márgenes anidados (tarjeta → sección → fila) y cada viajero ocupaba 2-3 líneas (114 px de alto) → ahora **UNA línea de 44 px**: `[nº│ciudad … ficha] [− 1 +] [×]` (el número es una pestaña pegada al campo, amarilla al reconocer la ciudad; asa de arrastre y flechas de reordenar fuera en móvil). Campos a **16 px** (por debajo iOS hace zoom al enfocar). La ficha de ciudad y el aviso «no reconocido» se ocultan mientras se escribe; a <360 px la ficha enseña solo la bandera (`.sf-input-flag`/`.sf-input-cityname`, spans nuevos en `SearchPage.jsx`). Sugerencias a todo el ancho de la fila. **Barra inferior fija = SOLO el CTA** (la invitación de grupo salió de `.sf-submit-wrap` en el JSX: con las dos tapaba ~170 px). Tipo de billete y criterio en dos mitades iguales; «Añadir viajero» a ancho completo; botón de subir oculto en la portada móvil. **Resultados**: la barra fija ya **no reserva alto en el flujo** (`height:0` + contenido absoluto; antes dejaba un hueco vacío de ~70 px bajo la cabecera, también en escritorio) y en móvil va en UNA fila (el botón «Cambiar búsqueda» pasa a icono con `aria-label`); acciones de la tarjeta en rejilla de 2 columnas; pestañas Mapa/Comparar/Más en 3 columnas iguales. **Plan de grupo**: en columna, `flex: 1 1 130px` se convertía en ALTO (campo de nombre de 130 px + hueco) → rejilla. ≤360 px: cabecera compacta y botones Skyscanner/Google sin montarse. **(2) Paridad de temas**: causa raíz = `--primary` era TINTA en claro y AMARILLO en oscuro, así que logo, iconos, marcos, botones secundarios, rutas del mapa… se teñían solo en oscuro, más ~40 overrides `[data-theme="dark"]` con literales de temas viejos. Ahora **`--primary` en oscuro = hueso** (+ `--primary-rgb`, `--panel-accent`, `--dm-route`), tokens nuevos **`--on-solid`** (texto sobre relleno `--primary`: blanco / tinta) y **`--pos-bg`** (cartel de posición, negro en los dos temas; de noche lo dibuja su filete amarillo), y fuera los overrides. Mismo cartel activo, mismo rotulador del titular, mismos marcos (decisión, total, sello), fichas split-flap con canto en oscuro. Piezas rehechas iguales en ambos: **selector de idioma** (`.fm-lang`, ya no clases de Bootstrap) e **interruptores** del formulario (eran una casilla de 14 px). **AA de paso** (lo destapó la auditoría): gris `--slate-400` claro 2,6:1 → 4,6:1, WhatsApp con tinta sobre el verde (blanco daba 1,9:1), ámbar/rojo de equidad en claro. **Fix PREVIO de paso**: abrir «Ver detalle» del reparto en escritorio provocaba scroll horizontal (+44 px, capa `.wc-ils-pos`) → `.wc-fs { overflow-x: clip }`. **MÉTODO (reutilizable): `frontend/scripts/theme-parity-audit.mjs`** — alterna `data-theme` sobre el mismo DOM y compara pieza a pieza el PAPEL de cada color, bordes, sombras, geometría y contraste; pasó de **322 diferencias a 0** (móvil y escritorio; excepciones documentadas en el propio script). Correr tras cualquier cambio de color: `PLAYWRIGHT=… CHROME=… node scripts/theme-parity-audit.mjs 390`. OJO de método: `pkill -f "node index.js"` mató la shell (el patrón casa con la propia línea) → matar por PID; el rate-limit del backend (60 búsquedas/10 min) corta las tandas largas de capturas → reiniciar el backend mock. **REGLA nueva**: no escribir colores literales en reglas `[data-theme="dark"]`; si algo necesita otro valor de noche, va en un token.
 
 Hecho (30-sep-2026, IDENTIDAD VISUAL «PANEL DE AEROPUERTO» + capa de movimiento — en rama `claude/sleepy-ride-z31kxe`, **PENDIENTE de merge a main** (Diego decide)): pedido de Diego: «que no se vea tan genérico / tan de web hecha con IA; más dinamismo, transiciones, mejor visualmente». De 3 direcciones (panel de aeropuerto / cinético / solo movimiento, AskUserQuestion con previews) eligió **panel de aeropuerto**. FRONTEND-ONLY, 70/70 tests, build OK, verificado con capturas claro/oscuro × desktop/móvil (incluidos frames A MITAD de animación). **Piezas**: (1) nuevo `components/FlapBoard.jsx` — `FlapText` (cada carácter en una celda split-flap que baraja y se asienta de izq. a der.; SSR/tests y `prefers-reduced-motion` → texto FINAL directo; texto accesible en `.flap-sr`, celdas aria-hidden; key por carácter → mini-giro CSS `flap-tick`) + `FlapCycle` (rota palabras ILUSTRATIVAS, sin precios). (2) **Hero**: fuera los orbes difuminados genéricos → retícula de puntos tipo carta aeronáutica con máscara radial; entrada escalonada del TEXTO (HTML); subrayado de rotulador coral que se traza en la palabra acento; **un avión por arco** en bucle (SMIL `<animateMotion>` sobre los arcos, que siguen ESTÁTICOS — la regla del 22-jun de no animar la entrada del SVG se respeta: solo bucles infinitos); bajo el destino, panel que gira con destinos de EJEMPLO (PAR/ROM/LIS…). (3) **WinnerCard = tarjeta de embarque**: nombre del destino en celdas split-flap sobre la foto, cifras de la matriz en mono, barras de «Quién paga qué» que crecen escalonadas + media que aparece después, **troquel** (muescas del color de página + línea perforada + código de barras decorativo) con la línea «Tarjeta de embarque del grupo · N ciudades · 1 punto de encuentro» (i18n `results.boardingPass/boardingMeta`), tarjetas por origen que entran escalonadas y avión que «rueda» por la pista. (4) **«Cómo funciona» = tramos de itinerario** (puertas 01/02/03 en mono con contorno, ruta punteada con un avión que la recorre; en móvil filas). FAQ editorial (reglas finas, sin tarjetas flotantes, chevron circular que rota). (5) **Carga**: el chip genérico con spinner → **panel de salidas acoplado abajo** (`SearchingBoard` en `SearchUX.jsx`): orígenes REALES del usuario → destino que BARAJA códigos sin asentarse nunca (indicador de actividad, no resultado), con el mensaje de estado rotando como cabecera (i18n `loading.boardTitle`). (6) Barra resumen del formulario como mini panel navy con los orígenes en celdas; filas de origen que entran deslizando; brillo que cruza el CTA al hover; micro-press coherente en CTAs; podio/cifras en mono. (7) **Entradas al hacer scroll con CSS scroll-driven** (`animation-timeline: view()` dentro de `@supports`, cero JS; donde no hay soporte el contenido se ve sin más). Fuente nueva **JetBrains Mono** 600/800 (Google Fonts, junto a las otras dos) para códigos/precios/etiquetas. **Todo el CSS nuevo vive en `src/styles/board.css`** (importado al final de App.jsx), solo tokens → oscuro hereda; entradas en contenedores con fill `backwards` (un transform residual rompería los `position:fixed` de dentro); bloque final `prefers-reduced-motion` que lo apaga todo. **Fix de paso (bug PREVIO)**: el stepper del `SearchSkeleton` desbordaba 40px en móvil (390px) → el layout viewport se ensanchaba a 430 y los fixed quedaban medio fuera; arreglado en `board.css` (labels solo del paso activo ≤600px). **Honestidad (regla #1)**: nada inventado — lo que gira se asienta en el valor REAL (o es ejemplo ilustrativo sin precio / indicador de actividad); los precios siguen con el count-up existente. **MÉTODO de QA (reutilizable)**: playwright global + chromium de `/opt/pw-browsers` desde el SCRATCHPAD (nada en el repo); el proxy del sandbox solo acepta CONNECT → lanzar con `--proxy-server=https=<host:port>` (http directo a localhost); Google Fonts/imagenes bloqueadas → servir las fuentes con `page.route` desde `@fontsource/*` instalado en el scratchpad; retrasar `/multi-origin` con `route` para capturar el estado de carga; **OJO**: las capturas `fullPage` NO disparan las animaciones scroll-driven y el `scroll-behavior:smooth` de la app hace que `scrollTo(0,y)` no llegue → usar `behavior:'instant'` antes de la captura (si no, paneles «invisibles» que en un navegador real sí aparecen). Diego debe mirarlo en su MÓVIL real antes del merge.

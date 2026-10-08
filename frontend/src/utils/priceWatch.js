@@ -5,6 +5,10 @@
 // de la app. Lógica pura, sin red.
 
 export const WATCH_KEY = "flyndme_watches";
+export const CHECKS_KEY = "flyndme_watch_checks";
+// Cada búsqueda vigilada se vuelve a consultar como mucho cada 30 min: recargar
+// la página no repite la llamada (cuenta para el límite de peticiones por IP).
+export const CHECK_EVERY_MS = 30 * 60 * 1000;
 export const MAX_WATCHES = 3;
 export const WATCH_TTL_DAYS = 30;
 const DAY_MS = 86_400_000;
@@ -30,6 +34,44 @@ export function makeWatch(params, totalEUR, now = Date.now()) {
     createdAt: now,
   };
   return { ...w, id: watchId(w) };
+}
+
+/**
+ * localStorage o null. En algunos navegadores (cookies bloqueadas, modo
+ * privado estricto) LEER window.localStorage ya lanza SecurityError.
+ */
+export function safeStorage(win = typeof window === "undefined" ? undefined : window) {
+  try {
+    const s = win?.localStorage;
+    s?.getItem(WATCH_KEY);
+    return s || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Última comprobación de cada vigilancia: { [id]: { at, totalEUR|null } }. */
+export function readChecks(storage) {
+  try {
+    const v = JSON.parse(storage?.getItem(CHECKS_KEY) || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Guarda solo las comprobaciones de vigilancias que siguen activas. */
+export function writeChecks(storage, checks, activeIds) {
+  const keep = {};
+  for (const id of activeIds || []) if (checks?.[id]) keep[id] = checks[id];
+  try { storage?.setItem(CHECKS_KEY, JSON.stringify(keep)); } catch { /* sin espacio */ }
+  return keep;
+}
+
+/** ¿Hay que volver a preguntar el precio? (nunca comprobada o hace más de CHECK_EVERY_MS) */
+export function isCheckDue(check, now = Date.now(), everyMs = CHECK_EVERY_MS) {
+  const at = Number(check?.at);
+  return !Number.isFinite(at) || now - at >= everyMs || at > now;
 }
 
 export function readWatches(storage) {

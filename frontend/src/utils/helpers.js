@@ -131,6 +131,26 @@ export const POPULAR_ORIGINS = ["MAD", "BCN", "LON", "PAR", "BER", "ROM", "AMS",
  * Devuelve copias de AIRPORTS con `alias` cuando el acierto vino de un nombre
  * alternativo (para enseñar "London · Londres").
  */
+/**
+ * Código de aeropuerto de lo que el usuario ha escrito en un campo de origen,
+ * con la misma lectura que enseña la ficha del formulario:
+ *   1) código exacto de la lista ("bcn" → BCN)
+ *   2) nombre exacto de ciudad, también en español ("Dubrovnik" → DBV, "Londres" → LON)
+ *   3) un código de 3 letras dentro del texto o sus 3 primeras ("MADRID" → MAD), solo si existe
+ * Si nada encaja devuelve el texto en mayúsculas (el aviso de «desconocido» lo trata).
+ */
+export function resolveOriginCode(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+  const upper = raw.toUpperCase();
+  if (AIRPORT_MAP[upper]) return upper;
+  const exact = searchAirports(raw, { limit: 6 })
+    .find((a) => [a.city, a.alias, cityOf(a.code)].some((n) => n && foldText(n) === foldText(raw)));
+  if (exact) return exact.code;
+  const guess = normalizeCode(upper);
+  return AIRPORT_MAP[guess] ? guess : upper;
+}
+
 export function searchAirports(query, { exclude = [], limit = 6 } = {}) {
   const q = foldText(query);
   if (!q) return [];
@@ -208,8 +228,11 @@ export function destLabel(code) {
   return c ? `${normalizeCode(code)} · ${c}` : normalizeCode(code);
 }
 
+// Sin dato → «—». Nunca «€0» por un precio que no tenemos (regla dura #1).
+export const NO_PRICE = "—";
 export function formatEur(n, dec = 0) {
-  const v = typeof n === "number" ? n : Number(n || 0);
+  if (n === null || n === undefined || n === "" || !Number.isFinite(Number(n))) return NO_PRICE;
+  const v = Number(n);
   try {
     return new Intl.NumberFormat("en-GB", {
       style: "currency", currency: "EUR",
@@ -218,28 +241,44 @@ export function formatEur(n, dec = 0) {
   } catch { return `€${v.toFixed(dec)}`; }
 }
 
+// Fechas en el idioma de la interfaz (el mismo que fija setCityLang).
+const dateLocale = () => (cityLang === "es" ? "es-ES" : "en-GB");
+
 export function formatDate(s) {
   if (!s) return "";
   const d = new Date(`${s}T00:00:00`);
   if (isNaN(d)) return s;
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString(dateLocale(), { day: "2-digit", month: "short", year: "numeric" }).replace(".", "");
 }
 
 export function weekdayOf(s) {
   if (!s) return "";
   const d = new Date(`${s}T00:00:00`);
   if (isNaN(d)) return "";
-  return d.toLocaleDateString("en-GB", { weekday: "short" });
+  return d.toLocaleDateString(dateLocale(), { weekday: "short" }).replace(".", "");
 }
 
 export function todayISO() {
   return new Date().toISOString().split("T")[0];
 }
 
+// Mismo horizonte que el backend (/multi-origin responde DATE_TOO_FAR más allá).
+export const MAX_HORIZON_DAYS = 360;
+
+export function addDaysISO(isoDate, n) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate || "");
+  if (!m) return "";
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + n)).toISOString().slice(0, 10);
+}
+
+export function horizonISO(today = todayISO()) {
+  return addDaysISO(today, MAX_HORIZON_DAYS);
+}
+
 // Skyscanner affiliate ID — set via VITE_SKYSCANNER_AFFILIATE_ID env var
 const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SKYSCANNER_AFFILIATE_ID) || "";
 
-export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType }) {
+export function buildSkyscannerUrl({ origin, destination, departureDate, returnDate, tripType, adults = 1 }) {
   const from = String(origin || "").toLowerCase();
   const to   = String(destination || "").toLowerCase();
   // Formato canónico de Skyscanner: yymmdd (260915), no yyyymmdd.
@@ -248,7 +287,9 @@ export function buildSkyscannerUrl({ origin, destination, departureDate, returnD
   if (!from || !to || !dep) return "";
   const base = "https://www.skyscanner.es/transport/flights";
   const path = ret ? `${base}/${from}/${to}/${dep}/${ret}/` : `${base}/${from}/${to}/${dep}/`;
-  const params = new URLSearchParams({ adultsv2: "1", cabinclass: "economy", rtn: ret ? "1" : "0" });
+  // Los viajeros que salen de esa ciudad: así Skyscanner enseña el precio del grupo.
+  const nAdults = Math.min(9, Math.max(1, Math.floor(Number(adults)) || 1));
+  const params = new URLSearchParams({ adultsv2: String(nAdults), cabinclass: "economy", rtn: ret ? "1" : "0" });
   // Append affiliate tracking if configured
   if (SKYSCANNER_AFFILIATE_ID) {
     params.set("associateId", SKYSCANNER_AFFILIATE_ID);

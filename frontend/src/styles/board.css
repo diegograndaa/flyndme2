@@ -166,7 +166,7 @@
   background: #121316;
 }
 [data-theme="dark"] body,
-[data-theme="dark"] .app-root { background: #121316; color: #C9CDD4; }
+[data-theme="dark"] .app-root { background: var(--bg); color: var(--slate-700); }
 
 /* ══ 1. Split-flap ═══════════════════════════════════════════════════════ */
 .flap {
@@ -297,31 +297,6 @@
   /* misma franja de rotulador que en claro, algo más apagada para que el
      texto hueso se lea encima */
   background-image: linear-gradient(transparent 62%, rgba(var(--sign-rgb),.42) 62%, rgba(var(--sign-rgb),.42) 92%, transparent 92%);
-}
-
-/* Aviones sobre los arcos (bucle SMIL, ver ConvergenceHero) */
-.cv-plane path { fill: var(--primary); transform: scale(1.35); }
-.cv-plane {  }
-
-/* Etiqueta del destino: texto + panel que gira con destinos de ejemplo */
-.cv-meet.cv-meet {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  right: 0;
-  transform: translateY(26px);
-}
-.cv-meet-label {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-}
-.cv-meet-flap.flap--sm { font-size: 22px; }
-@media (max-width: 860px) {
-  .cv-meet.cv-meet { display: flex; right: auto; transform: none; }
 }
 
 /* ══ 4. Botón principal: brillo que cruza + avión ═══════════════════════ */
@@ -488,6 +463,24 @@
 }
 .fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .fm-searching-board-arrow { color: var(--sign-line); font-size: 22px; font-weight: 800; }
+.fm-searching-cancel {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panel-muted);
+  background: transparent;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fm-searching-cancel:hover { color: var(--panel-ink); border-color: var(--panel-muted); }
+.fm-searching-cancel:focus-visible { outline: 2px solid var(--panel-ink); outline-offset: 2px; }
 
 /* ══ 7. Tarjeta ganadora → tarjeta de embarque ═══════════════════════════ */
 /* Nombre del destino en panel sobre la foto */
@@ -623,7 +616,6 @@
   .btn-fm-primary.btn-fm-primary::after { animation: none !important; }
   .lp-h1-accent.lp-h1-accent { animation: none; background-size: 100% 100%; }
   .lp-legs.lp-legs::after { display: none; }
-  .cv-plane { display: none; }
   .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo, .fm-group-nudge, .fm-group-savings, .fm-stats-bar, .fm-split-card, .fm-arrival-spread, .fm-plan-trip, .fm-quick-research { animation: none !important; }
 }
 
@@ -783,15 +775,13 @@
   border: 1px solid rgba(82,222,162,.25);
   border-radius: var(--radius-full);
 }
-.fm-board-cols,
-.fm-board-row {
+.fm-board-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 110px 190px 104px;
   align-items: center;
   gap: 20px;
 }
-.fm-board-cols--single,
-.fm-board-row--single { grid-template-columns: minmax(0, 1fr) 110px 104px; }
+.fm-board-cols--single { grid-template-columns: minmax(0, 1fr) 110px 104px; }
 .fm-board-cols {
   padding: 0 12px 8px;
   border-bottom: 1px solid var(--panel-line);
@@ -803,22 +793,6 @@
   color: var(--panel-faint);
 }
 .fm-board-col-price { text-align: right; }
-.fm-board-rows { list-style: none; margin: 0; padding: 0; }
-.fm-board-rows > li { animation: board-rise .5s var(--ease-out-expo) backwards; animation-delay: calc(.08s + var(--i, 0) * .07s); }
-.fm-board-row {
-  width: 100%;
-  padding: 11px 12px;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  border: none;
-  border-bottom: 1px solid var(--panel-line);
-  border-left: 3px solid transparent;
-  transition: background-color .2s ease, border-color .2s ease;
-}
-.fm-board-row:hover:not(.fm-board-row--current) { background: var(--panel-hover); }
-.fm-board-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-.fm-board-row--current { background: rgba(var(--sign-rgb),.16); border-left-color: var(--sign); cursor: default; }
 .fm-board-dest { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
 .fm-board-dest .flap--sm { font-size: 16px; flex: 0 0 auto; }
 .fm-board-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -841,7 +815,6 @@
 .fm-board-fair--mid  { color: var(--panel-mid); }
 .fm-board-fair--bad  { color: var(--panel-bad); }
 .fm-board-go { display: inline-flex; justify-content: flex-end; color: var(--panel-faint); transition: transform .25s var(--ease-out-expo), color .2s ease; }
-.fm-board-row:hover .fm-board-go { color: var(--panel-ink); transform: translateX(3px); }
 .fm-board-now {
   padding: 3px 7px;
   font-family: var(--font-mono);
@@ -857,14 +830,6 @@
 @media (max-width: 600px) {
   .fm-board { padding: 16px 12px 8px; }
   .fm-board-cols { display: none; }
-  .fm-board-row,
-  .fm-board-row--single {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    grid-template-areas: "dest price go" "fair price go";
-    row-gap: 4px;
-    padding: 11px 8px;
-  }
-  .fm-board-row--single { grid-template-areas: "dest price go"; }
   .fm-board-dest { grid-area: dest; }
   .fm-board-price { grid-area: price; }
   .fm-board-fair { grid-area: fair; padding-left: 2px; }
@@ -965,7 +930,7 @@
 [data-theme="dark"] .fm-error-state.fm-error-state { background: var(--panel-bg); }
 
 @media (prefers-reduced-motion: reduce) {
-  .fm-flight-head, .fm-board-rows > li, .fm-announce-dot, .gp .gp-member, .fm-decision { animation: none !important; }
+  .fm-flight-head, .fm-announce-dot, .gp .gp-member, .fm-decision { animation: none !important; }
 }
 
 /* ══ 14. Tema coherente: la tarjeta y los paneles siguen al tema ════════ */
@@ -1052,7 +1017,7 @@
 .fm-split-grid .fm-split-row.fm-split-row { border-radius: 0; background: transparent; border-bottom: 1px solid var(--line); }
 .fm-split-grid .fm-split-row.fm-split-row:last-child { border-bottom: none; }
 /* Iconos circulares puntuales se mantienen redondos (avatares, puntos) */
-.fm-split-avatar, .fm-announce-dot, .fm-searching-board-dot, .cv-dest-dot { border-radius: 50%; }
+.fm-split-avatar, .fm-announce-dot, .fm-searching-board-dot { border-radius: 50%; }
 
 /* ══ 17. PWA: pulido táctil nativo ═══════════════════════════════════════
    Sin rebote de scroll, sin resaltado azul al tocar, sin selección de texto
@@ -1075,7 +1040,6 @@ button,
 .wc-action-btn,
 .wc-cta,
 .rv-tab,
-.fm-board-row,
 .fm-currency-btn,
 .fm-split-pill,
 .fm-notice-btn,
@@ -1140,12 +1104,6 @@ button,
 [data-theme="dark"] .lp-hero.lp-hero--merged::before {
   background-image: radial-gradient(rgba(230,232,236,.13) 1px, transparent 1.3px);
 }
-/* Punto de encuentro = marcador amarillo con alfiler de tinta */
-.cv-dest-dot.cv-dest-dot { fill: var(--sign); }
-.cv-dest-pin.cv-dest-pin { fill: #1A1A1A; }
-.cv-dest-ring.cv-dest-ring { stroke: var(--sign-line); }
-/* Anillos de alcance de radar alrededor del punto de encuentro (estáticos) */
-.cv-range { fill: none; stroke: rgba(var(--primary-rgb), .16); stroke-width: 1; stroke-dasharray: 2 4; }
 
 /* Luces de aterrizaje: al aparecer la tarjeta de embarque su marco se
    enciende en amarillo y se apaga (antes: degradado animado estilo IA). */
@@ -1260,23 +1218,6 @@ button,
   100% { transform: none; opacity: 1; }
 }
 
-/* e) Panel de salidas: al pasar por una fila se dibuja una estela */
-.fm-board-rows > li { position: relative; }
-.fm-board-row { position: relative; }
-.fm-board-row::after {
-  content: "";
-  position: absolute;
-  left: 12px; right: 38%;
-  bottom: 6px;
-  height: 1px;
-  background-image: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), .38) 30%, rgba(var(--primary-rgb), .38) 80%, transparent);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform .5s var(--ease-out-expo);
-  pointer-events: none;
-}
-.fm-board-row:hover:not(.fm-board-row--current)::after { transform: scaleX(1); }
-
 /* f) Sello de embarque en el troquel: se estampa al aparecer la tarjeta (y
       otra vez al cambiar de destino). Datos reales: código + fecha. */
 .wc-stamp {
@@ -1382,9 +1323,6 @@ button,
   60%      { transform: rotate(3deg) scaleX(.97); }
 }
 
-/* m) Radar: barrido lento alrededor del punto de encuentro del hero (el SVG
-      solo lleva bucles infinitos, nunca animaciones de entrada). */
-
 /* Movimiento reducido: todo lo anterior, quieto */
 @media (prefers-reduced-motion: reduce) {
   .app-header.app-header::before,
@@ -1401,7 +1339,6 @@ button,
   .fm-windsock-sock,
   .wc-card.wc-card--entered::before { animation: none !important; }
   .fm-rabbit i:nth-child(odd) { background: var(--sign); }
-  .fm-board-row::after { transition: none; }
 }
 
 /* ══ 20. Mapa de rutas (carta aeronáutica) ═══════════════════════════════
@@ -1553,6 +1490,8 @@ button,
 .dm-dest--dim { opacity: .42; }
 .dm-dest--hover:not(.dm-dest--best) .dm-chip-bg { stroke: var(--sign); }
 .dm-dest:focus-visible .dm-chip-bg { stroke: var(--sign); stroke-width: 2.5; }
+/* El ganador ya es amarillo: su foco se dibuja con la tinta del tema */
+.dm-dest--best:focus-visible .dm-chip-bg { stroke: var(--primary); stroke-width: 3; }
 
 /* Ficha informativa */
 .dm-tooltip {
@@ -1607,7 +1546,7 @@ button,
 }
 .fm-offline svg { color: var(--sign); flex: 0 0 auto; }
 .fm-offline-tag { font-family: var(--font-mono); font-weight: 800; font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--sign); }
-[data-theme="dark"] .fm-offline { background: #1C1F24; border-top: 1px solid #25282F; }
+[data-theme="dark"] .fm-offline { background: var(--slate-50); border-top: 1px solid var(--line); }
 
 .fm-pwa-card {
   position: fixed;
@@ -1675,6 +1614,8 @@ button,
   --decision-bg: #0D0E11;
   --decision-line: #E6E8EC;
 }
+/* Recibe el foco por programa tras buscar (tabIndex -1): no es un control */
+.fm-decision:focus { outline: none; }
 .fm-decision .wc-card.wc-card { margin: 0; }
 .fm-decision .fm-group-block { margin: 14px 0 0; }
 .fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 14px; }
@@ -1840,6 +1781,7 @@ button,
   border-top: 1px dashed var(--slate-300);
 }
 .wc-total-foot .wc-verify-caption { font-size: 12px; color: var(--slate-500); }
+.wc-total .wc-fx-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
 .wc-total-foot .wc-verify-status { font-size: 12.5px; color: var(--slate-700); display: inline-flex; align-items: center; gap: 6px; }
 .wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1910,7 +1852,7 @@ button,
 .wc-card.wc-card .wc-image-wrap { height: 220px; min-height: 0; }
 @media (min-width: 768px) { .wc-card.wc-card .wc-image-wrap { height: 250px; } }
 .wc-total-foot .wc-verify-caption--ok { display: inline-flex; align-items: center; gap: 6px; color: var(--fair-high); font-weight: 600; }
-[data-theme="dark"] .wc-total-foot .wc-verify-caption--ok { color: #52DEA2; }
+[data-theme="dark"] .wc-total-foot .wc-verify-caption--ok { color: var(--panel-good); }
 
 /* Botones de cada vuelo: Reservar manda, el resto compacto en una fila */
 .wc-buy .wc-flight-ctas { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1933,39 +1875,6 @@ button,
    que el texto: radar del hero, cifras de odómetro, ILS de equidad, estrobo
    en las rutas y conmutadores de cabina. Solo transform/opacity (compositor),
    sin mover el layout; todo se apaga con prefers-reduced-motion.        */
-
-/* ── 24.1 Radar vivo en el hero ───────────────────────────────────────── */
-.cv-stage { position: relative; }
-/* Pantalla del radar: su caja y la posición del disco las fija
-   ConvergenceHero (SCOPE / SWEEP_R). Bordes difuminados: izquierda 40 u (6 %),
-   derecha 120 u (18 %), arriba/abajo 42 u (15 %). El disco gira dentro. */
-.cv-sweep-clip {
-  position: absolute;
-  overflow: hidden;
-  pointer-events: none;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0, #000 6%, #000 82%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 15%, #000 85%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0, #000 6%, #000 82%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 15%, #000 85%, transparent 100%);
-  mask-composite: intersect;
-}
-.cv-sweep {
-  position: absolute;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  /* Borde de ataque al norte (0°) y estela hacia atrás; gira en sentido horario */
-  background: conic-gradient(from -40deg,
-    rgba(var(--sign-rgb), 0) 0deg,
-    rgba(var(--sign-rgb), .06) 16deg,
-    rgba(var(--sign-rgb), .30) 39.3deg,
-    rgba(var(--sign-rgb), .8) 39.6deg,
-    rgba(var(--sign-rgb), 0) 40deg);
-  animation: cv-sweep 6s linear infinite; /* = SWEEP_S en ConvergenceHero */
-  will-change: transform;
-}
 /* La pantalla del radar sobresale de la carta: en móvil el remate no tiene un
    contenedor que recorte, así que se corta en horizontal (sin scroll lateral)
    sin tocar el vertical. */
@@ -1973,107 +1882,6 @@ button,
 @supports not (overflow: clip) {
   .lp-hero-visual-m { overflow: hidden; }
 }
-[data-theme="dark"] .cv-sweep { opacity: .62; }
-@keyframes cv-sweep { to { transform: rotate(360deg); } }
-
-/* Ping: onda en la ciudad cuando el haz pasa por ella (retardo por ángulo) */
-.cv-ping {
-  position: absolute;
-  width: 4.4%;
-  aspect-ratio: 1;
-  margin: -2.2% 0 0 -2.2%;
-  border-radius: 50%;
-  border: 2px solid var(--sign-line);
-  background: rgba(var(--sign-rgb), .22);
-  opacity: 0;
-  pointer-events: none;
-  animation: cv-ping 6s linear infinite;
-  will-change: transform, opacity;
-}
-@keyframes cv-ping {
-  0%   { transform: scale(1);   opacity: .8; }
-  14%  { transform: scale(2.2); opacity: 0; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-
-/* Aeropuertos pulsables: botones transparentes sobre nodo + código */
-.cv-hit {
-  position: absolute;
-  z-index: 2;
-  width: 64px;
-  height: 40px;
-  transform: translate(-50%, -50%);
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-}
-.cv-hit:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 1px; }
-
-/* Ruta encendida en amarillo terminal; las demás se atenúan */
-.cv-arc { transition: opacity .2s ease; }
-.cv-arc.cv-arc--dim { opacity: .26; }
-.cv-lit { opacity: 0; transition: opacity .2s ease; pointer-events: none; }
-.cv-lit--on { opacity: 1; }
-.cv-lit-halo { stroke: rgba(var(--sign-rgb), .42); stroke-width: 10; stroke-linecap: round; }
-.cv-lit-line { stroke: var(--sign-line); stroke-width: 3.2; stroke-linecap: round; }
-.cv-origin-lit { fill: var(--sign); stroke: #1A1A1A; stroke-width: 2; opacity: 0; transition: opacity .2s ease; }
-.cv-origin--on .cv-origin-lit { opacity: 1; }
-
-/* Ficha de la ruta: cartel de posición (tinta + amarillo) con puntero */
-.cv-route-tag {
-  position: absolute;
-  z-index: 3;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 6px 10px 7px;
-  border: 1px solid var(--sign);
-  border-radius: 4px;
-  background: #1A1A1A;
-  color: var(--sign);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  pointer-events: none;
-  transform: translate(-50%, calc(-100% - 12px));
-  animation: cv-tag-in .22s cubic-bezier(.2,.9,.25,1) both;
-}
-.cv-route-tag::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -5px;
-  width: 8px;
-  height: 8px;
-  background: #1A1A1A;
-  border-right: 1px solid var(--sign);
-  border-bottom: 1px solid var(--sign);
-  transform: translateX(-50%) rotate(45deg);
-}
-.cv-route-tag-k { font-size: 10px; font-weight: 600; letter-spacing: .12em; color: rgba(230,232,236,.72); }
-.cv-route-tag-v { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 600; line-height: 1.15; }
-.cv-route-tag-v i { font-style: normal; opacity: .55; }
-@keyframes cv-tag-in { from { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); } }
-
-/* Pista discreta: los aeropuertos se pueden tocar */
-.cv-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--slate-500);
-  white-space: nowrap;
-  pointer-events: none;
-  transition: opacity .2s ease;
-}
-.cv-stage--focus .cv-hint { opacity: 0; }
 
 /* ── 24.2 Odómetro de cabina (cifras que se deslizan como una cinta) ───── */
 .odo {
@@ -2391,8 +2199,6 @@ button,
   .wc-strobe-lane, .wc-takeoff { display: none; }
   .wc-flight-route--open .wc-route-draw { transition: none; }
   .wc-fd { animation: none; }
-  .cv-sweep, .cv-ping { display: none; }
-  .cv-route-tag { animation: none; }
   .odo-tape { transition: none; }
   .wc-ils-bar, .wc-ils-pos { transition: none; animation: none; }
   .wc-ils-diamond--on::after, .wc-twr, .wc-fs .wc-ils-row { animation: none; }
@@ -2459,7 +2265,7 @@ button,
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-code.sf-ac-code { background: var(--sign); color: #1A1A1A; }
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-mark { background: rgba(var(--sign-rgb), .28); }
 .sf-ac-item--hl .sf-ac-go { opacity: 1; transform: none; }
-[data-theme="dark"] .sf-ac-dropdown.sf-ac-dropdown { background: #17191D; border-color: #25282F; }
+[data-theme="dark"] .sf-ac-dropdown.sf-ac-dropdown { background: var(--white); border-color: var(--line); }
 @keyframes sf-ac-drop { from { opacity: 0; transform: translateY(-4px) scaleY(.96); } }
 @keyframes sf-ac-item { from { opacity: 0; transform: translateX(-6px); } }
 @media (max-width: 480px) {
@@ -2744,9 +2550,6 @@ button,
    una franja gris más clara sin filete) */
 [data-theme="dark"] .app-header.app-header { background: rgba(23,25,29,.94); }
 
-/* Fila "en tu tarjeta" del panel de salidas: mismo tinte amarillo de noche */
-[data-theme="dark"] .fm-board-row--current { background: rgba(var(--sign-rgb), .2); }
-
 /* Botón de contorno (elegir destinos): tinta/hueso con contraste AA */
 .sf-form .btn-outline-primary { color: var(--navy); border-color: var(--slate-300); background: transparent; }
 .sf-form .btn-outline-primary:hover:not(:disabled) { color: var(--on-solid); background: var(--primary); border-color: var(--primary); }
@@ -2813,6 +2616,4 @@ button,
   .wc-buy .wc-flight-ctas { gap: 6px; }
   .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 2px; font-size: 11px; letter-spacing: -.01em; }
   .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 34px; }
-  /* La fila actual ya se distingue por el tinte y la franja amarilla */
-  .fm-board-row--current .fm-board-now { display: none; }
 }

@@ -64,3 +64,32 @@ test("readWatches/writeWatches: sobrevive a datos corruptos", () => {
   writeWatches(storage, [w, { basura: true }]);
   assert.deepEqual(readWatches(storage).map((x) => x.id), [w.id]);
 });
+
+test("safeStorage: si leer localStorage lanza (cookies bloqueadas) devuelve null y nada rompe", async () => {
+  const { safeStorage, readWatches, writeWatches } = await import("../src/utils/priceWatch.js");
+  const blocked = {};
+  Object.defineProperty(blocked, "localStorage", { get() { throw new Error("SecurityError"); } });
+  assert.equal(safeStorage(blocked), null);
+  assert.deepEqual(readWatches(safeStorage(blocked)), []);
+  assert.doesNotThrow(() => writeWatches(safeStorage(blocked), []));
+  const store = new Map();
+  const ok = { localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) } };
+  assert.equal(safeStorage(ok), ok.localStorage);
+  assert.equal(safeStorage(undefined), null);
+});
+
+test("comprobaciones: se repite como mucho cada 30 min y se guardan solo las activas", async () => {
+  const { readChecks, writeChecks, isCheckDue, CHECK_EVERY_MS } = await import("../src/utils/priceWatch.js");
+  const mem = new Map();
+  const storage = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)) };
+  const now = 1_800_000_000_000;
+  assert.equal(isCheckDue(undefined, now), true);
+  assert.equal(isCheckDue({ at: now - 60_000 }, now), false);
+  assert.equal(isCheckDue({ at: now - CHECK_EVERY_MS }, now), true);
+  assert.equal(isCheckDue({ at: now + 60_000 }, now), true); // reloj cambiado: se vuelve a comprobar
+  writeChecks(storage, { a: { at: now, totalEUR: 300 }, b: { at: now, totalEUR: null } }, ["a"]);
+  assert.deepEqual(readChecks(storage), { a: { at: now, totalEUR: 300 } });
+  mem.set("flyndme_watch_checks", "basura");
+  assert.deepEqual(readChecks(storage), {});
+  assert.deepEqual(readChecks(null), {});
+});

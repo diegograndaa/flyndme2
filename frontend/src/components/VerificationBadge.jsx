@@ -1,6 +1,7 @@
 import React from "react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
+import { convertPrice } from "../utils/resultsLogic";
 import { Check, ArrowUp, ArrowDown, Info } from "lucide-react";
 
 // Renders a trust chip for the winning destination based on its live-price check
@@ -10,8 +11,8 @@ import { Check, ArrowUp, ArrowDown, Info } from "lucide-react";
 //   skipped          → cached estimate (default; not yet checked) — honest caveat
 //   partial/failed/timeout → indicative (we tried, it didn't conclude)
 
-export default function VerificationBadge({ dest }) {
-  const { t } = useI18n();
+export default function VerificationBadge({ dest, currency = "EUR" }) {
+  const { t, lang } = useI18n();
   const status = dest?.verificationStatus;
   if (!status) return null; // older cached payloads or response without verification
 
@@ -31,7 +32,7 @@ export default function VerificationBadge({ dest }) {
     // venía el orientativo (cached* lo guarda mergeVerification al promocionar).
     const wasAvg = Number(dest?.cachedAveragePerTraveler);
     if (Number.isFinite(wasAvg) && wasAvg > 0) {
-      hint = t("verifyBadge.wasPrice", { price: formatEur(wasAvg, 0) });
+      hint = t("verifyBadge.wasPrice", { price: currency === "EUR" ? formatEur(wasAvg, 0) : convertPrice(wasAvg, currency) });
     }
   } else if (status === "skipped") {
     // Default, not yet checked against Google Flights. Honest caveat: the shown
@@ -52,20 +53,19 @@ export default function VerificationBadge({ dest }) {
   if (dest?.verifiedAt) {
     try {
       const d = new Date(dest.verifiedAt);
-      const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      const time = d.toLocaleTimeString(lang === "es" ? "es-ES" : "en-GB", { hour: "2-digit", minute: "2-digit" });
       const stamp = t("verifyBadge.verifiedAt", { time });
       title = title ? `${stamp} · ${title}` : stamp;
     } catch { /* ignore bad timestamp */ }
   }
 
+  // aria-label en un <span> sin rol no lo leen todos los lectores de pantalla:
+  // el detalle va como texto oculto, que además llega a quien no tiene hover.
   return (
-    <span
-      className={`wc-verify-chip wc-verify-chip--${kind}`}
-      title={title || undefined}
-      aria-label={title ? `${text} — ${title}` : text}
-    >
+    <span className={`wc-verify-chip wc-verify-chip--${kind}`} title={title || undefined}>
       <span className="wc-verify-icon" aria-hidden="true">{icon}</span>
       {text}
+      {title && <span className="sr-only"> — {title}</span>}
     </span>
   );
 }

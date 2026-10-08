@@ -130,7 +130,7 @@
 /* Ejemplo animado de los campos: «p. ej.» fijo delante + ciudad en cursiva,
    para que no parezca un valor ya rellenado */
 .sf-typing-placeholder.sf-typing-placeholder { display: inline-flex; align-items: baseline; gap: 5px; color: var(--slate-400); font-style: italic; border-right: 0; animation: none; }
-.sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; opacity: .85; }
+.sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; }
 .sf-typing-word { border-right: 2px solid transparent; padding-right: 1px; }
 .sf-typing-word--active { animation: typingCursor .8s steps(1) infinite; }
 
@@ -438,7 +438,10 @@
 .wc-total-hint.wc-total-hint { background: transparent; border: 1px dashed var(--slate-300); border-left: 1px dashed var(--slate-300); }
 .wc-total-hint-btn.wc-total-hint-btn { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
 :root:not([data-theme="dark"]) .wc-total-hint-btn.wc-total-hint-btn { color: var(--navy); }
-.wc-total-hint-btn.wc-total-hint-btn:hover { background: var(--navy); color: var(--white); }
+/* El :root:not(oscuro) de arriba pesa más que este :hover: hay que repetirlo,
+   si no en claro el texto queda del mismo color que el fondo. */
+.wc-total-hint-btn.wc-total-hint-btn:hover,
+:root:not([data-theme="dark"]) .wc-total-hint-btn.wc-total-hint-btn:hover { background: var(--navy); color: var(--white); }
 .fm-notice.fm-notice { border-left: 1px solid var(--line); }
 .fm-notice-tag.fm-notice-tag { color: var(--slate-700); background: transparent; box-shadow: inset 0 0 0 1px var(--slate-300); }
 .fm-notice-tag .fm-announce-dot { background: var(--slate-500); animation: none; }
@@ -530,3 +533,22 @@
    La columna del formulario es estrecha: etiqueta, texto y botón apilados. */
 .sf-form .fm-notice { flex-direction: column; align-items: flex-start; margin-top: 12px; }
 .sf-form .fm-notice .fm-notice-body { flex: 0 0 auto; width: 100%; }
+
+/* ══ 36. Mínimos táctiles y de texto en móvil (360-390 px) ═════════════════
+   Reglas del proyecto: dianas ≥ 40 px y texto ≥ 12 px. Estas piezas se
+   habían quedado por debajo (medido a 360 y 390 px). */
+.app-header .fm-lang-btn.fm-lang-btn { min-width: 40px; height: 40px; }
+.gp-member-remove.gp-member-remove,
+.gp-pax-btn.gp-pax-btn { width: 40px; height: 40px; }
+.gp-exit.gp-exit { min-height: 40px; padding: 8px 12px; }
+.gp-eyebrow.gp-eyebrow,
+.gp-roster-title.gp-roster-title,
+.gp-add-label.gp-add-label,
+.gp-invite-label.gp-invite-label { font-size: 12px; }
+@media (max-width: 360px) {
+  .app-header .fm-lang-btn.fm-lang-btn { min-width: 40px; padding: 0 4px; }
+  .wc-card .wc-buy .wc-cta.wc-cta { font-size: 12px; }
+}
+@media (max-width: 340px) {
+  .wc-card .wc-buy .wc-cta.wc-cta { font-size: 12px; letter-spacing: 0; }
+}

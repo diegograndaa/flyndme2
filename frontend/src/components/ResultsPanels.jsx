@@ -3,26 +3,19 @@
 import { useState } from "react";
 import { cityOf, formatEur, countryFlag } from "../utils/helpers";
 import { BedDouble, Target, Map as MapIcon } from "lucide-react";
-import { convertPrice, travelerSlot } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot, splitRows } from "../utils/resultsLogic";
 import { tapHaptic } from "../utils/haptics";
 
 export function CostSplitCard({ bestDest, origins, currency, t }) {
   const [splitMode, setSplitMode] = useState("equal"); // equal | actual
   if (!bestDest?.flights?.length || origins.length < 2) return null;
 
-  const breakdown = bestDest.flights;
-  const totalCost = bestDest.totalCostEUR || 0;
-  const equalShare = totalCost / origins.length;
-
-  // In "actual" mode, each pays their own flight
-  // In "equal" mode, everyone pays the same (equal share)
-  // Show who owes whom
-  const diffs = breakdown.map(f => {
-    const origin = String(f.origin).toUpperCase();
-    const actual = f.price || 0;
-    const diff = actual - equalShare; // positive = overpaid, negative = underpaid
-    return { origin, actual, equalShare, diff };
-  });
+  // A partes iguales = la misma cantidad POR PERSONA (no por ciudad): una
+  // ciudad con 3 viajeros pone 3 partes. Lo que debe o recibe es de su grupo.
+  const diffs = splitRows(bestDest).map((r) => ({
+    origin: r.origin, pax: r.pax, actual: r.pricePP, equalShare: r.fairPP, diff: r.diff,
+  }));
+  const times = (d) => (d.pax > 1 ? ` × ${d.pax}` : "");
 
   return (
     <div className="fm-split-card view-enter">
@@ -44,9 +37,9 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
             <span className="fm-split-origin">{countryFlag(d.origin)} {d.origin}</span>
             <span className="fm-split-pays">
               {splitMode === "equal"
-                ? (currency === "EUR" ? formatEur(equalShare, 0) : convertPrice(equalShare, currency))
+                ? (currency === "EUR" ? formatEur(d.equalShare, 0) : convertPrice(d.equalShare, currency))
                 : (currency === "EUR" ? formatEur(d.actual, 0) : convertPrice(d.actual, currency))
-              }
+              }{times(d)}
             </span>
             {splitMode === "equal" && (
               <span className={`fm-split-diff${d.diff > 2 ? " fm-split-diff--overpaid" : d.diff < -2 ? " fm-split-diff--underpaid" : ""}`}>
@@ -67,13 +60,15 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
   );
 }
 
-export function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
+export function PlanYourTripCTA({ destCode, departureDate, returnDate, travelers = 0, t }) {
   if (!destCode) return null;
   const city = cityOf(destCode) || destCode;
   const checkin = departureDate || "";
   const checkout = returnDate || "";
 
-  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&checkin=${checkin}&checkout=${checkout}`;
+  // Booking abre por defecto con 2 adultos: se le pasa el grupo real.
+  const adults = Math.max(1, Math.min(30, Math.floor(Number(travelers)) || 0));
+  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&checkin=${checkin}&checkout=${checkout}${travelers ? `&group_adults=${adults}` : ""}`;
   const activitiesUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(city)}`;
   const mapsUrl = `https://www.google.com/maps/place/${encodeURIComponent(city)}`;
 

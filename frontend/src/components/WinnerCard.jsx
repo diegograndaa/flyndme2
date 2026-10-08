@@ -8,11 +8,12 @@ import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
 } from "../utils/helpers";
-import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
+import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
+import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
 import VerificationBadge from "./VerificationBadge";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
@@ -65,9 +66,15 @@ const WinnerCard = React.memo(function WinnerCard({
   dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [entered, setEntered] = useState(false);
   const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
+  const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
+  useEffect(() => {
+    if (!copied) return undefined;
+    const id = setTimeout(() => setCopied(null), 2000);
+    return () => clearTimeout(id);
+  }, [copied]);
 
   useEffect(() => {
     if (dest) {
@@ -125,13 +132,13 @@ const WinnerCard = React.memo(function WinnerCard({
     || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
     || cleanOrigins.length;
   // Suma de lo que paga cada origen (precio × pasajeros) → total del grupo.
-  // Solo se enseña si cuadra con el total del backend (nunca un total propio).
-  const sumParts = (() => {
-    if (singleOrigin || breakdown.length < 2 || breakdown.length > 6) return null;
-    const parts = breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1));
-    const sum = parts.reduce((a2, v) => a2 + v, 0);
-    return Math.abs(sum - (dest.totalCostEUR || 0)) <= 1 ? parts : null;
-  })();
+  // Solo si cuadra con el total del backend Y con los enteros que se pintan
+  // (si no, «€11 + €11 = €21»). Con un solo origen no hay suma que enseñar.
+  const sumParts = singleOrigin ? null : visibleSumParts(
+    breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1)),
+    dest.totalCostEUR,
+    currency,
+  );
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
@@ -157,7 +164,7 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Savings + trip duration + countdown + vs last search chips */}
         <div className="wc-chips-overlay">
           {/* Verification badge (first so it's the most visible trust signal) */}
-          <VerificationBadge dest={dest} />
+          <VerificationBadge dest={dest} currency={currency} />
           {/* Algún origen usa precio de una fecha vecina (sin dato exacto) */}
           {dest.hasDateFallback && (
             <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
@@ -165,8 +172,9 @@ const WinnerCard = React.memo(function WinnerCard({
             </span>
           )}
           {savingsPct > 5 && (
-            <span className="wc-savings-chip">
+            <span className="wc-savings-chip" title={t("results.savingsPctHint", { n: allFlights.length })}>
               {t("results.savingsPct", { pct: savingsPct })}
+              <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
             </span>
           )}
         </div>
@@ -178,6 +186,7 @@ const WinnerCard = React.memo(function WinnerCard({
           Es el centro de la decisión (antes iba debajo de la matriz de precios,
           el reparto y el troquel, y además plegable). */}
       <div className="wc-buy">
+        <span className="sr-only" role="status">{copied ? t(copied.ok ? "results.copied" : "results.copyFailed") : ""}</span>
         <div className="wc-buy-head">
           <div className="wc-buy-heading">
             <span className="wc-buy-kicker">
@@ -217,7 +226,8 @@ const WinnerCard = React.memo(function WinnerCard({
                 // código de ciudad ROM/LON; Google Flights ni lo acepta).
                 const ssOrigin = offer?.tp?.originAirport || origin;
                 const ssDest   = offer?.tp?.destinationAirport || code;
-                const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
+                const ssUrl = buildSkyscannerUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType,
+                  adults: Number(finfo.passengers) || Number(offer?.passengers) || 1 });
                 const gfUrl = buildGoogleFlightsUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
 
                 // Extract itinerary details (outbound)
@@ -253,7 +263,9 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retTime = hhmm(retSegments[0]?.departure?.at);
                 const flightNo = segments[0]?.carrierCode && segments[0]?.number ? `${segments[0].carrierCode} ${segments[0].number}` : "";
                 const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
-                const legTotal = Number(finfo.totalForOrigin) || (typeof price === "number" ? price * pax : 0);
+                const legEq = typeof price === "number"
+                  ? legEquation(price, pax, finfo.totalForOrigin, currency)
+                  : null;
 
                 return (
                   <div key={origin} className="wc-flight-card">
@@ -325,7 +337,7 @@ const WinnerCard = React.memo(function WinnerCard({
                         {typeof price === "number" && (
                           <div className="wc-fd-item">
                             <dt>{t("results.fdTravelers")}</dt>
-                            <dd>{pax} × {money(price)} = <strong>{money(legTotal)}</strong></dd>
+                            <dd>{pax} × {money(price)}{legEq?.showProduct && <> = <strong>{money(legEq.total)}</strong></>}</dd>
                           </div>
                         )}
                       </dl>
@@ -390,11 +402,13 @@ const WinnerCard = React.memo(function WinnerCard({
                           Google Flights
                         </a>
                       )}
-                      <button type="button" className="wc-cta wc-cta--copy" onClick={() => {
-                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""}`;
-                        copyText(txt);
+                      <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
+                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
+                        setCopied({ origin, ok: await copyText(txt) });
                       }} title={t("results.copyFlight")} aria-label={t("results.copyFlight")}>
-                        <Copy size={15} aria-hidden="true" />
+                        {copied?.origin === origin && copied.ok
+                          ? <Check size={15} aria-hidden="true" />
+                          : <Copy size={15} aria-hidden="true" />}
                       </button>
                     </div>
                   </div>
@@ -426,6 +440,8 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
 
           {/* Fecha más barata para ESTE destino: cambia el total, así que va aquí */}
+          {/* Región viva siempre presente: el aviso llega en segundo plano */}
+          <div aria-live="polite">
           {dateHint && (
             <div className="wc-total-hint">
               <CalendarClock size={16} aria-hidden="true" />
@@ -433,6 +449,7 @@ const WinnerCard = React.memo(function WinnerCard({
               <button type="button" className="wc-total-hint-btn" onClick={dateHint.onAction}>{dateHint.actionLabel}</button>
             </div>
           )}
+          </div>
 
           {/* Estimación honesta + comprobación en vivo bajo demanda (#5) */}
           <div className="wc-total-foot" aria-live="polite">
@@ -459,6 +476,9 @@ const WinnerCard = React.memo(function WinnerCard({
               <span className="wc-verify-caption">{t("board.estimateNote")}</span>
             )}
           </div>
+          {fxRateLabel(currency, lang) && (
+            <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
+          )}
         </div>
       </div>
 

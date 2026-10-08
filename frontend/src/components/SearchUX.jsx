@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
+import { X } from "lucide-react";
 import { FlapText, FlapCycle } from "./FlapBoard";
 
 // Códigos que el panel "baraja" mientras dura la búsqueda. Es un indicador de
@@ -11,12 +12,12 @@ const SHUFFLE_CODES = ["PAR", "ROM", "LIS", "PRG", "BCN", "AMS", "VIE", "BUD", "
  * destino que baraja códigos. Sustituye al "spinner genérico" encima del
  * skeleton de resultados.
  */
-export function SearchingBoard({ origins = [], title, className = "" }) {
+export function SearchingBoard({ origins = [], title, className = "", onCancel }) {
   const { t } = useI18n();
   const codes = (origins || []).map((o) => String(o).trim().toUpperCase()).filter(Boolean).slice(0, 8);
   return (
-    <div className={`fm-searching-board ${className}`.trim()} role="status" aria-live="polite">
-      <div className="fm-searching-board-head">
+    <div className={`fm-searching-board ${className}`.trim()}>
+      <div className="fm-searching-board-head" role="status" aria-live="polite">
         <span className="fm-searching-board-dot" aria-hidden="true" />
         {title || t("loading.boardTitle")}
       </div>
@@ -31,6 +32,11 @@ export function SearchingBoard({ origins = [], title, className = "" }) {
         </span>
         <span aria-hidden="true"><FlapCycle words={SHUFFLE_CODES} interval={650} size="md" /></span>
       </div>
+      {onCancel && (
+        <button type="button" className="fm-searching-cancel" onClick={onCancel}>
+          <X size={14} aria-hidden="true" /> {t("loading.cancel")}
+        </button>
+      )}
     </div>
   );
 }
@@ -40,7 +46,7 @@ export function SearchingBoard({ origins = [], title, className = "" }) {
  * Replaces the old full-screen overlay so the user can keep reading
  * while the search runs.
  */
-export function SearchProgress({ loading, origins = [] }) {
+export function SearchProgress({ loading, origins = [], onCancel, waking = false }) {
   const { t } = useI18n();
   const messages = t("loading.messages");
   const ariaLabel = t("loading.ariaLabel");
@@ -82,6 +88,7 @@ export function SearchProgress({ loading, origins = [] }) {
     <>
       {/* Progress bar */}
       <div
+        className="fm-progress-bar"
         role="progressbar"
         aria-label={ariaLabel}
         style={{
@@ -102,7 +109,7 @@ export function SearchProgress({ loading, origins = [] }) {
           con spinner). */}
       {loading && (
         <div className="fm-searching-dock">
-          <SearchingBoard origins={origins} title={currentMessage} />
+          <SearchingBoard origins={origins} title={waking ? t("loading.waking") : currentMessage} onCancel={onCancel} />
         </div>
       )}
 

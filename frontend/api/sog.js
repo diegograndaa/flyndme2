@@ -20,7 +20,9 @@ export default function handler(req) {
   const get = (k, max = 80) => String(searchParams.get(k) || "").slice(0, max);
 
   const mode = get("mode", 8);
-  const id = get("id", 24);
+  // El id se valida ENTERO (recortarlo antes haría pasar ids de más de 24
+  // caracteres como válidos, igual que el backend los rechaza).
+  const id = String(searchParams.get("id") || "");
   const from = get("from", 120);
   const n = get("n", 4);
 

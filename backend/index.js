@@ -192,7 +192,9 @@ const searchLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: "Demasiadas peticiones. Por favor espera unos minutos." },
+  // Con code: el frontend lo traduce (errors.codes.RATE_LIMITED) en vez de
+  // enseñar este texto en español también en inglés.
+  message: { code: "RATE_LIMITED", message: "Demasiadas peticiones. Por favor espera unos minutos." },
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────

@@ -111,6 +111,14 @@ test("render: VerificationBadge en todos los estados", async () => {
     }));
     assert.ok(html.length > 10, `badge vacío para ${status}`);
   }
+  // El detalle (precio anterior) va como texto, en la divisa elegida
+  const changed = renderWithI18n(React.createElement(VerificationBadge, {
+    dest: { verificationStatus: "changed", priceChangePct: -10, cachedAveragePerTraveler: 100 },
+    currency: "USD",
+  }));
+  assert.match(changed, /class="sr-only"/);
+  assert.match(changed, /\$\d+/);
+  assert.doesNotMatch(changed, /aria-label=/);
   // Sin estado → no renderiza nada
   const empty = renderWithI18n(React.createElement(VerificationBadge, { dest: {} }));
   assert.equal(empty, "");
@@ -151,11 +159,101 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     cabinClass: "ECONOMY", setCabinClass: noop,
     currency: "EUR", setCurrency: noop,
     loading: false, error: "", onSubmit: noop,
-    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    recentSearches: [{ origins: ["MAD", "LON"], departureDate: "2026-11-15", tripType: "oneway", flexDays: 2, maxBudget: 150 }],
+    onLoadRecent: noop, onClearRecent: noop,
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("MAD"));
+  assert.ok(html.includes("±2d"), "la reciente enseña el margen de fechas");
+  assert.ok(html.includes("150"), "la reciente enseña el tope");
+  assert.ok(html.includes("sf-summary-dest"), "el resumen enseña que hay destinos elegidos");
+  assert.ok(html.includes("Destinations to compare"), "el nombre accesible dice que son destinos");
+  assert.match(html, /sf-summary-dest[\s\S]*ROM/);
+  assert.ok(html.includes("×2"), "la fila de Madrid enseña sus 2 viajeros");
+  const ordered = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD", "LON"], setOrigins: noop,
+    tripType: "roundtrip", setTripType: noop,
+    departureDate: "2026-11-20", setDepartureDate: noop,
+    returnDate: "2026-11-15", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1, 1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
+  assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
+  const many = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: ["ROM", "LIS", "PAR", "VIE"], setSelectedDests: noop,
+    passengers: [1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(many.includes("4 destinations selected"));
+  assert.ok(!many.includes("sf-summary-dest\">ROM"), "con más de tres no se listan los códigos");
+  const all = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(!all.includes("sf-summary-dest"), "sin filtro no hay chip de destinos");
+  const dup = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD", "MAD"], setOrigins: noop,
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1, 3], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  }));
+  assert.ok(dup.includes("×3"), "la segunda ciudad igual enseña sus propios viajeros");
+  assert.equal((dup.match(/class="sf-summary-pax"/g) || []).length, 1, "la primera fila, con 1 viajero, no lleva ×");
 });
 
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
@@ -184,10 +282,9 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   assert.ok(html.includes("Rome") || html.includes("ROM"));
 });
 
-test("render: instrumentos de cabina (odómetro, ILS, radar, conmutadores)", async () => {
+test("render: instrumentos de cabina (odómetro, ILS, conmutadores)", async () => {
   const { Odometer } = await import("../src/components/Odometer.jsx");
   const { WhoPaysStrip } = await import("../src/components/WinnerCard.jsx");
-  const { default: ConvergenceHero } = await import("../src/components/ConvergenceHero.jsx");
   const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
   // Odómetro: el texto accesible es SIEMPRE el valor real (las cintas arrancan
   // en 0 en el primer frame de cliente y suben hasta él)
@@ -200,11 +297,6 @@ test("render: instrumentos de cabina (odómetro, ILS, radar, conmutadores)", asy
   assert.equal((ils.match(/wc-ils-diamond/g) || []).length, 2);
   assert.ok(ils.includes("translateX(-42.00%)") && ils.includes("translateX(42.00%)"), "MAD por debajo y LON por encima de la media");
   assert.ok(!ils.includes('class="wc-twr'), "la torre solo aparece al tocar una fila");
-  // Radar: tres aeropuertos pulsables con distancia y tiempo estimado
-  const hero = renderWithI18n(React.createElement(ConvergenceHero, { idSuffix: "-t" }));
-  assert.equal((hero.match(/class="cv-hit"/g) || []).length, 3);
-  assert.ok(hero.includes("cv-sweep") && (hero.match(/cv-ping/g) || []).length === 3);
-  assert.ok(/km/.test(hero), "la etiqueta accesible incluye los km");
   // Conmutadores: criterio con micro-LED y ruta pulsable (cerrada) con estrobo
   const noop = () => {};
   const card = renderWithI18n(React.createElement(WinnerCard, {
@@ -240,6 +332,10 @@ test("render: ChromeBits y ResultsPanels extraídos", async () => {
   // Paneles de resultados
   assert.ok(renderWithI18n(React.createElement(CostSplitCard, { bestDest: FIXTURE_DEST, origins: ["MAD", "LON"], currency: "EUR", t })).length > 100);
   assert.ok(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "", t })).length > 50);
+  // El enlace de hoteles lleva el número real de viajeros (Booking abre con 2 si no)
+  const plan = renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", returnDate: "2026-09-18", travelers: 5, t }));
+  assert.match(plan, /group_adults=5/);
+  assert.doesNotMatch(renderWithI18n(React.createElement(PlanYourTripCTA, { destCode: "ROM", departureDate: "2026-09-15", t })), /group_adults/);
   // Zonas de resultados y avisos en línea
   assert.ok(renderWithI18n(React.createElement(ZoneHead, { id: "z", num: "01", title: "Decisión final", variant: "decision" })).includes("fm-zone-head--decision"));
   const notice = renderWithI18n(React.createElement(Notice, { variant: "next", tag: "Siguiente paso", text: "Plan", actionLabel: "Crear", onAction: noop }));
@@ -260,6 +356,41 @@ test("render: ThemeToggle expone aria-pressed según el tema resuelto", async ()
   assert.ok(dark.includes('aria-pressed="true"'), "oscuro: aria-pressed=true");
 });
 
+test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redondear", async () => {
+  const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
+  const noop = () => {};
+  const base = {
+    origins: ["MAD", "LON"], cleanOrigins: ["MAD", "LON"],
+    departureDate: "2026-09-15", tripType: "oneway", uiCriterion: "total",
+    onChangeCriterion: noop,
+  };
+  const cents = {
+    ...FIXTURE_DEST,
+    totalCostEUR: 21.2,
+    flights: [
+      { origin: "MAD", price: 10.6, passengers: 1, totalForOrigin: 10.6 },
+      { origin: "LON", price: 10.6, passengers: 1, totalForOrigin: 10.6 },
+    ],
+  };
+  const hidden = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: cents, currency: "EUR" }));
+  assert.ok(!hidden.includes("wc-total-sum"), "€11 + €11 = €21 no se pinta");
+  const shown = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: FIXTURE_DEST, currency: "EUR" }));
+  assert.ok(shown.includes("wc-total-sum"), "130 + 170 = 300 sí se pinta");
+  const gbp = renderWithI18n(React.createElement(WinnerCard, {
+    ...base,
+    currency: "GBP",
+    dest: {
+      ...FIXTURE_DEST,
+      totalCostEUR: 20,
+      flights: [
+        { origin: "MAD", price: 10, passengers: 1, totalForOrigin: 10 },
+        { origin: "LON", price: 10, passengers: 1, totalForOrigin: 10 },
+      ],
+    },
+  }));
+  assert.ok(!gbp.includes("wc-total-sum"), "£9 + £9 = £17 no se pinta");
+});
+
 test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión import roto)", async () => {
   // Con favoritos en localStorage, isFav ejecuta normalizeCode durante el
   // render; sin el import en useAppHooks.js lanzaba ReferenceError (solo se
@@ -276,4 +407,12 @@ test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión impo
   } finally {
     localStorage.removeItem("flyndme_favorites");
   }
+});
+
+test("toastDuration: 2,5 s los avisos cortos, más los largos, tope 8 s", async () => {
+  const { toastDuration } = await import("../src/components/ChromeBits.jsx");
+  assert.equal(toastDuration("¡Copiado!"), 2500);
+  assert.ok(toastDuration("x".repeat(100)) > 5000);
+  assert.equal(toastDuration("x".repeat(400)), 8000);
+  assert.equal(toastDuration(undefined), 2500);
 });

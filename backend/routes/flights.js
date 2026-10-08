@@ -28,6 +28,14 @@ const { candidateNights } = require("../services/tripLength");
 // frontend muestra el badge de "precios orientativos".
 const CAN_VERIFY = flightService.capabilities?.verification !== false;
 
+// Cabina que el proveedor no distingue (la caché de Aviasales solo tiene
+// turista): mejor decirlo que devolver «sin resultados». Sin lista declarada
+// (mock) se aceptan todas.
+function unsupportedTravelClass(travelClass, caps = flightService.capabilities) {
+  const list = caps?.travelClasses;
+  return Boolean(travelClass) && Array.isArray(list) && !list.includes(travelClass);
+}
+
 // Capa 2: verificación del destino ganador contra Google Flights vía SerpAPI
 // (endpoint dedicado POST /verify, ver abajo). Sin SERPAPI_KEY queda
 // deshabilitada y el endpoint responde "skipped" — nada cambia para el front.
@@ -237,17 +245,14 @@ async function verifyDestination(result) {
     return { ...result, verificationStatus: "timeout" };
   }
 
+  // El precio de la búsqueda (price / totalForOrigin) no se toca aquí.
+  // Si solo se reescribiera totalForOrigin, el detalle «1 × €128 = €134»
+  // no cuadraría y el total del grupo seguiría siendo el de la caché.
   const verifiedFlights = result.flights.map((f, i) => {
     const r = settled[i];
     const v = r && r.status === "fulfilled" ? r.value : null;
     const verifiedPrice = v?.price ?? null;
-    const effective = verifiedPrice ?? f.price;
-    const pax = f.passengers || 1;
-    return {
-      ...f,
-      verifiedPrice,
-      totalForOrigin: Number((effective * pax).toFixed(2)),
-    };
+    return { ...f, verifiedPrice };
   });
 
   // Build pax-aware effective flights and re-aggregate using the same helper as search.
@@ -271,9 +276,36 @@ async function verifyDestination(result) {
   else if (Math.abs(priceChangePct) >= VERIFY_PRICE_DELTA_PCT) verificationStatus = "changed";
   else verificationStatus = "verified";
 
+  // Verificación completa: el precio confirmado pasa a ser el mostrado
+  // (igual que mergeVerification en el front). Parcial o fallida: se queda
+  // el de la búsqueda; verifiedPrice va aparte y no se mezcla en el total.
+  const fully = verificationStatus === "verified" || verificationStatus === "changed";
+  const flights = fully
+    ? verifiedFlights.map((f) => {
+        const pax = f.passengers || 1;
+        return {
+          ...f,
+          cachedPrice: f.price,
+          cachedTotalForOrigin: f.totalForOrigin,
+          price: f.verifiedPrice,
+          totalForOrigin: Number((f.verifiedPrice * pax).toFixed(2)),
+        };
+      })
+    : verifiedFlights;
+
   return {
     ...result,
-    flights: verifiedFlights,
+    flights,
+    ...(fully ? {
+      cachedTotalCostEUR: result.totalCostEUR,
+      cachedAveragePerTraveler: result.averageCostPerTraveler,
+      cachedPriceSpread: result.priceSpread,
+      cachedFairnessScore: result.fairnessScore,
+      totalCostEUR: Number(total.toFixed(2)),
+      averageCostPerTraveler: Number(avg.toFixed(2)),
+      priceSpread: Number(spread.toFixed(2)),
+      fairnessScore: Number(fairness.toFixed(1)),
+    } : {}),
     verifiedAt: new Date().toISOString(),
     verifiedTotalCostEUR:        Number(total.toFixed(2)),
     verifiedAveragePerTraveler:  Number(avg.toFixed(2)),
@@ -378,6 +410,13 @@ router.post("/multi-origin", async (req, res) => {
     } else {
       travelClass = undefined;
     }
+    if (unsupportedTravelClass(travelClass)) {
+      return res.status(400).json({
+        code: "TRAVEL_CLASS_UNSUPPORTED",
+        message: "Por ahora solo hay precios de clase turista.",
+        supported: flightService.capabilities.travelClasses,
+      });
+    }
 
     // ── Validate origins ──────────────────────────────────────────────────────
     if (!Array.isArray(origins) || origins.length === 0) {
@@ -387,14 +426,17 @@ router.post("/multi-origin", async (req, res) => {
       });
     }
 
-    const originList = [...new Set(
-      origins.map((o) => String(o || "").trim().toUpperCase()).filter(isValidIata)
-    )];
+    const cleaned = origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean);
+    const originList = [...new Set(cleaned.filter(isValidIata))];
+    // Un origen no válido se rechaza en vez de ignorarlo: si no, la búsqueda
+    // seguía con el resto y el resultado parecía del grupo entero sin serlo.
+    const invalid = [...new Set(cleaned.filter((o) => !isValidIata(o)))];
 
-    if (originList.length === 0) {
+    if (originList.length === 0 || invalid.length) {
       return res.status(400).json({
         code: "INVALID_ORIGINS",
         message: "Los orígenes deben ser códigos IATA válidos (ej: MAD, BCN).",
+        ...(invalid.length ? { invalid } : {}),
       });
     }
     if (originList.length > MAX_ORIGINS) {
@@ -724,12 +766,17 @@ router.post("/cheaper-date", async (req, res) => {
 
     const { origins, passengers, destination, departureDate, returnDate, tripType, currentTotalEUR } = req.body || {};
 
-    const originList = (Array.isArray(origins) ? origins : [])
+    // Mismos topes que /multi-origin: cada origen son 1-2 consultas al
+    // calendario del proveedor, así que sin tope el endpoint amplificaría.
+    const originList = [...new Set((Array.isArray(origins) ? origins : [])
       .map((o) => String(o || "").trim().toUpperCase())
-      .filter(isValidIata);
+      .filter(isValidIata))];
     const dest = String(destination || "").trim().toUpperCase();
-    if (originList.length === 0 || !isValidIata(dest)) {
+    if (originList.length === 0 || originList.length > MAX_ORIGINS || !isValidIata(dest) || originList.includes(dest)) {
       return res.status(400).json({ code: "INVALID_ORIGINS", message: "origins/destination inválidos." });
+    }
+    if (passengers !== undefined && !Array.isArray(passengers)) {
+      return res.status(400).json({ code: "INVALID_PASSENGERS", message: "passengers debe ser un array alineado con origins." });
     }
     if (!departureDate || !isValidISODate(departureDate)) {
       return res.status(400).json({ code: "INVALID_DEPARTURE_DATE", message: "Fecha inválida. Usa YYYY-MM-DD." });
@@ -751,6 +798,9 @@ router.post("/cheaper-date", async (req, res) => {
     }
 
     const originPax = buildOriginPax(origins, passengers, originList);
+    if (originPax.reduce((a, b) => a + b, 0) > TOTAL_PAX_CAP) {
+      return res.status(400).json({ code: "TOO_MANY_PASSENGERS", message: `Máximo ${TOTAL_PAX_CAP} pasajeros en total.` });
+    }
     const perOrigin = await Promise.all(
       originList.map((o) =>
         getDatedPrices(o, dest, departureDate, roundtrip ? { returnDate } : {}).catch(() => [])
@@ -861,9 +911,14 @@ router.post("/trip-length-hint", async (req, res) => {
       return res.status(400).json({ code: "INVALID_RETURN_DATE", message: "Fecha de vuelta inválida." });
     }
 
-    const custom = (Array.isArray(destinations) ? destinations : [])
-      .map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata);
+    const custom = [...new Set((Array.isArray(destinations) ? destinations : [])
+      .map((d) => String(d || "").trim().toUpperCase()).filter(isValidIata))];
     const dests = (custom.length ? custom : DEFAULT_DESTINATION_TIERS[0]).filter((d) => !originList.includes(d));
+    // Cada duración candidata repite orígenes × destinos: mismo tope que una
+    // búsqueda de una sola fecha en /multi-origin.
+    if (originList.length * dests.length > MAX_COMBINATIONS) {
+      return res.status(400).json({ code: "TOO_MANY_COMBINATIONS", message: "Demasiadas combinaciones. Reduce orígenes o destinos." });
+    }
     const options = { max: 5, ...(nonStop === true || nonStop === "true" ? { nonStop: true } : {}) };
     const t0 = Date.now();
 
@@ -872,6 +927,7 @@ router.post("/trip-length-hint", async (req, res) => {
       const ret = toISODate(addDays(parseISODate(departureDate), nights));
       const found = [];
       for (let i = 0; i < dests.length; i += 3) {
+        if (Date.now() - t0 > TRIP_HINT_BUDGET_MS) break;
         const chunk = await Promise.all(dests.slice(i, i + 3).map((d) =>
           fetchDestDate(originList, originPax, d, departureDate, ret, options, null).catch(() => null)));
         found.push(...chunk.filter(Boolean));
@@ -1102,3 +1158,4 @@ router.post("/verify", async (req, res) => {
 });
 
 module.exports = router;
+module.exports._unsupportedTravelClass = unsupportedTravelClass; // solo para tests

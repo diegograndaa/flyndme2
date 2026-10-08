@@ -78,7 +78,8 @@ test("buildResultsCsv: cabecera, filas y precios por origen", () => {
   const csv = buildResultsCsv(RESULTS, ["MAD", "LON"]);
   const lines = csv.split("\n");
   assert.equal(lines.length, 4); // cabecera + 3 destinos
-  assert.ok(lines[0].includes('"MAD price"'));
+  assert.ok(lines[0].includes('"MAD price/person estimate (EUR)"'));
+  assert.ok(lines[0].includes('"Total estimate (EUR)"'));
   assert.ok(lines[1].includes('"ROM"'));
   assert.ok(lines[1].includes('"Rome"'));
   assert.ok(lines[1].includes('"100.00"'));
@@ -122,4 +123,63 @@ test("payRows / paySpread / maxLegPrice: solo precios reales, en el orden de la 
   assert.equal(paySpread({ flights: [{ origin: "MAD", price: 50 }] }), 0);
   assert.equal(maxLegPrice([dest, { flights: [{ origin: "MAD", price: 300 }] }]), 300);
   assert.deepEqual(payRows(null, []), []);
+});
+
+test("pickBest y sortByCriterion coinciden aunque falten fairnessScore o totalCostEUR", async () => {
+  const { pickBest, sortByCriterion } = await import("../src/utils/resultsLogic.js");
+  const lists = [
+    [{ destination: "A", totalCostEUR: 100 }, { destination: "B", fairnessScore: 0, totalCostEUR: 50 }],
+    [{ destination: "A", fairnessScore: 70 }, { destination: "B", fairnessScore: 70, totalCostEUR: 10 }],
+    [{ destination: "A", fairnessScore: 40, totalCostEUR: 90 }, { destination: "B", totalCostEUR: 20 }, { destination: "C", fairnessScore: 40, totalCostEUR: 80 }],
+  ];
+  for (const l of lists) for (const mode of ["total", "fairness"]) {
+    assert.equal(pickBest(l, mode).destination, sortByCriterion(l, mode)[0].destination, `${mode} ${JSON.stringify(l)}`);
+  }
+});
+
+test("convertPrice: sin dato → «—», nunca NaN; el 0 real se convierte", async () => {
+  const { convertPrice } = await import("../src/utils/resultsLogic.js");
+  for (const v of [undefined, null, "", "abc", NaN, Infinity]) assert.equal(convertPrice(v, "GBP"), "—", String(v));
+  assert.equal(convertPrice(0, "USD"), "$0");
+  assert.equal(convertPrice("100", "GBP"), "£86");
+});
+
+test("fxRateLabel: cambio aproximado con el formato del idioma; null en euros", async () => {
+  const { fxRateLabel } = await import("../src/utils/resultsLogic.js");
+  assert.equal(fxRateLabel("EUR", "es"), null);
+  assert.equal(fxRateLabel(undefined, "es"), null);
+  assert.equal(fxRateLabel("XXX", "es"), null);
+  assert.equal(fxRateLabel("USD", "es"), "1 € ≈ 1,09 $");
+  assert.equal(fxRateLabel("USD", "en"), "€1 ≈ $1.09");
+  assert.equal(fxRateLabel("GBP", "en"), "€1 ≈ £0.86");
+});
+
+test("splitRows: a partes iguales por PERSONA; el bote cuadra con varios viajeros por ciudad", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  // MAD: 3 viajeros a 50 € (150) · BCN: 1 viajero a 80 € → 230 € entre 4 personas = 57,5 €/pp
+  const rows = splitRows({ flights: [
+    { origin: "MAD", price: 50, passengers: 3, totalForOrigin: 150 },
+    { origin: "BCN", price: 80, passengers: 1, totalForOrigin: 80 },
+  ] });
+  const mad = rows.find((r) => r.origin === "MAD"), bcn = rows.find((r) => r.origin === "BCN");
+  assert.equal(mad.fairPP, 57.5);
+  assert.equal(mad.fair, 172.5);
+  assert.equal(mad.diff, -22.5); // MAD debe 22,5 € (7,5 € por cabeza)
+  assert.equal(bcn.diff, 22.5);  // BCN recibe 22,5 €
+  assert.ok(Math.abs(rows.reduce((a, r) => a + r.diff, 0)) < 1e-9);
+});
+
+test("splitRows: con 1 viajero por ciudad coincide con dividir el total entre ciudades", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  const rows = splitRows({ flights: [{ origin: "MAD", price: 50, passengers: 1 }, { origin: "LON", price: 80, passengers: 1 }] });
+  assert.deepEqual(rows.map((r) => [r.origin, r.fairPP, r.diff]), [["MAD", 65, -15], ["LON", 65, 15]]);
+});
+
+test("splitRows: sin datos útiles → lista vacía; sin totalForOrigin usa precio × viajeros", async () => {
+  const { splitRows } = await import("../src/utils/resultsLogic.js");
+  assert.deepEqual(splitRows(null), []);
+  assert.deepEqual(splitRows({ flights: [{ origin: "MAD", price: 0 }] }), []);
+  const r = splitRows({ flights: [{ origin: "MAD", price: 40, passengers: 2 }, { origin: "LIS", price: 40, passengers: 2 }] });
+  assert.deepEqual(r.map((x) => x.paid), [80, 80]);
+  assert.deepEqual(r.map((x) => x.diff), [0, 0]);
 });

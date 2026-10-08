@@ -6,12 +6,13 @@ import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
+  formatDate, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
+import { restoreFlexBudget, restoreDirectCabin, restoreDestinations } from "../utils/recentSearch";
 import DateField from "./DateField";
 
 // Placeholder animado del buscador (vivía en App.jsx antes del troceo; su
@@ -56,10 +57,14 @@ function useDateWarnings(departureDate, returnDate, tripType) {
     }
 
     if (tripType === "roundtrip" && returnDate && departureDate) {
-      const ret = new Date(returnDate + "T00:00:00");
-      const tripLen = Math.round((ret - dep) / 86400000);
-      if (tripLen > 30) {
-        warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
+      if (returnDate <= departureDate) {
+        warnings.push({ key: "order", text: t("search.dateWarnOrder"), type: "error" });
+      } else {
+        const ret = new Date(returnDate + "T00:00:00");
+        const tripLen = Math.round((ret - dep) / 86400000);
+        if (tripLen > 30) {
+          warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
+        }
       }
     }
 
@@ -162,7 +167,7 @@ const SearchPage = React.memo(function SearchPage({
   const acState = useMemo(() => {
     if (acFocus < 0) return { items: [], popular: false, q: "" };
     const raw = (origins[acFocus] || "").trim();
-    const exclude = origins.filter((o, i) => i !== acFocus && o?.trim()).map((o) => normalizeCode(o));
+    const exclude = origins.filter((o, i) => i !== acFocus && o?.trim()).map((o) => resolveOriginCode(o));
     if (!raw) {
       return { items: POPULAR_ORIGINS.filter((c) => !exclude.includes(c)).slice(0, 6).map((c) => AIRPORT_MAP[c]), popular: true, q: "" };
     }
@@ -191,13 +196,13 @@ const SearchPage = React.memo(function SearchPage({
   // Ciudades ya reconocidas, en orden: cada una lleva su color de viajero
   // (el mismo que tendrá después en el mapa y en los resultados).
   const setCodes = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter((c) => AIRPORT_MAP[c]))],
+    () => [...new Set(origins.map(resolveOriginCode).filter((c) => AIRPORT_MAP[c]))],
     [origins],
   );
 
   // Memoize destination airports (excludes selected origins)
   const destAirports = useMemo(() => {
-    const originCodes = new Set(origins.map(o => normalizeCode(o)));
+    const originCodes = new Set(origins.map(o => resolveOriginCode(o)));
     return AIRPORTS.filter(a => !originCodes.has(a.code));
   }, [origins]);
 
@@ -227,12 +232,29 @@ const SearchPage = React.memo(function SearchPage({
                 <button type="button" className="sf-recent-clear" onClick={onClearRecent}>{t("recentSearches.clear")}</button>
               </div>
               <div className="sf-recent-chips">
-                {recentSearches.map((r, i) => (
-                  <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
-                    <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
-                    <span className="sf-recent-date">{r.departureDate}{r.tripType === "roundtrip" ? ` ↔ ${r.returnDate}` : ""}</span>
-                  </button>
-                ))}
+                {recentSearches.map((r, i) => {
+                  const extra = restoreFlexBudget(r);
+                  const cabin = restoreDirectCabin(r);
+                  const dests = restoreDestinations(r);
+                  const cabinLabel = cabin.cabinClass === "PREMIUM_ECONOMY" ? t("search.cabinPremium")
+                    : cabin.cabinClass === "BUSINESS" ? t("search.cabinBusiness")
+                    : cabin.cabinClass === "FIRST" ? t("search.cabinFirst")
+                    : "";
+                  return (
+                    <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
+                      <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
+                      <span className="sf-recent-date">
+                        {formatDate(r.departureDate)}{r.tripType === "roundtrip" && r.returnDate ? ` ↔ ${formatDate(r.returnDate)}` : ""}
+                        {extra.flexDays ? ` · ±${extra.flexDays}d` : ""}
+                        {extra.maxBudget ? ` · ${formatEur(extra.maxBudget)}` : ""}
+                        {cabin.directOnly ? ` · ${t("recentSearches.direct")}` : ""}
+                        {cabinLabel ? ` · ${cabinLabel}` : ""}
+                        {dests.length > 0 && dests.length <= 3 ? ` · ${dests.join(" · ")}` : ""}
+                        {dests.length > 3 ? ` · ${t("recentSearches.destCount", { n: dests.length })}` : ""}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -261,9 +283,7 @@ const SearchPage = React.memo(function SearchPage({
                           setTripType(v);
                           // Auto-suggest return date when switching to roundtrip
                           if (v === "roundtrip" && !returnDate && departureDate) {
-                            const d = new Date(departureDate + "T00:00:00");
-                            d.setDate(d.getDate() + 7);
-                            setReturnDate(d.toISOString().slice(0, 10));
+                            setReturnDate(addDaysISO(departureDate, 7));
                           }
                         }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}
@@ -272,13 +292,13 @@ const SearchPage = React.memo(function SearchPage({
                 <div className={`sf-when-dates${tripType === "roundtrip" ? " sf-when-dates--two" : ""}`}>
                   <div className="sf-when-date">
                     <label className="sf-label" htmlFor="sf-date-dep">{tripType === "roundtrip" ? t("search.departure") : t("search.datesLabel")}</label>
-                    <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()}
+                    <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()} max={horizonISO()}
                       onChange={setDepartureDate} disabled={loading} />
                   </div>
                   {tripType === "roundtrip" && (
                     <div className="sf-when-date sf-ret-col">
                       <label className="sf-label" htmlFor="sf-date-ret">{t("search.return")}</label>
-                      <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate || todayISO()}
+                      <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate ? addDaysISO(departureDate, 1) : addDaysISO(todayISO(), 1)} max={horizonISO()}
                         onChange={setReturnDate} disabled={loading} />
                     </div>
                   )}
@@ -303,7 +323,7 @@ const SearchPage = React.memo(function SearchPage({
             <div className="sf-section">
               <div className="sf-label">{t("search.originLabel")}</div>
               {origins.map((origin, idx) => {
-                const code = normalizeCode(origin);
+                const code = resolveOriginCode(origin);
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
                 const empty = !origin.trim();
@@ -329,7 +349,7 @@ const SearchPage = React.memo(function SearchPage({
                       setDragIdx(-1); setDragOver(-1);
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
-                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true"><GripVertical size={14} /></span>}
+                    {origins.length > 1 && <span className="sf-drag-handle" title={t("a11y.dragToReorder")} aria-hidden="true"><GripVertical size={14} /></span>}
                     <span className={`sf-badge${city && origin.trim() ? ` sf-badge--set trav-c${travelerSlot(setCodes, code)}` : ""}`} title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
@@ -420,11 +440,12 @@ const SearchPage = React.memo(function SearchPage({
                       )}
                     </div>
                     {/* Passenger count stepper */}
-                    <div className="sf-pax" title={t("search.paxTooltip")} role="group" aria-label={t("search.paxTooltip")}>
+                    <div className="sf-pax" title={t("search.paxTooltip")} role="group"
+                      aria-label={city ? t("search.paxGroupCity", { city }) : t("search.paxGroupRow", { n: idx + 1 })}>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxDecrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.max(1, (p[idx] || 1) - 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) <= 1}>−</button>
-                      <span className="sf-pax-count">{passengers[idx] || 1}</span>
+                      <span className="sf-pax-count" aria-live="polite">{passengers[idx] || 1}</span>
                       <button type="button" className="sf-pax-btn" aria-label={t("search.paxIncrease")}
                         onClick={() => { const p = [...passengers]; p[idx] = Math.min(9, (p[idx] || 1) + 1); setPassengers(p); }}
                         disabled={loading || (passengers[idx] || 1) >= 9}>+</button>
@@ -432,7 +453,7 @@ const SearchPage = React.memo(function SearchPage({
                     {/* Reorder + remove */}
                     <div className="sf-origin-actions-inline">
                       {origins.length > 1 && idx > 0 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")} aria-label={t("search.moveUp")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveUp")} aria-label={`${t("search.moveUp")}: ${t("search.originAria", { n: idx + 1 })}`}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx - 1]] = [o[idx - 1], o[idx]];
@@ -441,7 +462,7 @@ const SearchPage = React.memo(function SearchPage({
                           }} aria-hidden="false"><ArrowUp size={15} /></button>
                       )}
                       {origins.length > 1 && idx < origins.length - 1 && (
-                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={t("search.moveDown")}
+                        <button type="button" className="sf-reorder-btn" disabled={loading} title={t("search.moveDown")} aria-label={`${t("search.moveDown")}: ${t("search.originAria", { n: idx + 1 })}`}
                           onClick={() => {
                             const o = [...origins]; const p = [...passengers];
                             [o[idx], o[idx + 1]] = [o[idx + 1], o[idx]];
@@ -454,15 +475,19 @@ const SearchPage = React.memo(function SearchPage({
                       <button
                         type="button"
                         className="sf-remove"
-                        onClick={() => {
+                        onClick={(e) => {
                           const copy = origins.filter((_, i) => i !== idx);
                           const pCopy = passengers.filter((_, i) => i !== idx);
                           setOrigins(copy.length ? copy : [""]);
                           setPassengers(pCopy.length ? pCopy : [1]);
+                          // El botón desaparece con su fila: el foco pasa a «Añadir viajero»
+                          // (enfocar un campo abriría sus sugerencias).
+                          const form = e.currentTarget.closest("form");
+                          setTimeout(() => form?.querySelector(".sf-add-btn")?.focus(), 0);
                         }}
                         disabled={loading}
                         title={t("search.removeTitle")}
-                        aria-label={t("search.removeTitle")}
+                        aria-label={`${t("search.removeTitle")} ${idx + 1}${city ? ` (${city})` : ""}`}
                       ><X size={16} /></button>
                     )}
                   </div>
@@ -565,7 +590,7 @@ const SearchPage = React.memo(function SearchPage({
                   {budgetEnabled && (
                     <div className="sf-budget-box mt-3">
                       <input type="range" className="form-range" min={BUDGET_MIN} max={BUDGET_MAX} step={BUDGET_STEP}
-                        aria-label={t("search.budgetLabel")}
+                        aria-label={t("search.budgetLabel")} aria-valuetext={formatEur(maxBudget)}
                         value={maxBudget} onChange={(e) => setMaxBudget(Number(e.target.value))} disabled={loading} />
                       <div className="d-flex justify-content-between small" style={{ color: "var(--slate-500)" }}>
                         <span>{formatEur(BUDGET_MIN)}</span>
@@ -627,7 +652,7 @@ const SearchPage = React.memo(function SearchPage({
                       <div className="sf-label mb-0">{t("search.destLabel")}</div>
                       <div className="sf-hint">
                         {selectedDests.length > 0
-                          ? t("search.destSelected", { n: selectedDests.length })
+                          ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
                           : t("search.destAll")}
                       </div>
                     </div>
@@ -692,34 +717,43 @@ const SearchPage = React.memo(function SearchPage({
             )}
 
             {error && <FriendlyError message={error} onRetry={onSubmit} />}
-            {error && errorHint && <Notice variant="next" {...errorHint} />}
+            {/* Región viva siempre presente: la sugerencia llega en segundo plano */}
+            <div aria-live="polite">{error && errorHint && <Notice variant="next" {...errorHint} />}</div>
 
             {/* Traveler summary bar */}
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
                 <div className="sf-summary-travelers">
-                  {origins.filter((o) => o.trim()).map((o, i) => {
-                    const c = normalizeCode(o);
+                  {origins.map((o, i) => {
+                    if (!o.trim()) return null;
+                    const c = resolveOriginCode(o);
                     const flag = countryFlag(c);
+                    const pax = Math.max(1, Number(passengers[i]) || 1);
                     return (
                       <span key={`${c}-${i}`} className="sf-summary-chip" title={cityOf(c) || c}>
                         {flag && <span className="sf-summary-flag">{flag}</span>}
                         {c}
-                        {(passengers[origins.indexOf(o)] || 1) > 1 && (
-                          <span className="sf-summary-pax">×{passengers[origins.indexOf(o)]}</span>
-                        )}
+                        {pax > 1 ? <span className="sf-summary-pax">{`×${pax}`}</span> : null}
                       </span>
                     );
                   })}
                 </div>
                 <div className="sf-summary-meta">
                   {(() => {
-                    const totalPax = origins.filter(o => o.trim()).reduce((s, o, i) => s + (passengers[i] || 1), 0);
+                    const totalPax = origins.reduce((s, o, i) => (o.trim() ? s + (passengers[i] || 1) : s), 0);
                     return totalPax > 1 ? <span className="sf-summary-pax-total"><Users size={14} aria-hidden="true" /> {totalPax} {t("search.paxLabel")}</span> : null;
                   })()}
                   {departureDate && <span>{formatDate(departureDate)}</span>}
                   {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
                   {flexEnabled && <span className="sf-summary-flex">±{flexDays}d</span>}
+                  {selectedDests.length > 0 && (
+                    <span className="sf-summary-flex sf-summary-dest">
+                      <span className="sr-only">{t("search.destLabel")}: </span>
+                      {selectedDests.length <= 3
+                        ? selectedDests.join(" · ")
+                        : t("search.destSelected", { n: selectedDests.length })}
+                    </span>
+                  )}
                 </div>
               </div>
             )}

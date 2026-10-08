@@ -159,6 +159,17 @@ test("search: verification fields are populated on winner", async () => {
   assert.ok(w.verifiedAt, "verifiedAt present");
   assert.ok(!isNaN(new Date(w.verifiedAt).getTime()), "verifiedAt is parseable");
   assert.equal(typeof w.priceChangePct, "number");
+  // price × viajeros tiene que ser el total de ese origen: si la verificación
+  // reescribe solo uno de los dos, el detalle «1 × €128 = €134» miente.
+  for (const f of w.flights) {
+    const expected = f.price * (f.passengers || 1);
+    assert.ok(Math.abs(f.totalForOrigin - expected) < 0.02,
+      `${f.origin}: totalForOrigin ${f.totalForOrigin} !== ${f.price} × ${f.passengers}`);
+  }
+  if (w.verificationStatus === "verified" || w.verificationStatus === "changed") {
+    assert.equal(w.totalCostEUR, w.verifiedTotalCostEUR);
+    for (const f of w.flights) assert.equal(f.price, f.verifiedPrice);
+  }
 });
 
 test("search: validation errors return proper codes", async () => {
@@ -353,8 +364,9 @@ test("groups: member without an origin is rejected", async () => {
 test("groups: enforces the 9-traveler ceiling", async () => {
   const created = await post("/api/groups", { departureDate: futureDate(102) });
   const id = created.body.id;
+  // 9 entradas desde 8 ciudades distintas (el tope de ciudades de la búsqueda)
   for (let i = 0; i < 9; i++) {
-    const r = await post(`/api/groups/${id}/members`, { origin: `C${i}` });
+    const r = await post(`/api/groups/${id}/members`, { origin: `C${i % 8}` });
     assert.equal(r.status, 200, `member ${i} should be accepted`);
   }
   const overflow = await post(`/api/groups/${id}/members`, { origin: "X" });

@@ -45,7 +45,11 @@ test("formatEur: formatea con y sin decimales", () => {
   assert.ok(formatEur(123).includes("123"));
   assert.ok(formatEur(123).includes("€"));
   assert.ok(formatEur(99.4, 2).includes("99.40"));
-  assert.ok(formatEur(null).includes("0"));
+  // Sin dato no se inventa «€0»: se muestra «—» (un 0 real sí es «€0»)
+  assert.equal(formatEur(null), "—");
+  assert.equal(formatEur(undefined), "—");
+  assert.equal(formatEur("abc"), "—");
+  assert.ok(formatEur(0).includes("0"));
   assert.ok(formatEur("85").includes("85")); // strings numéricos
 });
 
@@ -57,6 +61,16 @@ test("formatDate / weekdayOf: fechas válidas e inválidas", () => {
   assert.equal(weekdayOf(""), "");
 });
 
+test("formatDate / weekdayOf: en el idioma de la interfaz", () => {
+  setCityLang("es");
+  try {
+    assert.equal(formatDate("2026-11-15"), "15 nov 2026");
+    assert.equal(weekdayOf("2026-11-15"), "dom");
+  } finally { setCityLang("en"); }
+  assert.equal(formatDate("2026-11-15"), "15 Nov 2026");
+  assert.equal(weekdayOf("2026-11-15"), "Sun");
+});
+
 test("todayISO devuelve YYYY-MM-DD", () => {
   assert.match(todayISO(), /^\d{4}-\d{2}-\d{2}$/);
 });
@@ -66,6 +80,12 @@ test("buildSkyscannerUrl: estructura, fechas y oneway/roundtrip", () => {
   const ow = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", tripType: "oneway" });
   assert.ok(ow.startsWith("https://www.skyscanner.es/transport/flights/mad/rom/260915/"));
   assert.ok(ow.includes("rtn=0"));
+
+  assert.ok(ow.includes("adultsv2=1"));
+  const group = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", tripType: "oneway", adults: 3 });
+  assert.ok(group.includes("adultsv2=3"));
+  assert.ok(buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", adults: 40 }).includes("adultsv2=9"));
+  assert.ok(buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", adults: "x" }).includes("adultsv2=1"));
 
   const rt = buildSkyscannerUrl({ origin: "MAD", destination: "ROM", departureDate: "2026-09-15", returnDate: "2026-09-20", tripType: "roundtrip" });
   assert.ok(rt.includes("/260915/260920/"));
@@ -176,4 +196,22 @@ test("cityOf / countryOf: nombres en el idioma de la interfaz", () => {
   } finally { setCityLang("en"); }
   assert.equal(cityOf("MIL"), "Milan");
   assert.equal(cityOf("XXX", "es"), "");
+});
+
+test("resolveOriginCode: código, nombre exacto (ES/EN) y luego la pista de 3 letras", async () => {
+  const { resolveOriginCode, setCityLang } = await import("../src/utils/helpers.js");
+  assert.equal(resolveOriginCode("bcn"), "BCN");
+  assert.equal(resolveOriginCode(" MAD "), "MAD");
+  assert.equal(resolveOriginCode("Madrid"), "MAD");
+  assert.equal(resolveOriginCode("MADRID"), "MAD");
+  assert.equal(resolveOriginCode("Barcelona"), "BCN");
+  assert.equal(resolveOriginCode("Londres"), "LON");
+  assert.equal(resolveOriginCode("london"), "LON");
+  // Antes «Dubrovnik» caía en DUB (Dublín) por sus 3 primeras letras
+  assert.equal(resolveOriginCode("Dubrovnik"), "DBV");
+  setCityLang("es");
+  try { assert.equal(resolveOriginCode("Múnich"), "MUC"); } finally { setCityLang("en"); }
+  assert.equal(resolveOriginCode("XYZ"), "XYZ");
+  assert.equal(resolveOriginCode("Atlantis"), "ATLANTIS");
+  assert.equal(resolveOriginCode(""), "");
 });
