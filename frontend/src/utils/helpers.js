@@ -236,6 +236,19 @@ export function todayISO() {
   return new Date().toISOString().split("T")[0];
 }
 
+// Mismo horizonte que el backend (/multi-origin responde DATE_TOO_FAR más allá).
+export const MAX_HORIZON_DAYS = 360;
+
+export function addDaysISO(isoDate, n) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate || "");
+  if (!m) return "";
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + n)).toISOString().slice(0, 10);
+}
+
+export function horizonISO(today = todayISO()) {
+  return addDaysISO(today, MAX_HORIZON_DAYS);
+}
+
 // Skyscanner affiliate ID — set via VITE_SKYSCANNER_AFFILIATE_ID env var
 const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SKYSCANNER_AFFILIATE_ID) || "";
 

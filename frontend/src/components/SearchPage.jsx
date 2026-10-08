@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
+  formatDate, weekdayOf, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
@@ -272,13 +272,13 @@ const SearchPage = React.memo(function SearchPage({
                 <div className={`sf-when-dates${tripType === "roundtrip" ? " sf-when-dates--two" : ""}`}>
                   <div className="sf-when-date">
                     <label className="sf-label" htmlFor="sf-date-dep">{tripType === "roundtrip" ? t("search.departure") : t("search.datesLabel")}</label>
-                    <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()}
+                    <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()} max={horizonISO()}
                       onChange={setDepartureDate} disabled={loading} />
                   </div>
                   {tripType === "roundtrip" && (
                     <div className="sf-when-date sf-ret-col">
                       <label className="sf-label" htmlFor="sf-date-ret">{t("search.return")}</label>
-                      <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate || todayISO()}
+                      <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate ? addDaysISO(departureDate, 1) : addDaysISO(todayISO(), 1)} max={horizonISO()}
                         onChange={setReturnDate} disabled={loading} />
                     </div>
                   )}

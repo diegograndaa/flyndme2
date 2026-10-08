@@ -10,7 +10,7 @@ const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
-  formatEur, formatDate, weekdayOf, todayISO, copyText,
+  formatEur, formatDate, weekdayOf, todayISO, horizonISO, copyText,
   countryFlag, scrollBehavior
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
@@ -1012,6 +1012,9 @@ export default function App() {
     if (!cleanOrigins.length) { setError(t("errors.noOrigin")); return; }
     if (!departureDate)        { setError(t("errors.noDeparture")); return; }
     if (departureDate < todayISO()) { setError(t("errors.departurePast")); return; }
+    if ((tripType === "roundtrip" && returnDate > departureDate ? returnDate : departureDate) > horizonISO()) {
+      setError(t("errors.codes.DATE_TOO_FAR")); return;
+    }
     if (tripType === "roundtrip") {
       if (!returnDate)               { setError(t("errors.noReturn")); return; }
       if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
