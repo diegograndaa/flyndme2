@@ -613,7 +613,8 @@
     "empty": "No favorites yet. Tap the heart on any destination to save it here.",
     "remove": "Remove {{city}} from saved destinations",
     "open": "View {{city}} details",
-    "notInResults": "{{city}} isn't in the current results. Run a search to see its details."
+    "notInResults": "{{city}} isn't in the current results. Run a search to see its details.",
+    "priceNote": "Estimated price on the day you saved it. Search again to see today's."
   },
   "breadcrumb": {
     "home": "Home",

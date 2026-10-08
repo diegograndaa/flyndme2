@@ -3560,6 +3560,19 @@ html {
   font-size: 14px;
   color: var(--primary);
   white-space: nowrap;
+  text-align: right;
+}
+.fm-fav-panel-date {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--slate-500);
+}
+.fm-fav-panel-note {
+  margin: 8px 4px 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--slate-500);
 }
 
 .fm-fav-panel-remove {
@@ -3568,6 +3581,8 @@ html {
   justify-content: center;
   width: 26px;
   height: 26px;
+  min-width: 40px;
+  min-height: 40px;
   border: none;
   background: transparent;
   border-radius: 50%;

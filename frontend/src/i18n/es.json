@@ -613,6 +613,7 @@
     "remove": "Quitar {{city}} de destinos guardados",
     "open": "Ver detalles de {{city}}",
     "notInResults": "{{city}} no está en los resultados actuales. Haz una búsqueda para ver sus detalles.",
+    "priceNote": "Precio estimado el día que lo guardaste. Busca de nuevo para ver el de hoy.",
     "empty": "Aún no tienes favoritos. Pulsa el corazón en cualquier destino para guardarlo aquí."
   },
   "breadcrumb": {
