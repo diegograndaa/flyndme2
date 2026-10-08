@@ -137,7 +137,8 @@ function GroupPlanner({
                 </span>
                 {m.passengers > 1 && <span className="gp-member-pax">×{m.passengers}</span>}
                 <button type="button" className="gp-member-remove" onClick={() => onRemoveMember(i)}
-                  disabled={busy} aria-label={t("group.remove")}>
+                  disabled={busy}
+                  aria-label={t("group.removeWho", { who: `${m.name || t("group.travelerN", { n: i + 1 })} (${cityOf(m.origin) || m.origin})` })}>
                   <X size={15} className="lucide" />
                 </button>
               </li>

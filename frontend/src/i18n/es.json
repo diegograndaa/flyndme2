@@ -910,6 +910,7 @@
     "travelerN": "Viajero {{n}}",
     "travelers": "Viajeros",
     "remove": "Quitar",
+    "removeWho": "Quitar a {{who}} del grupo",
     "addLabel": "Añade tu ciudad de salida",
     "namePlaceholder": "Tu nombre (opcional)",
     "cityPlaceholder": "Ciudad o aeropuerto",
