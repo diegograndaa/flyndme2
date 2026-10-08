@@ -33,9 +33,9 @@
     "steps": [
       "Add the departure city of each traveler.",
       "FlyndMe compares flights with flexible dates and finds the cheapest destination.",
-      "Share results with your group and book on Skyscanner or Google Flights."
+      "Share the result with your group and each traveler books their own flight."
     ],
-    "metaSource": "Real flight data",
+    "metaSource": "Price estimates from recent searches",
     "metaTime": "Results in ~5 s",
     "statDestinations": "destinations",
     "statOrigins": "max origins",
@@ -200,7 +200,7 @@
     "submit": "Meet up for less",
     "searching": "Checking departures…",
     "footnoteTime": "Results in ~5 s",
-    "footnotePrices": "Real flight prices",
+    "footnotePrices": "Price estimates from recent searches",
     "flexLabel": "Flexible dates",
     "flexHintOn": "±{{days}} days around your date",
     "flexHintOff": "Search on exact date only",
