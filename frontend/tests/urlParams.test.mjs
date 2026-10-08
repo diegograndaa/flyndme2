@@ -68,3 +68,24 @@ test("urlParams: una vuelta igual o anterior a la ida se descarta", async () => 
   assert.equal(parseSearchLinkParams("?o=MAD&dep=2026-12-10&ret=2026-12-14&trip=roundtrip").returnDate, "2026-12-14");
   assert.equal(parseSearchLinkParams("?o=MAD&ret=2026-12-14").returnDate, "2026-12-14", "sin ida no se puede comparar");
 });
+
+test("urlParams: ?p= da los viajeros de cada ?o=, en el mismo orden", () => {
+  const r = parseSearchLinkParams("?o=MAD&o=LON&p=3&p=1");
+  assert.deepEqual(r.origins, ["MAD", "LON"]);
+  assert.deepEqual(r.passengers, [3, 1]);
+});
+
+test("urlParams: sin ?p= no hay passengers (la app pone 1 por ciudad)", () => {
+  assert.equal(parseSearchLinkParams("?o=MAD&o=LON").passengers, undefined);
+});
+
+test("urlParams: un ?o= inválido no desplaza los viajeros de los demás", () => {
+  const r = parseSearchLinkParams("?o=MAD&o=XX1&o=LON&p=2&p=5&p=4");
+  assert.deepEqual(r.origins, ["MAD", "LON"]);
+  assert.deepEqual(r.passengers, [2, 4]);
+});
+
+test("urlParams: ?p= raros o fuera de rango se normalizan a 1..9", () => {
+  const r = parseSearchLinkParams("?o=MAD&o=LON&o=BER&o=PAR&p=0&p=99&p=abc");
+  assert.deepEqual(r.passengers, [1, 9, 1, 1]);
+});
