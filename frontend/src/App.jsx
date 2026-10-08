@@ -374,6 +374,7 @@ export default function App() {
     setRecentSearches((prev) => {
       const entry = {
         origins: params.origins,
+        passengers: params.passengers,
         tripType: params.tripType,
         departureDate: params.departureDate,
         returnDate: params.returnDate,
@@ -395,9 +396,15 @@ export default function App() {
 
   const loadRecentSearch = useCallback((entry) => {
     setOrigins(entry.origins);
+    // Las búsquedas guardadas antes de oct-2026 no traen viajeros: 1 por ciudad
+    // (antes se quedaban los de la búsqueda anterior, desalineados).
+    const pax = Array.isArray(entry.passengers) && entry.passengers.length === entry.origins.length
+      ? entry.passengers.map((p) => Math.min(9, Math.max(1, Math.floor(Number(p)) || 1)))
+      : entry.origins.map(() => 1);
+    setPassengers(pax);
     setTripType(entry.tripType);
     setDepartureDate(entry.departureDate);
-    if (entry.returnDate) setReturnDate(entry.returnDate);
+    setReturnDate(entry.tripType === "roundtrip" ? (entry.returnDate || "") : "");
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -1298,7 +1305,7 @@ export default function App() {
           if (searchStartRef.current) {
             setSearchDuration(((Date.now() - searchStartRef.current) / 1000).toFixed(1));
           }
-          saveRecentSearch({ origins: cleanOrigins, tripType, departureDate, returnDate });
+          saveRecentSearch({ origins: cleanOrigins, passengers: body.passengers, tripType, departureDate, returnDate });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
           if (bestTotal?.averageCostPerTraveler) {
