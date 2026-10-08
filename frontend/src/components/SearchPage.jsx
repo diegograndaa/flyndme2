@@ -239,7 +239,7 @@ const SearchPage = React.memo(function SearchPage({
                     <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
                       <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
                       <span className="sf-recent-date">
-                        {r.departureDate}{r.tripType === "roundtrip" ? ` ↔ ${r.returnDate}` : ""}
+                        {formatDate(r.departureDate)}{r.tripType === "roundtrip" && r.returnDate ? ` ↔ ${formatDate(r.returnDate)}` : ""}
                         {extra.flexDays ? ` · ±${extra.flexDays}d` : ""}
                         {extra.maxBudget ? ` · ${formatEur(extra.maxBudget)}` : ""}
                         {cabin.directOnly ? ` · ${t("recentSearches.direct")}` : ""}
