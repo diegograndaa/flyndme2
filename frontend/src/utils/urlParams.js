@@ -9,6 +9,15 @@ const TRIP_TYPES = new Set(["oneway", "roundtrip"]);
 const OPTIMIZE = new Set(["total", "fairness"]);
 const CABINS = new Set(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]);
 const CURRENCIES = new Set(["EUR", "GBP", "USD"]);
+// Mismo tope que el backend (MAX_ORIGINS): más ciudades acabarían en un 400.
+export const MAX_LINK_ORIGINS = 8;
+
+// AAAA-MM-DD que además existe en el calendario (2026-13-45 o 2026-02-30 no).
+function isRealDate(s) {
+  if (!s || !DATE_RE.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
 
 /**
  * Parsea un querystring de "copiar enlace de búsqueda" (?o=MAD&o=LON&dep=...).
@@ -21,16 +30,17 @@ export function parseSearchLinkParams(search) {
 
   const origins = params.getAll("o")
     .map((s) => String(s).trim().toUpperCase())
-    .filter((s) => IATA_RE.test(s));
+    .filter((s) => IATA_RE.test(s))
+    .slice(0, MAX_LINK_ORIGINS);
   if (!origins.length) return null;
 
   const out = { origins };
 
   const dep = params.get("dep");
-  if (dep && DATE_RE.test(dep)) out.departureDate = dep;
+  if (isRealDate(dep)) out.departureDate = dep;
 
   const ret = params.get("ret");
-  if (ret && DATE_RE.test(ret)) out.returnDate = ret;
+  if (isRealDate(ret) && (!out.departureDate || ret > out.departureDate)) out.returnDate = ret;
 
   const trip = params.get("trip");
   if (trip && TRIP_TYPES.has(trip)) out.tripType = trip;

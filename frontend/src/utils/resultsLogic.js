@@ -47,13 +47,17 @@ export function approxDistKm(code1, code2) {
 // backend al ordenar).
 export function pickBest(arr, mode) {
   if (!arr?.length) return null;
+  // Sin dato cuenta como 0, igual que sortByCriterion: el ganador de la
+  // tarjeta tiene que ser el primero del panel de salidas.
+  const fair = (d) => d.fairnessScore ?? 0;
+  const cost = (d) => d.totalCostEUR ?? 0;
   return arr.reduce((best, cur) => {
     if (mode === "fairness") {
-      if (cur.fairnessScore > best.fairnessScore) return cur;
-      if (cur.fairnessScore === best.fairnessScore && cur.totalCostEUR < best.totalCostEUR) return cur;
+      if (fair(cur) > fair(best)) return cur;
+      if (fair(cur) === fair(best) && cost(cur) < cost(best)) return cur;
       return best;
     }
-    return cur.totalCostEUR < best.totalCostEUR ? cur : best;
+    return cost(cur) < cost(best) ? cur : best;
   });
 }
 
