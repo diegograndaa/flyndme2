@@ -16,6 +16,7 @@ import {
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
@@ -395,11 +396,16 @@ export default function App() {
         tripType: params.tripType,
         departureDate: params.departureDate,
         returnDate: params.returnDate,
+        flexDays: params.flexDays || 0,
+        maxBudget: params.maxBudget || 0,
+        directOnly: params.directOnly === true,
+        cabinClass: savedCabin(params.cabinClass),
+        destinations: params.destinations || [],
         ts: Date.now(),
       };
-      // De-duplicate by origins+date combo
-      const key = `${entry.origins.join(",")}_${entry.departureDate}_${entry.tripType}`;
-      const filtered = prev.filter((r) => `${r.origins.join(",")}_${r.departureDate}_${r.tripType}` !== key);
+      // Misma ruta con otra vuelta, otros viajeros, ±días o tope es otra búsqueda.
+      const key = recentSearchKey(entry);
+      const filtered = prev.filter((r) => recentSearchKey(r) !== key);
       const updated = [entry, ...filtered].slice(0, MAX_RECENT);
       try { localStorage.setItem(RECENT_KEY, JSON.stringify(updated)); } catch { /* quota */ }
       return updated;
@@ -422,6 +428,18 @@ export default function App() {
     setTripType(entry.tripType);
     setDepartureDate(entry.departureDate);
     setReturnDate(entry.tripType === "roundtrip" ? (entry.returnDate || "") : "");
+    // Sin el campo (búsquedas viejas) o con un valor que el formulario no enseña:
+    // día exacto y sin tope. Si no, se quedarían los de la búsqueda anterior.
+    const extra = restoreFlexBudget(entry);
+    setFlexEnabled(extra.flexDays != null);
+    setFlexDays(extra.flexDays ?? 3);
+    setBudgetEnabled(extra.maxBudget != null);
+    setMaxBudget(extra.maxBudget ?? 200);
+    const cabin = restoreDirectCabin(entry);
+    setDirectOnly(cabin.directOnly);
+    setCabinClass(cabin.cabinClass);
+    // Sin destinos guardados: el pool. Si no, se quedarían los de la búsqueda anterior.
+    setSelectedDests(restoreDestinations(entry));
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -1374,7 +1392,18 @@ export default function App() {
           if (searchStartRef.current) {
             setSearchDuration(((Date.now() - searchStartRef.current) / 1000).toFixed(1));
           }
-          saveRecentSearch({ origins: cleanOrigins, passengers: body.passengers, tripType, departureDate, returnDate });
+          saveRecentSearch({
+            origins: cleanOrigins,
+            passengers: body.passengers,
+            tripType,
+            departureDate,
+            returnDate,
+            flexDays: savedFlexDays(flexEnabled, flexDays),
+            maxBudget: savedBudget(budgetEnabled, maxBudget),
+            directOnly: directOnly === true,
+            cabinClass: savedCabin(cabinClass),
+            destinations: savedDestinations(selectedDests, cleanOrigins),
+          });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
           if (bestTotal?.averageCostPerTraveler) {

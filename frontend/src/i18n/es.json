@@ -236,6 +236,7 @@
     "cabinEconomy": "Turista",
     "cabinPremium": "Premium",
     "cabinBusiness": "Business",
+    "cabinFirst": "Primera",
     "currencyLabel": "Moneda",
     "dateWarnPast": "Esta fecha ya pasó — elige una fecha futura",
     "dateWarnSoon": "Sales en menos de 3 días — los precios pueden ser más altos de lo normal",
@@ -515,7 +516,9 @@
   },
   "recentSearches": {
     "title": "Búsquedas recientes",
-    "clear": "Borrar todo"
+    "clear": "Borrar todo",
+    "direct": "directo",
+    "destCount": "{{n}} destinos"
   },
   "map": {
     "title": "Mapa de rutas",

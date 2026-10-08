@@ -236,6 +236,7 @@
     "cabinEconomy": "Economy",
     "cabinPremium": "Premium",
     "cabinBusiness": "Business",
+    "cabinFirst": "First",
     "currencyLabel": "Currency",
     "dateWarnPast": "This date is in the past — please pick a future date",
     "dateWarnSoon": "Departing in less than 3 days — prices may be higher than usual",
@@ -515,7 +516,9 @@
   },
   "recentSearches": {
     "title": "Recent searches",
-    "clear": "Clear all"
+    "clear": "Clear all",
+    "direct": "direct",
+    "destCount": "{{n}} destinations"
   },
   "map": {
     "title": "Route map",
