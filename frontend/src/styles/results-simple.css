@@ -105,7 +105,7 @@
 /* Estados semánticos contenidos */
 .wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #006C48; background: #E6F7EF; border: none; }
 .wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #92400E; background: #FFF6E6; border: none; }
-[data-theme="dark"] .wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #52DEA2; background: rgba(82,222,162,.12); }
+[data-theme="dark"] .wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: var(--panel-good); background: rgba(82,222,162,.12); }
 [data-theme="dark"] .wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #FBBF24; background: rgba(251,191,36,.12); }
 
 /* CTAs de reserva: primario granate + secundarios neutros */
@@ -145,5 +145,5 @@
 [data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
 [data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
 [data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary {
-  color: #1A1A1A;
+  color: var(--on-sign);
 }
