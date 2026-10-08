@@ -84,4 +84,14 @@ export function getCityImage(code, baseUrl = "/", { w = 800, h = 400 } = {}) {
   return unsplash || `${baseUrl}destinations/${code}.jpg`;
 }
 
+// Cuántas fotos de destino precargar al pintar resultados (para que cambiar de
+// destino no espere a la red). Con «ahorro de datos» o red lenta, ninguna: la
+// foto se pide al mostrarse.
+export function imagePreloadCount(connection, max = 3) {
+  if (!connection) return max;
+  if (connection.saveData) return 0;
+  if (/(^|-)2g$|^3g$/.test(String(connection.effectiveType || ""))) return 0;
+  return max;
+}
+
 export default CITY_PHOTO_IDS;

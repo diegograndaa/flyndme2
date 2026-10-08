@@ -31,7 +31,7 @@ import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
-import { getCityImage } from "./utils/cityImages";
+import { getCityImage, imagePreloadCount } from "./utils/cityImages";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -1115,7 +1115,7 @@ export default function App() {
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
-          adjusted.slice(0, 6).forEach((d) => {
+          adjusted.slice(0, imagePreloadCount(typeof navigator !== "undefined" ? navigator.connection : null)).forEach((d) => {
             const img = new Image();
             img.src = getCityImage(normalizeCode(d.destination), getBaseUrl(), { w: 1200, h: 500 });
           });
