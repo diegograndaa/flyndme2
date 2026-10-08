@@ -1075,7 +1075,9 @@ export default function App() {
           });
           clearTimeout(timeout);
 
-          if (res.status === 503 && attempt < MAX_RETRIES) {
+          // 502/504 son del proxy de Render mientras el servicio arranca o se
+          // reinicia: transitorios, como el 503.
+          if ([502, 503, 504].includes(res.status) && attempt < MAX_RETRIES) {
             await new Promise((r) => setTimeout(r, RETRY_DELAY));
             continue;
           }
