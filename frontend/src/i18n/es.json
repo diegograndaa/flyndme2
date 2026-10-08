@@ -545,8 +545,8 @@
     "meetPoint": "Punto de encuentro",
     "showCard": "Ver tarjeta",
     "tapHint": "Toca para ponerlo en tu tarjeta",
-    "selectAria": "{{city}}: {{price}} por persona. Poner en tu tarjeta",
-    "bestAria": "{{city}}: {{price}} por persona. Punto de encuentro en tu tarjeta",
+    "selectAria": "{{city}}: {{price}} por persona (estimación). Poner en tu tarjeta",
+    "bestAria": "{{city}}: {{price}} por persona (estimación). Punto de encuentro en tu tarjeta",
     "best": "Mejor",
     "groupTotal": "Total grupo",
     "ariaLabel": "Mapa de destinos europeos con precios de vuelos"
@@ -623,7 +623,10 @@
     "language": "Idioma",
     "dragToReorder": "Arrastra para reordenar",
     "close": "Cerrar",
-    "resultsAnnounce": "{{n}} destinos encontrados. Recomendado: {{dest}}, {{price}} por persona.",
+    "resultsAnnounce": "{{found}}. Recomendado: {{dest}}, {{price}} por persona (estimación).",
+    "resultsAnnounceVerified": "{{found}}. Recomendado: {{dest}}, {{price}} por persona.",
+    "foundOne": "1 destino encontrado",
+    "foundMany": "{{n}} destinos encontrados",
     "priceVerified": "El precio recomendado se ha vuelto a comprobar."
   },
   "shortcuts": {
