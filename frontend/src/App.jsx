@@ -37,6 +37,7 @@ import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage } from "./utils/cityImages";
 import { resolveApiBase } from "./utils/apiBase";
+import { downloadText } from "./utils/download";
 import "./styles/board.css";
 import "./styles/revision.css";
 import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
@@ -64,15 +65,8 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
 // ─── CSV export ─────────────────────────────────────────────────────────────
 
-function exportResultsCSV(flights, origins, currency) {
-  const csv = buildResultsCsv(flights, origins);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `flyndme-results-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+function exportResultsCSV(flights, origins) {
+  downloadText(`flyndme-results-${new Date().toISOString().slice(0, 10)}.csv`, buildResultsCsv(flights, origins));
 }
 
 // ─── Friendly error display ─────────────────────────────────────────────────
@@ -1889,7 +1883,7 @@ export default function App() {
                 </div>
               </div>
 
-              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins, currency)}>
+              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins)}>
                 <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}
               </button>
             </div>
