@@ -413,21 +413,24 @@ export default function App() {
     if (!shareId) return;
 
     setLoading(true);
-    fetch(`${API_BASE}/api/share/${shareId}`)
+    // Render free puede estar dormido: despertar y reintentar como en grupos.
+    // Solo 404/410 significan "caducado"; un fallo de red o un 5xx conserva el
+    // ?share= en la URL para que recargar vuelva a intentarlo.
+    groupFetch(`${API_BASE}/api/share/${shareId}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Share not found");
+        if (res.status === 404 || res.status === 410) { const e = new Error("expired"); e.expired = true; throw e; }
+        if (!res.ok) throw new Error("connection");
         return res.json();
       })
       .then((data) => {
         const { results, searchParams } = data;
-        if (results?.flights?.length) {
-          setFlights(results.flights);
-          lastSearchRef.current = null;
-          setBestByCriterion(results.bestByCriterion || {
-            total: pickBest(results.flights, "total"),
-            fairness: pickBest(results.flights, "fairness"),
-          });
-        }
+        if (!results?.flights?.length) { const e = new Error("empty"); e.expired = true; throw e; }
+        setFlights(results.flights);
+        lastSearchRef.current = null;
+        setBestByCriterion(results.bestByCriterion || {
+          total: pickBest(results.flights, "total"),
+          fairness: pickBest(results.flights, "fairness"),
+        });
         if (searchParams) {
           if (searchParams.origins?.length) setOrigins(searchParams.origins);
           if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
@@ -441,9 +444,13 @@ export default function App() {
         // Clean URL without reload
         window.history.replaceState({}, "", window.location.pathname);
       })
-      .catch(() => {
-        setToast({ message: t("share.expired"), type: "error" });
-        window.history.replaceState({}, "", window.location.pathname);
+      .catch((err) => {
+        if (err?.expired) {
+          setToast({ message: t("share.expired"), type: "error" });
+          window.history.replaceState({}, "", window.location.pathname);
+        } else {
+          setToast({ message: t("errors.connection"), type: "error" });
+        }
       })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -556,7 +563,7 @@ export default function App() {
   // share channel — not just WhatsApp — surface the rich result card.
   const createShareLink = async () => {
     if (!bestDestination) return null;
-    const res = await fetch(`${API_BASE}/api/share`, {
+    const req = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -570,7 +577,11 @@ export default function App() {
           uiCriterion,
         },
       }),
-    }).catch(() => null);
+    };
+    // Intento directo (rápido: el menú de compartir nativo necesita el gesto del
+    // usuario reciente); solo si falla, despertar el backend y reintentar.
+    let res = await fetch(`${API_BASE}/api/share`, req).catch(() => null);
+    if (!res || [502, 503, 504].includes(res.status)) res = await groupFetch(`${API_BASE}/api/share`, req).catch(() => null);
     if (!res || !res.ok) return null;
     const { id } = await res.json();
     // OG preview now served from a WARM Vercel edge function (frontend/api/sog.js)
