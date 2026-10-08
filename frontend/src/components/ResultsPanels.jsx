@@ -60,13 +60,15 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
   );
 }
 
-export function PlanYourTripCTA({ destCode, departureDate, returnDate, t }) {
+export function PlanYourTripCTA({ destCode, departureDate, returnDate, travelers = 0, t }) {
   if (!destCode) return null;
   const city = cityOf(destCode) || destCode;
   const checkin = departureDate || "";
   const checkout = returnDate || "";
 
-  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&checkin=${checkin}&checkout=${checkout}`;
+  // Booking abre por defecto con 2 adultos: se le pasa el grupo real.
+  const adults = Math.max(1, Math.min(30, Math.floor(Number(travelers)) || 0));
+  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}&checkin=${checkin}&checkout=${checkout}${travelers ? `&group_adults=${adults}` : ""}`;
   const activitiesUrl = `https://www.getyourguide.com/s/?q=${encodeURIComponent(city)}`;
   const mapsUrl = `https://www.google.com/maps/place/${encodeURIComponent(city)}`;
 

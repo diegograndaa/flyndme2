@@ -2071,7 +2071,8 @@ export default function App() {
           {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
           {showAlt === "more" && (
             <div className="view-enter fm-more" id="rv-panel-more">
-              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")} t={t} />
+              <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")}
+                travelers={bestDestination.totalPassengers || totalTravelers} t={t} />
 
               {/* Quick re-search: try nearby dates */}
               <div className="fm-quick-research">
