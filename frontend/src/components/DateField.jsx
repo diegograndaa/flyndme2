@@ -114,8 +114,15 @@ export default function DateField({ id, value, min, max, onChange, disabled = fa
 
   const shown = value ? formatDateLong(value, lang) : "";
 
+  // Un solo día entra en el orden de tabulación (el elegido o el primero
+  // disponible); el resto se recorre con flechas. Así Tab sale del calendario
+  // en vez de recorrer 30 botones.
+  const selDay = sel && sel.y === view.y && sel.m === view.m ? sel.d : null;
+  const tabDay = selDay && !isOff(selDay) ? selDay : days.find((d) => d !== null && !isOff(d));
+
   return (
-    <div className={`df${open ? " df--open" : ""}${disabled ? " df--disabled" : ""}`} ref={rootRef}>
+    <div className={`df${open ? " df--open" : ""}${disabled ? " df--disabled" : ""}`} ref={rootRef}
+      onBlur={(e) => { if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
       <button type="button" id={coarse ? undefined : id} className="df-trigger form-control sf-input" ref={triggerRef}
         aria-haspopup="dialog" aria-expanded={open} disabled={disabled}
         tabIndex={coarse ? -1 : undefined} aria-hidden={coarse ? "true" : undefined}
@@ -153,6 +160,7 @@ export default function DateField({ id, value, min, max, onChange, disabled = fa
                 <button key={s} type="button" data-day={d}
                   className={`df-day${on ? " df-day--on" : ""}${s === todayIso ? " df-day--today" : ""}`}
                   aria-pressed={on} aria-label={formatDateLong(s, lang)}
+                  tabIndex={d === tabDay ? 0 : -1}
                   disabled={isOff(d)} onClick={() => pick(d)}>
                   {d}
                 </button>
