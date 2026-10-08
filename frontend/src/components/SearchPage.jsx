@@ -230,7 +230,7 @@ const SearchPage = React.memo(function SearchPage({
                 {recentSearches.map((r, i) => (
                   <button key={i} type="button" className="sf-recent-chip" onClick={() => onLoadRecent(r)}>
                     <span className="sf-recent-origins">{r.origins.join(" · ")}</span>
-                    <span className="sf-recent-date">{r.departureDate}{r.tripType === "roundtrip" ? ` ↔ ${r.returnDate}` : ""}</span>
+                    <span className="sf-recent-date">{formatDate(r.departureDate)}{r.tripType === "roundtrip" && r.returnDate ? ` ↔ ${formatDate(r.returnDate)}` : ""}</span>
                   </button>
                 ))}
               </div>
