@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText,
+  formatDate, weekdayOf, todayISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
 } from "../utils/helpers";
 import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
@@ -162,7 +162,7 @@ const SearchPage = React.memo(function SearchPage({
   const acState = useMemo(() => {
     if (acFocus < 0) return { items: [], popular: false, q: "" };
     const raw = (origins[acFocus] || "").trim();
-    const exclude = origins.filter((o, i) => i !== acFocus && o?.trim()).map((o) => normalizeCode(o));
+    const exclude = origins.filter((o, i) => i !== acFocus && o?.trim()).map((o) => resolveOriginCode(o));
     if (!raw) {
       return { items: POPULAR_ORIGINS.filter((c) => !exclude.includes(c)).slice(0, 6).map((c) => AIRPORT_MAP[c]), popular: true, q: "" };
     }
@@ -197,7 +197,7 @@ const SearchPage = React.memo(function SearchPage({
 
   // Memoize destination airports (excludes selected origins)
   const destAirports = useMemo(() => {
-    const originCodes = new Set(origins.map(o => normalizeCode(o)));
+    const originCodes = new Set(origins.map(o => resolveOriginCode(o)));
     return AIRPORTS.filter(a => !originCodes.has(a.code));
   }, [origins]);
 
@@ -303,7 +303,7 @@ const SearchPage = React.memo(function SearchPage({
             <div className="sf-section">
               <div className="sf-label">{t("search.originLabel")}</div>
               {origins.map((origin, idx) => {
-                const code = normalizeCode(origin);
+                const code = resolveOriginCode(origin);
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
                 const empty = !origin.trim();
@@ -699,7 +699,7 @@ const SearchPage = React.memo(function SearchPage({
               <div className="sf-summary-bar">
                 <div className="sf-summary-travelers">
                   {origins.filter((o) => o.trim()).map((o, i) => {
-                    const c = normalizeCode(o);
+                    const c = resolveOriginCode(o);
                     const flag = countryFlag(c);
                     return (
                       <span key={`${c}-${i}`} className="sf-summary-chip" title={cityOf(c) || c}>

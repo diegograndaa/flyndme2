@@ -11,7 +11,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, copyText,
-  countryFlag, scrollBehavior
+  countryFlag, scrollBehavior, resolveOriginCode
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
@@ -525,8 +525,10 @@ export default function App() {
     document.title = titles[view] || titles.landing;
   }, [view, bestDestination]);
 
+  // Mismo código que enseña la ficha del formulario ("Madrid" → MAD,
+  // "Dubrovnik" → DBV): antes se mandaba el texto tal cual ("MADRID").
   const cleanOrigins = useMemo(
-    () => [...new Set(origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean))],
+    () => [...new Set(origins.map(resolveOriginCode).filter(Boolean))],
     [origins]
   );
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la

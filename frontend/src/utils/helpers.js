@@ -131,6 +131,26 @@ export const POPULAR_ORIGINS = ["MAD", "BCN", "LON", "PAR", "BER", "ROM", "AMS",
  * Devuelve copias de AIRPORTS con `alias` cuando el acierto vino de un nombre
  * alternativo (para enseñar "London · Londres").
  */
+/**
+ * Código de aeropuerto de lo que el usuario ha escrito en un campo de origen,
+ * con la misma lectura que enseña la ficha del formulario:
+ *   1) código exacto de la lista ("bcn" → BCN)
+ *   2) nombre exacto de ciudad, también en español ("Dubrovnik" → DBV, "Londres" → LON)
+ *   3) un código de 3 letras dentro del texto o sus 3 primeras ("MADRID" → MAD), solo si existe
+ * Si nada encaja devuelve el texto en mayúsculas (el aviso de «desconocido» lo trata).
+ */
+export function resolveOriginCode(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+  const upper = raw.toUpperCase();
+  if (AIRPORT_MAP[upper]) return upper;
+  const exact = searchAirports(raw, { limit: 6 })
+    .find((a) => [a.city, a.alias, cityOf(a.code)].some((n) => n && foldText(n) === foldText(raw)));
+  if (exact) return exact.code;
+  const guess = normalizeCode(upper);
+  return AIRPORT_MAP[guess] ? guess : upper;
+}
+
 export function searchAirports(query, { exclude = [], limit = 6 } = {}) {
   const q = foldText(query);
   if (!q) return [];
