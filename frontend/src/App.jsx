@@ -1084,7 +1084,8 @@ export default function App() {
             // 400/429 deterministas: no se reintentan. Mapeamos el code del
             // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
-            setError(errorMessageForCode(data.code, data.message || data.error));
+            const which = Array.isArray(data.invalid) && data.invalid.length ? ` (${data.invalid.join(", ")})` : "";
+            setError(errorMessageForCode(data.code, data.message || data.error) + which);
             return;
           }
 

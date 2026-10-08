@@ -387,14 +387,17 @@ router.post("/multi-origin", async (req, res) => {
       });
     }
 
-    const originList = [...new Set(
-      origins.map((o) => String(o || "").trim().toUpperCase()).filter(isValidIata)
-    )];
+    const cleaned = origins.map((o) => String(o || "").trim().toUpperCase()).filter(Boolean);
+    const originList = [...new Set(cleaned.filter(isValidIata))];
+    // Un origen no válido se rechaza en vez de ignorarlo: si no, la búsqueda
+    // seguía con el resto y el resultado parecía del grupo entero sin serlo.
+    const invalid = [...new Set(cleaned.filter((o) => !isValidIata(o)))];
 
-    if (originList.length === 0) {
+    if (originList.length === 0 || invalid.length) {
       return res.status(400).json({
         code: "INVALID_ORIGINS",
         message: "Los orígenes deben ser códigos IATA válidos (ej: MAD, BCN).",
+        ...(invalid.length ? { invalid } : {}),
       });
     }
     if (originList.length > MAX_ORIGINS) {
