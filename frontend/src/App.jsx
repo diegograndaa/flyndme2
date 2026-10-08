@@ -18,7 +18,7 @@ import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
-import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage } from "./utils/priceWatch";
+import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 import GroupPlanner from "./components/GroupPlanner";
@@ -935,7 +935,16 @@ export default function App() {
     let cancelled = false;
     const timer = setTimeout(async () => {
       const found = [];
+      const store = safeStorage();
+      const checks = readChecks(store);
       for (const w of list) {
+        const wid = w.id || watchId(w);
+        // Comprobada hace poco: se reutiliza su resultado sin volver a llamar.
+        if (!isCheckDue(checks[wid])) {
+          const drop = checks[wid].totalEUR ? priceDrop(w.savedTotalEUR, checks[wid].totalEUR) : null;
+          if (drop) found.push({ watch: w, ...drop });
+          continue;
+        }
         try {
           const res = await groupFetch(`${API_BASE}/api/flights/price-check`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -948,10 +957,12 @@ export default function App() {
           });
           if (!res.ok) continue;
           const data = await res.json();
+          checks[wid] = { at: Date.now(), totalEUR: data?.result?.totalCostEUR ?? null };
           const drop = data?.result ? priceDrop(w.savedTotalEUR, data.result.totalCostEUR) : null;
           if (drop) found.push({ watch: w, ...drop });
         } catch { /* silencioso: el aviso es opcional */ }
       }
+      writeChecks(store, checks, list.map((w) => w.id || watchId(w)));
       if (!cancelled && found.length) {
         setPriceAlerts(found);
         trackEvent("price_drop_seen", { n: found.length });
