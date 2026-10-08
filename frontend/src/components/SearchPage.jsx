@@ -630,7 +630,7 @@ const SearchPage = React.memo(function SearchPage({
                       <div className="sf-label mb-0">{t("search.destLabel")}</div>
                       <div className="sf-hint">
                         {selectedDests.length > 0
-                          ? t("search.destSelected", { n: selectedDests.length })
+                          ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
                           : t("search.destAll")}
                       </div>
                     </div>

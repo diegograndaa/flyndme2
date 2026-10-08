@@ -214,6 +214,7 @@
     "destLabel": "Destinos a comparar",
     "destAll": "Buscando en todos los destinos",
     "destSelected": "{{n}} destinos seleccionados",
+    "destSelectedOne": "1 destino seleccionado",
     "destChoose": "Elegir",
     "destHide": "Ocultar",
     "destCatAll": "Todos",
