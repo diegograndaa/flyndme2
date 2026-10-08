@@ -46,7 +46,7 @@ export function SearchingBoard({ origins = [], title, className = "", onCancel }
  * Replaces the old full-screen overlay so the user can keep reading
  * while the search runs.
  */
-export function SearchProgress({ loading, origins = [], onCancel }) {
+export function SearchProgress({ loading, origins = [], onCancel, waking = false }) {
   const { t } = useI18n();
   const messages = t("loading.messages");
   const ariaLabel = t("loading.ariaLabel");
@@ -109,7 +109,7 @@ export function SearchProgress({ loading, origins = [], onCancel }) {
           con spinner). */}
       {loading && (
         <div className="fm-searching-dock">
-          <SearchingBoard origins={origins} title={currentMessage} onCancel={onCancel} />
+          <SearchingBoard origins={origins} title={waking ? t("loading.waking") : currentMessage} onCancel={onCancel} />
         </div>
       )}
 

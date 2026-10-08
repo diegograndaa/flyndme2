@@ -515,6 +515,7 @@
     "boardTitle": "Finding your meeting point",
     "cancel": "Cancel search",
     "cancelled": "Search cancelled",
+    "waking": "Starting the server: this can take up to a minute",
     "messages": [
       "Powering up the departures board…",
       "Checking departures from each city…",

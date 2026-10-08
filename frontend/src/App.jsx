@@ -373,6 +373,7 @@ export default function App() {
   // para descartar respuestas tardías + AbortController de la petición en vuelo.
   const searchGenRef = useRef(0);
   const searchAbortRef = useRef(null);
+  const [backendWaking, setBackendWaking] = useState(false);
   const verifyAbortRef = useRef(null);
 
   // Verificación bajo demanda (#5): estado del control "Comprobar precio en vivo"
@@ -911,19 +912,26 @@ export default function App() {
     const MAX_WAKE = 15;           // up to 15 attempts = ~60 s
     const WAKE_DELAY = 4000;
 
-    for (let i = 0; i < MAX_WAKE; i++) {
-      if (isOffline()) return false;
-      if (isCancelled()) return false;
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 5000);
-        const res = await fetch(PING_URL, { cache: "no-store", signal: ctrl.signal });
-        clearTimeout(t);
-        if (res.ok) return true;    // backend is alive
-      } catch { /* network error or timeout — keep trying */ }
-      await new Promise((r) => setTimeout(r, WAKE_DELAY));
+    try {
+      for (let i = 0; i < MAX_WAKE; i++) {
+        if (isOffline()) return false;
+        if (isCancelled()) return false;
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 5000);
+          const res = await fetch(PING_URL, { cache: "no-store", signal: ctrl.signal });
+          clearTimeout(t);
+          if (res.ok) return true;    // backend is alive
+        } catch { /* network error or timeout — keep trying */ }
+        // El primer ping no ha respondido: el servidor (Render free) estaba
+        // dormido. Se dice en el panel de carga, que si no parece colgado.
+        setBackendWaking(true);
+        await new Promise((r) => setTimeout(r, WAKE_DELAY));
+      }
+      return false;                    // gave up
+    } finally {
+      setBackendWaking(false);
     }
-    return false;                    // gave up
   }
 
   // Peticiones del plan de grupo: el backend (Render free) se duerme tras unos
@@ -1710,7 +1718,7 @@ export default function App() {
       )}
 
       {/* Loading bar */}
-      <SearchProgress loading={loading} origins={cleanOrigins} onCancel={cancelSearch} />
+      <SearchProgress loading={loading} origins={cleanOrigins} onCancel={cancelSearch} waking={backendWaking} />
 
       {/* Toast */}
       {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
