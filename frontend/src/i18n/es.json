@@ -922,6 +922,7 @@
     "creating": "Preparando el embarque…",
     "rateLimited": "Has creado muchos grupos seguidos. Espera unos minutos y vuelve a intentarlo.",
     "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
+    "rosterChanged": "La lista había cambiado y no se ha quitado a nadie. Ya está actualizada: revisa a quién quieres quitar.",
     "paxLimit": "Un grupo puede llevar como máximo 16 pasajeros en total. Reduce el número de viajeros.",
     "full": "El grupo ya tiene 9 ciudades de salida, el máximo.",
     "expired": "Este enlace de grupo ha caducado."

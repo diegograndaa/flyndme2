@@ -922,6 +922,7 @@
     "creating": "Preparing boarding…",
     "rateLimited": "You've created several groups in a row. Wait a few minutes and try again.",
     "addError": "Couldn't update the group. Try again.",
+    "rosterChanged": "The list had changed, so nobody was removed. It's up to date now: check who you want to remove.",
     "paxLimit": "A group can take at most 16 passengers in total. Reduce the number of travelers.",
     "full": "The group already has 9 departure cities, the maximum.",
     "expired": "This group link has expired."

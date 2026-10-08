@@ -248,7 +248,7 @@ router.post("/:id/members", memberLimiter, asyncH(async (req, res) => {
 
 // ─── DELETE /api/groups/:id/members/:index — remove a roster entry ──────────
 
-router.delete("/:id/members/:index", asyncH(async (req, res) => {
+router.delete("/:id/members/:index", memberLimiter, asyncH(async (req, res) => {
   const { id, index } = req.params;
   if (!GROUP_ID_RE.test(id)) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
@@ -260,6 +260,17 @@ router.delete("/:id/members/:index", asyncH(async (req, res) => {
   const i = Number(index);
   if (!Number.isInteger(i) || i < 0 || i >= g.members.length) {
     return res.status(400).json({ code: "INVALID_INDEX", message: "No such member." });
+  }
+  // El índice viene de la lista que tenía el cliente; si otro viajero la ha
+  // cambiado entretanto, ese índice puede ser otra persona. Con ?origin= (y
+  // ?name=) el cliente dice a quién quiere quitar y, si no coincide, no se
+  // borra nada y se devuelve la lista actual.
+  const expectOrigin = req.query.origin;
+  const expectName = req.query.name;
+  const target = g.members[i];
+  if ((expectOrigin !== undefined && String(expectOrigin) !== target.origin)
+    || (expectName !== undefined && String(expectName) !== target.name)) {
+    return res.status(409).json({ code: "MEMBER_CHANGED", message: "The roster changed; nothing was removed.", group: publicView(id, g) });
   }
   g.members.splice(i, 1);
   await store.set(id, g, { ttlMs: Math.max(1, g.expiresAt - Date.now()) });
