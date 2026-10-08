@@ -2061,9 +2061,9 @@ button,
 }
 
 /* ── 24.4 Estrobo de navegación en las rutas + despegue al abrir ────────
-   Cerrada: un destello recorre la línea discontinua cada 2,5 s (luz de
-   navegación). Abierta: la línea se dibuja de izquierda a derecha y un
-   micro-avión despega hacia el destino mientras aparece el detalle.   */
+   Cerrada: la luz recorre la línea UNA vez al aparecer y se queda quieta.
+   Abierta: la línea se dibuja de izquierda a derecha y un micro-avión
+   despega hacia el destino mientras aparece el detalle.               */
 .wc-card .wc-flight-route {
   width: 100%;
   padding: 0;
@@ -2083,8 +2083,8 @@ button,
   position: absolute;
   inset: 0;
   opacity: 0;
-  animation: wc-strobe 2.5s linear infinite;
-  animation-delay: calc(var(--k, 0) * .45s);
+  animation: wc-strobe 1.15s linear both;
+  animation-delay: calc(var(--k, 0) * .28s);
   will-change: transform, opacity;
 }
 .wc-strobe i {
@@ -2110,10 +2110,10 @@ button,
   box-shadow: 0 0 0 2px rgba(var(--sign-rgb), .55), 0 0 8px 2px rgba(var(--sign-rgb), .7);
 }
 @keyframes wc-strobe {
-  0%        { transform: translateX(0); opacity: 0; }
-  4%        { opacity: 1; }
-  40%       { transform: translateX(calc(100% + 24px)); opacity: 1; }
-  41%, 100% { transform: translateX(calc(100% + 24px)); opacity: 0; }
+  0%   { transform: translateX(0); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { transform: translateX(calc(100% + 24px)); opacity: 1; }
+  100% { transform: translateX(calc(100% + 24px)); opacity: 0; }
 }
 .wc-route-draw {
   position: absolute;

@@ -276,9 +276,9 @@ const WinnerCard = React.memo(function WinnerCard({
                         </span>
                       </div>
                     )}
-                    {/* Ruta pulsable: abre el detalle del vuelo. Cerrada, un
-                        destello de navegación recorre la línea cada 2,5 s;
-                        al abrirla la línea se dibuja y el avión despega. */}
+                    {/* Ruta pulsable: abre el detalle del vuelo. Cerrada, la luz
+                        recorre la línea una sola vez al aparecer; al abrirla
+                        la línea se dibuja y el avión despega. */}
                     <button type="button"
                       className={`wc-flight-route${routeOpen ? " wc-flight-route--open" : ""}`}
                       aria-expanded={routeOpen} aria-controls={`wc-fd-${origin}`}
