@@ -1420,6 +1420,8 @@ export default function App() {
         const code = (await res.json().catch(() => ({}))).code;
         if (code === "GROUP_PAX_LIMIT") { setToast({ message: t("group.paxLimit"), type: "error" }); return; }
         if (code === "GROUP_FULL") { setToast({ message: t("group.full"), type: "error" }); return; }
+        if (res.status === 404) { setToast({ message: t("group.expired"), type: "error" }); return; }
+        if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
         throw new Error("add failed");
       }
       setGroup(await res.json());
@@ -1435,8 +1437,20 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("remove failed");
+      const m = group.members?.[index] || {};
+      const q = new URLSearchParams({ origin: m.origin || "", name: m.name || "" });
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}/members/${index}?${q}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        if (body.code === "MEMBER_CHANGED" && body.group) {
+          setGroup(body.group);
+          setToast({ message: t("group.rosterChanged"), type: "error" });
+          return;
+        }
+        if (res.status === 404) { setToast({ message: t("group.expired"), type: "error" }); return; }
+        if (res.status === 429) { setToast({ message: t("group.rateLimited"), type: "error" }); return; }
+        throw new Error("remove failed");
+      }
       setGroup(await res.json());
     } catch {
       setToast({ message: t("group.addError"), type: "error" });
