@@ -792,7 +792,7 @@ export default function App() {
 
   // ── Copy search params as URL ─────────────────────────────────────────────
 
-  const handleCopySearchLink = () => {
+  const handleCopySearchLink = async () => {
     const params = new URLSearchParams();
     cleanOrigins.forEach(o => params.append("o", o));
     if (departureDate) params.set("dep", departureDate);
@@ -803,8 +803,10 @@ export default function App() {
     if (cabinClass !== "ECONOMY") params.set("cabin", cabinClass);
     if (currency !== "EUR") params.set("cur", currency);
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    copyText(url);
-    setToast({ message: t("share.searchLinkCopied"), type: "success" });
+    const ok = await copyText(url);
+    setToast(ok
+      ? { message: t("share.searchLinkCopied"), type: "success" }
+      : { message: t("results.copyFailed"), type: "error" });
   };
 
   // ── Native Web Share API (mobile) ──────────────────────────────────────────
