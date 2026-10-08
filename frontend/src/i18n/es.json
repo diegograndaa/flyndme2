@@ -924,7 +924,8 @@
     "addError": "No se pudo actualizar el grupo. Inténtalo de nuevo.",
     "rosterChanged": "La lista había cambiado y no se ha quitado a nadie. Ya está actualizada: revisa a quién quieres quitar.",
     "paxLimit": "Un grupo puede llevar como máximo 16 pasajeros en total. Reduce el número de viajeros.",
-    "full": "El grupo ya tiene 9 ciudades de salida, el máximo.",
+    "full": "El grupo ya está completo: 9 viajeros apuntados, el máximo.",
+    "tooManyCities": "El grupo ya sale desde 8 ciudades distintas, el máximo para buscar. Todavía se puede sumar gente que salga de alguna de ellas.",
     "expired": "Este enlace de grupo ha caducado."
   }
 }

@@ -353,8 +353,9 @@ test("groups: member without an origin is rejected", async () => {
 test("groups: enforces the 9-traveler ceiling", async () => {
   const created = await post("/api/groups", { departureDate: futureDate(102) });
   const id = created.body.id;
+  // 9 entradas desde 8 ciudades distintas (el tope de ciudades de la búsqueda)
   for (let i = 0; i < 9; i++) {
-    const r = await post(`/api/groups/${id}/members`, { origin: `C${i}` });
+    const r = await post(`/api/groups/${id}/members`, { origin: `C${i % 8}` });
     assert.equal(r.status, 200, `member ${i} should be accepted`);
   }
   const overflow = await post(`/api/groups/${id}/members`, { origin: "X" });
