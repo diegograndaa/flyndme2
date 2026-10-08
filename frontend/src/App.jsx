@@ -330,6 +330,9 @@ export default function App() {
   // El error se pinta también en la vista de grupo: uno que venga de la
   // búsqueda individual no debe aparecer al abrir el grupo.
   useEffect(() => { if (view === "group") setError(""); }, [view]);
+  // Momento en que se guardó un resultado abierto con ?share= (sus precios son
+  // de entonces). null = resultados de una búsqueda propia.
+  const [sharedAt, setSharedAt] = useState(null);
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
@@ -469,6 +472,7 @@ export default function App() {
         const { results, searchParams } = data;
         const shared = normalizeSharedFlights(results?.flights);
         if (!shared.length) { const e = new Error("empty"); e.expired = true; throw e; }
+        setSharedAt(Number(data.createdAt) || Date.now());
         setFlights(shared);
         lastSearchRef.current = null;
         // Se respeta el destino que el usuario tenía en su tarjeta al
@@ -1096,6 +1100,16 @@ export default function App() {
     setPendingResearch(true);
   };
 
+  // Un compartido no guarda los pasajeros por origen en searchParams, pero cada
+  // tramo del resultado sí los lleva: se recuperan para buscar lo mismo hoy.
+  const refreshShared = () => {
+    const legs = bestDestination?.flights || [];
+    const paxFor = (o) => Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1;
+    setPassengers(origins.map(paxFor));
+    trackEvent("shared_refresh", {});
+    setPendingResearch(true);
+  };
+
   // "Usar esta fecha": fija la fecha sugerida y relanza la búsqueda. El re-submit
   // va por un flag + efecto para que handleSubmit lea ya el departureDate nuevo.
   const useCheaperDate = (date, newReturnDate) => {
@@ -1150,6 +1164,7 @@ export default function App() {
     loadWinnerCard().catch(() => {});
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
+    setSharedAt(null);
     setCheaperDate(null);
     setTripHint(null);
     setShowAlt(false);
@@ -1770,6 +1785,15 @@ export default function App() {
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
+          {sharedAt && (
+            <Notice variant="partial" tag={t("board.tagNotice")}
+              text={t("results.sharedNotice", {
+                when: new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(sharedAt)),
+              })}
+              detail={t("results.sharedDetail")}
+              actionLabel={t("results.sharedRefresh")}
+              onAction={refreshShared} disabled={loading} />
+          )}
           <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
           <Suspense fallback={<ResultsSkeleton />}>
           <WinnerCard
