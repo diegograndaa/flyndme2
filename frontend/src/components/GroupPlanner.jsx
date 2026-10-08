@@ -159,9 +159,11 @@ function GroupPlanner({
             )}
           </div>
           <div className="gp-pax" role="group" aria-label={t("group.travelers")}>
-            <button type="button" className="gp-pax-btn" onClick={() => setPax((p) => Math.max(1, p - 1))} aria-label="−">−</button>
-            <span className="gp-pax-n">{pax}</span>
-            <button type="button" className="gp-pax-btn" onClick={() => setPax((p) => Math.min(9, p + 1))} aria-label="+">+</button>
+            <button type="button" className="gp-pax-btn" onClick={() => setPax((p) => Math.max(1, p - 1))}
+              aria-label={t("search.paxDecrease")} disabled={pax <= 1}>−</button>
+            <span className="gp-pax-n" aria-live="polite">{pax}</span>
+            <button type="button" className="gp-pax-btn" onClick={() => setPax((p) => Math.min(9, p + 1))}
+              aria-label={t("search.paxIncrease")} disabled={pax >= 9}>+</button>
           </div>
           <button type="submit" className="gp-add-btn" disabled={busy || !city.trim()}>
             <Plus size={16} className="lucide" /> {t("group.add")}

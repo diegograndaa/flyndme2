@@ -4892,6 +4892,7 @@ html {
   line-height: 1;
 }
 .gp-pax-btn:hover { background: rgba(var(--primary-rgb), .08); }
+.gp-pax-btn:disabled { opacity: .4; cursor: default; background: none; }
 .gp-pax-n { min-width: 18px; text-align: center; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
 
 .gp-add-btn {
