@@ -11,7 +11,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, horizonISO, copyText,
-  countryFlag, scrollBehavior, AIRPORT_MAP
+  countryFlag, scrollBehavior, AIRPORT_MAP, resolveOriginCode
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
@@ -67,8 +67,9 @@ const API_URL = `${API_BASE}/api/flights/multi-origin`;
 
 // ─── Favorites (localStorage) ───────────────────────────────────────────────
 
-// Texto de una fila de origen → código de ciudad (el criterio de cleanOrigins).
-const toOriginCode = (o) => String(o || "").trim().toUpperCase();
+// Texto de una fila de origen → código de ciudad (el criterio de cleanOrigins):
+// el mismo que enseña la ficha del formulario ("Madrid" → MAD, "Dubrovnik" → DBV).
+const toOriginCode = resolveOriginCode;
 
 // ─── CSV export ─────────────────────────────────────────────────────────────
 

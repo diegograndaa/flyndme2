@@ -197,3 +197,21 @@ test("cityOf / countryOf: nombres en el idioma de la interfaz", () => {
   assert.equal(cityOf("MIL"), "Milan");
   assert.equal(cityOf("XXX", "es"), "");
 });
+
+test("resolveOriginCode: código, nombre exacto (ES/EN) y luego la pista de 3 letras", async () => {
+  const { resolveOriginCode, setCityLang } = await import("../src/utils/helpers.js");
+  assert.equal(resolveOriginCode("bcn"), "BCN");
+  assert.equal(resolveOriginCode(" MAD "), "MAD");
+  assert.equal(resolveOriginCode("Madrid"), "MAD");
+  assert.equal(resolveOriginCode("MADRID"), "MAD");
+  assert.equal(resolveOriginCode("Barcelona"), "BCN");
+  assert.equal(resolveOriginCode("Londres"), "LON");
+  assert.equal(resolveOriginCode("london"), "LON");
+  // Antes «Dubrovnik» caía en DUB (Dublín) por sus 3 primeras letras
+  assert.equal(resolveOriginCode("Dubrovnik"), "DBV");
+  setCityLang("es");
+  try { assert.equal(resolveOriginCode("Múnich"), "MUC"); } finally { setCityLang("en"); }
+  assert.equal(resolveOriginCode("XYZ"), "XYZ");
+  assert.equal(resolveOriginCode("Atlantis"), "ATLANTIS");
+  assert.equal(resolveOriginCode(""), "");
+});

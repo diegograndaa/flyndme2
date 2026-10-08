@@ -8,22 +8,13 @@ import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
 import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
-import { AIRPORT_MAP, normalizeCode, cityOf, countryOf, countryFlag, searchAirports, foldText, todayISO } from "../utils/helpers";
+import { AIRPORT_MAP, cityOf, countryOf, countryFlag, searchAirports, todayISO, resolveOriginCode } from "../utils/helpers";
 import { formatDateLong } from "./DateField";
 import { FriendlyError } from "./UiBits";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
 // can, so the search receives the same city codes the main form produces.
-function resolveOrigin(input) {
-  const raw = String(input || "").trim();
-  if (!raw) return "";
-  const code = normalizeCode(raw);
-  if (AIRPORT_MAP[code]) return code;
-  // Nombre exacto de la ciudad, también en español ("Bucarest", "Atenas")
-  const hit = searchAirports(raw, { limit: 1 })[0];
-  const exact = hit && [hit.city, hit.alias].some((n) => n && foldText(n) === foldText(raw));
-  return exact ? hit.code : code;
-}
+const resolveOrigin = resolveOriginCode;
 
 function GroupPlanner({
   group, inviteUrl, copied,
