@@ -4735,6 +4735,10 @@ html {
   font-family: var(--font);
 }
 .gp-copy { white-space: nowrap; flex-shrink: 0; }
+/* Por encima de la regla global de inputs del tema oscuro: mismo papel que
+   la tarjeta en los dos temas. */
+.gp .gp-invite-url,
+.gp .gp-input { background: var(--white); }
 .gp-invite-share { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .gp-invite-hint { margin: 8px 0 0; font-size: 13px; color: var(--slate-400); }
 

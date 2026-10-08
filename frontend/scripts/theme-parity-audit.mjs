@@ -10,6 +10,9 @@
 //   PLAYWRIGHT=/ruta/a/playwright/index.mjs CHROME=/ruta/a/chrome \
 //   node scripts/theme-parity-audit.mjs 390     # móvil
 //   node scripts/theme-parity-audit.mjs 1366    # escritorio
+// Recorre portada, formulario, resultados (y sus pestañas), panel de carga,
+// error de búsqueda y vista de grupo (crea un grupo en el backend mock de
+// API_URL, por defecto http://localhost:5000).
 // Sale con código 1 si queda alguna diferencia. Playwright NO es dependencia
 // del repo: se usa uno global/externo (no añadirlo a package.json).
 //
@@ -28,6 +31,7 @@
 const PLAYWRIGHT = process.env.PLAYWRIGHT || 'playwright';
 const CHROME = process.env.CHROME || undefined;
 const BASE = process.env.BASE_URL || 'http://localhost:5173';
+const API = process.env.API_URL || 'http://localhost:5000';
 const { chromium } = await import(PLAYWRIGHT);
 const vw = Number(process.argv[2] || 390);
 const browser = await chromium.launch({ executablePath: CHROME, args: ['--no-proxy-server'] });
@@ -108,6 +112,9 @@ const diffState = async (name) => {
     const a = L[i], b = D[i]; if (!b || a.sig !== b.sig) continue;
     if (a.hidden && b.hidden) continue;
     const diffs = [];
+    // Barras que avanzan con el tiempo: entre las dos mediciones pasan ~400 ms
+    const TIMED = /fm-progress-bar|sk-timer-fill/;
+    if (TIMED.test(a.sig)) continue;
     if (!!a.hidden !== !!b.hidden) diffs.push(`VISIBILIDAD claro=${a.hidden ? 'oculto' : 'visible'} oscuro=${b.hidden ? 'oculto' : 'visible'}`);
     else for (const k of Object.keys(a)) { if (['idx', 'sig', 'contraste'].includes(k)) continue; if ((k === 'w' || k === 'h') && (/typing|flap|odo/.test(a.sig) || Math.abs(a[k] - b[k]) < 2)) continue; if (k === 'fondo' && /neutro/.test(a[k]) && /neutro/.test(b[k]) && !(/FUERTE/.test(a[k]) !== /FUERTE/.test(b[k]) && (/sutil/.test(a[k]) || /sutil/.test(b[k])))) continue; if (String(a[k]) !== String(b[k])) diffs.push(`${k}: ${a[k]}  →  ${b[k]}`); }
     if (a.contraste && a.contraste < 4.5) diffs.push(`CONTRASTE claro ${a.contraste}`);
@@ -141,6 +148,27 @@ await page.waitForTimeout(400);
 total += await diffState('resultados');
 const tabs = await page.$$('.rv-tab');
 for (let i = 0; i < tabs.length; i++) { await tabs[i].click(); await page.waitForTimeout(700); total += await diffState('resultados · pestaña ' + ['mapa','comparar','más'][i]); }
+
+// Panel «buscando…»: se retiene la respuesta para medirlo
+await page.route('**/api/flights/multi-origin', async (route) => { await new Promise((r) => setTimeout(r, 6000)); await route.continue().catch(() => {}); });
+await page.goto(`${BASE}/?o=MAD&o=LON&o=BER&dep=${dep}&trip=oneway`, { waitUntil: 'networkidle' });
+await page.click('button[type=submit]'); await page.waitForSelector('.fm-searching-dock', { timeout: 10000 }); await page.waitForTimeout(300);
+total += await diffState('buscando');
+await page.unroute('**/api/flights/multi-origin');
+
+// Búsqueda sin resultados → estado de error
+await page.route('**/api/flights/multi-origin', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ flights: [] }) }));
+await page.goto(`${BASE}/?o=MAD&o=LON&o=BER&dep=${dep}&trip=oneway`, { waitUntil: 'networkidle' });
+await page.click('button[type=submit]'); await page.waitForSelector('.fm-error-state', { timeout: 30000 }); await page.waitForTimeout(300);
+total += await diffState('error de búsqueda');
+await page.unroute('**/api/flights/multi-origin');
+
+// Vista de grupo (plan colaborativo)
+const grp = await fetch(`${API}/api/groups`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ departureDate: dep, members: [{ origin: 'MAD', name: 'Ana' }, { origin: 'LON', passengers: 2 }] }) }).then((r) => r.json()).catch(() => null);
+if (grp?.id) {
+  await page.goto(`${BASE}/?group=${grp.id}`, { waitUntil: 'networkidle' }); await page.waitForSelector('.gp', { timeout: 30000 }); await page.waitForTimeout(500);
+  total += await diffState('grupo');
+} else console.log('\n(sin backend en ' + API + ': vista de grupo no auditada)');
 console.log('\nTOTAL', total);
 await browser.close();
 process.exit(total ? 1 : 0);

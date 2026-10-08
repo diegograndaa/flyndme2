@@ -88,6 +88,7 @@ export function SearchProgress({ loading, origins = [], onCancel }) {
     <>
       {/* Progress bar */}
       <div
+        className="fm-progress-bar"
         role="progressbar"
         aria-label={ariaLabel}
         style={{
