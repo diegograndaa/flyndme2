@@ -382,6 +382,7 @@
     "arrivalSync": "Group arrival sync",
     "arrivalSpread": "Everyone arrives within {{time}}",
     "shareStory": "Share as story",
+    "fxNote": "Amounts converted from euros at a fixed approximate rate ({{rate}}); you'll pay in the currency of the site where you book.",
     "partialNotice": "Partial results: the search hit its time limit. Showing what was found — try again or narrow the search for full coverage.",
     "degradedNotice": "Our price provider failed for part of the search, so some destinations may be missing. Search again in a few minutes to see them all.",
     "dateFallbackBadge": "Nearby dates",
