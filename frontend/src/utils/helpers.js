@@ -218,18 +218,21 @@ export function formatEur(n, dec = 0) {
   } catch { return `€${v.toFixed(dec)}`; }
 }
 
+// Fechas en el idioma de la interfaz (el mismo que fija setCityLang).
+const dateLocale = () => (cityLang === "es" ? "es-ES" : "en-GB");
+
 export function formatDate(s) {
   if (!s) return "";
   const d = new Date(`${s}T00:00:00`);
   if (isNaN(d)) return s;
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString(dateLocale(), { day: "2-digit", month: "short", year: "numeric" }).replace(".", "");
 }
 
 export function weekdayOf(s) {
   if (!s) return "";
   const d = new Date(`${s}T00:00:00`);
   if (isNaN(d)) return "";
-  return d.toLocaleDateString("en-GB", { weekday: "short" });
+  return d.toLocaleDateString(dateLocale(), { weekday: "short" }).replace(".", "");
 }
 
 export function todayISO() {
