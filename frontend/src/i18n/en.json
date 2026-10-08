@@ -913,6 +913,7 @@
     "addLabel": "Add your departure city",
     "namePlaceholder": "Your name (optional)",
     "cityPlaceholder": "City or airport",
+    "unknownCity": "We don't recognise “{{code}}”. Pick your city from the list; if it's your airport code, press Add again.",
     "add": "Add",
     "findDestination": "Find the best destination",
     "searchHint": "Anyone in the group can run the search.",

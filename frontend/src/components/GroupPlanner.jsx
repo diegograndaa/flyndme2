@@ -7,7 +7,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
-import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2 } from "lucide-react";
+import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
 import { AIRPORT_MAP, normalizeCode, cityOf, countryOf, formatDate, weekdayOf, countryFlag, searchAirports, foldText } from "../utils/helpers";
 
 // Resolve free text ("madrid", "MAD", "Mad") to a known airport code when we
@@ -38,6 +38,9 @@ function GroupPlanner({
   const [pax, setPax] = useState(1);
   const [acOpen, setAcOpen] = useState(false);
   const [hl, setHl] = useState(0);
+  // Código no reconocido pendiente de confirmar: un origen sin precios deja a
+  // todo el grupo sin resultados, así que se pide una segunda pulsación.
+  const [unknownAsk, setUnknownAsk] = useState(null);
   const cityRef = useRef(null);
 
   const members = group?.members || [];
@@ -65,8 +68,14 @@ function GroupPlanner({
     e.preventDefault();
     const origin = resolveOrigin(city);
     if (!origin) { cityRef.current?.focus(); return; }
+    if (!AIRPORT_MAP[origin] && unknownAsk !== origin) {
+      setUnknownAsk(origin);
+      setAcOpen(false);
+      cityRef.current?.focus();
+      return;
+    }
     onAddMember({ origin, passengers: pax, name: name.trim() });
-    setName(""); setCity(""); setPax(1); setAcOpen(false);
+    setName(""); setCity(""); setPax(1); setAcOpen(false); setUnknownAsk(null);
     cityRef.current?.focus();
   }
 
@@ -151,12 +160,13 @@ function GroupPlanner({
             maxLength={40} />
           <div className="gp-city-wrap">
             <input ref={cityRef} className="gp-input gp-input-city" type="text" value={city}
-              onChange={(e) => { setCity(e.target.value); setAcOpen(true); setHl(0); }}
+              onChange={(e) => { setCity(e.target.value); setAcOpen(true); setHl(0); setUnknownAsk(null); }}
               onFocus={() => { setAcOpen(true); setHl(0); }}
               onBlur={() => setTimeout(() => setAcOpen(false), 120)}
               onKeyDown={onCityKey}
               placeholder={t("group.cityPlaceholder")} autoComplete="off"
               aria-label={t("group.cityPlaceholder")}
+              aria-describedby={unknownAsk ? "gp-add-warn" : undefined}
               role="combobox" aria-autocomplete="list" aria-expanded={listOpen} aria-controls="gp-ac-list"
               aria-activedescendant={listOpen && suggestions[hl] ? `gp-ac-${suggestions[hl].code}` : undefined} />
             {listOpen && (
@@ -185,6 +195,12 @@ function GroupPlanner({
             <Plus size={16} className="lucide" /> {t("group.add")}
           </button>
         </div>
+        {unknownAsk && (
+          <p className="gp-add-warn" id="gp-add-warn" role="alert">
+            <AlertTriangle size={15} aria-hidden="true" />
+            <span>{t("group.unknownCity", { code: unknownAsk })}</span>
+          </p>
+        )}
       </form>
 
       {/* Search */}
