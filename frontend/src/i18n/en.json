@@ -620,6 +620,8 @@
   "a11y": {
     "skipToContent": "Skip to content",
     "scrollToTop": "Scroll to top",
+    "language": "Language",
+    "dragToReorder": "Drag to reorder",
     "close": "Close",
     "resultsAnnounce": "{{n}} destinations found. Recommended: {{dest}}, {{price}} per person.",
     "priceVerified": "The recommended price has been re-checked."

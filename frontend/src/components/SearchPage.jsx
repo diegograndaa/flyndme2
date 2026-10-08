@@ -329,7 +329,7 @@ const SearchPage = React.memo(function SearchPage({
                       setDragIdx(-1); setDragOver(-1);
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
-                    {origins.length > 1 && <span className="sf-drag-handle" title="Drag to reorder" aria-hidden="true"><GripVertical size={14} /></span>}
+                    {origins.length > 1 && <span className="sf-drag-handle" title={t("a11y.dragToReorder")} aria-hidden="true"><GripVertical size={14} /></span>}
                     <span className={`sf-badge${city && origin.trim() ? ` sf-badge--set trav-c${travelerSlot(setCodes, code)}` : ""}`} title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
