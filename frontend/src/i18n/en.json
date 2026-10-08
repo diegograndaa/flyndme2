@@ -595,6 +595,7 @@
     "perOrigin": "Per origin: {{details}}",
     "linkCopied": "Link copied! Share it with your group.",
     "searchLinkCopied": "Search link copied!",
+    "tapAgain": "Link ready. Tap Share again to send it.",
     "expired": "This link has expired or doesn't exist.",
     "sharing": "Generating link…",
     "copyError": "Couldn't copy the link. Copy it by hand from the field above."
