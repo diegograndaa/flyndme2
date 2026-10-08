@@ -17,6 +17,7 @@ import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/res
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { parseSearchLinkParams } from "./utils/urlParams";
 import { track } from "./utils/analytics";
+import { isOffline } from "./utils/network";
 import { shouldVerify, buildVerifyPayload, mergeVerification } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop } from "./utils/priceWatch";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
@@ -753,6 +754,7 @@ export default function App() {
     const WAKE_DELAY = 4000;
 
     for (let i = 0; i < MAX_WAKE; i++) {
+      if (isOffline()) return false;
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 5000);
@@ -770,6 +772,7 @@ export default function App() {
   // grupo» / «el grupo ha caducado» (falso). Igual que la búsqueda: despertarlo
   // primero y reintentar ante 502/503/504 o error de red.
   async function groupFetch(url, opts = {}) {
+    if (isOffline()) throw new Error("offline");
     await ensureBackendAwake();
     let last = null;
     for (let i = 0; i < 3; i++) {
@@ -1016,6 +1019,7 @@ export default function App() {
       if (!returnDate)               { setError(t("errors.noReturn")); return; }
       if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
     }
+    if (isOffline()) { setError(t("errors.offline")); return; }
 
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
 
@@ -1037,7 +1041,7 @@ export default function App() {
       // Step 1: wake backend if needed (ping is lightweight)
       const awake = await ensureBackendAwake();
       if (!awake) {
-        setError(t("errors.serverWaking"));
+        setError(t(isOffline() ? "errors.offline" : "errors.serverWaking"));
         return;
       }
 
@@ -1161,7 +1165,7 @@ export default function App() {
       // Solo se llega aquí tras agotar reintentos por error de red/timeout
       // (TypeError/AbortError), cuyo message sería técnico ("Failed to fetch")
       // → mostramos un motivo de conexión claro en su lugar.
-      setError(t("errors.connection"));
+      setError(t(isOffline() ? "errors.offline" : "errors.connection"));
     } finally {
       setLoading(false);
     }
