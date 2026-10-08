@@ -938,6 +938,7 @@
     "full": "The group already has 9 departure cities, the maximum.",
     "expired": "This group link has expired.",
     "loading": "Opening the group plan…",
-    "loadingDetail": "If the server was asleep this can take a few seconds. No need to fill anything in yet."
+    "loadingDetail": "If the server was asleep this can take a few seconds. No need to fill anything in yet.",
+    "datePast": "This group's date ({{date}}) has already passed. To search, go back to the search and create a new plan."
   }
 }

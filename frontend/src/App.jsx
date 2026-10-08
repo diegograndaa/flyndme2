@@ -321,6 +321,9 @@ export default function App() {
   const [group, setGroup] = useState(null);     // { id, departureDate, tripType, members }
   const [groupBusy, setGroupBusy] = useState(false);
   const [groupCopied, setGroupCopied] = useState(false);
+  // El error se pinta también en la vista de grupo: uno que venga de la
+  // búsqueda individual no debe aparecer al abrir el grupo.
+  useEffect(() => { if (view === "group") setError(""); }, [view]);
   // Mantener las refs del manejador de teclado al día (ver efecto de atajos)
   useEffect(() => { showShortcutsRef.current = showShortcuts; }, [showShortcuts]);
   useEffect(() => { showFavPanelRef.current = showFavPanel; }, [showFavPanel]);
@@ -1615,6 +1618,7 @@ export default function App() {
             onShareNative={handleGroupShareNative}
             loading={loading}
             busy={groupBusy}
+            error={error}
           />
           </Suspense>
           </ErrorBoundary>

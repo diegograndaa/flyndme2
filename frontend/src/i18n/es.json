@@ -938,6 +938,7 @@
     "full": "El grupo ya tiene 9 ciudades de salida, el máximo.",
     "expired": "Este enlace de grupo ha caducado.",
     "loading": "Abriendo el plan de grupo…",
-    "loadingDetail": "Si el servidor estaba en reposo puede tardar unos segundos. No hace falta rellenar nada todavía."
+    "loadingDetail": "Si el servidor estaba en reposo puede tardar unos segundos. No hace falta rellenar nada todavía.",
+    "datePast": "La fecha de este grupo ({{date}}) ya ha pasado. Para buscar, vuelve a la búsqueda y crea un plan nuevo."
   }
 }
