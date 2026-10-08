@@ -1283,11 +1283,36 @@ export default function App() {
     if (!group) return;
     setGroupBusy(true);
     try {
-      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}`);
+      const res = await groupFetch(`${API_BASE}/api/groups/${group.id}?refresh=1`);
       if (res.ok) setGroup(await res.json());
     } catch { /* keep current roster */ }
     finally { setGroupBusy(false); }
   }, [group]);
+
+  // Al volver a la pestaña del grupo, traer las ciudades que hayan añadido los
+  // demás sin tener que pulsar «Sincronizar». Silencioso y como mucho cada 15 s;
+  // no pisa una operación en curso (añadir/quitar).
+  const groupBusyRef = useRef(false);
+  useEffect(() => { groupBusyRef.current = groupBusy; }, [groupBusy]);
+  const groupId = group?.id;
+  useEffect(() => {
+    if (view !== "group" || !groupId) return undefined;
+    let last = Date.now();
+    const onReturn = () => {
+      if (document.visibilityState !== "visible" || groupBusyRef.current || Date.now() - last < 15000) return;
+      last = Date.now();
+      fetch(`${API_BASE}/api/groups/${groupId}?refresh=1`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((g) => { if (g?.id === groupId && !groupBusyRef.current) setGroup(g); })
+        .catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+    return () => {
+      document.removeEventListener("visibilitychange", onReturn);
+      window.removeEventListener("focus", onReturn);
+    };
+  }, [view, groupId]);
 
   const copyGroupLink = useCallback(async () => {
     const ok = await copyText(groupInviteUrl);

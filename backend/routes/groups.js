@@ -212,8 +212,9 @@ router.get("/:id", asyncH(async (req, res) => {
   if (!g || Date.now() > g.expiresAt) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Group not found or expired." });
   }
-  // Alguien abrió un ?group= (cota superior: incluye refrescos del organizador).
-  counters.incr("group_landing");
+  // Alguien abrió un ?group=. Los refrescos de quien ya tiene la vista abierta
+  // («Sincronizar» o volver a la pestaña) llegan con ?refresh=1 y no cuentan.
+  if (req.query.refresh !== "1") counters.incr("group_landing");
   return res.json(publicView(id, g));
 }));
 
