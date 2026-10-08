@@ -1420,16 +1420,19 @@ export default function App() {
           asíncrona del precio del ganador (el badge cambia sin recargar). */}
       <div className="sr-only" role="status" aria-live="polite">
         {view === "results" && bestDestination
-          ? [
-              t("a11y.resultsAnnounce", {
-                n: flights.length,
-                dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
-                price: formatEur(bestDestination.averageCostPerTraveler, 0),
-              }),
-              (bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed")
-                ? t("a11y.priceVerified")
-                : "",
-            ].join(" ").trim()
+          ? (() => {
+              const verified = bestDestination.verificationStatus === "verified" || bestDestination.verificationStatus === "changed";
+              return [
+                t(verified ? "a11y.resultsAnnounceVerified" : "a11y.resultsAnnounce", {
+                  n: flights.length,
+                  dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
+                  price: currency === "EUR"
+                    ? formatEur(bestDestination.averageCostPerTraveler, 0)
+                    : convertPrice(bestDestination.averageCostPerTraveler, currency),
+                }),
+                verified ? t("a11y.priceVerified") : "",
+              ].join(" ").trim();
+            })()
           : ""}
       </div>
 

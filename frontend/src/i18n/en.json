@@ -535,8 +535,8 @@
     "meetPoint": "Meeting point",
     "showCard": "View pass",
     "tapHint": "Tap to put it on your pass",
-    "selectAria": "{{city}}: {{price}} per person. Put it on your pass",
-    "bestAria": "{{city}}: {{price}} per person. Meeting point on your pass",
+    "selectAria": "{{city}}: {{price}} per person (estimate). Put it on your pass",
+    "bestAria": "{{city}}: {{price}} per person (estimate). Meeting point on your pass",
     "best": "Best",
     "groupTotal": "Group total",
     "ariaLabel": "Map of European destinations with flight prices"
@@ -609,7 +609,8 @@
     "skipToContent": "Skip to content",
     "scrollToTop": "Scroll to top",
     "close": "Close",
-    "resultsAnnounce": "{{n}} destinations found. Recommended: {{dest}}, {{price}} per person.",
+    "resultsAnnounce": "{{n}} destinations found. Recommended: {{dest}}, {{price}} per person (estimate).",
+    "resultsAnnounceVerified": "{{n}} destinations found. Recommended: {{dest}}, {{price}} per person.",
     "priceVerified": "The recommended price has been re-checked."
   },
   "shortcuts": {
