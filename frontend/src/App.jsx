@@ -1008,13 +1008,20 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    // Relanzada desde resultados («Cambiar a esta fecha», «Buscar de nuevo»):
+    // el error solo se pinta en el formulario, y los resultados ya se han
+    // vaciado, así que hay que volver a él o la página queda en blanco.
+    const fail = (msg) => {
+      setError(msg);
+      if (viewRef.current === "results") setView("search");
+    };
 
-    if (!cleanOrigins.length) { setError(t("errors.noOrigin")); return; }
-    if (!departureDate)        { setError(t("errors.noDeparture")); return; }
-    if (departureDate < todayISO()) { setError(t("errors.departurePast")); return; }
+    if (!cleanOrigins.length) { fail(t("errors.noOrigin")); return; }
+    if (!departureDate)        { fail(t("errors.noDeparture")); return; }
+    if (departureDate < todayISO()) { fail(t("errors.departurePast")); return; }
     if (tripType === "roundtrip") {
-      if (!returnDate)               { setError(t("errors.noReturn")); return; }
-      if (returnDate <= departureDate) { setError(t("errors.returnBeforeDep")); return; }
+      if (!returnDate)               { fail(t("errors.noReturn")); return; }
+      if (returnDate <= departureDate) { fail(t("errors.returnBeforeDep")); return; }
     }
 
     trackEvent("search", { origins: cleanOrigins.length, tripType, optimizeBy });
@@ -1037,7 +1044,7 @@ export default function App() {
       // Step 1: wake backend if needed (ping is lightweight)
       const awake = await ensureBackendAwake();
       if (!awake) {
-        setError(t("errors.serverWaking"));
+        fail(t("errors.serverWaking"));
         return;
       }
 
@@ -1084,7 +1091,7 @@ export default function App() {
             // 400/429 deterministas: no se reintentan. Mapeamos el code del
             // backend a un mensaje localizado y específico (no el crudo en español).
             const data = await res.json().catch(() => ({}));
-            setError(errorMessageForCode(data.code, data.message || data.error));
+            fail(errorMessageForCode(data.code, data.message || data.error));
             return;
           }
 
@@ -1100,7 +1107,7 @@ export default function App() {
               : (tripType === "roundtrip" && cleanOrigins.length >= 2)
                 ? t("errors.noResultsRoundtripMulti")
                 : t("errors.noResults");
-            setError(noResMsg);
+            fail(noResMsg);
             if (tripType === "roundtrip" && !budgetEnabled) fetchTripHint(body, searchGenRef.current);
             return;
           }
@@ -1161,7 +1168,7 @@ export default function App() {
       // Solo se llega aquí tras agotar reintentos por error de red/timeout
       // (TypeError/AbortError), cuyo message sería técnico ("Failed to fetch")
       // → mostramos un motivo de conexión claro en su lugar.
-      setError(t("errors.connection"));
+      fail(t("errors.connection"));
     } finally {
       setLoading(false);
     }
