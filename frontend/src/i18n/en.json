@@ -463,6 +463,7 @@
     "offline": "You're offline. Prices need internet: reconnect and search again.",
     "departurePast": "The departure date has already passed. Pick a future one.",
     "paxPerCity": "At most {{max}} travelers per departure city: {{city}} adds up to {{n}}.",
+    "unknownOriginsHint": "Check {{codes}}: it isn't in our list of cities and may have no flights. Pick it from the suggestions.",
     "noResultsRoundtripMulti": "No round-trip results for those cities and dates. Round-trip data across several cities is thinner, so try flexible dates, fewer cities, or search one-way.",
     "friendlyTitle": "Oops, something went wrong",
     "tryAgain": "Try again",

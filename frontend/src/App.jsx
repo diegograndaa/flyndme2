@@ -11,7 +11,7 @@ import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, horizonISO, copyText,
-  countryFlag, scrollBehavior
+  countryFlag, scrollBehavior, AIRPORT_MAP
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
@@ -1282,7 +1282,12 @@ export default function App() {
               : (tripType === "roundtrip" && cleanOrigins.length >= 2)
                 ? t("errors.noResultsRoundtripMulti")
                 : t("errors.noResults");
-            fail(noResMsg);
+            // Un código que no está en nuestra lista suele ser una errata, y basta
+            // un origen sin precios para descartar todos los destinos.
+            const unknown = cleanOrigins.filter((o) => !AIRPORT_MAP[o]);
+            fail(unknown.length
+              ? `${noResMsg} ${t("errors.unknownOriginsHint", { codes: unknown.join(", ") })}`
+              : noResMsg);
             if (tripType === "roundtrip" && !budgetEnabled) fetchTripHint(body, searchGenRef.current);
             return;
           }
