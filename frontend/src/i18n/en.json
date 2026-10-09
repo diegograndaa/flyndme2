@@ -623,7 +623,9 @@
     "text": "{{date}} · {{total}} · −{{saving}}",
     "use": "Switch to this date",
     "textRoundtrip": "{{date}} → {{returnDate}} · {{total}} · −{{saving}}",
-    "useRoundtrip": "Switch to these dates"
+    "useRoundtrip": "Switch to these dates",
+    "aside": "Cheaper date",
+    "asideMany": "Cheaper dates"
   },
   "tripHint": {
     "tag": "Another length",

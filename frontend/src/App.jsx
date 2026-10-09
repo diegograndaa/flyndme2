@@ -307,7 +307,7 @@ export default function App() {
   const [returnDate,    setReturnDate]    = useState("");
   const [optimizeBy,    setOptimizeBy]    = useState("total");
   // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
-  const [cheaperDate,     setCheaperDate]     = useState(null);
+  const [cheaperDates,    setCheaperDates]    = useState([]);
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
@@ -615,6 +615,12 @@ export default function App() {
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+  // Fechas que de verdad abaratan ESTE destino (el calendario del proveedor).
+  // Si el usuario elige otro en el panel, no se muestran: son de otro ganador.
+  const dateRecs = useMemo(() => {
+    const code = bestDestination ? normalizeCode(bestDestination.destination) : "";
+    return cheaperDates.filter((d) => d && d.destination === code).slice(0, 3);
+  }, [cheaperDates, bestDestination]);
   useEffect(() => {
     hasResultsRef.current = Boolean(bestDestination);
     hasGroupRef.current = Boolean(group);
@@ -676,8 +682,9 @@ export default function App() {
     if (!iso || iso < todayISO() || iso > horizonISO()) return;
     setDepartureDate(iso);
     if (tripType === "roundtrip" && returnDate) setReturnDate(addDaysISO(returnDate, offset));
-    setView("search");
-    setTimeout(() => document.querySelector(".sf-form form")?.requestSubmit?.(), 200);
+    // Misma vía que «usar esta fecha»: la búsqueda se relanza en resultados.
+    // Volver a la portada solo para enviar el formulario hacía parpadear el inicio.
+    setPendingResearch(true);
   };
 
   // ── Share helpers ───────────────────────────────────────────────────────────
@@ -1080,7 +1087,14 @@ export default function App() {
         if (!data || searchGenRef.current !== gen) return; // búsqueda nueva: descartar
         // Se guarda el destino: el aviso solo vale para ESE destino (si el
         // usuario cambia de criterio o elige otro en el panel, no se muestra).
-        if (data.betterDate) setCheaperDate({ ...data.betterDate, destination: normalizeCode(winner.destination) });
+        const dest = normalizeCode(winner.destination);
+        const raw = Array.isArray(data.betterDates) && data.betterDates.length
+          ? data.betterDates
+          : (data.betterDate ? [data.betterDate] : []);
+        setCheaperDates(raw
+          .filter((d) => d && d.date && Number(d.savingEUR) > 0 && Number(d.totalEUR) > 0)
+          .slice(0, 3)
+          .map((d) => ({ ...d, destination: dest })));
       })
       .catch(() => { /* silencioso: el nudge es opcional */ });
   };
@@ -1222,7 +1236,7 @@ export default function App() {
   const useCheaperDate = (date, newReturnDate) => {
     if (!date) return;
     trackEvent("cheaper_date_apply", { date, roundtrip: !!newReturnDate });
-    setCheaperDate(null);
+    setCheaperDates([]);
     setDepartureDate(date);
     if (newReturnDate) setReturnDate(newReturnDate);
     setPendingResearch(true);
@@ -1284,7 +1298,7 @@ export default function App() {
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
     setSharedAt(null);
-    setCheaperDate(null);
+    setCheaperDates([]);
     setTripHint(null);
     setShowAlt(false);
     setLoading(true);
@@ -1902,8 +1916,8 @@ export default function App() {
 
       {/* Results loading skeleton */}
       {loading && view === "results" && !bestDestination && (
-        <div className="container py-4 view-enter" key="results-skeleton" style={{ maxWidth: 1080 }}>
-          <ResultsSkeleton />
+        <div className="view-enter" key="results-skeleton">
+          <SearchSkeleton origins={cleanOrigins} />
         </div>
       )}
 
@@ -1933,7 +1947,9 @@ export default function App() {
           />
 
           {/* Tira de días, justo bajo la cabecera (como Skyscanner): el día
-              buscado en el centro y los vecinos a un toque. Sin precios. */}
+              buscado en el centro y los vecinos a un toque. Sin precios.
+              Al lado, solo si el calendario trae fechas que abaratan el grupo. */}
+          <div className="fm-date-row">
           <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
             <span className="fm-date-strip-label">{t("results.tryNearbyDates")}</span>
             <div className="fm-date-strip-days">
@@ -1960,6 +1976,24 @@ export default function App() {
               })}
             </div>
           </nav>
+          {dateRecs.length > 0 && (
+            <aside className="fm-date-recs" aria-live="polite"
+              aria-label={t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}>
+              <span className="fm-date-recs-label">
+                {t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}
+              </span>
+              {dateRecs.map((d) => (
+                <button key={`${d.date}-${d.returnDate || ""}`} type="button" className="fm-date-rec"
+                  onClick={() => useCheaperDate(d.date, d.returnDate)}>
+                  <span className="fm-date-rec-when">
+                    {formatDate(d.date)}{d.returnDate ? ` → ${formatDate(d.returnDate)}` : ""}
+                  </span>
+                  <span className="fm-date-rec-save">{money(d.totalEUR)} · −{money(d.savingEUR)}</span>
+                </button>
+              ))}
+            </aside>
+          )}
+          </div>
 
           {/* Sticky results mini-bar */}
           <div className="fm-sticky-bar">
@@ -2027,16 +2061,6 @@ export default function App() {
             onToggleFav={() => toggleFav(bestDestination)}
             watched={isWatched(bestDestination)}
             onToggleWatch={() => toggleWatch(bestDestination)}
-            dateHint={cheaperDate && cheaperDate.destination === normalizeCode(bestDestination.destination) ? {
-              text: t(cheaperDate.returnDate ? "cheaperDate.textRoundtrip" : "cheaperDate.text", {
-                date: formatDate(cheaperDate.date),
-                returnDate: cheaperDate.returnDate ? formatDate(cheaperDate.returnDate) : "",
-                total: currency === "EUR" ? formatEur(cheaperDate.totalEUR, 0) : convertPrice(cheaperDate.totalEUR, currency),
-                saving: currency === "EUR" ? formatEur(cheaperDate.savingEUR, 0) : convertPrice(cheaperDate.savingEUR, currency),
-              }),
-              actionLabel: t(cheaperDate.returnDate ? "cheaperDate.useRoundtrip" : "cheaperDate.use"),
-              onAction: () => useCheaperDate(cheaperDate.date, cheaperDate.returnDate),
-            } : null}
             mapSlot={flights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>

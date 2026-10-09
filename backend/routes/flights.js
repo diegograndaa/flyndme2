@@ -20,7 +20,7 @@ if (!PROVIDER_MODULES[FLIGHT_PROVIDER]) {
 const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.travelpayouts);
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
-const { findCheaperGroupDate, daysBetween } = require("../services/cheaperDate");
+const { findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
 const { candidateNights } = require("../services/tripLength");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
@@ -756,13 +756,13 @@ router.post("/multi-origin", async (req, res) => {
 // ─── POST /cheaper-date — "meet a few days earlier/later and save" nudge ──────
 // Enrichment para el ganador: ¿hay una fecha cercana donde el GRUPO pague menos?
 // Reusa la caché de prices_for_dates que la búsqueda ya consultó (coste API ~0),
-// agrega por día (todos los orígenes el mismo día) y devuelve UNA sugerencia si
-// el ahorro supera el umbral. En ida y vuelta conserva la duración del viaje
-// (mueve salida y vuelta a la vez) para que siga siendo UNA sugerencia.
+// agrega por día (todos los orígenes el mismo día) y devuelve hasta 3 fechas
+// que superan el umbral de ahorro (betterDate sigue siendo la más barata).
+// En ida y vuelta conserva la duración del viaje (mueve salida y vuelta a la vez).
 // El frontend lo llama en segundo plano tras pintar resultados.
 router.post("/cheaper-date", async (req, res) => {
   try {
-    if (!getDatedPrices) return res.json({ betterDate: null, reason: "unsupported" });
+    if (!getDatedPrices) return res.json({ betterDate: null, betterDates: [], reason: "unsupported" });
 
     const { origins, passengers, destination, departureDate, returnDate, tripType, currentTotalEUR } = req.body || {};
 
@@ -807,7 +807,7 @@ router.post("/cheaper-date", async (req, res) => {
       )
     );
 
-    const betterDate = findCheaperGroupDate({
+    const betterDates = findCheaperGroupDates({
       originList,
       originPax,
       perOrigin,
@@ -815,12 +815,13 @@ router.post("/cheaper-date", async (req, res) => {
       tripNights,
       currentTotalEUR: total,
       today: new Date().toISOString().slice(0, 10),
+      limit: 3,
     });
 
-    return res.json({ betterDate: betterDate || null });
+    return res.json({ betterDate: betterDates[0] || null, betterDates });
   } catch (err) {
     console.error("[cheaper-date] error:", err.message);
-    return res.json({ betterDate: null, reason: "error" });
+    return res.json({ betterDate: null, betterDates: [], reason: "error" });
   }
 });
 

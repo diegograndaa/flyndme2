@@ -700,13 +700,22 @@
 }
 [data-theme="dark"] .fm-flight-head { background: var(--panel-bg); }
 
-/* Tira de días bajo la cabecera. El día buscado es cartel de posición
-   («estás aquí»); los vecinos relanzan la misma búsqueda, sin precio. */
+/* Tira de días bajo la cabecera, y al lado las fechas que abaratan el grupo.
+   El día buscado es cartel de posición («estás aquí»); los vecinos relanzan
+   la misma búsqueda, sin precio. Las recomendadas sí llevan el total real. */
+.fm-date-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin: -8px 0 16px;
+}
 .fm-date-strip {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: -8px 0 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   padding: 8px 10px 8px 14px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
@@ -753,9 +762,53 @@ button.fm-date-strip-day:hover { border-color: var(--primary); }
 button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-date-strip-wd { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: capitalize; }
 .fm-date-strip-n { font-size: 15px; font-weight: 700; }
+.fm-date-recs {
+  flex: 0 1 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-md);
+}
+.fm-date-recs-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--panel-muted);
+}
+.fm-date-rec {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--navy);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+.fm-date-rec:hover { border-color: var(--primary); }
+.fm-date-rec:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+.fm-date-rec-save { font-weight: 700; }
 @media (max-width: 600px) {
+  .fm-date-row { flex-direction: column; }
   .fm-date-strip { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; }
   .fm-date-strip-label { max-width: none; }
+  .fm-date-recs { flex: 1 1 auto; }
 }
 .fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .fm-flight-head .fm-board-label { color: var(--panel-faint); }
