@@ -14,8 +14,14 @@ test("displayedInteger: mismo entero que el precio pintado", () => {
 test("visibleSumParts: enseña la suma cuando los enteros cuadran", () => {
   assert.deepEqual(visibleSumParts([67, 37], 104, "EUR"), [67, 37]);
   assert.deepEqual(visibleSumParts([130, 170], 300, "EUR"), [130, 170]);
-  // 50.4+49.6=100 → se ve «€50 + €50 = €100»
-  assert.deepEqual(visibleSumParts([50.4, 49.6], 100, "EUR"), [50.4, 49.6]);
+  // 50+50+100 se ve distinto en cada tramo: la suma sí informa.
+  assert.deepEqual(visibleSumParts([50, 50, 100], 200, "EUR"), [50, 50, 100]);
+});
+
+test("visibleSumParts: oculta la suma si todos pagan lo mismo a la vista", () => {
+  assert.equal(visibleSumParts([73, 73], 146, "EUR"), null);
+  // 50.4+49.6=100 se pintaría «€50 + €50 = €100»: el mismo número dos veces.
+  assert.equal(visibleSumParts([50.4, 49.6], 100, "EUR"), null);
 });
 
 test("visibleSumParts: oculta la ecuación si el redondeo no suma", () => {

@@ -14,7 +14,6 @@ import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
 import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
-import VerificationBadge from "./VerificationBadge";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
 import { FlapText } from "./FlapBoard";
@@ -42,14 +41,6 @@ function AirlineLogo({ code }) {
     <img key={src} src={AIRLINE_LOGO_SOURCES[src](iata)} alt="" className={`wc-airline-logo wc-airline-logo--s${src}`}
       loading="lazy" decoding="async" onError={() => setSrc((n) => n + 1)} />
   );
-}
-
-// Frase traducida con la cifra dentro ("Media €52 por persona"): se traduce con
-// un marcador y la cifra va en odómetro, conservando el orden de cada idioma.
-const SLOT = "\u0000";
-function WithOdometer({ text, value }) {
-  const [pre, post = ""] = String(text).split(SLOT);
-  return <>{pre}<Odometer value={value} />{post}</>;
 }
 
 const WinnerCard = React.memo(function WinnerCard({
@@ -152,32 +143,21 @@ const WinnerCard = React.memo(function WinnerCard({
             duotono amarillo hacía que todas las ciudades parecieran la misma). */}
         <div className="wc-image-overlay" />
         <div className="wc-image-label">
-          <div className="wc-badge-winner">{t("results.eyebrow")}</div>
-          {/* Nombre del destino en panel de salidas: gira y se asienta en el
-              valor REAL (el SSR/primer render ya pinta el nombre final). */}
+          {/* Nombre del destino: gira y se asienta en el valor REAL. */}
           <span className="wc-dest-code wc-dest-code--flap"><FlapText text={city || code} size="lg" delay={250} /></span>
           {city && <span className="wc-dest-city">{code}</span>}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
           {isFav ? <Heart size={18} fill="currentColor" aria-hidden="true" /> : <Heart size={18} aria-hidden="true" />}
         </button>
-        {/* Savings + trip duration + countdown + vs last search chips */}
-        <div className="wc-chips-overlay">
-          {/* Verification badge (first so it's the most visible trust signal) */}
-          <VerificationBadge dest={dest} currency={currency} />
-          {/* Algún origen usa precio de una fecha vecina (sin dato exacto) */}
-          {dest.hasDateFallback && (
+        {/* Solo si el precio no es de la fecha pedida: es un dato, no un adorno. */}
+        {dest.hasDateFallback && (
+          <div className="wc-chips-overlay">
             <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
               <Calendar size={13} aria-hidden="true" /> {t("results.dateFallbackBadge")}
             </span>
-          )}
-          {savingsPct > 5 && (
-            <span className="wc-savings-chip" title={t("results.savingsPctHint", { n: allFlights.length })}>
-              {t("results.savingsPct", { pct: savingsPct })}
-              <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
-            </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {mapSlot && <div className="wc-map">{mapSlot}</div>}
       </div>
@@ -188,15 +168,9 @@ const WinnerCard = React.memo(function WinnerCard({
       <div className="wc-buy">
         <span className="sr-only" role="status">{copied ? t(copied.ok ? "results.copied" : "results.copyFailed") : ""}</span>
         <div className="wc-buy-head">
-          <div className="wc-buy-heading">
-            <span className="wc-buy-kicker">
-              {singleOrigin ? t("results.buyKickerOne") : t("results.buyKicker", { n: cleanOrigins.length })}
-            </span>
-            <h3 className="wc-buy-title">
-              {singleOrigin ? t("results.buyTitleOne", { city: city || code }) : t("results.buyTitle", { city: city || code })}
-            </h3>
-            <p className="wc-buy-sub">{t("results.bookSub")}</p>
-          </div>
+          <h3 className="wc-buy-title">
+            {singleOrigin ? t("results.buyTitleOne", { city: city || code }) : t("results.buyTitle", { city: city || code })}
+          </h3>
           {/* Criterio: control único que gobierna ganador Y alternativas */}
           {!singleOrigin && (
             <div className="wc-criterion-pills" role="group" aria-label={t("results.criterionGroupLabel")}>
@@ -422,9 +396,17 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-total">
           <div className="wc-total-main">
             <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
-            {/* Cifras de odómetro: al cambiar de fecha, destino o criterio los
-                dígitos se deslizan hasta el valor real (≤300 ms) */}
-            <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
+            <div className="wc-total-figure">
+              {savingsPct > 5 && (
+                <span className="wc-total-savings" title={t("results.savingsPctHint", { n: allFlights.length })}>
+                  {t("results.savingsPct", { pct: savingsPct })}
+                  <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
+                </span>
+              )}
+              {/* Cifras de odómetro: al cambiar de fecha, destino o criterio los
+                  dígitos se deslizan hasta el valor real (≤300 ms) */}
+              <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
+            </div>
           </div>
           {sumParts && (
             <div className="wc-total-sum" aria-hidden="true">
@@ -433,10 +415,8 @@ const WinnerCard = React.memo(function WinnerCard({
             </div>
           )}
           <div className="wc-total-meta">
-            {!singleOrigin && <span>{t("results.flightsCount", { n: cleanOrigins.length })}</span>}
             <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
-            {!singleOrigin && <span><WithOdometer text={t("results.whoPaysAvg", { amount: SLOT })} value={money(dest.averageCostPerTraveler)} /></span>}
-            {dep && <span>{tripType === "roundtrip" ? t("results.roundtripTag") : t("results.onewayTag")} · {tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
+            {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
           </div>
 
           {/* Fecha más barata para ESTE destino: cambia el total, así que va aquí */}
@@ -482,21 +462,13 @@ const WinnerCard = React.memo(function WinnerCard({
         </div>
       </div>
 
-      {/* Troquel de tarjeta de embarque: separa la compra del resto. Decorativo
-          salvo la línea de datos reales. */}
+      {/* Troquel: separa la compra de compartir. El sello lleva código y fecha. */}
       <div className="wc-perf">
-        <span className="wc-perf-text">
-          {t("results.boardingPass")}
-          {!singleOrigin && <> · {t("results.boardingMeta", { n: cleanOrigins.length })}</>}
-        </span>
-        {/* Sello de embarque: se estampa al aparecer la tarjeta y otra vez al
-            cambiar de destino (key). Solo datos reales: código y fecha. */}
         <span key={code} className="wc-stamp" aria-hidden="true">
           <span className="wc-stamp-label">{t("results.stampLabel")}</span>
           <span className="wc-stamp-code">{code}</span>
           {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
         </span>
-        <span className="wc-perf-barcode" aria-hidden="true" />
       </div>
 
       {/* Body */}
@@ -558,8 +530,6 @@ const WinnerCard = React.memo(function WinnerCard({
             ))}
           </div>
         )}
-
-        <div className="wc-disclaimer">{t("results.disclaimer")}</div>
       </div>
     </div>
   );

@@ -32,6 +32,8 @@ export function visibleSumParts(parts, totalEur, currency = "EUR") {
   const shownTotal = displayedInteger(total, currency);
   if (shown.some((n) => n == null) || shownTotal == null) return null;
   if (shown.reduce((a, b) => a + b, 0) !== shownTotal) return null;
+  // €73 + €73 = €146 no aporta: es el mismo importe que el total, repetido.
+  if (shown.every((n) => n === shown[0])) return null;
   return nums;
 }
 
