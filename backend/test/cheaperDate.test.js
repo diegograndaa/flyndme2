@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { findCheaperGroupDate, daysBetween } = require("../services/cheaperDate");
+const { findCheaperGroupDate, findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
 
 const base = {
   originList: ["MAD", "LON"],
@@ -170,6 +170,26 @@ test("roundtrip: duración inválida → null", () => {
     perOrigin: [[{ date: "2026-09-12", returnDate: "2026-09-11", price: 1 }], [{ date: "2026-09-12", returnDate: "2026-09-11", price: 1 }]],
   });
   assert.equal(r, null);
+});
+
+test("lista hasta 3 fechas que abaratan el grupo, de la más barata a la más cara", () => {
+  const days = [
+    { date: "2026-09-15", price: 200 },
+    { date: "2026-09-12", price: 100 }, // total 200, ahorro 200
+    { date: "2026-09-13", price: 120 }, // 240 / 160
+    { date: "2026-09-14", price: 140 }, // 280 / 120
+    { date: "2026-09-16", price: 160 }, // 320 / 80 — entra, pero el tope de 3 la deja fuera
+    { date: "2026-09-18", price: 195 }, // 390 / 10 — por debajo del umbral
+  ];
+  const perOrigin = [days, days.map((d) => ({ ...d }))];
+  const list = findCheaperGroupDates({ ...base, currentTotalEUR: 400, perOrigin });
+  assert.equal(list.length, 3);
+  assert.deepEqual(list.map((d) => d.date), ["2026-09-12", "2026-09-13", "2026-09-14"]);
+  assert.ok(list[0].totalEUR < list[1].totalEUR && list[1].totalEUR < list[2].totalEUR);
+  assert.equal(list[0].savingEUR, 200);
+  const all = findCheaperGroupDates({ ...base, currentTotalEUR: 400, perOrigin, limit: 10 });
+  assert.deepEqual(all.map((d) => d.date), ["2026-09-12", "2026-09-13", "2026-09-14", "2026-09-16"]);
+  assert.equal(findCheaperGroupDate({ ...base, currentTotalEUR: 400, perOrigin }).date, "2026-09-12");
 });
 
 test("oneway: el resultado no lleva returnDate", () => {

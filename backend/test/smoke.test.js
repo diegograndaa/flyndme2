@@ -854,6 +854,8 @@ test("cheaper-date: devuelve una fecha mas barata con forma valida (total forzad
   assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(b.date), "fecha ISO");
   assert.ok(b.savingEUR > 0 && b.totalEUR > 0, "ahorro y total positivos");
   assert.equal(b.perOrigin.length, 3, "desglose por los 3 origenes");
+  assert.ok(Array.isArray(r.body.betterDates) && r.body.betterDates.length >= 1 && r.body.betterDates.length <= 3);
+  assert.equal(r.body.betterDates[0].date, b.date, "la primera de la lista es la sugerencia principal");
   for (const o of b.perOrigin) {
     assert.ok(["MAD", "LON", "BER"].includes(o.origin));
     assert.ok(o.price > 0 && o.passengers >= 1);
@@ -878,6 +880,9 @@ test("cheaper-date: ida y vuelta sugiere salida y vuelta con la misma duración"
   const nights = (Date.parse(b.returnDate) - Date.parse(b.date)) / 86_400_000;
   assert.equal(nights, 7, "conserva las 7 noches del viaje");
   assert.equal(b.perOrigin.length, 2);
+  assert.ok(Array.isArray(r.body.betterDates) && r.body.betterDates.length <= 3);
+  assert.equal(r.body.betterDates[0].date, b.date);
+  assert.equal(r.body.betterDates[0].returnDate, b.returnDate);
 });
 
 test("cheaper-date: ida y vuelta sin fecha de vuelta válida → 400", async () => {

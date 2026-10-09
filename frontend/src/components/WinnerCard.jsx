@@ -13,7 +13,7 @@ import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
 import { getCityImage } from "../utils/cityImages";
-import { Heart, Calendar, CalendarClock, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
+import { Heart, Calendar, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
 import { FlapText } from "./FlapBoard";
@@ -54,7 +54,6 @@ const WinnerCard = React.memo(function WinnerCard({
   searchBadges = [],
   isFav = false, onToggleFav,
   watched = false, onToggleWatch,
-  dateHint = null, // { text, actionLabel, onAction } fecha más barata para este destino
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
 }) {
   const { t, lang } = useI18n();
@@ -417,18 +416,6 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-total-meta">
             <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
             {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
-          </div>
-
-          {/* Fecha más barata para ESTE destino: cambia el total, así que va aquí */}
-          {/* Región viva siempre presente: el aviso llega en segundo plano */}
-          <div aria-live="polite">
-          {dateHint && (
-            <div className="wc-total-hint">
-              <CalendarClock size={16} aria-hidden="true" />
-              <span className="wc-total-hint-text">{dateHint.text}</span>
-              <button type="button" className="wc-total-hint-btn" onClick={dateHint.onAction}>{dateHint.actionLabel}</button>
-            </div>
-          )}
           </div>
 
           {/* Estimación honesta + comprobación en vivo bajo demanda (#5) */}

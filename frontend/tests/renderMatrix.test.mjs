@@ -49,9 +49,9 @@ test("matriz WinnerCard: orígenes × estado × ida/vuelta × divisa × fecha ve
           dest: d, origins, tripType: roundtrip ? "roundtrip" : "oneway", departureDate: "2026-12-06", returnDate: roundtrip ? "2026-12-10" : "",
           currency, uiCriterion: "total", onChangeCriterion: noop, flightsCount: 3, onVerify: noop, verifyPhase: status === "skipped" ? null : undefined,
           onToggleWatch: noop, watched: n % 2 === 0, onToggleFav: noop,
-          dateHint: n % 3 === 0 ? { text: "x", actionLabel: "y", onAction: noop } : null,
         }));
       }, label);
+      assert.ok(!html.includes("wc-total-hint"), `${label}: la fecha barata ya no va dentro del total`);
       const sym = { EUR: "€", GBP: "£", USD: "$" }[currency];
       assert.ok(html.includes(sym), `${label}: falta el símbolo ${sym}`);
       assert.ok(!/NaN|undefined|\[object Object\]/.test(html.replace(/<[^>]+>/g, " ")), `${label}: texto con NaN/undefined`);
