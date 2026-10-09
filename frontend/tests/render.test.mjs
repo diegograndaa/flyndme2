@@ -256,6 +256,45 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.equal((dup.match(/class="sf-summary-pax"/g) || []).length, 1, "la primera fila, con 1 viajero, no lleva ×");
 });
 
+test("render: con 16 viajeros no se puede sumar otro; por encima se avisa", async () => {
+  const { default: SearchPage } = await import("../src/components/SearchPage.jsx");
+  const noop = () => {};
+  const base = {
+    tripType: "oneway", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "", onSubmit: noop,
+    recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+    favs: [], onToggleFav: noop, isFav: () => false,
+  };
+  const full = renderWithI18n(React.createElement(SearchPage, {
+    ...base,
+    origins: ["MAD", "LON"], setOrigins: noop,
+    passengers: [9, 7], setPassengers: noop,
+  }));
+  const tags = full.match(/<button[^>]*aria-label="One traveler more from this city"[^>]*>/g) || [];
+  assert.equal(tags.length, 2);
+  assert.ok(tags.every((tag) => tag.includes("disabled")), "en el tope no se suma otro viajero");
+  assert.ok(full.includes("most we can search"), "en el tope se explica por qué no se puede sumar");
+  assert.ok(!full.includes("Lower the headcount"), "16 viajeros caben: no pide reducir");
+  assert.match(full, /sf-add-btn"[^>]*disabled/, "no se añade una ciudad que ya no cabe");
+  const over = renderWithI18n(React.createElement(SearchPage, {
+    ...base,
+    origins: ["MAD", "LON"], setOrigins: noop,
+    passengers: [9, 8], setPassengers: noop,
+  }));
+  assert.ok(over.includes("Lower the headcount"), "por encima de 16 se pide bajar el número");
+});
+
 test("render: WinnerCard extraída renderiza con fixture verificado", async () => {
   const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
   const noop = () => {};

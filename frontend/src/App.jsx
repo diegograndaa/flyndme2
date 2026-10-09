@@ -21,7 +21,7 @@ import { track } from "./utils/analytics";
 import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
 import { isOffline } from "./utils/network";
-import { paxByOrigin, MAX_PAX_PER_ORIGIN } from "./utils/passengers";
+import { paxByOrigin, totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "./utils/passengers";
 import { ResultsSkeleton, ScrollProgressBar, KeyboardShortcutsOverlay } from "./components/UiBits";
 import SearchPage from "./components/SearchPage";
 // Solo hacen falta en vistas concretas: van en chunks aparte. WinnerCard se
@@ -1258,6 +1258,12 @@ export default function App() {
     const crowded = originPax.find((x) => x.passengers > MAX_PAX_PER_ORIGIN);
     if (crowded) {
       fail(t("errors.paxPerCity", { city: cityOf(crowded.origin) || crowded.origin, n: crowded.passengers, max: MAX_PAX_PER_ORIGIN }));
+      return;
+    }
+    // 8 ciudades × 9 viajeros caben en el formulario y el backend los rechaza.
+    // Se avisa aquí, sin llamar a la API ni buscar un grupo más pequeño.
+    if (totalPax(origins, passengers) > MAX_TOTAL_PAX) {
+      fail(t("errors.codes.TOO_MANY_PASSENGERS"));
       return;
     }
 
