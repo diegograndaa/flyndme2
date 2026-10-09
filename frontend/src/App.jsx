@@ -669,6 +669,17 @@ export default function App() {
     setUiCriterion(mode);
   };
 
+  // Fechas vecinas: la misma búsqueda, un día a un lado. Sin precios en los
+  // chips (no los tenemos hasta buscar). La ida y la vuelta se mueven juntas.
+  const shiftDeparture = (offset) => {
+    const iso = addDaysISO(departureDate || todayISO(), offset);
+    if (!iso || iso < todayISO() || iso > horizonISO()) return;
+    setDepartureDate(iso);
+    if (tripType === "roundtrip" && returnDate) setReturnDate(addDaysISO(returnDate, offset));
+    setView("search");
+    setTimeout(() => document.querySelector(".sf-form form")?.requestSubmit?.(), 200);
+  };
+
   // ── Share helpers ───────────────────────────────────────────────────────────
   // Persist the current results to the backend once, and hand back both URLs a
   // share button might need: the SPA link (?share=id, for copy-link) and the OG
@@ -1919,6 +1930,35 @@ export default function App() {
             onChange={() => setView("search")}
           />
 
+          {/* Tira de días, justo bajo la cabecera (como Skyscanner): el día
+              buscado en el centro y los vecinos a un toque. Sin precios. */}
+          <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
+            <span className="fm-date-strip-label">{t("results.tryNearbyDates")}</span>
+            <div className="fm-date-strip-days">
+              {[-2, -1, 0, 1, 2].map((offset) => {
+                const iso = addDaysISO(departureDate || todayISO(), offset);
+                if (!iso || iso < todayISO() || iso > horizonISO()) return null;
+                const wd = weekdayOf(iso);
+                const day = String(Number(iso.slice(8, 10)));
+                if (offset === 0) {
+                  return (
+                    <span key={offset} className="fm-date-strip-day fm-date-strip-day--current" aria-current="date">
+                      <span className="fm-date-strip-wd">{wd}</span>
+                      <span className="fm-date-strip-n">{day}</span>
+                    </span>
+                  );
+                }
+                return (
+                  <button key={offset} type="button" className="fm-date-strip-day"
+                    onClick={() => shiftDeparture(offset)}>
+                    <span className="fm-date-strip-wd">{wd}</span>
+                    <span className="fm-date-strip-n">{day}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
           {/* Sticky results mini-bar */}
           <div className="fm-sticky-bar">
             <div className="fm-sticky-inner">
@@ -2167,40 +2207,12 @@ export default function App() {
             </div>
           )}
 
-          {/* Más opciones (plegado): planifica tu viaje, fechas cercanas y CSV */}
+          {/* Más opciones (plegado): planifica tu viaje y CSV. Las fechas
+              cercanas viven arriba, bajo la cabecera. */}
           {showAlt === "more" && (
             <div className="view-enter fm-more" id="rv-panel-more">
               <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")}
                 travelers={bestDestination.totalPassengers || totalTravelers} t={t} />
-
-              {/* Quick re-search: try nearby dates */}
-              <div className="fm-quick-research">
-                <span className="fm-quick-research-label">{t("results.tryNearbyDates")}</span>
-                <div className="fm-quick-research-btns">
-                  {[-1, 1, -2, 2].map((offset) => {
-                    // En UTC: con new Date("…T00:00:00") (hora local) y toISOString()
-                    // (UTC), en España «+1 día» volvía a buscar la misma fecha.
-                    const iso = addDaysISO(departureDate || todayISO(), offset);
-                    if (iso < todayISO()) return null; // una salida pasada no se puede buscar
-                    const label = `${offset > 0 ? "+" : ""}${offset}d · ${weekdayOf(iso)}`;
-                    return (
-                      <button key={offset} type="button" className="fm-quick-research-btn"
-                        onClick={() => {
-                          setDepartureDate(iso);
-                          if (tripType === "roundtrip" && returnDate) {
-                            setReturnDate(addDaysISO(returnDate, offset));
-                          }
-                          setView("search");
-                          setTimeout(() => {
-                            document.querySelector(".sf-form form")?.requestSubmit?.();
-                          }, 200);
-                        }}>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins)}>
                 <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}

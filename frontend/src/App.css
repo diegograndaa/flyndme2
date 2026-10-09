@@ -4590,7 +4590,7 @@ html {
 /* ── Print Styles (Round 35 updated) ──────────────────────── */
 
 @media print {
-  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-plan-trip, .fm-scroll-progress, .sf-recent { display: none !important; }
+  .app-header, .app-footer, .fm-sticky-bar, .scroll-top-btn, .pwa-banner, .fm-toast, .fm-shortcuts-overlay, .wc-actions, .wc-flight-ctas, .rv-tabs, .fm-quick-research, .fm-date-strip, .fm-plan-trip, .fm-scroll-progress, .sf-recent { display: none !important; }
   body { background: white !important; }
   .wc-card { box-shadow: none !important; border: 1px solid #ddd; }
   .wc-card::before { display: none !important; }
