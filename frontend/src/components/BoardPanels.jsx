@@ -13,7 +13,7 @@
 import React, { useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, formatDate, getBaseUrl } from "../utils/helpers";
-import { convertPrice, sortByCriterion, paySpread, maxLegPrice, fxRateLabel } from "../utils/resultsLogic";
+import { convertPrice, sortByCriterion, paySpread, maxLegPrice } from "../utils/resultsLogic";
 import { getCityImage } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
 import { PayBars, TravelerLegend } from "./TravelerBits";
@@ -80,10 +80,12 @@ export function ZoneHead({ id, num, title, sub, variant = "explore" }) {
 export function Notice({ tag, text, detail, actionLabel, onAction, disabled, variant = "date" }) {
   return (
     <div className={`fm-notice fm-notice--${variant}`} role={variant === "partial" ? "status" : undefined}>
-      <span className="fm-notice-tag">
-        <span className="fm-announce-dot" aria-hidden="true" />
-        {tag}
-      </span>
+      {tag && (
+        <span className="fm-notice-tag">
+          <span className="fm-announce-dot" aria-hidden="true" />
+          {tag}
+        </span>
+      )}
       <div className="fm-notice-body">
         <span className="fm-notice-text">{text}</span>
         {detail && <span className="fm-notice-detail">{detail}</span>}
@@ -121,7 +123,7 @@ function DestThumb({ code }) {
 export const DeparturesBoard = React.memo(function DeparturesBoard({
   flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
 }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const listRef = useRef(null);
   const rows = flights && flights.length >= 2 ? sortByCriterion(flights, criterion) : [];
   // Al cambiar de criterio las filas se recolocan deslizándose (FLIP): se ve
@@ -136,12 +138,6 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
           <p className="fm-board-sub">{t("board.departuresSub", { n: flights.length })}</p>
-          {/* Regla de datos: todos los importes son estimaciones de la caché de
-              búsquedas (Travelpayouts), nunca ofertas reservables. */}
-          <p className="fm-board-note">
-            {t("board.estimateNote")}
-            {fxRateLabel(currency, lang) && <> · {t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</>}
-          </p>
         </div>
         {savings > 10 && (
           <span className="fm-board-savings">

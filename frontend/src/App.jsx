@@ -1911,7 +1911,9 @@ export default function App() {
         <div className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
-            {t("results.eyebrow")}: {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}
+            {t(cleanOrigins.length <= 1 ? "results.buyTitleOne" : "results.buyTitle", {
+              city: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
+            })}
           </h1>
           {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
               orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
@@ -1986,7 +1988,7 @@ export default function App() {
               decisión) + reparto del grupo + siguiente paso. */}
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
-            title={t("results.decisionTitle")} sub={t("results.decisionSub")} />
+            title={t("results.decisionTitle")} />
           {sharedAt && (
             <Notice variant="partial" tag={t("board.tagNotice")}
               text={t("results.sharedNotice", {
@@ -2121,10 +2123,9 @@ export default function App() {
           </details>
           )}
 
-          {/* Siguiente paso: convertirlo en plan de grupo (cada uno añade su ciudad) */}
-          <Notice variant="next" tag={t("results.nextStep")}
+          {/* Plan de grupo: una línea y el botón. El párrafo explicaba el producto. */}
+          <Notice variant="next"
             text={t("results.groupNudge.title")}
-            detail={t("results.groupNudge.text")}
             actionLabel={groupBusy ? t("group.creating") : t("results.groupNudge.cta")}
             onAction={createGroup}
             disabled={groupBusy} />
@@ -2133,11 +2134,12 @@ export default function App() {
           {/* Troquel: aquí termina la decisión y empieza la exploración */}
           <div className="fm-zone-perf" aria-hidden="true" />
 
-          {/* ══ 02 · EXPLORAR ALTERNATIVAS ══ Otros destinos, mapa y comparación */}
-          <section className="fm-explore" aria-labelledby="fm-explore-title">
-          <ZoneHead id="fm-explore-title" variant="explore" num="02"
-            title={t("results.exploreTitle")}
-            sub={flights.length > 1 ? t("results.exploreSub") : t("results.exploreSubOne")} />
+          {/* Salidas: el panel ya se nombra solo. Con un único destino, una línea
+              dice por qué no hay alternativas. */}
+          <section className="fm-explore" aria-labelledby={flights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
+          {flights.length <= 1 && (
+            <p id="fm-explore-note" className="fm-explore-note">{t("results.exploreSubOne")}</p>
+          )}
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
           )}

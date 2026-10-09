@@ -56,6 +56,7 @@ test("render: DeparturesBoard lista los destinos y marca el de la tarjeta", asyn
   assert.equal((html.match(/class="pay-row trav-c2"/g) || []).length, 2, "LON lleva el color 2 en las dos filas");
   // La equidad ya no se comunica en negativo (ni "Unequal" ni "Desigual")
   assert.ok(!/Unequal|Desigual/i.test(html), "sin etiquetas de equidad en negativo");
+  assert.ok(!html.includes("fm-board-note"), "la estimación no se repite en Salidas");
 });
 
 test("render: el comparador marca «Mejor» según el criterio, no según la tarjeta", async () => {
@@ -415,6 +416,7 @@ test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redon
   assert.ok(!hidden.includes("wc-total-sum"), "€11 + €11 = €21 no se pinta");
   const shown = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: FIXTURE_DEST, currency: "EUR" }));
   assert.ok(shown.includes("wc-total-sum"), "130 + 170 = 300 sí se pinta");
+  assert.ok(!shown.includes("wc-buy-sub") && !shown.includes("wc-disclaimer") && !shown.includes("wc-perf-barcode"), "la tarjeta no repite párrafos ni el código de barras");
   const gbp = renderWithI18n(React.createElement(WinnerCard, {
     ...base,
     currency: "GBP",

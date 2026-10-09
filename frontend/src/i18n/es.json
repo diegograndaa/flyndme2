@@ -620,9 +620,9 @@
     "charKeysHint": "Desactívalos si usas control por voz o se te activan sin querer. Escape sigue funcionando."
   },
   "cheaperDate": {
-    "text": "Quedad el {{date}} y el grupo paga {{total}} — ahorráis {{saving}}",
+    "text": "{{date}} · {{total}} · −{{saving}}",
     "use": "Cambiar a esta fecha",
-    "textRoundtrip": "Salid el {{date}} y volved el {{returnDate}} (mismas noches): el grupo paga {{total}} — ahorráis {{saving}}",
+    "textRoundtrip": "{{date}} → {{returnDate}} · {{total}} · −{{saving}}",
     "useRoundtrip": "Cambiar a estas fechas"
   },
   "tripHint": {
