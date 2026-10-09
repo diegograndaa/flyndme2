@@ -699,6 +699,64 @@
   animation: board-rise .5s var(--ease-out-expo) backwards;
 }
 [data-theme="dark"] .fm-flight-head { background: var(--panel-bg); }
+
+/* Tira de días bajo la cabecera. El día buscado es cartel de posición
+   («estás aquí»); los vecinos relanzan la misma búsqueda, sin precio. */
+.fm-date-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -8px 0 16px;
+  padding: 8px 10px 8px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-md);
+}
+.fm-date-strip-label {
+  flex: 0 1 auto;
+  max-width: 9rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--panel-muted);
+}
+.fm-date-strip-days {
+  display: flex;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fm-date-strip-days::-webkit-scrollbar { display: none; }
+.fm-date-strip-day {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--navy);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+}
+button.fm-date-strip-day { cursor: pointer; }
+button.fm-date-strip-day:hover { border-color: var(--primary); }
+button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+.fm-date-strip-wd { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: capitalize; }
+.fm-date-strip-n { font-size: 15px; font-weight: 700; }
+@media (max-width: 600px) {
+  .fm-date-strip { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; }
+  .fm-date-strip-label { max-width: none; }
+}
 .fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .fm-flight-head .fm-board-label { color: var(--panel-faint); }
 .fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
@@ -1077,7 +1135,7 @@ button,
    · Cartel de POSICIÓN  = fondo negro + texto y filete amarillos → "estás
      aquí" (pestaña, opción o paso activo).
    Los dos carteles son IGUALES en claro y en oscuro (oct-2026).            */
-:is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active) {
+:is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active, .fm-date-strip-day--current) {
   background: var(--pos-bg) !important;
   border-color: var(--pos-bg) !important;
   color: var(--sign) !important;
