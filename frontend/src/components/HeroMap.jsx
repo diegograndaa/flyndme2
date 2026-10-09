@@ -5,15 +5,15 @@
 // cambiaba al rellenar el formulario.
 //
 // Honestidad (regla 1): antes de buscar NO hay destino real, así que el punto
-// de encuentro rota entre destinos CANDIDATOS de ejemplo (va marcado con "¿?"
-// y una nota lo dice). Sin precios. Lo único calculado es la distancia
+// de encuentro es un candidato de EJEMPLO (el primero que no sea ya un origen,
+// marcado con "¿?" y una nota). Sin precios. Lo único calculado es la distancia
 // ortodrómica real y un tiempo de vuelo ESTIMADO ("~"), al tocar una ciudad.
 //
 // Sin ciudades escritas enseña un ejemplo (MAD/LON/BER) etiquetado como tal.
 //
 // Movimiento: la geografía y los arcos son estáticos (nada de animaciones de
-// entrada en el SVG, ver CLAUDE.md 22-jun). Solo bucles: un avión por ruta
-// (SMIL) y el pulso del punto de encuentro (HTML, transform/opacity).
+// entrada en el SVG, ver CLAUDE.md 22-jun). El avión de cada ruta y el pulso
+// del candidato salen una vez, cuando aparece esa ciudad o ese candidato.
 // Este módulo importa los geodatos: cargarlo SIEMPRE con React.lazy.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
@@ -25,7 +25,6 @@ import { FlapText } from "./FlapBoard";
 
 const EXAMPLE_ORIGINS = ["MAD", "LON", "BER"];
 const CANDIDATES = ["PAR", "ROM", "LIS", "PRG", "BCN", "AMS"];
-const CYCLE_MS = 3600;
 
 // Encuadres fijos (unidades del mapa 700×500): Europa entera en escritorio y
 // una franja más apaisada en la versión compacta del móvil. Fijos a propósito:
@@ -35,12 +34,6 @@ const FRAMES = {
   compact: { x: 40, y: 100, w: 600, h: 330 },
 };
 const EDGE = 14;
-
-function prefersReducedMotion() {
-  try {
-    return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  } catch { return false; }
-}
 
 // Posición en el mapa; las ciudades fuera del encuadre se pegan a su borde.
 function place(code, vb) {
@@ -59,7 +52,6 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
   const wrapRef = useRef(null);
   const lastPointer = useRef("keyboard");
   const [widthPx, setWidthPx] = useState(compact ? 358 : 520);
-  const [idx, setIdx] = useState(0);
   const [active, setActive] = useState(null); // ciudad con la ruta encendida
 
   useEffect(() => {
@@ -85,15 +77,9 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
     return list.length ? list : CANDIDATES;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codesKey]);
-  const dest = candidates[idx % candidates.length];
-
-  // El candidato rota; se detiene con una ruta encendida (su ficha de km/tiempo
-  // no puede cambiar bajo el dedo) y con movimiento reducido.
-  useEffect(() => {
-    if (active || prefersReducedMotion() || candidates.length < 2) return undefined;
-    const id = setInterval(() => setIdx((i) => i + 1), CYCLE_MS);
-    return () => clearInterval(id);
-  }, [active, candidates.length]);
+  // Un candidato fijo (el primero que no sea ya un origen). Cambia solo si
+  // esa ciudad entra en el formulario, no con un temporizador.
+  const dest = candidates[0];
 
   // Si la ciudad encendida desaparece del formulario, se apaga.
   useEffect(() => { if (active && !codes.includes(active)) setActive(null); }, [active, codes]);
@@ -159,7 +145,7 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
             <circle key={`c-${o.code}`} cx={o.pos[0]} cy={o.pos[1]} r={3 * u} strokeWidth={1.2 * u} className="hm-cand" />
           ))}
 
-          {/* Rutas de cada ciudad al candidato actual + avión en bucle */}
+          {/* Rutas de cada ciudad al candidato + un avión que las recorre una vez */}
           {pts.map((p, i) => {
             const id = `hm-arc-${p.code}${idSuffix}`;
             const d = flightArc(p.pos, destPos);
@@ -170,12 +156,12 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
                   className={`hm-route${lit ? " hm-route--lit" : ""}${active && !lit ? " hm-route--dim" : ""}`} />
                 <g className="hm-plane" opacity="0">
                   <path d={PLANE_D} transform={`scale(${(u * 0.95).toFixed(3)})`} />
-                  <animateMotion dur="3.6s" begin={`${(i * 0.8).toFixed(1)}s`} repeatCount="indefinite" rotate="auto"
+                  <animateMotion dur="3.6s" begin={`${(i * 0.8).toFixed(1)}s`} repeatCount="1" rotate="auto"
                     keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.45 0 0.25 1">
                     <mpath href={`#${id}`} />
                   </animateMotion>
                   <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.84;1"
-                    dur="3.6s" begin={`${(i * 0.8).toFixed(1)}s`} repeatCount="indefinite" />
+                    dur="3.6s" begin={`${(i * 0.8).toFixed(1)}s`} repeatCount="1" />
                 </g>
               </g>
             );
@@ -216,8 +202,8 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
           )}
         </svg>
 
-        {/* Pulso de radar en el candidato (HTML: solo transform/opacity).
-            key = destino → la onda vuelve a salir al cambiar de candidato. */}
+        {/* Un pulso al aparecer el candidato (HTML: solo transform/opacity).
+            key = destino → si el candidato cambia, la onda sale otra vez. */}
         {destPos && (
           <span key={dest} className="hm-pulse" aria-hidden="true" style={{ left: pctX(destPos[0]), top: pctY(destPos[1]) }}>
             <i /><i />
