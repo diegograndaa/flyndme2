@@ -15,6 +15,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
+import { listResults, DEFAULT_FILTERS, arrivalStatus } from "./utils/resultFilters";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
@@ -34,6 +35,7 @@ import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, ZoneHead, Notice, DeparturesBoard } from "./components/BoardPanels";
+import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
@@ -308,6 +310,7 @@ export default function App() {
   const [optimizeBy,    setOptimizeBy]    = useState("total");
   // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
   const [cheaperDates,    setCheaperDates]    = useState([]);
+  const [resultFilters,   setResultFilters]   = useState(DEFAULT_FILTERS);
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
@@ -615,12 +618,23 @@ export default function App() {
   }, []);
 
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
+  // La lista que se ve: los filtros solo esconden destinos que no cumplen
+  // con los vuelos más baratos ya encontrados. No piden más datos.
+  const listedFlights = useMemo(
+    () => listResults(flights, resultFilters, uiCriterion),
+    [flights, resultFilters, uiCriterion]
+  );
+  const displayDest = useMemo(() => {
+    if (!listedFlights.length) return null;
+    const code = normalizeCode(bestDestination?.destination);
+    return listedFlights.find((d) => normalizeCode(d.destination) === code) || listedFlights[0];
+  }, [listedFlights, bestDestination]);
   // Fechas que de verdad abaratan ESTE destino (el calendario del proveedor).
   // Si el usuario elige otro en el panel, no se muestran: son de otro ganador.
   const dateRecs = useMemo(() => {
-    const code = bestDestination ? normalizeCode(bestDestination.destination) : "";
+    const code = displayDest ? normalizeCode(displayDest.destination) : "";
     return cheaperDates.filter((d) => d && d.destination === code).slice(0, 3);
-  }, [cheaperDates, bestDestination]);
+  }, [cheaperDates, displayDest]);
   useEffect(() => {
     hasResultsRef.current = Boolean(bestDestination);
     hasGroupRef.current = Boolean(group);
@@ -674,6 +688,18 @@ export default function App() {
   const handleCriterion = (mode) => {
     setUiCriterion(mode);
   };
+
+  const changeFilters = (next) => {
+    setResultFilters(next);
+    const listed = listResults(flights, next, uiCriterion);
+    if (!listed.length) return;
+    const code = normalizeCode(bestDestination?.destination);
+    const keep = listed.some((d) => normalizeCode(d.destination) === code);
+    if (next.arrival === "closest" || !keep) {
+      setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: listed[0] }));
+    }
+  };
+  const resetFilters = () => changeFilters(DEFAULT_FILTERS);
 
   // Fechas vecinas: la misma búsqueda, un día a un lado. Sin precios en los
   // chips (no los tenemos hasta buscar). La ida y la vuelta se mueven juntas.
@@ -1299,6 +1325,7 @@ export default function App() {
     setBestByCriterion({ total: null, fairness: null });
     setSharedAt(null);
     setCheaperDates([]);
+    setResultFilters(DEFAULT_FILTERS);
     setTripHint(null);
     setShowAlt(false);
     setLoading(true);
@@ -1995,7 +2022,19 @@ export default function App() {
           )}
           </div>
 
-          {/* Sticky results mini-bar */}
+          <div className="fm-results-layout">
+          <ResultFilters
+            flights={flights}
+            listedCount={listedFlights.length}
+            filters={resultFilters}
+            onChange={changeFilters}
+            onReset={resetFilters}
+            multiOrigin={cleanOrigins.length > 1}
+            status={arrivalStatus(displayDest)}
+          />
+          <div className="fm-results-main">
+          {/* La barra de precio va en la columna de la decisión: si cubriera
+              también los filtros, al hacer scroll no se podrían pulsar. */}
           <div className="fm-sticky-bar">
             <div className="fm-sticky-inner">
               <span className="fm-sticky-dest"><Plane size={14} aria-hidden="true" /> {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
@@ -2016,7 +2055,6 @@ export default function App() {
               </button>
             </div>
           </div>
-
           {/* ══ 01 · DECISIÓN FINAL ══ Lo que os conviene reservar, separado de
               la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
               decisión) + reparto del grupo + siguiente paso. */}
@@ -2032,18 +2070,19 @@ export default function App() {
               actionLabel={t("results.sharedRefresh")}
               onAction={refreshShared} disabled={loading} />
           )}
+          {displayDest ? (<>
           <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
           <Suspense fallback={<ResultsSkeleton />}>
           <WinnerCard
-            dest={bestDestination}
+            dest={displayDest}
             origins={cleanOrigins}
             tripType={tripType}
             returnDate={returnDate}
             departureDate={departureDate}
             uiCriterion={uiCriterion}
             onChangeCriterion={handleCriterion}
-            flightsCount={flights.length}
-            allFlights={flights}
+            flightsCount={listedFlights.length}
+            allFlights={listedFlights}
             lastBestPrice={lastBestPrice}
             onShare={handleShare}
             onShareWhatsApp={handleShareWhatsApp}
@@ -2054,17 +2093,17 @@ export default function App() {
             shareStatus={shareStatus}
             onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
             onChangeSearch={() => setView("search")}
-            onVerify={() => handleVerifyWinner(bestDestination)}
-            verifyPhase={liveCheck.code === normalizeCode(bestDestination.destination) ? liveCheck.phase : null}
+            onVerify={() => handleVerifyWinner(displayDest)}
+            verifyPhase={liveCheck.code === normalizeCode(displayDest.destination) ? liveCheck.phase : null}
             currency={currency}
-            isFav={isFav(bestDestination.destination)}
-            onToggleFav={() => toggleFav(bestDestination)}
-            watched={isWatched(bestDestination)}
-            onToggleWatch={() => toggleWatch(bestDestination)}
-            mapSlot={flights.length > 0 ? (
+            isFav={isFav(displayDest.destination)}
+            onToggleFav={() => toggleFav(displayDest)}
+            watched={isWatched(displayDest)}
+            onToggleWatch={() => toggleWatch(displayDest)}
+            mapSlot={listedFlights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
-                  <DestinationMap inline flights={flights} bestDestination={bestDestination} origins={cleanOrigins}
+                  <DestinationMap inline flights={listedFlights} bestDestination={displayDest} origins={cleanOrigins}
                     currency={currency}
                     onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))} />
                 </Suspense>
@@ -2084,9 +2123,9 @@ export default function App() {
             <summary className="fm-split-summary">
               <span className="fm-split-summary-tag">{t("results.splitSummaryTag")}</span>
               <span className="fm-split-summary-text">
-                {(bestDestination.flights || []).map((f) => `${String(f.origin).toUpperCase()} ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`).join(" · ")}
+                {(displayDest.flights || []).map((f) => `${String(f.origin).toUpperCase()} ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`).join(" · ")}
                 <span className="fm-split-summary-sep"> — </span>
-                {t("results.splitSummaryEqual", { amount: currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency) })}
+                {t("results.splitSummaryEqual", { amount: currency === "EUR" ? formatEur(displayDest.averageCostPerTraveler, 0) : convertPrice(displayDest.averageCostPerTraveler, currency) })}
               </span>
               <span className="fm-split-summary-more">
                 <span className="fm-split-summary-open">{t("results.splitSummaryMore")}</span>
@@ -2095,9 +2134,9 @@ export default function App() {
             </summary>
             <div className="fm-split-body">
             <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
-              <Suspense fallback={null}><WhoPaysStrip dest={bestDestination} currency={currency} origins={cleanOrigins} /></Suspense>
+              <Suspense fallback={null}><WhoPaysStrip dest={displayDest} currency={currency} origins={cleanOrigins} /></Suspense>
             </ErrorBoundary>
-            <CostSplitCard bestDest={bestDestination} origins={cleanOrigins} currency={currency} t={t} />
+            <CostSplitCard bestDest={displayDest} origins={cleanOrigins} currency={currency} t={t} />
 
           {/* ── Coordinación de llegadas del grupo ── (solo multi-origen; datos
               REALES: solo los vuelos directos informan la hora, los de escalas
@@ -2105,7 +2144,7 @@ export default function App() {
               horas locales: no tenemos la zona horaria del destino. Reacciona
               al toggle de criterio porque se recalcula sobre bestDestination. */}
           {(() => {
-            const sp = computeArrivalSpread(bestDestination.flights);
+            const sp = computeArrivalSpread(displayDest.flights);
             if (!sp || sp.legsWithTime < 2 || sp.spreadMs == null) return null; // no comparable
             const parts = splitSpread(sp.spreadMs);
             if (!parts) return null;
@@ -2147,6 +2186,11 @@ export default function App() {
           </details>
           )}
 
+          </>) : (
+            <Notice variant="partial" text={t("filters.empty")}
+              actionLabel={t("filters.reset")} onAction={resetFilters} />
+          )}
+
           {/* Plan de grupo: una línea y el botón. El párrafo explicaba el producto. */}
           <Notice variant="next"
             text={t("results.groupNudge.title")}
@@ -2160,9 +2204,11 @@ export default function App() {
 
           {/* Salidas: el panel ya se nombra solo. Con un único destino, una línea
               dice por qué no hay alternativas. */}
-          <section className="fm-explore" aria-labelledby={flights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
-          {flights.length <= 1 && (
-            <p id="fm-explore-note" className="fm-explore-note">{t("results.exploreSubOne")}</p>
+          <section className="fm-explore" aria-labelledby={listedFlights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
+          {listedFlights.length < 2 && (
+            <p id="fm-explore-note" className={flights.length <= 1 ? "fm-explore-note" : "sr-only"}>
+              {flights.length <= 1 ? t("results.exploreSubOne") : t("filters.title")}
+            </p>
           )}
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
@@ -2175,13 +2221,14 @@ export default function App() {
               (sustituye podio Top 3 + barra de stats + lista "otras opciones").
               Pulsar uno lo pone en la tarjeta de embarque y sube a ella. */}
           <DeparturesBoard
-            flights={flights}
-            current={bestDestination}
+            flights={listedFlights}
+            current={displayDest || bestDestination}
             origins={cleanOrigins}
             criterion={uiCriterion}
+            preserveOrder={resultFilters.arrival === "closest"}
             singleOrigin={cleanOrigins.length <= 1}
             currency={currency}
-            savings={flights.length >= 2 ? Math.max(...flights.map(f => f.totalCostEUR || 0)) - bestDestination.totalCostEUR : 0}
+            savings={listedFlights.length >= 2 ? Math.max(...listedFlights.map(f => f.totalCostEUR || 0)) - (displayDest || bestDestination).totalCostEUR : 0}
             onSelect={(dest) => {
               setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
               setTimeout(() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
@@ -2204,7 +2251,7 @@ export default function App() {
           {/* Pestañas: Comparar · Más opciones (el mapa de rutas vive ahora en la
               tarjeta ganadora, junto a la foto). */}
           <div className="rv-tabs" ref={tabContentRef}>
-            {flights.length > 1 && (
+            {listedFlights.length > 1 && (
             <>
               <button type="button"
                 className={`rv-tab${showAlt === "compare" ? " rv-tab--active" : ""}`}
@@ -2222,11 +2269,11 @@ export default function App() {
               </button>
           </div>
 
-          {showAlt === "compare" && flights.length > 1 && (
+          {showAlt === "compare" && listedFlights.length > 1 && (
             <div className="view-enter" id="rv-panel-compare">
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary" /></div>}>
-                  <CompareChart flights={flights} bestDestination={bestDestination} singleOrigin={cleanOrigins.length <= 1}
+                  <CompareChart flights={listedFlights} bestDestination={displayDest || bestDestination} singleOrigin={cleanOrigins.length <= 1}
                     criterion={uiCriterion} origins={cleanOrigins} currency={currency} />
                 </Suspense>
               </ErrorBoundary>
@@ -2240,12 +2287,14 @@ export default function App() {
               <PlanYourTripCTA destCode={normalizeCode(bestDestination.destination)} departureDate={bestDestination.bestDate || departureDate} returnDate={bestDestination.bestReturnDate || (tripType === "roundtrip" ? returnDate : "")}
                 travelers={bestDestination.totalPassengers || totalTravelers} t={t} />
 
-              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(flights, cleanOrigins)}>
+              <button type="button" className="fm-more-csv" onClick={() => exportResultsCSV(listedFlights.length ? listedFlights : flights, cleanOrigins)}>
                 <Download size={14} aria-hidden="true" /> {t("board.exportCsv")}
               </button>
             </div>
           )}
           </section>
+          </div>
+          </div>
         </div>
       )}
       </main>{/* /main-content */}

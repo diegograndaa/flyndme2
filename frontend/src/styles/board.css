@@ -810,6 +810,122 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   .fm-date-strip-label { max-width: none; }
   .fm-date-recs { flex: 1 1 auto; }
 }
+
+/* Filtros a la izquierda de la decisión. En el móvil se pliegan: la decisión
+   sigue siendo lo primero. El activo es cartel de posición, no un CTA. */
+.fm-results-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (min-width: 861px) {
+  .fm-results-layout:has(.fm-filters) { grid-template-columns: 232px minmax(0, 1fr); }
+}
+.fm-filters {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+.fm-filters-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--navy);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 14px;
+}
+.fm-filters-body { display: none; flex-direction: column; gap: 14px; }
+.fm-filters--open .fm-filters-body { display: flex; margin-top: 10px; }
+.fm-filters-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.fm-filter-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--panel-muted);
+}
+.fm-filter-count { font-family: var(--font-mono); font-size: 12px; color: var(--panel-muted); }
+.fm-filter-hint { margin: 0; font-size: 12px; line-height: 1.35; color: var(--slate-500); }
+.fm-filter-block { display: flex; flex-direction: column; gap: 6px; }
+.fm-filter-opts, .fm-filter-airlines { display: flex; flex-direction: column; gap: 6px; }
+.fm-filter-airlines { flex-direction: row; flex-wrap: wrap; }
+.fm-filter-opt {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.fm-filter-opt--air {
+  justify-content: center;
+  min-width: 52px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.fm-filter-opt--air:not(.fm-filter-opt--picked) {
+  color: var(--slate-500);
+  background: transparent;
+}
+.fm-filter-opt:hover { border-color: var(--primary); }
+.fm-filter-opt:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+.fm-filter-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--pos-bg);
+  color: var(--sign);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+.fm-filter-reset {
+  min-height: 40px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--navy);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fm-filter-reset:hover { border-color: var(--primary); }
+.fm-filter-reset:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+@media (min-width: 861px) {
+  .fm-filters-toggle { display: none; }
+  .fm-filters-body { display: flex; }
+  .fm-filters--open .fm-filters-body { margin-top: 0; }
+  .fm-filters {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100dvh - 88px);
+    overflow: auto;
+  }
+  .fm-results-main > .fm-sticky-bar { margin-left: 0; margin-right: 0; }
+}
+.fm-results-main { min-width: 0; }
+@media (max-width: 860px) {
+  .fm-filters { padding: 8px; position: relative; z-index: 91; }
+}
 .fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .fm-flight-head .fm-board-label { color: var(--panel-faint); }
 .fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
@@ -1188,7 +1304,7 @@ button,
    · Cartel de POSICIÓN  = fondo negro + texto y filete amarillos → "estás
      aquí" (pestaña, opción o paso activo).
    Los dos carteles son IGUALES en claro y en oscuro (oct-2026).            */
-:is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active, .fm-date-strip-day--current) {
+:is(.rv-tab--active, .sf-pill--active, .wc-criterion-pill--active, .fm-split-pill--active, .fm-date-strip-day--current, .fm-filter-opt--on) {
   background: var(--pos-bg) !important;
   border-color: var(--pos-bg) !important;
   color: var(--sign) !important;
@@ -1721,6 +1837,10 @@ button,
 [data-theme="dark"] .fm-decision {
   --decision-bg: #0D0E11;
   --decision-line: #E6E8EC;
+}
+@media (max-width: 860px) {
+  /* El filtro va encima de la decisión: al subir a ella no debe quedar bajo la cabecera. */
+  .fm-decision { scroll-margin-top: 156px; }
 }
 /* Recibe el foco por programa tras buscar (tabIndex -1): no es un control */
 .fm-decision:focus { outline: none; }

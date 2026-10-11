@@ -122,10 +122,13 @@ function DestThumb({ code }) {
  */
 export const DeparturesBoard = React.memo(function DeparturesBoard({
   flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
+  preserveOrder = false,
 }) {
   const { t } = useI18n();
   const listRef = useRef(null);
-  const rows = flights && flights.length >= 2 ? sortByCriterion(flights, criterion) : [];
+  const rows = flights && flights.length >= 2
+    ? (preserveOrder ? [...flights] : sortByCriterion(flights, criterion))
+    : [];
   // Al cambiar de criterio las filas se recolocan deslizándose (FLIP): se ve
   // qué destino sube y cuál baja en vez de un salto brusco.
   useFlip(listRef, rows.map((f) => normalizeCode(f.destination)).join(","));
