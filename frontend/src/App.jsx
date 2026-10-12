@@ -2198,6 +2198,8 @@ export default function App() {
             onReset={resetFilters}
             multiOrigin={cleanOrigins.length > 1}
             status={arrivalStatus(displayDest)}
+            displayDest={displayDest}
+            origins={cleanOrigins}
             domesticCountry={homeCountry}
             domesticName={homeCountry ? countryOf(cleanOrigins[0]) : ""}
             domesticChoices={homeCodes.length}
