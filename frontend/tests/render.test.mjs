@@ -320,6 +320,9 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("Rome") || html.includes("ROM"));
+  const totalAt = html.indexOf("wc-total");
+  const legAt = html.indexOf("wc-flight-card");
+  assert.ok(totalAt > 0 && legAt > totalAt, "el total del grupo va antes que el precio de cada viajero");
 });
 
 test("render: la app comprueba el precio sola; no hay botón para el usuario", async () => {

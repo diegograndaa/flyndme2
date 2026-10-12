@@ -193,6 +193,51 @@ const WinnerCard = React.memo(function WinnerCard({
           el reparto y el troquel, y además plegable). */}
       <div className="wc-buy">
         <span className="sr-only" role="status">{copied ? t(copied.ok ? "results.copied" : "results.copyFailed") : ""}</span>
+        {/* Primero el cómputo del grupo; debajo, el precio de cada viajero. */}
+        <div className="wc-total" aria-busy={verifyPhase === "loading" ? "true" : undefined}>
+          <div className="wc-total-main">
+            <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
+            <div className="wc-total-figure">
+              {savingsPct > 5 && (
+                <span className="wc-total-savings" title={t("results.savingsPctHint", { n: allFlights.length })}>
+                  {t("results.savingsPct", { pct: savingsPct })}
+                  <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
+                </span>
+              )}
+              <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
+            </div>
+          </div>
+          {sumParts && (
+            <div className="wc-total-sum" aria-hidden="true">
+              {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
+              <b> = </b><strong>{money(dest.totalCostEUR)}</strong>
+            </div>
+          )}
+          <div className="wc-total-meta">
+            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
+            {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
+          </div>
+          <div className="wc-total-foot" aria-live="polite">
+            {verifyPhase === "loading" ? (
+              <span className="wc-verify-status">
+                <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
+              </span>
+            ) : verifyPhase === "unavailable" ? (
+              <span className="wc-verify-status">
+                <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
+              </span>
+            ) : dest.verificationStatus === "verified" || dest.verificationStatus === "changed" ? (
+              <span className="wc-verify-caption wc-verify-caption--ok">
+                <ShieldCheck size={14} aria-hidden="true" /> {dest.verificationStatus === "changed" ? t("results.totalChanged") : t("results.totalVerified")}
+              </span>
+            ) : (
+              <span className="wc-verify-caption">{t("board.estimateNote")}</span>
+            )}
+          </div>
+          {fxRateLabel(currency, lang) && (
+            <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
+          )}
+        </div>
         <div className="wc-buy-head">
           <h3 className="wc-buy-title">
             {singleOrigin ? t("results.buyTitleOne", { city: city || code }) : t("results.buyTitle", { city: city || code })}
@@ -445,67 +490,16 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
         )}
 
-        {/* Cómputo global: la suma de los vuelos = total del grupo (datos del
-            backend; la suma solo se muestra si cuadra con su total). */}
-        <div className="wc-total" aria-busy={verifyPhase === "loading" ? "true" : undefined}>
-          <div className="wc-total-main">
-            <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
-            <div className="wc-total-figure">
-              {savingsPct > 5 && (
-                <span className="wc-total-savings" title={t("results.savingsPctHint", { n: allFlights.length })}>
-                  {t("results.savingsPct", { pct: savingsPct })}
-                  <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
-                </span>
-              )}
-              {/* Cifras de odómetro: al cambiar de fecha, destino o criterio los
-                  dígitos se deslizan hasta el valor real (≤300 ms) */}
-              <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
-            </div>
-          </div>
-          {sumParts && (
-            <div className="wc-total-sum" aria-hidden="true">
-              {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
-              <b> = </b><strong>{money(dest.totalCostEUR)}</strong>
-            </div>
-          )}
-          <div className="wc-total-meta">
-            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
-            {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
-          </div>
-
-          {/* El número de arriba es la caché hasta que la app termina de
-              comprobarlo. No hay botón: esa comprobación no se le pide al usuario. */}
-          <div className="wc-total-foot" aria-live="polite">
-            {verifyPhase === "loading" ? (
-              <span className="wc-verify-status">
-                <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
-              </span>
-            ) : verifyPhase === "unavailable" ? (
-              <span className="wc-verify-status">
-                <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
-              </span>
-            ) : dest.verificationStatus === "verified" || dest.verificationStatus === "changed" ? (
-              <span className="wc-verify-caption wc-verify-caption--ok">
-                <ShieldCheck size={14} aria-hidden="true" /> {dest.verificationStatus === "changed" ? t("results.totalChanged") : t("results.totalVerified")}
-              </span>
-            ) : (
-              <span className="wc-verify-caption">{t("board.estimateNote")}</span>
-            )}
-          </div>
-          {fxRateLabel(currency, lang) && (
-            <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
-          )}
-          {!singleOrigin && (
-            <GroupSalePanel
-              legs={saleLegs}
-              sale={sale}
-              onRequest={onRequestSale}
-              onSubmit={onSubmitPassengers}
-              onPaid={onSalePaid}
-              onFail={onSaleFailed}
-            />
-          )}
-        </div>
+        {!singleOrigin && (
+          <GroupSalePanel
+            legs={saleLegs}
+            sale={sale}
+            onRequest={onRequestSale}
+            onSubmit={onSubmitPassengers}
+            onPaid={onSalePaid}
+            onFail={onSaleFailed}
+          />
+        )}
       </div>
 
       {/* Troquel: separa la compra de compartir. El sello lleva código y fecha. */}

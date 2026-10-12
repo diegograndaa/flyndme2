@@ -2116,7 +2116,7 @@ export default function App() {
       )}
 
       {view === "results" && bestDestination && (
-        <div className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+        <div className="container fm-results-page view-enter" key="results" style={{ maxWidth: 1080 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
             {t(cleanOrigins.length <= 1 ? "results.buyTitleOne" : "results.buyTitle", {

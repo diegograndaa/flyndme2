@@ -17,7 +17,7 @@ import { convertPrice, sortByCriterion, paySpread, maxLegPrice } from "../utils/
 import { getCityImage } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
 import { PayBars, TravelerLegend } from "./TravelerBits";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, SlidersHorizontal } from "lucide-react";
 import { useFlip } from "../hooks/useFlip";
 
 function money(v, currency) {
@@ -52,8 +52,9 @@ export const FlightHeader = React.memo(function FlightHeader({
         </div>
       </div>
       {onChange && (
-        <button type="button" className="fm-flight-head-btn" onClick={onChange}>
-          {t("results.changeSearch")}
+        <button type="button" className="fm-flight-head-btn" aria-label={t("results.changeSearch")} onClick={onChange}>
+          <SlidersHorizontal size={14} aria-hidden="true" />
+          <span className="fm-flight-head-btn-text">{t("results.changeSearch")}</span>
         </button>
       )}
     </div>
