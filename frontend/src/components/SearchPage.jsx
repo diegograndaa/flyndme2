@@ -5,9 +5,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
-  AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, normalizeCode, cityOf, destLabel, formatEur,
+  AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, SEARCH_POOL, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
+  nextDestSelection, sameCodeSet,
 } from "../utils/helpers";
+import { domesticCodes, sharedCountry } from "../utils/resultFilters";
 import { FriendlyError } from "./UiBits";
 import { Notice } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
@@ -146,6 +148,15 @@ const SearchPage = React.memo(function SearchPage({
     const originCodes = new Set(origins.map(o => resolveOriginCode(o)));
     return AIRPORTS.filter(a => !originCodes.has(a.code));
   }, [origins]);
+  const searchPool = useMemo(
+    () => SEARCH_POOL.filter((c) => !setCodes.includes(c)),
+    [setCodes],
+  );
+  const homeCountry = useMemo(() => sharedCountry(setCodes), [setCodes]);
+  const homeDests = useMemo(
+    () => (homeCountry ? domesticCodes(homeCountry, setCodes) : []),
+    [homeCountry, setCodes],
+  );
 
   const BUDGET_MIN = 30; const BUDGET_MAX = 800; const BUDGET_STEP = 10;
 
@@ -604,38 +615,38 @@ const SearchPage = React.memo(function SearchPage({
                       <div className="sf-dest-categories">
                         {[
                           ["all",     t("search.destCatAll"),     []],
+                          ...(homeDests.length > 0 ? [["domestic", t("search.destCatDomestic", { country: countryOf(setCodes[0]) }), homeDests]] : []),
                           ["beach",   t("search.destCatBeach"),   ["AGP","PMI","TFS","NCE","MLA","DBV","SPU","RHO","TLV"]],
                           ["budget",  t("search.destCatBudget"),  ["OPO","NAP","KRK","BEG","OTP","SOF","TIA","RAK","TLL","RIX","VNO","SKG"]],
                           ["capital", t("search.destCatCapital"), ["LON","PAR","ROM","BER","MAD","LIS","VIE","PRG","ATH","CPH","BUD","DUB","BRU","WAW","OSL","HEL","STO"]],
-                        ].map(([key, label, codes]) => (
+                        ].map(([key, label, codes]) => {
+                          const active = key === "all"
+                            ? selectedDests.length === 0
+                            : sameCodeSet(selectedDests, codes);
+                          return (
                           <button key={key} type="button"
-                            className={`sf-pill sf-pill--sm${key === "all" && selectedDests.length === 0 ? " sf-pill--active" : ""}`}
+                            aria-pressed={active}
+                            className={`sf-pill sf-pill--sm${active ? " sf-pill--active" : ""}`}
                             onClick={() => {
                               if (key === "all") setSelectedDests([]);
                               else setSelectedDests(codes);
                             }} disabled={loading}>
                             {label}
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
-                      {/* Individual city toggles */}
+                      {/* Individual city toggles. Vacío = pool habitual, no el
+                          catálogo entero (si no, quitar una ciudad mandaba ~60). */}
                       <div className="sf-dest-grid">
                         {destAirports.map((a) => {
-                          const isOn = selectedDests.length === 0 || selectedDests.includes(a.code);
+                          const isOn = (selectedDests.length === 0 ? searchPool : selectedDests).includes(a.code);
                           return (
                             <button key={a.code} type="button"
                               aria-pressed={isOn}
                               className={`sf-dest-chip${isOn ? " sf-dest-chip--on" : ""}`}
-                              onClick={() => {
-                                if (selectedDests.length === 0) {
-                                  // Switch from "all" to "all except this one"
-                                  setSelectedDests(destAirports.map(x => x.code).filter(c => c !== a.code));
-                                } else if (selectedDests.includes(a.code)) {
-                                  setSelectedDests(selectedDests.filter(c => c !== a.code));
-                                } else {
-                                  setSelectedDests([...selectedDests, a.code]);
-                                }
-                              }} disabled={loading}>
+                              onClick={() => setSelectedDests(nextDestSelection(selectedDests, a.code, searchPool))}
+                              disabled={loading}>
                               <span className="sf-dest-chip-code">{a.code}</span>
                               <span className="sf-dest-chip-city">{cityOf(a.code)}</span>
                             </button>

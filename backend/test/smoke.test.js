@@ -636,6 +636,34 @@ test("trip-length-hint: valida la entrada", async () => {
   assert.equal(noOrig.status, 400);
 });
 
+test("tiering: una lista pedida se busca entera, sin cortar a 6", async () => {
+  const asked = ["ROM", "LIS", "ATH", "BER", "AMS", "MIL", "OPO", "VIE"];
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD"],
+    destinations: asked,
+    departureDate: futureDate(61),
+    tripType: "oneway",
+  });
+  assert.equal(r.status, 200);
+  const got = r.body.flights.map((f) => f.destination).sort();
+  assert.deepEqual(got, [...asked].sort());
+});
+
+test("nonStop: el mock marca esos vuelos como directos", async () => {
+  const r = await post("/api/flights/multi-origin", {
+    origins: ["MAD"],
+    destinations: ["ROM", "LIS", "ATH", "BER"],
+    departureDate: futureDate(62),
+    tripType: "oneway",
+    nonStop: true,
+  });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.flights.length >= 1);
+  for (const f of r.body.flights) {
+    for (const leg of f.flights) assert.equal(leg.offer.transfers, 0);
+  }
+});
+
 test("tiering: custom destinations bypass tier fallback", async () => {
   const r = await post("/api/flights/multi-origin", {
     origins: ["MAD", "BCN"],

@@ -11,11 +11,11 @@ import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel,
   formatEur, formatDate, weekdayOf, todayISO, horizonISO, addDaysISO, copyText,
-  countryFlag, scrollBehavior, AIRPORT_MAP, resolveOriginCode
+  countryFlag, countryOf, scrollBehavior, AIRPORT_MAP, resolveOriginCode, sameCodeSet
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { listResults, DEFAULT_FILTERS, arrivalStatus } from "./utils/resultFilters";
+import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes } from "./utils/resultFilters";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
@@ -311,6 +311,10 @@ export default function App() {
   // Nudge "fecha más barata" (enriquecimiento en 2º plano del ganador).
   const [cheaperDates,    setCheaperDates]    = useState([]);
   const [resultFilters,   setResultFilters]   = useState(DEFAULT_FILTERS);
+  // «Solo en este país» relanza la búsqueda con esas ciudades. El ref sobrevive
+  // al reset de filtros de handleSubmit; el otro guarda la selección anterior.
+  const keepDomesticRef = useRef(false);
+  const destBeforeDomesticRef = useRef(null);
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
@@ -622,12 +626,26 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Ciudades sin repetir y sus viajeros salen de la MISMA pasada (paxByOrigin),
+  // así no se pueden desalinear (filas vacías o una ciudad en dos filas).
+  const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
+  const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
+  const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
+  // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
+  // cabecera de vuelo de resultados.
+  const totalTravelers = useMemo(
+    () => origins.reduce((sum, o, i) => (String(o || "").trim() ? sum + (passengers[i] || 1) : sum), 0),
+    [origins, passengers]
+  );
+
   const bestDestination = bestByCriterion[uiCriterion] || bestByCriterion.total || null;
-  // La lista que se ve: los filtros solo esconden destinos que no cumplen
-  // con los vuelos más baratos ya encontrados. No piden más datos.
+  const homeCountry = useMemo(() => sharedCountry(cleanOrigins), [cleanOrigins]);
+  const homeCodes = useMemo(() => domesticCodes(homeCountry, cleanOrigins), [homeCountry, cleanOrigins]);
+  // La lista que se ve. El filtro nacional, si estas ciudades no se buscaron,
+  // relanza la búsqueda (changeFilters): el resto solo esconde.
   const listedFlights = useMemo(
-    () => listResults(flights, resultFilters, uiCriterion),
-    [flights, resultFilters, uiCriterion]
+    () => listResults(flights, resultFilters, uiCriterion, { country: homeCountry }),
+    [flights, resultFilters, uiCriterion, homeCountry]
   );
   const displayDest = useMemo(() => {
     if (!listedFlights.length) return null;
@@ -682,18 +700,6 @@ export default function App() {
     document.title = title;
   }, [view, bestDestination, t, lang, currency]);
 
-  // Ciudades sin repetir y sus viajeros salen de la MISMA pasada (paxByOrigin),
-  // así no se pueden desalinear (filas vacías o una ciudad en dos filas).
-  const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
-  const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
-  const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
-  // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
-  // cabecera de vuelo de resultados.
-  const totalTravelers = useMemo(
-    () => origins.reduce((sum, o, i) => (String(o || "").trim() ? sum + (passengers[i] || 1) : sum), 0),
-    [origins, passengers]
-  );
-
   // ── Compute best for each criterion ────────────────────────────────────────
 
   // ── Handle criterion toggle ─────────────────────────────────────────────────
@@ -705,13 +711,32 @@ export default function App() {
   };
 
   const changeFilters = (next) => {
+    const wasDomestic = !!resultFilters.domestic;
+    const nowDomestic = !!next.domestic;
     setResultFilters(next);
-    const listed = listResults(flights, next, uiCriterion);
-    if (!listed.length) return;
-    const code = normalizeCode(bestDestination?.destination);
-    const keep = listed.some((d) => normalizeCode(d.destination) === code);
-    if (next.arrival === "closest" || !keep) {
-      setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: listed[0] }));
+    const listed = listResults(flights, next, uiCriterion, { country: homeCountry });
+    if (listed.length) {
+      const code = normalizeCode(bestDestination?.destination);
+      const keep = listed.some((d) => normalizeCode(d.destination) === code);
+      if (next.arrival === "closest" || !keep) {
+        setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: listed[0] }));
+      }
+    }
+    if (nowDomestic && !wasDomestic) {
+      if (!homeCodes.length || sameCodeSet(selectedDests, homeCodes)) return;
+      destBeforeDomesticRef.current = selectedDests;
+      keepDomesticRef.current = true;
+      setSelectedDests(homeCodes);
+      setPendingResearch(true);
+      return;
+    }
+    if (!nowDomestic && wasDomestic) {
+      const restore = Array.isArray(destBeforeDomesticRef.current) ? destBeforeDomesticRef.current : [];
+      destBeforeDomesticRef.current = null;
+      keepDomesticRef.current = false;
+      if (sameCodeSet(selectedDests, restore)) return;
+      setSelectedDests(restore);
+      setPendingResearch(true);
     }
   };
   const resetFilters = () => changeFilters(DEFAULT_FILTERS);
@@ -1454,7 +1479,9 @@ export default function App() {
     setBestByCriterion({ total: null, fairness: null });
     setSharedAt(null);
     setCheaperDates([]);
-    setResultFilters(DEFAULT_FILTERS);
+    const useDomestic = keepDomesticRef.current || (homeCodes.length > 0 && sameCodeSet(selectedDests, homeCodes));
+    keepDomesticRef.current = useDomestic;
+    setResultFilters(useDomestic ? { ...DEFAULT_FILTERS, domestic: true } : DEFAULT_FILTERS);
     setTripHint(null);
     setShowAlt(false);
     setLoading(true);
@@ -1644,6 +1671,13 @@ export default function App() {
     searchAbortRef.current = null;
     setLoading(false);
     setToast({ message: t("loading.cancelled"), type: "success" });
+  };
+
+  // El formulario no arrastra el filtro nacional de la búsqueda anterior,
+  // salvo que las ciudades elegidas sean exactamente las de ese país.
+  const submitFromForm = (e) => {
+    keepDomesticRef.current = false;
+    handleSubmit(e);
   };
 
   // Relanza la búsqueda cuando "Usar esta fecha" ya ha actualizado departureDate
@@ -2030,7 +2064,7 @@ export default function App() {
                 actionLabel: t("tripHint.use"),
                 onAction: () => useTripHint(tripHint),
               } : null}
-              onSubmit={handleSubmit}
+              onSubmit={submitFromForm}
               onCreateGroup={createGroup}
               groupBusy={groupBusy}
               recentSearches={recentSearches}
@@ -2164,6 +2198,9 @@ export default function App() {
             onReset={resetFilters}
             multiOrigin={cleanOrigins.length > 1}
             status={arrivalStatus(displayDest)}
+            domesticCountry={homeCountry}
+            domesticName={homeCountry ? countryOf(cleanOrigins[0]) : ""}
+            domesticChoices={homeCodes.length}
           />
           <div className="fm-results-main">
           {/* La barra de precio va en la columna de la decisión: si cubriera
@@ -2343,8 +2380,10 @@ export default function App() {
               dice por qué no hay alternativas. */}
           <section className="fm-explore" aria-labelledby={listedFlights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
           {listedFlights.length < 2 && (
-            <p id="fm-explore-note" className={flights.length <= 1 ? "fm-explore-note" : "sr-only"}>
-              {flights.length <= 1 ? t("results.exploreSubOne") : t("filters.title")}
+            <p id="fm-explore-note" className="fm-explore-note">
+              {flights.length <= 1
+                ? t("results.exploreSubOne")
+                : (listedFlights.length === 0 ? t("filters.empty") : t("filters.onlyOne"))}
             </p>
           )}
           {partialResults && (

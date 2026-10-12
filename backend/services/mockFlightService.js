@@ -58,9 +58,18 @@ function addDuration(isoAt, durationISO) {
   return d.toISOString().replace(/\.\d{3}Z$/, "");
 }
 
-function mockOffer(origin, dest, date, returnDate, price) {
+function mockTransfers(origin, dest, nonStop) {
+  if (nonStop) return 0;
+  const h = hash(`${origin}${dest}`);
+  if (h % 9 === 0) return 2;
+  if (h % 4 === 0) return 1;
+  return 0;
+}
+
+function mockOffer(origin, dest, date, returnDate, price, options = {}) {
   const seed         = `${origin}-${dest}-${date}`;
   const carrierCode  = AIRLINES[hash(seed) % AIRLINES.length];
+  const transfers    = mockTransfers(origin, dest, options.nonStop === true);
   const flightNumber = 1000 + (hash(seed + "fn") % 8999);
   // Duration scales loosely with route hash → 1h30 – 5h00
   const totalMinutes = 90 + (hash(`${origin}${dest}`) % 210);
@@ -94,6 +103,10 @@ function mockOffer(origin, dest, date, returnDate, price) {
       grandTotal: priceStr,
     },
     validatingAirlineCodes: [carrierCode],
+    // El filtro de escalas lee este campo (como Travelpayouts). Los segmentos
+    // se mantienen: el mock no inventa aeropuertos de escala.
+    transfers,
+    returnTransfers: returnDate ? transfers : null,
     travelerPricings: [{
       travelerId: "1",
       fareOption: "STANDARD",
@@ -143,7 +156,7 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
     return null;
   }
   const price = mockPrice(origin, destination, departureDate);
-  const offer = mockOffer(origin, destination, departureDate, options.returnDate, price);
+  const offer = mockOffer(origin, destination, departureDate, options.returnDate, price, { nonStop: options.nonStop === true });
   return { price, offer };
 }
 
