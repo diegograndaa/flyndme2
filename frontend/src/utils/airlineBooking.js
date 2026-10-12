@@ -3,9 +3,12 @@
 // de hoy. Si no conocemos un enlace suyo, no se inventa ni se manda a otra web.
 
 const EASYJET = new Set(["U2", "EC", "DS"]);
-const WIZZ = new Set(["W6", "W9", "W4"]);
+const WIZZ = new Set(["W6", "W9", "W4", "5W"]);
 const RYANAIR = new Set(["FR", "RK", "AL", "RR"]);
 const VUELING = new Set(["VY"]);
+const BRITISH_AIRWAYS = new Set(["BA", "CJ", "A0"]);
+const KLM = new Set(["KL", "WA"]);
+const FINNAIR = new Set(["AY"]);
 
 function codeOf(airline) {
   return String(airline || "").trim().toUpperCase();
@@ -64,6 +67,48 @@ function ryanair({ from, to, departureDate, returnDate, adults }) {
   return `https://www.ryanair.com/es/es/trip/flights/select?${params}`;
 }
 
+function britishAirways({ from, to, departureDate, returnDate, adults }) {
+  const legs = [`${from}-${to}_${departureDate}`];
+  if (returnDate) legs.push(`${to}-${from}_${returnDate}`);
+  const params = new URLSearchParams({
+    onds: legs.join(","),
+    ad: String(adults),
+    yad: "0",
+    ch: "0",
+    inf: "0",
+    cabin: "M",
+    flex: "LOWEST",
+  });
+  return `https://www.britishairways.com/travel/book/public/en_gb/flightList?${params}`;
+}
+
+function klm({ from, to, departureDate, returnDate, adults }) {
+  const ymd = (iso) => iso.replace(/-/g, "");
+  let connections = `${from}:A:${ymd(departureDate)}>${to}:A`;
+  if (returnDate) connections += `-${to}:A:${ymd(returnDate)}>${from}:A`;
+  const params = new URLSearchParams({
+    pax: `${adults}:0:0:0`,
+    cabinClass: "ECONOMY",
+    activeConnection: "0",
+    connections,
+    bookingFlow: "LEISURE",
+  });
+  return `https://www.klm.com/search/offers?${params}`;
+}
+
+function finnair({ from, to, departureDate, returnDate, adults }) {
+  const flights = [{ origin: from, destination: to, departureDate }];
+  if (returnDate) flights.push({ origin: to, destination: from, departureDate: returnDate });
+  const json = JSON.stringify({
+    flights,
+    adults,
+    children: 0,
+    infants: 0,
+    cabin: "ECONOMY",
+  });
+  return `https://www.finnair.com/es-es/booking/flight-selection?json=${encodeURIComponent(json)}`;
+}
+
 function vueling({ from, to, departureDate, returnDate, adults, flightNumber }) {
   const params = new URLSearchParams({
     o: from,
@@ -86,6 +131,9 @@ const BUILDERS = [
   [WIZZ, "Wizz Air", wizz],
   [RYANAIR, "Ryanair", ryanair],
   [VUELING, "Vueling", vueling],
+  [BRITISH_AIRWAYS, "British Airways", britishAirways],
+  [KLM, "KLM", klm],
+  [FINNAIR, "Finnair", finnair],
 ];
 
 // { url, airlineName } o null si esa aerolínea no tiene enlace conocido.

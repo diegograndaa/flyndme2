@@ -273,6 +273,23 @@ const WinnerCard = React.memo(function WinnerCard({
                   adults: pax,
                   flightNumber: segments[0]?.number || "",
                 });
+                // Sin web de la aerolínea, Reservar abre Skyscanner con la
+                // misma ruta, fecha y viajeros. No se inventa otra aerolínea.
+                const book = booking
+                  ? {
+                    url: booking.url,
+                    provider: "airline",
+                    airline: booking.airlineName,
+                    hint: t("results.bookOnAirlineHint", { airline: booking.airlineName }),
+                  }
+                  : (ssUrl
+                    ? {
+                      url: ssUrl,
+                      provider: "skyscanner",
+                      airline: "Skyscanner",
+                      hint: t("results.bookOnSkyscannerHint"),
+                    }
+                    : null);
                 const legEq = typeof price === "number"
                   ? legEquation(price, pax, finfo.totalForOrigin, currency)
                   : null;
@@ -388,19 +405,18 @@ const WinnerCard = React.memo(function WinnerCard({
                       </div>
                     )}
                     <div className="wc-flight-ctas">
-                      {/* Reservar abre la web de ESA aerolínea (ruta, fecha y
-                          viajeros). El precio allí es el suyo. Si no hay enlace
-                          conocido, no se manda a otra web. */}
-                      {booking && (
-                        <a href={booking.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
-                          title={t("results.bookOnAirlineHint", { airline: booking.airlineName })}
-                          aria-label={t("results.bookOnAirlineHint", { airline: booking.airlineName })}
-                          onClick={() => track("book_click", { provider: "airline", airline: booking.airlineName, dest: code, origin, where: "winner" })}>
+                      {/* Reservar abre la web de esa aerolínea. Si no la
+                          tenemos, el mismo botón abre Skyscanner. */}
+                      {book && (
+                        <a href={book.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
+                          title={book.hint}
+                          aria-label={book.hint}
+                          onClick={() => track("book_click", { provider: book.provider, airline: book.airline, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
                         </a>
                       )}
-                      {ssUrl && (
+                      {ssUrl && book?.provider !== "skyscanner" && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta"
                           onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Search size={16} aria-hidden="true" /></span>

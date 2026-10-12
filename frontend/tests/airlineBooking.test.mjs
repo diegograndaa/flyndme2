@@ -42,6 +42,52 @@ test("easyJet, Wizz, Ryanair y Vueling abren su web con trayecto, fecha y viajer
   assert.match(vy.url, /o=MAD/);
   assert.match(vy.url, /dd=2026-10-15/);
   assert.match(vy.url, /ofn=VY2115/);
+
+  const abuDhabi = buildAirlineBookingUrl({ ...base, airline: "5W" });
+  assert.equal(abuDhabi.airlineName, "Wizz Air");
+  assert.match(abuDhabi.url, /^https:\/\/www\.wizzair\.com\/en-gb\/booking\/select-flight\/MAD\/LTN\//);
+});
+
+test("British Airways, KLM y Finnair abren su búsqueda con trayecto, fecha y viajeros", () => {
+  const ba = buildAirlineBookingUrl({ ...base, airline: "BA" });
+  assert.equal(ba.airlineName, "British Airways");
+  const baUrl = new URL(ba.url);
+  assert.equal(baUrl.origin + baUrl.pathname, "https://www.britishairways.com/travel/book/public/en_gb/flightList");
+  assert.equal(baUrl.searchParams.get("onds"), "MAD-LTN_2026-10-15");
+  assert.equal(baUrl.searchParams.get("ad"), "2");
+  assert.equal(baUrl.searchParams.get("cabin"), "M");
+
+  const cityflyer = buildAirlineBookingUrl({ ...base, airline: "CJ", returnDate: "2026-10-20" });
+  assert.equal(
+    new URL(cityflyer.url).searchParams.get("onds"),
+    "MAD-LTN_2026-10-15,LTN-MAD_2026-10-20",
+  );
+
+  const kl = buildAirlineBookingUrl({ ...base, airline: "KL", returnDate: "2026-10-20" });
+  assert.equal(kl.airlineName, "KLM");
+  const klUrl = new URL(kl.url);
+  assert.equal(klUrl.origin + klUrl.pathname, "https://www.klm.com/search/offers");
+  assert.equal(klUrl.searchParams.get("pax"), "2:0:0:0");
+  assert.equal(klUrl.searchParams.get("connections"), "MAD:A:20261015>LTN:A-LTN:A:20261020>MAD:A");
+  assert.equal(klUrl.searchParams.get("cabinClass"), "ECONOMY");
+
+  const hopper = buildAirlineBookingUrl({ ...base, airline: "wa" });
+  assert.equal(new URL(hopper.url).searchParams.get("connections"), "MAD:A:20261015>LTN:A");
+
+  const ay = buildAirlineBookingUrl({ ...base, airline: "AY", returnDate: "2026-10-20" });
+  assert.equal(ay.airlineName, "Finnair");
+  const ayUrl = new URL(ay.url);
+  assert.equal(ayUrl.origin + ayUrl.pathname, "https://www.finnair.com/es-es/booking/flight-selection");
+  assert.deepEqual(JSON.parse(ayUrl.searchParams.get("json")), {
+    flights: [
+      { origin: "MAD", destination: "LTN", departureDate: "2026-10-15" },
+      { origin: "LTN", destination: "MAD", departureDate: "2026-10-20" },
+    ],
+    adults: 2,
+    children: 0,
+    infants: 0,
+    cabin: "ECONOMY",
+  });
 });
 
 test("sin aerolínea conocida no hay enlace: no se manda a otra web", () => {

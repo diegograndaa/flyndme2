@@ -49,7 +49,7 @@
     "faqs": [
       {
         "q": "Does FlyndMe sell tickets?",
-        "a": "Each Reserve opens that airline's website for the same route, date and travelers. The price there is the airline's current price, not the estimate on this card. At the group total you can buy the flights here: you pay the fare that can be issued now, plus a FlyndMe commission and the card fee, and the ticket is issued in the traveler's name. If that sale is not connected, nothing is charged."
+        "a": "Each Reserve opens that airline's website for the same route, date and travelers. If we don't have that airline's page, it opens Skyscanner for the same search. The price there is the current price, not the estimate on this card. At the group total you can buy the flights here: you pay the fare that can be issued now, plus a FlyndMe commission and the card fee, and the ticket is issued in the traveler's name. If that sale is not connected, nothing is charged."
       },
       {
         "q": "How do you know if a destination is fair for everyone?",
@@ -294,10 +294,11 @@
     "spreadSub": "Between the most and least expensive flight",
     "destsFound": "Destinations found",
     "bookTitle": "Boarding gate: book your flight",
-    "bookSub": "One link per traveler to their airline's site. If there is no link, compare on Skyscanner and Google Flights.",
+    "bookSub": "One link per traveler. It opens that airline's site, or Skyscanner if we don't have the airline's page.",
     "bookCta": "Book",
     "bookOnAirline": "Book on {{airline}}",
     "bookOnAirlineHint": "Opens {{airline}}'s site for this route, date and travelers. The price there is theirs, not this estimate.",
+    "bookOnSkyscannerHint": "Opens Skyscanner for this route, date and travelers. The price there is the one they show now, not this estimate.",
     "bookLabel": "Book on the airline's website — one link per traveler",
     "buyGroup": "Buy the group's flights",
     "buyGroupHint": "One payment here. The charge is the fare that can be issued now, plus FlyndMe's commission and the card fee.",
@@ -306,7 +307,7 @@
     "saleCardFee": "Card fee",
     "saleTotal": "To pay",
     "saleQuoting": "Looking up the fare that can be issued…",
-    "saleNotConfigured": "Selling from FlyndMe is not connected yet. Nothing is charged. You can book each flight on its airline's website.",
+    "saleNotConfigured": "Selling from FlyndMe is not connected yet. Nothing is charged. Reserve opens the airline's site, or Skyscanner for the same route and date.",
     "saleNotForSale": "The flight from {{origin}} is not for sale right now. We do not swap it for another.",
     "saleNotIdentified": "The exact flight cannot be identified. Nothing is charged.",
     "saleFailed": "The purchase could not be prepared. Nothing was charged.",
