@@ -8,6 +8,8 @@ import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
 } from "../utils/helpers";
+import { buildAirlineBookingUrl } from "../utils/airlineBooking";
+import GroupSalePanel from "./GroupSalePanel";
 import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
@@ -55,6 +57,7 @@ const WinnerCard = React.memo(function WinnerCard({
   isFav = false, onToggleFav,
   watched = false, onToggleWatch,
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
+  onRequestSale, sale = null, onSubmitPassengers, onSalePaid, onSaleFailed,
 }) {
   const { t, lang } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -135,6 +138,24 @@ const WinnerCard = React.memo(function WinnerCard({
     dest.totalCostEUR,
     currency,
   );
+  const saleLegs = cleanOrigins.map((origin) => {
+    const offer = offerMap[origin];
+    const finfo = flightInfoMap[origin] || {};
+    const segs = offer?.itineraries?.[0]?.segments || [];
+    const first = segs[0] || {};
+    const last = segs[segs.length - 1] || first;
+    const effDep = finfo.flightDate || dep;
+    const effRet = tripType === "roundtrip" ? (finfo.flightReturnDate || ret) : "";
+    return {
+      origin: offer?.tp?.originAirport || first.departure?.iataCode || origin,
+      destination: offer?.tp?.destinationAirport || last.arrival?.iataCode || code,
+      departureDate: effDep,
+      returnDate: effRet || undefined,
+      airline: first.carrierCode || offer?.validatingAirlineCodes?.[0] || "",
+      flightNumber: first.number || "",
+      passengers: Number(finfo.passengers) || Number(offer?.passengers) || 1,
+    };
+  });
 
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
@@ -242,6 +263,16 @@ const WinnerCard = React.memo(function WinnerCard({
                 const retTime = hhmm(retSegments[0]?.departure?.at);
                 const flightNo = segments[0]?.carrierCode && segments[0]?.number ? `${segments[0].carrierCode} ${segments[0].number}` : "";
                 const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
+                const airlineCode = segments[0]?.carrierCode || offer?.validatingAirlineCodes?.[0] || "";
+                const booking = buildAirlineBookingUrl({
+                  airline: airlineCode,
+                  origin: ssOrigin,
+                  destination: ssDest,
+                  departureDate: effDep,
+                  returnDate: tripType === "roundtrip" ? effRet : "",
+                  adults: pax,
+                  flightNumber: segments[0]?.number || "",
+                });
                 const legEq = typeof price === "number"
                   ? legEquation(price, pax, finfo.totalForOrigin, currency)
                   : null;
@@ -357,12 +388,14 @@ const WinnerCard = React.memo(function WinnerCard({
                       </div>
                     )}
                     <div className="wc-flight-ctas">
-                      {/* CTA principal: deep link de Aviasales con marker de
-                          afiliado (única vía de monetización). Lleva la búsqueda
-                          exacta de este precio ya hecha. */}
-                      {offer?.link && (
-                        <a href={offer.link} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
-                          onClick={() => track("book_click", { provider: "travelpayouts", dest: code, origin, where: "winner" })}>
+                      {/* Reservar abre la web de ESA aerolínea (ruta, fecha y
+                          viajeros). El precio allí es el suyo. Si no hay enlace
+                          conocido, no se manda a otra web. */}
+                      {booking && (
+                        <a href={booking.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
+                          title={t("results.bookOnAirlineHint", { airline: booking.airlineName })}
+                          aria-label={t("results.bookOnAirlineHint", { airline: booking.airlineName })}
+                          onClick={() => track("book_click", { provider: "airline", airline: booking.airlineName, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
                         </a>
@@ -445,6 +478,16 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
           {fxRateLabel(currency, lang) && (
             <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
+          )}
+          {!singleOrigin && (
+            <GroupSalePanel
+              legs={saleLegs}
+              sale={sale}
+              onRequest={onRequestSale}
+              onSubmit={onSubmitPassengers}
+              onPaid={onSalePaid}
+              onFail={onSaleFailed}
+            />
           )}
         </div>
       </div>

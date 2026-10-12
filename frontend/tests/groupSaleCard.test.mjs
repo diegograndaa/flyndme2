@@ -1,0 +1,107 @@
+// Reservar abre la web de la aerolínea. El total del grupo ofrece comprar aquí.
+// Sin tarifa emitible no se pinta un importe de cobro.
+import "./_domStubs.mjs";
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+const { renderToString } = await import("react-dom/server");
+const React = (await import("react")).default;
+const { I18nProvider } = await import("../src/i18n/useI18n.jsx");
+const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
+
+function render(element) {
+  return renderToString(React.createElement(I18nProvider, null, element));
+}
+
+const LONDON = {
+  destination: "LON",
+  bestDate: "2026-10-15",
+  totalCostEUR: 61,
+  averageCostPerTraveler: 30.5,
+  totalPassengers: 2,
+  verificationStatus: "skipped",
+  flights: [
+    {
+      origin: "MAD", price: 41, passengers: 1, totalForOrigin: 41,
+      offer: {
+        link: "https://www.aviasales.com/search/MAD1510LTN1",
+        validatingAirlineCodes: ["W9"],
+        tp: { originAirport: "MAD", destinationAirport: "LTN" },
+        itineraries: [{ segments: [{ carrierCode: "W9", number: "1234", departure: { iataCode: "MAD", at: "2026-10-15T08:00:00" }, arrival: { iataCode: "LTN" } }] }],
+      },
+    },
+    {
+      origin: "BCN", price: 20, passengers: 1, totalForOrigin: 20,
+      offer: {
+        link: "https://www.aviasales.com/search/BCN1510LTN1",
+        validatingAirlineCodes: ["U2"],
+        tp: { originAirport: "BCN", destinationAirport: "LTN" },
+        itineraries: [{ segments: [{ carrierCode: "U2", number: "5678", departure: { iataCode: "BCN", at: "2026-10-15T09:00:00" }, arrival: { iataCode: "LTN" } }] }],
+      },
+    },
+  ],
+};
+
+const base = {
+  origins: ["MAD", "BCN"],
+  departureDate: "2026-10-15",
+  tripType: "oneway",
+  currency: "EUR",
+  uiCriterion: "total",
+};
+
+test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece comprar el grupo", () => {
+  const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
+  assert.ok(html.includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), html);
+  assert.ok(html.includes("https://www.easyjet.com/en/buy/flights?"), html);
+  assert.ok(html.includes("origin=BCN"), html);
+  assert.ok(html.includes("departureDate=2026-10-15"), html);
+  assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
+  assert.match(html, /Comprar los vuelos del grupo|Buy the group/);
+});
+
+test("con un solo origen no hay compra de grupo", () => {
+  const one = {
+    ...LONDON,
+    totalPassengers: 1,
+    flights: [LONDON.flights[0]],
+  };
+  const html = render(React.createElement(WinnerCard, { ...base, origins: ["MAD"], dest: one }));
+  assert.ok(!html.includes("wc-sale"), "un origen no compra el grupo");
+  assert.ok(html.includes("wizzair.com"), "el Reservar de ese vuelo sigue");
+});
+
+test("la tarifa emitible se enseña aparte de la estimación, con comisión", () => {
+  const sale = {
+    phase: "quote",
+    quote: {
+      quoteId: "q1",
+      currency: "EUR",
+      markupPercent: 5,
+      passengerCount: 2,
+      fare: "61.00",
+      commission: "3.05",
+      cardFee: "1.91",
+      charge: "65.96",
+      legs: [
+        { origin: "MAD", destination: "LTN", passengers: 1 },
+        { origin: "BCN", destination: "LTN", passengers: 1 },
+      ],
+    },
+  };
+  const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON, sale }));
+  assert.ok(html.includes("65.96") || html.includes("€65.96"), html);
+  assert.ok(/Comisión FlyndMe \(5%\)|FlyndMe commission \(5%\)/.test(html), html);
+  assert.ok(html.includes("sale-MAD-0-given"), "un viajero por tramo");
+  assert.ok(html.includes("sale-BCN-1-given"));
+  assert.ok(!html.includes("aviasales.com"));
+});
+
+test("sin venta conectada no se inventa un cobro", () => {
+  const html = render(React.createElement(WinnerCard, {
+    ...base, dest: LONDON, sale: { phase: "error", code: "BOOKING_NOT_CONFIGURED" },
+  }));
+  assert.ok(/no está conectada|not connected yet/i.test(html), html);
+  assert.ok(!html.includes("wc-sale-lines"), "sin tarifa no hay desglose de cobro");
+  assert.ok(!html.includes("saleRetry") && !/Volver a pedir la tarifa|Ask for the fare again/.test(html));
+});

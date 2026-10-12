@@ -386,6 +386,9 @@ export default function App() {
   // Comprobación del precio que se está viendo. phase ∈ "loading" | "unavailable"
   // | null; code = destino al que aplica.
   const [liveCheck, setLiveCheck] = useState({ code: null, phase: null });
+  // Compra del grupo en esta app. Se tira al cambiar el destino en pantalla.
+  const [groupSale, setGroupSale] = useState(null);
+  const saleSeq = useRef(0);
 
   // ── Recent searches (localStorage) ────────────────────────────────────────
   const RECENT_KEY = "flyndme_recent";
@@ -631,6 +634,16 @@ export default function App() {
     const code = normalizeCode(bestDestination?.destination);
     return listedFlights.find((d) => normalizeCode(d.destination) === code) || listedFlights[0];
   }, [listedFlights, bestDestination]);
+  const saleKey = displayDest
+    ? `${normalizeCode(displayDest.destination)}|${displayDest.bestDate || ""}|${(displayDest.flights || []).map((f) => {
+        const seg = f.offer?.itineraries?.[0]?.segments?.[0];
+        return `${f.origin}:${seg?.carrierCode || ""}:${seg?.number || ""}:${f.passengers || 1}`;
+      }).join(",")}`
+    : "";
+  useEffect(() => {
+    saleSeq.current += 1;
+    setGroupSale(null);
+  }, [saleKey]);
   // Fechas que de verdad abaratan ESTE destino (el calendario del proveedor).
   // Si el usuario elige otro en el panel, no se muestran: son de otro ganador.
   const dateRecs = useMemo(() => {
@@ -1121,6 +1134,88 @@ export default function App() {
   // el efecto en cada render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, shownVerifyKey]);
+
+  const requestGroupSale = async (legs) => {
+    const seq = ++saleSeq.current;
+    const key = saleKey;
+    setGroupSale({ phase: "quoting", key });
+    try {
+      const res = await fetch(`${API_BASE}/api/flights/group-sale/quote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ legs }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (seq !== saleSeq.current) return;
+      if (!data?.available) {
+        setGroupSale({ phase: "error", key, code: data?.code || "SALE_FAILED", origin: data?.origin || null });
+        return;
+      }
+      setGroupSale({ phase: "quote", key, quote: data });
+    } catch {
+      if (seq !== saleSeq.current) return;
+      setGroupSale({ phase: "error", key, code: "SALE_FAILED" });
+    }
+  };
+
+  const submitSalePassengers = async (people, email, phone) => {
+    const quoteId = groupSale?.quote?.quoteId;
+    if (!quoteId) return;
+    const seq = saleSeq.current;
+    setGroupSale((s) => (s ? { ...s, phase: "paying", code: null } : s));
+    try {
+      const res = await fetch(`${API_BASE}/api/flights/group-sale/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId, passengers: people, email, phone }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (seq !== saleSeq.current) return;
+      const keepForm = ["INVALID_NAME", "INVALID_BIRTH_DATE", "ADULT_REQUIRED", "INVALID_GENDER", "INVALID_TITLE", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSENGERS"].includes(data?.code);
+      if (!data?.ok || !data.clientToken) {
+        setGroupSale((s) => (s ? { ...s, phase: keepForm ? "quote" : "error", code: data?.code || "SALE_FAILED" } : s));
+        return;
+      }
+      setGroupSale((s) => (s ? { ...s, phase: "card", clientToken: data.clientToken, code: null } : s));
+    } catch {
+      if (seq !== saleSeq.current) return;
+      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
+    }
+  };
+
+  const finishGroupSale = async () => {
+    const quoteId = groupSale?.quote?.quoteId;
+    if (!quoteId) return;
+    const seq = saleSeq.current;
+    setGroupSale((s) => (s ? { ...s, phase: "completing" } : s));
+    try {
+      const res = await fetch(`${API_BASE}/api/flights/group-sale/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (seq !== saleSeq.current) return;
+      if (data?.ok && data.status === "issued") {
+        setGroupSale((s) => (s ? { ...s, phase: "issued", orders: data.orders || [], code: null } : s));
+        return;
+      }
+      if (data?.code === "TICKET_PARTIAL" || data?.status === "partial") {
+        setGroupSale((s) => (s ? {
+          ...s, phase: "partial", code: "TICKET_PARTIAL", orders: data.orders || [], failedOrigin: data.failedOrigin || null,
+        } : s));
+        return;
+      }
+      setGroupSale((s) => (s ? { ...s, phase: "error", code: data?.code || "SALE_FAILED" } : s));
+    } catch {
+      if (seq !== saleSeq.current) return;
+      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
+    }
+  };
+
+  const failGroupSale = () => {
+    setGroupSale((s) => (s ? { ...s, phase: "error", code: "PAYMENT_NOT_CONFIRMED", clientToken: null } : s));
+  };
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
   // fecha cercana donde el GRUPO pague menos? En ida y vuelta el backend mueve
@@ -2137,6 +2232,11 @@ export default function App() {
             onToggleFav={() => toggleFav(displayDest)}
             watched={isWatched(displayDest)}
             onToggleWatch={() => toggleWatch(displayDest)}
+            onRequestSale={requestGroupSale}
+            sale={groupSale}
+            onSubmitPassengers={submitSalePassengers}
+            onSalePaid={finishGroupSale}
+            onSaleFailed={failGroupSale}
             mapSlot={listedFlights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>

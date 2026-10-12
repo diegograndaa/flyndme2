@@ -2016,6 +2016,40 @@ button,
 }
 .wc-total-foot .wc-verify-caption { font-size: 12px; color: var(--slate-500); }
 .wc-total .wc-fx-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
+.wc-sale { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--slate-300); }
+.wc-sale-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 44px; padding: 10px 14px;
+  background: var(--sign); color: var(--on-sign);
+  border: 1px solid var(--sign); border-radius: 4px;
+  font-size: 15px; font-weight: 700;
+}
+.wc-sale-btn:disabled { opacity: .65; }
+.wc-sale-btn--ghost { background: transparent; color: var(--navy); border-color: var(--navy); }
+.wc-sale-hint, .wc-sale-note, .wc-sale-kicker {
+  margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--slate-500);
+}
+.wc-sale-kicker { font-weight: 700; color: var(--navy); }
+.wc-sale-lines { margin: 10px 0 0; display: grid; gap: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--slate-700); }
+.wc-sale-lines div { display: flex; justify-content: space-between; gap: 12px; }
+.wc-sale-lines strong { color: var(--navy); }
+.wc-sale-form { display: grid; gap: 10px; margin-top: 12px; }
+.wc-sale-person {
+  display: grid; gap: 8px; margin: 0; padding: 10px;
+  border: 1px solid var(--line); border-radius: 4px;
+}
+.wc-sale-person legend { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--navy); }
+.wc-sale-person-fields { display: grid; gap: 8px; }
+.wc-sale-field { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--navy); }
+.wc-sale-field input, .wc-sale-field select {
+  font-size: 16px; min-height: 44px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: var(--white); color: var(--navy);
+}
+.wc-sale-field-hint { font-size: 12px; font-weight: 500; color: var(--slate-500); }
+@media (min-width: 700px) {
+  .wc-sale-person-fields { grid-template-columns: 1fr 1fr; }
+}
 .wc-total-foot .wc-verify-status { font-size: 12.5px; color: var(--slate-700); display: inline-flex; align-items: center; gap: 6px; }
 .wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn {
   display: inline-flex; align-items: center; gap: 6px;
