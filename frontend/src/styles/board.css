@@ -820,7 +820,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   align-items: start;
 }
 @media (min-width: 861px) {
-  .fm-results-layout:has(.fm-filters) { grid-template-columns: 232px minmax(0, 1fr); }
+  /* Lateral estrecho: la decisión (foto y vuelos) sigue siendo lo ancho. */
+  .fm-results-layout:has(.fm-filters) { grid-template-columns: 156px minmax(0, 1fr); gap: 10px; }
 }
 .fm-filters {
   background: var(--panel-bg);
@@ -921,14 +922,27 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-filter-reset:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 @media (min-width: 861px) {
   .fm-filters-toggle { display: none; }
-  .fm-filters-body { display: flex; }
+  .fm-filters-body { display: flex; gap: 10px; }
   .fm-filters--open .fm-filters-body { margin-top: 0; }
   .fm-filters {
     position: sticky;
     top: 72px;
     max-height: calc(100dvh - 88px);
     overflow: auto;
+    padding: 8px;
   }
+  .fm-filter-block { gap: 4px; }
+  .fm-filter-opts { gap: 4px; }
+  .fm-filter-opt {
+    min-height: 40px;
+    padding: 6px 8px;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .fm-filter-opt > span:first-child { min-width: 0; }
+  .fm-filter-opt-n { font-size: 12px; }
+  .fm-filter-reset { font-size: 12px; padding: 6px 8px; }
   .fm-results-main > .fm-sticky-bar { margin-left: 0; margin-right: 0; }
 }
 .fm-results-main { min-width: 0; }
