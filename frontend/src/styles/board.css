@@ -705,9 +705,10 @@
    la misma búsqueda, sin precio. Las recomendadas sí llevan el total real. */
 .fm-date-row {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
-  margin: -8px 0 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
 }
 .fm-date-strip {
   display: flex;
@@ -715,6 +716,7 @@
   gap: 12px;
   flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   margin: 0;
   padding: 8px 10px 8px 14px;
   background: var(--panel-bg);
@@ -763,13 +765,14 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-date-strip-wd { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: capitalize; }
 .fm-date-strip-n { font-size: 15px; font-weight: 700; }
 .fm-date-recs {
-  flex: 0 1 220px;
+  flex: 1 1 280px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 6px 8px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
   border-radius: var(--radius-md);
@@ -785,10 +788,10 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 }
 .fm-date-rec {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
   min-height: 40px;
   padding: 4px 8px;
   border: 1px solid var(--line);
@@ -799,16 +802,34 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   font-size: 12px;
   line-height: 1.25;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 .fm-date-rec:hover { border-color: var(--primary); }
 .fm-date-rec:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-date-rec-save { font-weight: 700; }
 @media (max-width: 600px) {
-  .fm-date-row { flex-direction: column; }
-  .fm-date-strip { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; }
-  .fm-date-strip-label { max-width: none; }
-  .fm-date-recs { flex: 1 1 auto; }
+  .fm-date-row { flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
+  .fm-date-strip {
+    flex: 0 1 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .fm-date-strip-label { max-width: 6.5rem; flex: 0 0 auto; }
+  .fm-date-recs {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+  .fm-date-recs::-webkit-scrollbar { display: none; }
+  .fm-date-rec { flex: 0 0 auto; }
 }
 
 /* Filtros a la izquierda de la decisión. En el móvil se pliegan: la decisión
@@ -2780,8 +2801,8 @@ button,
   .fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { flex-wrap: nowrap; gap: 8px; padding: 6px 6px 6px 12px; }
   .fm-sticky-dest.fm-sticky-dest { flex: 1 1 0; }
   .fm-sticky-btn-text { display: none; }
-  .fm-sticky-btn.fm-sticky-btn { width: 36px; height: 36px; padding: 0; justify-content: center; }
-  .fm-currency-switcher .fm-currency-btn { min-width: 30px; height: 32px; padding: 0 6px; }
+  .fm-sticky-btn.fm-sticky-btn { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .fm-currency-switcher .fm-currency-btn { min-width: 40px; height: 40px; padding: 0 6px; }
 
   /* Acciones de la tarjeta: rejilla de 2 columnas en vez de botones a
      distinta anchura que caían donde cupieran */
