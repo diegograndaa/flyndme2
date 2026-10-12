@@ -19,7 +19,7 @@ import { listResults, DEFAULT_FILTERS, arrivalStatus } from "./utils/resultFilte
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
-import { shouldVerify, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
+import { autoVerifyDecision, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
 import { isOffline } from "./utils/network";
 import { paxByOrigin, totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "./utils/passengers";
@@ -379,10 +379,12 @@ export default function App() {
   const searchAbortRef = useRef(null);
   const [backendWaking, setBackendWaking] = useState(false);
   const verifyAbortRef = useRef(null);
+  // Destinos ya enviados a /verify en esta búsqueda. Evita repetir el POST
+  // automático; el botón puede volver a pedirlo.
+  const verifyAttemptedRef = useRef(new Set());
 
-  // Verificación bajo demanda (#5): estado del control "Comprobar precio en vivo"
-  // del ganador. phase ∈ "loading" | "unavailable" | null; code = destino al que
-  // aplica (verifyPhase se resetea solo al cambiar de ganador o de búsqueda).
+  // Comprobación del precio que se está viendo. phase ∈ "loading" | "unavailable"
+  // | null; code = destino al que aplica.
   const [liveCheck, setLiveCheck] = useState({ code: null, phase: null });
 
   // ── Recent searches (localStorage) ────────────────────────────────────────
@@ -1024,69 +1026,101 @@ export default function App() {
     throw last || new Error("network");
   }
 
-  // ── Verificación de precio del ganador (capa 2, en segundo plano) ──────────
-  // Tras pintar resultados, re-tarifica el destino ganador contra
-  // POST /api/flights/verify (SerpAPI, 5-20 s). Sin spinners ni UI nueva: el
-  // único cambio visual es que VerificationBadge pasa de "orientativo" a ✓/↑/↓.
-  // Fallo SIEMPRE silencioso: si la petición falla o responde "skipped", el
-  // badge "precio orientativo" se queda como está.
+  // ── Verificación de precio del destino en pantalla (capa 2) ────────────────
+  // Al pintar, y al cambiar el destino de la tarjeta, se re-tarifica ESE
+  // destino contra POST /api/flights/verify (Google Flights, 10-20 s). El
+  // número grande sigue siendo la caché hasta que la respuesta es completa;
+  // entonces mergeVerification lo sustituye. Una respuesta a medias no toca
+  // el precio. No se re-ordena la lista. Si la red falla, la app lo reintenta
+  // una vez; no hay un botón para que lo haga el usuario.
 
   const applyVerification = (destCode, verification) => {
     const code = normalizeCode(destCode);
     const upd = (d) =>
       d && normalizeCode(d.destination) === code ? mergeVerification(d, verification) : d;
-    // Mismo destino en la lista y en bestByCriterion: solo se añaden campos
-    // verified*; ni se re-ordena ni cambian los precios mostrados.
     setFlights((prev) => prev.map(upd));
     setBestByCriterion((prev) => ({ ...prev, total: upd(prev.total), fairness: upd(prev.fairness) }));
   };
 
-  // Verificación capa 2 BAJO DEMANDA (#5). Ya NO se auto-dispara en cada
-  // búsqueda: con un pico de tráfico eso quema el cupo de SerpAPI (~250/mes) en
-  // minutos. Por defecto el ganador queda como "estimación en caché" (honesto);
-  // solo cuando el usuario pulsa "Comprobar precio en vivo" llamamos a /verify.
-  const handleVerifyWinner = (winner) => {
-    if (!winner || !shouldVerify(winner, { partial: partialResults })) return;
-    const code = normalizeCode(winner.destination);
+  const handleVerifyWinner = (winner, { retry = false } = {}) => {
+    const code = normalizeCode(winner?.destination);
+    if (!retry) {
+      if (!autoVerifyDecision(winner, { partial: partialResults, code, attempted: verifyAttemptedRef.current })) return;
+      verifyAttemptedRef.current.add(code);
+      trackEvent("verify_auto", { dest: code });
+    }
     const gen = searchGenRef.current;
-    trackEvent("verify_click", { dest: code });
     setLiveCheck({ code, phase: "loading" });
 
     // Fecha REAL del ganador (con fechas flexibles puede no ser la del formulario)
     const payload = buildVerifyPayload(winner, { departureDate: winner.bestDate || departureDate, returnDate: winner.bestReturnDate || returnDate, tripType });
-    verifyAbortRef.current?.abort();
-    const controller = new AbortController();
-    verifyAbortRef.current = controller;
+    const ticket = { superseded: false, controller: new AbortController() };
+    if (verifyAbortRef.current) {
+      verifyAbortRef.current.superseded = true;
+      verifyAbortRef.current.controller.abort();
+    }
+    verifyAbortRef.current = ticket;
     // Sin respuesta en 35 s (el backend corta a los 20 s y Render a los ~30 s):
-    // se aborta y el botón pasa a «no se pudo comprobar» en vez de quedarse girando.
-    const verifyTimer = setTimeout(() => controller.abort(), 35000);
+    // se aborta. La app lo intenta una vez más; si tampoco hay respuesta, avisa.
+    const verifyTimer = setTimeout(() => ticket.controller.abort(), 35000);
 
     fetch(`${API_BASE}/api/flights/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: controller.signal,
+      signal: ticket.controller.signal,
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.ok) return res.json();
+        const err = new Error("verify-http");
+        err.status = res.status;
+        throw err;
+      })
       .then((data) => {
-        if (searchGenRef.current !== gen) return; // búsqueda nueva: descartar
+        if (searchGenRef.current !== gen || ticket.superseded) return;
         if (isFullyVerified(winner, data)) {
-          // Verificación COMPLETA: mergeVerification promociona el precio
-          // verificado a mostrado y el badge pasa a ✓/↑↓. Quitamos el transitorio.
           applyVerification(winner.destination, data);
           setLiveCheck({ code: null, phase: null });
         } else {
           // skipped/partial/failed/timeout: NO mergeamos (un total mezcla no es
           // verificado). Seguimos en "estimación en caché" + aviso honesto.
+          // No se reintenta: la respuesta ya gastó la consulta en vivo.
           setLiveCheck({ code, phase: "unavailable" });
         }
       })
-      .catch(() => {
-        if (searchGenRef.current !== gen) return; // abortada por búsqueda nueva
+      .catch((err) => {
+        if (searchGenRef.current !== gen) return;
+        // Otra ciudad (o una búsqueda nueva) sustituyó esta petición: se podrá
+        // volver a pedir si el usuario regresa a este destino.
+        if (ticket.superseded) {
+          verifyAttemptedRef.current.delete(code);
+          return;
+        }
+        // Corte de red, tiempo agotado o proxy dormido (502/503/504): la app
+        // lo repite sola, una vez. Un 429 o un 400 no se repite.
+        const status = err && err.status;
+        const retryable = status == null || status === 502 || status === 503 || status === 504;
+        if (!retry && retryable) {
+          handleVerifyWinner(winner, { retry: true });
+          return;
+        }
         setLiveCheck({ code, phase: "unavailable" });
       })
       .finally(() => clearTimeout(verifyTimer));
   };
+
+  // El destino que se ve (ganador al buscar, u otro si lo eligen en Salidas o
+  // en el mapa) se comprueba solo. Una vez por código.
+  const shownVerifyKey = displayDest
+    ? `${normalizeCode(displayDest.destination)}:${displayDest.verificationStatus || ""}`
+    : "";
+  useEffect(() => {
+    if (view !== "results" || !displayDest) return;
+    handleVerifyWinner(displayDest);
+  // handleVerifyWinner cierra sobre la búsqueda actual; la clave evita repetir
+  // el efecto en cada render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, shownVerifyKey]);
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
   // fecha cercana donde el GRUPO pague menos? En ida y vuelta el backend mueve
@@ -1335,8 +1369,13 @@ export default function App() {
     searchGenRef.current += 1;
     const gen = searchGenRef.current;
     const cancelled = () => searchGenRef.current !== gen;
-    verifyAbortRef.current?.abort();
+    if (verifyAbortRef.current) {
+      verifyAbortRef.current.superseded = true;
+      verifyAbortRef.current.controller.abort();
+    }
     verifyAbortRef.current = null;
+    verifyAttemptedRef.current = new Set();
+    setLiveCheck({ code: null, phase: null });
     setLiveCheck({ code: null, phase: null });
 
     try {
@@ -1475,10 +1514,9 @@ export default function App() {
             tripType,
             winner: arr[0]?.destination,
           });
-          // Capa 2 (SerpAPI): ya NO se auto-verifica (#5) — quemaba el cupo en
-          // picos de tráfico. Ahora es bajo demanda desde la WinnerCard
-          // (handleVerifyWinner). El nudge de fecha SÍ sigue auto: usa el
-          // calendario de Travelpayouts (gratis/ilimitado), no SerpAPI.
+          // La comprobación del ganador la dispara el efecto de displayDest
+          // (solo ese destino, una vez). El nudge de fecha sigue aquí: usa el
+          // calendario de Travelpayouts, no SerpAPI.
           const winner = optimizeBy === "fairness" ? pickBest(adjusted, "fairness") : bestTotal;
           fetchCheaperDate(winner, searchGenRef.current);
           return;
@@ -2093,7 +2131,6 @@ export default function App() {
             shareStatus={shareStatus}
             onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
             onChangeSearch={() => setView("search")}
-            onVerify={() => handleVerifyWinner(displayDest)}
             verifyPhase={liveCheck.code === normalizeCode(displayDest.destination) ? liveCheck.phase : null}
             currency={currency}
             isFav={isFav(displayDest.destination)}

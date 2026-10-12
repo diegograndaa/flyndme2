@@ -21,6 +21,17 @@ export function shouldVerify(dest, { partial = false } = {}) {
   return true;
 }
 
+// ¿Disparar la comprobación solos? Una vez por destino y búsqueda: `attempted`
+// guarda los códigos ya pedidos. Si la red falla, App.jsx reintenta una vez
+// por su cuenta; esta función no vuelve a decir que sí para el mismo código.
+export function autoVerifyDecision(dest, { partial = false, code, attempted } = {}) {
+  if (!shouldVerify(dest, { partial })) return false;
+  const key = String(code || dest.destination || "").trim().toUpperCase();
+  if (!key) return false;
+  if (attempted && attempted.has(key)) return false;
+  return true;
+}
+
 // Construye el payload de POST /api/flights/verify a partir del destino ganador
 // y de las fechas de la búsqueda. IMPORTANTE: cuando hubo date-fallback (fecha
 // vecina), se manda la fecha REAL del vuelo — de ahí el orden de preferencia

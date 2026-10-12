@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  shouldVerify, buildVerifyPayload, mergeVerification,
+  shouldVerify, autoVerifyDecision, buildVerifyPayload, mergeVerification,
 } from "../src/utils/verification.js";
 
 const SEARCH_RT = { departureDate: "2026-07-10", returnDate: "2026-07-14", tripType: "roundtrip" };
@@ -132,6 +132,27 @@ test("shouldVerify: solo con status skipped y flights presentes", () => {
   assert.equal(shouldVerify(makeDest({ verificationStatus: undefined })), false);
   assert.equal(shouldVerify(makeDest({ flights: [] })), false);
   assert.equal(shouldVerify(makeDest({ flights: undefined })), false);
+});
+
+test("auto-verify: un ganador skipped se pide una vez; una respuesta a medias no cambia el precio", () => {
+  const dest = makeDest({ verificationStatus: "skipped" });
+  const attempted = new Set();
+  assert.equal(autoVerifyDecision(dest, { code: "ROM", attempted }), true);
+  attempted.add("ROM");
+  assert.equal(autoVerifyDecision(dest, { code: "ROM", attempted }), false, "no se repite el POST");
+  assert.equal(autoVerifyDecision(dest, { code: "PAR", attempted }), true, "otro destino sí se comprueba");
+  assert.equal(autoVerifyDecision(makeDest({ verificationStatus: "verified" }), { code: "ROM" }), false);
+  const partial = mergeVerification(dest, {
+    verificationStatus: "partial",
+    verifiedTotalCostEUR: 999,
+    flights: [
+      { origin: "MAD", verifiedPrice: 130 },
+      { origin: "LON", verifiedPrice: null },
+    ],
+  });
+  assert.equal(partial.totalCostEUR, dest.totalCostEUR);
+  assert.equal(partial.flights[0].price, dest.flights[0].price);
+  assert.equal(partial.verificationStatus, "partial");
 });
 
 test("shouldVerify: con partial exige offers completos en todos los legs", () => {
