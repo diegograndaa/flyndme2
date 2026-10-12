@@ -84,12 +84,18 @@ const WinnerCard = React.memo(function WinnerCard({
   const singleOrigin = cleanOrigins.length <= 1;
 
 
-  // Savings vs average of all destinations
+  // Ahorro frente a la media de ESTA búsqueda. Si el destino ya se comprobó en
+  // vivo, su precio mostrado ya no es comparable con la caché de los demás:
+  // el porcentaje usa el orientativo (cached*) para no inflarlo.
   const savingsPct = useMemo(() => {
-    if (!allFlights || allFlights.length < 2 || !dest?.averageCostPerTraveler) return 0;
-    const avgAll = allFlights.reduce((s, f) => s + (f.averageCostPerTraveler || 0), 0) / allFlights.length;
+    const estimate = (f) => {
+      if (!f) return 0;
+      return Number.isFinite(f.cachedAveragePerTraveler) ? f.cachedAveragePerTraveler : (f.averageCostPerTraveler || 0);
+    };
+    if (!allFlights || allFlights.length < 2 || !estimate(dest)) return 0;
+    const avgAll = allFlights.reduce((s, f) => s + estimate(f), 0) / allFlights.length;
     if (avgAll <= 0) return 0;
-    return Math.round(((avgAll - dest.averageCostPerTraveler) / avgAll) * 100);
+    return Math.round(((avgAll - estimate(dest)) / avgAll) * 100);
   }, [allFlights, dest]);
 
   // Todos los hooks ya se han llamado de forma incondicional → early return seguro.
@@ -392,7 +398,7 @@ const WinnerCard = React.memo(function WinnerCard({
 
         {/* Cómputo global: la suma de los vuelos = total del grupo (datos del
             backend; la suma solo se muestra si cuadra con su total). */}
-        <div className="wc-total">
+        <div className="wc-total" aria-busy={verifyPhase === "loading" ? "true" : undefined}>
           <div className="wc-total-main">
             <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
             <div className="wc-total-figure">
@@ -418,16 +424,22 @@ const WinnerCard = React.memo(function WinnerCard({
             {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
           </div>
 
-          {/* Estimación honesta + comprobación en vivo bajo demanda (#5) */}
+          {/* El número de arriba es la caché hasta que la comprobación termina.
+              Si falla, el botón permite repetirla. */}
           <div className="wc-total-foot" aria-live="polite">
             {verifyPhase === "loading" ? (
               <span className="wc-verify-status">
                 <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
               </span>
             ) : verifyPhase === "unavailable" ? (
-              <span className="wc-verify-status">
-                <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
-              </span>
+              <>
+                <span className="wc-verify-status">
+                  <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
+                </span>
+                <button type="button" className="wc-verify-btn" onClick={onVerify}>
+                  <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
+                </button>
+              </>
             ) : dest.verificationStatus === "skipped" ? (
               <>
                 <span className="wc-verify-caption">{t("results.verifyCaption")}</span>
