@@ -3032,12 +3032,21 @@ html {
     animation-timeline: scroll();
     animation-range: 350px 450px;
   }
+  .fm-sticky-inner {
+    animation: stickyHits linear both;
+    animation-timeline: scroll();
+    animation-range: 350px 450px;
+  }
   @keyframes stickyReveal {
     from { opacity: 0; transform: translateY(-10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes stickyHits {
+    from { pointer-events: none; }
+    to   { pointer-events: auto; }
+  }
 }
-/* Fallback: use JS-driven class or always show after a delay */
+/* Sin scroll-timeline la barra se ve desde el principio y sí se puede pulsar. */
 @supports not (animation-timeline: scroll()) {
   .fm-sticky-bar {
     opacity: 1;
@@ -3054,8 +3063,12 @@ html {
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  pointer-events: auto;
+  /* Hasta que el scroll la enseña, no tapa los clics de la decisión. */
+  pointer-events: none;
   font-size: 13px;
+}
+@supports not (animation-timeline: scroll()) {
+  .fm-sticky-inner { pointer-events: auto; }
 }
 .fm-sticky-dest {
   font-weight: 800;
