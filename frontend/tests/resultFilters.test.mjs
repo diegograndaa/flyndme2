@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   applyResultFilters, listResults, arrivalSpreadMs, matchesArrival,
-  airlinesIn, durationSteps, DEFAULT_FILTERS,
+  airlinesIn, durationSteps, DEFAULT_FILTERS, sharedCountry, domesticCodes,
+  nextAirlines, countryKey,
 } from "../src/utils/resultFilters.js";
 
 function leg({ date = "2026-11-15", at = "08:30", dur = "PT2H", transfers = 0, airline = "IB", flightDate = null } = {}) {
@@ -76,4 +77,27 @@ test("duración y aerolínea solo dejan pasar lo que el billete declara", () => 
   const onlyIb = applyResultFilters([short, long], { ...DEFAULT_FILTERS, airlines: ["IB"] });
   assert.deepEqual(onlyIb.map((d) => d.destination), ["PAR"]);
   assert.deepEqual(airlinesIn([short, long]), ["FR", "IB"]);
+});
+
+test("solo nacional: mismo país, y un código desconocido no cuenta", () => {
+  assert.equal(sharedCountry(["MAD", "BCN"]), "Spain");
+  assert.equal(sharedCountry(["MAD", "LON"]), null);
+  assert.equal(sharedCountry(["ZZZ"]), null);
+  assert.equal(countryKey("AGP"), "Spain");
+  assert.equal(countryKey("LHR"), null);
+  const spain = domesticCodes("Spain", ["MAD", "BCN"]);
+  assert.ok(spain.includes("AGP") && spain.includes("PMI") && spain.includes("VLC"));
+  assert.ok(!spain.includes("MAD") && !spain.includes("PAR"));
+  const agp = dest("AGP", [leg(), leg()]);
+  const par = dest("PAR", [leg(), leg()]);
+  const lhr = dest("LHR", [leg(), leg()]);
+  const out = applyResultFilters([par, agp, lhr], { ...DEFAULT_FILTERS, domestic: true }, { country: "Spain" });
+  assert.deepEqual(out.map((d) => d.destination), ["AGP"]);
+  assert.equal(applyResultFilters([agp], { ...DEFAULT_FILTERS, domestic: true }, { country: null }).length, 0);
+});
+
+test("el primer toque de aerolínea la oculta, no vacía el resto", () => {
+  assert.deepEqual(nextAirlines(null, "IB", ["IB", "FR", "VY"]), ["FR", "VY"]);
+  assert.deepEqual(nextAirlines(["FR", "VY"], "IB", ["IB", "FR", "VY"]), null);
+  assert.deepEqual(nextAirlines(["VY"], "VY", ["IB", "FR", "VY"]), ["VY"]);
 });

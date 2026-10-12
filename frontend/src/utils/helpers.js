@@ -90,6 +90,35 @@ export function airportName(code) {
 
 export const AIRPORT_MAP = Object.fromEntries(AIRPORTS.map((a) => [a.code, a]));
 
+// Mismo orden que DEFAULT_DESTINATION_TIERS del backend: lo que se busca
+// cuando el formulario dice «ciudades habituales». Vacío en selectedDests.
+export const SEARCH_POOL = Object.freeze([
+  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "MAD", "BCN",
+  "DUB", "VIE", "PRG", "ATH", "BUD", "OPO", "CPH", "IST",
+  "AGP", "PMI", "NCE", "DBV", "MLA", "NAP", "ZRH",
+]);
+
+export function sameCodeSet(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((c) => set.has(c));
+}
+
+// selected vacío = pool (la búsqueda habitual), no «todas las ciudades del
+// catálogo». El primer toque quita o suma ESA ciudad sobre el pool.
+// Quitar la última no vuelve a «todas»: se queda como está (hay «Reiniciar»).
+export function nextDestSelection(selected, code, pool) {
+  const base = Array.isArray(pool) ? pool : [];
+  const current = Array.isArray(selected) && selected.length > 0 ? selected : base;
+  if (!code || !/^[A-Z]{3}$/.test(code)) return selected?.length ? selected : [];
+  const next = current.includes(code)
+    ? current.filter((c) => c !== code)
+    : [...current, code];
+  if (next.length === 0) return selected?.length ? selected : [];
+  if (sameCodeSet(next, base)) return [];
+  return next;
+}
+
 // ── Búsqueda de aeropuertos (autocompletado) ─────────────────────────────────
 // Nombres en español y variantes habituales: quien escribe "Londres", "Múnich"
 // o "Praga" debe encontrar su ciudad aunque el catálogo esté en inglés.

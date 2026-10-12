@@ -861,6 +861,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-filter-opt {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   min-height: 40px;
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -872,9 +874,16 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   text-align: left;
   cursor: pointer;
 }
+.fm-filter-opt-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--panel-muted);
+}
 .fm-filter-opt--air {
-  justify-content: center;
-  min-width: 52px;
+  justify-content: space-between;
+  min-width: 64px;
   font-family: var(--font-mono);
   font-weight: 700;
 }

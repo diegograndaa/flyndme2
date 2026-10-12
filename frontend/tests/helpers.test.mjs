@@ -7,7 +7,9 @@ import {
   normalizeCode, cityOf, destLabel, formatEur, formatDate, weekdayOf,
   todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, fairnessColor,
   countryFlag, destQuickInfo, setCityLang, countryOf,
+  SEARCH_POOL, nextDestSelection, sameCodeSet,
 } from "../src/utils/helpers.js";
+import { readFileSync } from "node:fs";
 
 test("AIRPORTS: códigos IATA únicos y válidos", () => {
   const codes = AIRPORTS.map((a) => a.code);
@@ -16,6 +18,23 @@ test("AIRPORTS: códigos IATA únicos y válidos", () => {
   for (const a of AIRPORTS) {
     assert.ok(a.city && a.country, `aeropuerto incompleto: ${a.code}`);
   }
+});
+
+test("SEARCH_POOL es el de los tiers del backend, en el mismo orden", () => {
+  const src = readFileSync(new URL("../../backend/routes/flights.js", import.meta.url), "utf8");
+  const block = src.match(/const DEFAULT_DESTINATION_TIERS = \[([\s\S]*?)\];/);
+  assert.ok(block, "no está DEFAULT_DESTINATION_TIERS");
+  const codes = [...block[1].matchAll(/"([A-Z]{3})"/g)].map((m) => m[1]);
+  assert.deepEqual([...SEARCH_POOL], codes);
+});
+
+test("quitar una ciudad parte del pool habitual, no del catálogo entero", () => {
+  const pool = ["LON", "PAR", "ROM"];
+  assert.deepEqual(nextDestSelection([], "PAR", pool), ["LON", "ROM"]);
+  assert.deepEqual(nextDestSelection([], "AGP", pool), ["LON", "PAR", "ROM", "AGP"]);
+  assert.deepEqual(nextDestSelection(["LON", "ROM"], "PAR", pool), []);
+  assert.deepEqual(nextDestSelection(["AGP"], "AGP", pool), ["AGP"]);
+  assert.equal(sameCodeSet(["AGP", "PMI"], ["PMI", "AGP"]), true);
 });
 
 test("AIRPORT_MAP es consistente con AIRPORTS", () => {

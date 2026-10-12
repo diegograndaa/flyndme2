@@ -6,6 +6,7 @@
 // misma regla que arrivalSpread.js.
 
 import { computeArrivalSpread, splitSpread } from "./arrivalSpread";
+import { AIRPORTS, AIRPORT_MAP, normalizeCode } from "./helpers";
 import { sortByCriterion } from "./resultsLogic";
 
 export const DEFAULT_FILTERS = Object.freeze({
@@ -13,7 +14,47 @@ export const DEFAULT_FILTERS = Object.freeze({
   stops: "any",         // any | direct | max1
   maxDurationMin: null, // tope de la ida, en minutos; null = sin tope
   airlines: null,       // null = todas; si no, códigos permitidos
+  domestic: false,      // solo destinos del país común de los orígenes
 });
+
+export function countryKey(code) {
+  return AIRPORT_MAP[normalizeCode(code)]?.country || null;
+}
+
+/** País común si TODOS los orígenes están en el catálogo y coinciden. Si no, null. */
+export function sharedCountry(origins) {
+  const keys = [];
+  for (const o of origins || []) {
+    const k = countryKey(o);
+    if (!k) return null;
+    keys.push(k);
+  }
+  if (!keys.length) return null;
+  return keys.every((k) => k === keys[0]) ? keys[0] : null;
+}
+
+/** Aeropuertos de ese país, sin los orígenes (no se vuela de una ciudad a sí misma). */
+export function domesticCodes(country, origins) {
+  if (!country) return [];
+  const skip = new Set((origins || []).map((o) => normalizeCode(o)));
+  return AIRPORTS.filter((a) => a.country === country && !skip.has(a.code)).map((a) => a.code);
+}
+
+/**
+ * null = todas encendidas. El primer toque OCULTA esa aerolínea (en un grupo
+ * casi nunca coinciden las dos ciudades en la misma, y «solo esta» vaciaba
+ * la lista). Volver a pulsarla la enciende. La última no se puede apagar:
+ * para verlas todas está «Quitar filtros».
+ */
+export function nextAirlines(current, code, universe) {
+  const all = Array.isArray(universe) ? universe : [];
+  if (!all.includes(code)) return Array.isArray(current) ? current : null;
+  const base = Array.isArray(current) ? current.filter((c) => all.includes(c)) : all;
+  const next = base.includes(code) ? base.filter((c) => c !== code) : [...base, code];
+  if (next.length === 0) return base;
+  if (next.length >= all.length) return null;
+  return next;
+}
 
 const FOUR_H = 4 * 60 * 60 * 1000;
 
@@ -112,10 +153,12 @@ function matchesAirlines(dest, allowed) {
   return true;
 }
 
-export function applyResultFilters(flights, filters) {
+export function applyResultFilters(flights, filters, ctx) {
   const f = filters || DEFAULT_FILTERS;
   const allowed = Array.isArray(f.airlines) ? f.airlines : null;
+  const country = f.domestic ? (ctx?.country || null) : null;
   return (flights || []).filter((dest) => {
+    if (f.domestic && countryKey(dest?.destination) !== country) return false;
     if (!matchesArrival(dest, f.arrival)) return false;
     if (!matchesStops(dest, f.stops)) return false;
     if (f.maxDurationMin != null && !matchesDuration(dest, f.maxDurationMin)) return false;
@@ -144,8 +187,8 @@ export function sortByArrival(list) {
   });
 }
 
-export function listResults(flights, filters, criterion) {
-  const visible = applyResultFilters(flights, filters);
+export function listResults(flights, filters, criterion, ctx) {
+  const visible = applyResultFilters(flights, filters, ctx);
   if (filters?.arrival === "closest") return sortByArrival(visible);
   return sortByCriterion(visible, criterion);
 }

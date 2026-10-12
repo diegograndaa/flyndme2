@@ -327,12 +327,15 @@ function buildSearchTiers(customDestinations, originList) {
       .map((d) => String(d || "").trim().toUpperCase())
       .filter(isValidIata);
     const filtered = dropOrigins([...new Set(list)]);
-    return filtered.length ? [filtered] : [];
+    return { tiers: filtered.length ? [filtered] : [], explicit: true };
   }
 
-  return DEFAULT_DESTINATION_TIERS
-    .map((tier) => dropOrigins(tier))
-    .filter((tier) => tier.length > 0);
+  return {
+    tiers: DEFAULT_DESTINATION_TIERS
+      .map((tier) => dropOrigins(tier))
+      .filter((tier) => tier.length > 0),
+    explicit: false,
+  };
 }
 
 // Build an "origin → pax count" map from the raw origins + passengers arrays.
@@ -503,8 +506,11 @@ router.post("/multi-origin", async (req, res) => {
       ? Number(maxBudgetPerFlight) : null;
 
     // ── Destination tiers ─────────────────────────────────────────────────────
-    const searchTiers = buildSearchTiers(destinations, originList);
+    const { tiers: searchTiers, explicit: explicitDestinations } = buildSearchTiers(destinations, originList);
     const destinationList = searchTiers.flat(); // used only for combination guard + logging
+    // Lista pedida por el usuario: se consultan todas (sigue el tope de tiempo).
+    // El pool por defecto sigue cortando al llegar a TARGET_RESULTS.
+    const resultCap = explicitDestinations ? Infinity : TARGET_RESULTS;
 
     if (destinationList.length === 0) {
       return res.status(400).json({
@@ -590,7 +596,7 @@ router.post("/multi-origin", async (req, res) => {
       const tier = searchTiers[tierIdx];
       console.log(`[search] tier ${tierIdx + 1}: ${tier.length} destinos`);
 
-      for (let chunkIdx = 0; chunkIdx < tier.length && enriched.length < TARGET_RESULTS; chunkIdx += CHUNK_SIZE) {
+      for (let chunkIdx = 0; chunkIdx < tier.length && enriched.length < resultCap; chunkIdx += CHUNK_SIZE) {
         // Presupuesto agotado → cortar y devolver lo acumulado como parcial
         if (SEARCH_TIME_BUDGET_MS > 0 && Date.now() - t0 > SEARCH_TIME_BUDGET_MS) {
           partial = true;
@@ -631,13 +637,13 @@ router.post("/multi-origin", async (req, res) => {
         );
 
         for (const result of chunkResults) {
-          if (result.status === "fulfilled" && result.value && enriched.length < TARGET_RESULTS) {
+          if (result.status === "fulfilled" && result.value && enriched.length < resultCap) {
             enriched.push(result.value);
           }
         }
       }
 
-      if (enriched.length >= TARGET_RESULTS) {
+      if (!explicitDestinations && enriched.length >= TARGET_RESULTS) {
         const skipped = searchTiers.slice(tierIdx + 1).reduce((s, t) => s + t.length, 0);
         if (skipped > 0) {
           console.log(`[search] target ${TARGET_RESULTS} alcanzado en tier ${tierIdx + 1}, omitidos ${skipped} destinos de tiers posteriores`);
