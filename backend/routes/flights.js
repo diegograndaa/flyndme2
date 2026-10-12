@@ -1158,5 +1158,51 @@ router.post("/verify", async (req, res) => {
   }
 });
 
+// Venta del grupo: tarifa emitible + comisión, cobro en esta app.
+// Sin DUFFEL_ACCESS_TOKEN no se cobra.
+const groupSale = require("../services/groupSale");
+
+function groupSaleHttp(code) {
+  if (code === "BOOKING_NOT_CONFIGURED") return 503;
+  if (code === "SALE_FAILED") return 502;
+  if (code === "QUOTE_EXPIRED" || code === "PAYMENT_NOT_CONFIRMED" || code === "PAYMENT_MISMATCH" || code === "TICKET_PARTIAL") return 409;
+  if (code === "FLIGHT_NOT_FOR_SALE" || code === "MIXED_CURRENCY") return 200;
+  return 400;
+}
+
+router.post("/group-sale/quote", async (req, res) => {
+  try {
+    const result = await groupSale.quoteLegs(req.body?.legs, toISODate(new Date()));
+    if (!result.available) return res.status(groupSaleHttp(result.code)).json(result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[group-sale] quote", err.code || err.message);
+    return res.status(502).json({ available: false, code: "SALE_FAILED" });
+  }
+});
+
+router.post("/group-sale/pay", async (req, res) => {
+  try {
+    const { quoteId, passengers, email, phone } = req.body || {};
+    const result = await groupSale.startPayment(quoteId, passengers, email, phone);
+    if (!result.ok) return res.status(groupSaleHttp(result.code)).json(result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[group-sale] pay", err.code || err.message);
+    return res.status(502).json({ ok: false, code: "SALE_FAILED" });
+  }
+});
+
+router.post("/group-sale/complete", async (req, res) => {
+  try {
+    const result = await groupSale.completeSale(req.body?.quoteId);
+    if (!result.ok) return res.status(groupSaleHttp(result.code)).json(result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[group-sale] complete", err.code || err.message);
+    return res.status(502).json({ ok: false, code: "SALE_FAILED" });
+  }
+});
+
 module.exports = router;
 module.exports._unsupportedTravelClass = unsupportedTravelClass; // solo para tests

@@ -117,9 +117,9 @@
   box-shadow: none;
 }
 .wc-card .wc-cta--book.wc-cta--book {
-  background: var(--primary);
-  color: var(--on-solid);
-  border-color: var(--primary);
+  background: var(--sign);
+  color: var(--on-sign);
+  border-color: var(--sign);
 }
 
 /* Acciones */
