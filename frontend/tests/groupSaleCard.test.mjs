@@ -60,6 +60,32 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece comprar el g
   assert.match(html, /Comprar los vuelos del grupo|Buy the group/);
 });
 
+test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () => {
+  const iberia = {
+    ...LONDON,
+    flights: [
+      {
+        ...LONDON.flights[0],
+        offer: {
+          ...LONDON.flights[0].offer,
+          validatingAirlineCodes: ["IB"],
+          itineraries: [{ segments: [{ carrierCode: "IB", number: "3001", departure: { iataCode: "MAD", at: "2026-10-15T08:00:00" }, arrival: { iataCode: "LTN" } }] }],
+        },
+      },
+      LONDON.flights[1],
+    ],
+  };
+  const html = render(React.createElement(WinnerCard, { ...base, dest: iberia }));
+  const anchors = [...html.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]);
+  const bookToSky = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("skyscanner.es/transport/flights/mad/ltn/261015/"));
+  const bookToEasy = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("easyjet.com"));
+  const compareSky = anchors.filter((a) => a.includes('class="wc-cta"') && a.includes("skyscanner.es"));
+  assert.equal(bookToSky.length, 1);
+  assert.equal(bookToEasy.length, 1);
+  assert.equal(compareSky.length, 1, "Skyscanner aparte solo en el vuelo que ya abre su aerolínea");
+  assert.ok(!html.includes("aviasales.com"));
+});
+
 test("con un solo origen no hay compra de grupo", () => {
   const one = {
     ...LONDON,

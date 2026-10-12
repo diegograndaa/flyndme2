@@ -49,7 +49,7 @@
     "faqs": [
       {
         "q": "¿FlyndMe vende billetes?",
-        "a": "Cada Reservar abre la web de esa aerolínea con la misma ruta, la misma fecha y los mismos viajeros. El precio allí es el de la aerolínea en ese momento, no la estimación de esta tarjeta. En el total del grupo puedes comprar los vuelos aquí: pagas la tarifa que se puede emitir ahora, más la comisión de FlyndMe y el coste del cobro, y el billete se emite a nombre del viajero. Si esa venta no está conectada, no se cobra nada."
+        "a": "Cada Reservar abre la web de esa aerolínea con la misma ruta, la misma fecha y los mismos viajeros. Si no tenemos la página de esa aerolínea, abre Skyscanner con la misma búsqueda. El precio allí es el de ese momento, no la estimación de esta tarjeta. En el total del grupo puedes comprar los vuelos aquí: pagas la tarifa que se puede emitir ahora, más la comisión de FlyndMe y el coste del cobro, y el billete se emite a nombre del viajero. Si esa venta no está conectada, no se cobra nada."
       },
       {
         "q": "¿Cómo sabéis si un destino es justo para todos?",
@@ -294,10 +294,11 @@
     "spreadSub": "Entre el vuelo más caro y el más barato",
     "destsFound": "Destinos encontrados",
     "bookTitle": "Puerta de embarque: reserva tu vuelo",
-    "bookSub": "Un enlace por viajero a la web de su aerolínea. Si no hay enlace, compara en Skyscanner y Google Flights.",
+    "bookSub": "Un enlace por viajero. Abre la web de su aerolínea, o Skyscanner si no tenemos la página de esa aerolínea.",
     "bookCta": "Reservar",
     "bookOnAirline": "Reservar en {{airline}}",
     "bookOnAirlineHint": "Abre la web de {{airline}} con esta ruta, fecha y viajeros. El precio allí es el suyo, no esta estimación.",
+    "bookOnSkyscannerHint": "Abre Skyscanner con esta ruta, fecha y viajeros. El precio allí es el que muestran ahora, no esta estimación.",
     "bookLabel": "Reservar en la web de la aerolínea — un enlace por viajero",
     "buyGroup": "Comprar los vuelos del grupo",
     "buyGroupHint": "Un solo pago aquí. El cobro es la tarifa que se puede emitir ahora, más la comisión de FlyndMe y el coste del cobro.",
@@ -306,7 +307,7 @@
     "saleCardFee": "Coste del cobro",
     "saleTotal": "A pagar",
     "saleQuoting": "Buscando la tarifa que se puede emitir…",
-    "saleNotConfigured": "La venta desde FlyndMe aún no está conectada. No se cobra nada. Puedes reservar cada vuelo en la web de su aerolínea.",
+    "saleNotConfigured": "La venta desde FlyndMe aún no está conectada. No se cobra nada. Reservar abre la web de la aerolínea, o Skyscanner con la misma ruta y fecha.",
     "saleNotForSale": "El vuelo de {{origin}} no está a la venta ahora. No lo cambiamos por otro.",
     "saleNotIdentified": "No se puede identificar el vuelo exacto. No se cobra nada.",
     "saleFailed": "No se ha podido preparar la compra. No se ha cobrado.",
