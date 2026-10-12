@@ -2,7 +2,7 @@
   "pageTitle": {
     "landing": "FlyndMe — Find the cheapest place to meet your group",
     "results": "FlyndMe — Results",
-    "resultsDest": "FlyndMe — {{city}} · {{price}}/pp (estimate)",
+    "resultsDest": "FlyndMe — {{city}} · {{price}} (estimate)",
     "group": "FlyndMe — Group plan"
   },
   "header": {
@@ -646,8 +646,8 @@
     "language": "Language",
     "dragToReorder": "Drag to reorder",
     "close": "Close",
-    "resultsAnnounce": "{{found}}. Recommended: {{dest}}, {{price}} per person (estimate).",
-    "resultsAnnounceVerified": "{{found}}. Recommended: {{dest}}, {{price}} per person.",
+    "resultsAnnounce": "{{found}}. Recommended: {{dest}}. Group total: {{price}} (estimate).",
+    "resultsAnnounceVerified": "{{found}}. Recommended: {{dest}}. Group total: {{price}}.",
     "foundOne": "1 destination found",
     "foundMany": "{{n}} destinations found",
     "priceVerified": "The recommended price has been re-checked."

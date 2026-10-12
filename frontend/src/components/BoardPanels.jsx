@@ -41,7 +41,7 @@ export const FlightHeader = React.memo(function FlightHeader({
         <span className="fm-board-label">{t("board.flightHead")}</span>
         <div className="fm-flight-head-row">
           <span className="fm-flight-head-origins">
-            {origins.map((o, i) => <FlapText key={o + i} text={o} size="sm" delay={i * 90} />)}
+            {origins.map((o, i) => <span key={o + i} className="fm-flight-head-code">{o}</span>)}
           </span>
           <span className="fm-flight-head-arrow" aria-hidden="true">→</span>
           <span className="fm-flight-head-meta">

@@ -2,7 +2,7 @@
   "pageTitle": {
     "landing": "FlyndMe — El destino más barato para quedar con tu grupo",
     "results": "FlyndMe — Resultados",
-    "resultsDest": "FlyndMe — {{city}} · {{price}}/pp (estimación)",
+    "resultsDest": "FlyndMe — {{city}} · {{price}} (estimación)",
     "group": "FlyndMe — Plan de grupo"
   },
   "header": {
@@ -646,8 +646,8 @@
     "language": "Idioma",
     "dragToReorder": "Arrastra para reordenar",
     "close": "Cerrar",
-    "resultsAnnounce": "{{found}}. Recomendado: {{dest}}, {{price}} por persona (estimación).",
-    "resultsAnnounceVerified": "{{found}}. Recomendado: {{dest}}, {{price}} por persona.",
+    "resultsAnnounce": "{{found}}. Recomendado: {{dest}}. Total del grupo: {{price}} (estimación).",
+    "resultsAnnounceVerified": "{{found}}. Recomendado: {{dest}}. Total del grupo: {{price}}.",
     "foundOne": "1 destino encontrado",
     "foundMany": "{{n}} destinos encontrados",
     "priceVerified": "El precio recomendado se ha vuelto a comprobar."

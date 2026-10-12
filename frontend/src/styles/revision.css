@@ -307,7 +307,7 @@
 .sf-form .sf-budget-box.sf-budget-box { background: var(--white); border: 1px solid var(--line); }
 /* «Elegir» destinos: botón de contorno de la casa (antes azul de Bootstrap) */
 .sf-form .btn-outline-primary.btn-outline-primary {
-  color: var(--navy); border: 1px solid var(--navy); background: transparent; border-radius: 4px; font-weight: 600; min-height: 34px;
+  color: var(--navy); border: 1px solid var(--navy); background: transparent; border-radius: 4px; font-weight: 600; min-height: 40px;
 }
 .sf-form .btn-outline-primary.btn-outline-primary:hover { background: var(--navy); color: var(--white); }
 
@@ -334,7 +334,9 @@
 .dm-origin-dot[class*="trav-c"] { stroke: var(--trav); }
 @media (max-width: 767.98px) {
   .wc-top--map { grid-template-columns: minmax(0, 1fr); }
-  .wc-map { min-height: 0; height: 210px; border-left: 0; border-top: 1px solid var(--line); }
+  /* La foto sigue siendo el destino. El mapa se queda en una franja: si mide
+     210 px, el total del grupo cae bajo el pliegue de un teléfono. */
+  .wc-map { min-height: 0; height: 120px; border-left: 0; border-top: 1px solid var(--line); overflow: hidden; }
 }
 .wc-flight-code .trav-dot { margin-right: 6px; vertical-align: 1px; }
 
