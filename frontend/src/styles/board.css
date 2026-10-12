@@ -880,6 +880,51 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-filter-block { display: flex; flex-direction: column; gap: 6px; }
 .fm-filter-opts, .fm-filter-airlines { display: flex; flex-direction: column; gap: 6px; }
 .fm-filter-airlines { flex-direction: row; flex-wrap: wrap; }
+.fm-filter-gaps { display: flex; flex-wrap: wrap; gap: 4px; }
+.fm-filter-gaps .fm-filter-opt {
+  flex: 1 1 calc(50% - 4px);
+  min-height: 40px;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+.fm-arr { display: flex; flex-direction: column; gap: 4px; }
+.fm-arr-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--panel-muted);
+}
+.fm-arr-row {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.fm-arr-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--trav, var(--navy));
+}
+.fm-arr-track {
+  position: relative;
+  height: 8px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.fm-arr-track--cap { box-shadow: inset -2px 0 0 var(--sign-line); }
+.fm-arr-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--trav, var(--slate-400));
+  min-width: 4px;
+}
 .fm-filter-opt {
   display: flex;
   align-items: center;

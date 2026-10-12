@@ -10,12 +10,16 @@ import { AIRPORTS, AIRPORT_MAP, normalizeCode } from "./helpers";
 import { sortByCriterion } from "./resultsLogic";
 
 export const DEFAULT_FILTERS = Object.freeze({
-  arrival: "any",       // any | closest | within4h | sameDay
+  arrival: "any",       // any | closest | within4h | gap | sameDay
+  maxArrivalMin: null,  // tope de la franja entre la primera y la última llegada
   stops: "any",         // any | direct | max1
   maxDurationMin: null, // tope de la ida, en minutos; null = sin tope
   airlines: null,       // null = todas; si no, códigos permitidos
   domestic: false,      // solo destinos del país común de los orígenes
 });
+
+/** Franjas que se pueden pedir (minutos). 2 h y 4 h siempre que haya horas; 8 h solo si alguien se pasa de 4. */
+export const ARRIVAL_GAPS = Object.freeze([120, 240, 480]);
 
 export function countryKey(code) {
   return AIRPORT_MAP[normalizeCode(code)]?.country || null;
@@ -101,23 +105,96 @@ function knownStops(leg) {
   return Math.max(...nums);
 }
 
-export function matchesArrival(dest, mode) {
-  if (!mode || mode === "any" || mode === "closest") return true;
+/** "HH:MM" escrito en el billete. null si el proveedor no trae hora. */
+export function ticketClock(iso) {
+  const m = typeof iso === "string" ? /T(\d{2}:\d{2})/.exec(iso) : null;
+  return m ? m[1] : null;
+}
+
+/**
+ * Marcas de llegada real de cada tramo, para pintar la franja.
+ * La posición se calcula después: aquí solo hay instantes del proveedor.
+ * Sin hora (escala) → ms null. No se rellena.
+ */
+export function arrivalWindow(legs) {
+  const list = Array.isArray(legs) ? legs : [];
+  const marks = list.map((leg) => {
+    const iso = leg?.offer?.itineraries?.[0]?.segments?.[0]?.arrival?.at;
+    const ms = typeof iso === "string" ? Date.parse(iso) : NaN;
+    return {
+      origin: normalizeCode(leg?.origin) || "",
+      ms: Number.isFinite(ms) ? ms : null,
+      clock: ticketClock(iso),
+    };
+  });
+  const known = marks.filter((m) => m.ms != null);
+  const sp = computeArrivalSpread(list);
+  if (known.length < 2) {
+    return { marks, min: null, max: null, spreadMs: null, partial: sp.partial, differentDays: sp.differentDays };
+  }
+  const min = Math.min(...known.map((m) => m.ms));
+  const max = Math.max(...known.map((m) => m.ms));
+  return { marks, min, max, spreadMs: max - min, partial: sp.partial, differentDays: sp.differentDays };
+}
+
+/**
+ * Cada marca, con pct 0–1 dentro de la franja. Si se pidió un tope, la escala
+ * es esa franja (desde la primera llegada); si no, es la distancia real.
+ * Quien no tiene hora queda en pct null.
+ */
+export function arrivalBars(legs, requestedMin) {
+  const win = arrivalWindow(legs);
+  if (win.min == null) return { ...win, bars: win.marks.map((m) => ({ ...m, pct: null })) };
+  const requested = Number(requestedMin);
+  const scale = Number.isFinite(requested) && requested > 0
+    ? requested * 60 * 1000
+    : Math.max(win.spreadMs, 60 * 1000);
+  const bars = win.marks.map((m) => {
+    if (m.ms == null) return { ...m, pct: null };
+    const pct = (m.ms - win.min) / scale;
+    return { ...m, pct: Math.min(1, Math.max(0, pct)) };
+  });
+  return { ...win, bars, scaleMs: scale };
+}
+
+function withinGap(legs, capMs) {
+  if (!Number.isFinite(capMs) || capMs <= 0) return true;
+  const sp = computeArrivalSpread(legs);
+  return sp.legsWithTime === legs.length
+    && sp.legsWithTime >= 2
+    && sp.spreadMs != null
+    && !sp.differentDays
+    && sp.spreadMs <= capMs;
+}
+
+export function matchesArrival(dest, mode, maxArrivalMin) {
   const legs = dest?.flights || [];
-  if (legs.length < 2) return false;
+  const capMin = mode === "within4h" ? 240 : (maxArrivalMin != null ? Number(maxArrivalMin) : null);
   if (mode === "sameDay") {
+    if (legs.length < 2) return false;
     const days = legs.map(departureDay);
     return days.every(Boolean) && new Set(days).size === 1;
   }
-  if (mode === "within4h") {
-    const sp = computeArrivalSpread(legs);
-    return sp.legsWithTime === legs.length
-      && sp.legsWithTime >= 2
-      && sp.spreadMs != null
-      && !sp.differentDays
-      && sp.spreadMs <= FOUR_H;
+  if (capMin != null && (mode === "within4h" || mode === "gap" || mode === "closest" || mode === "any")) {
+    if (legs.length < 2) return false;
+    return withinGap(legs, capMin * 60 * 1000);
   }
+  if (!mode || mode === "any" || mode === "closest") return true;
   return true;
+}
+
+/** 2 h y 4 h si hay alguna franja medible el mismo día; 8 h si alguien se pasa de 4 h. */
+export function arrivalGapChoices(flights) {
+  const spreads = [];
+  for (const dest of flights || []) {
+    const sp = computeArrivalSpread(dest?.flights || []);
+    if (sp.partial || sp.differentDays || sp.legsWithTime < 2 || sp.spreadMs == null) continue;
+    spreads.push(sp.spreadMs);
+  }
+  if (!spreads.length) return [];
+  const out = [120, 240];
+  if (spreads.some((s) => s > FOUR_H)) out.push(480);
+  return out;
 }
 
 function matchesStops(dest, mode) {
@@ -159,7 +236,7 @@ export function applyResultFilters(flights, filters, ctx) {
   const country = f.domestic ? (ctx?.country || null) : null;
   return (flights || []).filter((dest) => {
     if (f.domestic && countryKey(dest?.destination) !== country) return false;
-    if (!matchesArrival(dest, f.arrival)) return false;
+    if (!matchesArrival(dest, f.arrival, f.maxArrivalMin)) return false;
     if (!matchesStops(dest, f.stops)) return false;
     if (f.maxDurationMin != null && !matchesDuration(dest, f.maxDurationMin)) return false;
     if (allowed && !matchesAirlines(dest, allowed)) return false;

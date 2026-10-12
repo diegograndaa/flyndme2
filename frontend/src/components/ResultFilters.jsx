@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
+import { travelerSlot } from "../utils/resultsLogic";
 import {
-  airlinesIn, applyResultFilters, durationSteps, formatDurationMin, legAirline, nextAirlines,
+  airlinesIn, applyResultFilters, arrivalBars, arrivalGapChoices, durationSteps,
+  formatDurationMin, legAirline, nextAirlines,
 } from "../utils/resultFilters";
 
 function Opt({ pressed, onClick, children, count, label }) {
@@ -17,9 +19,49 @@ function Opt({ pressed, onClick, children, count, label }) {
   );
 }
 
+function ArrivalStrip({ dest, origins, requestedMin }) {
+  const { t } = useI18n();
+  const drawn = arrivalBars(dest?.flights || [], requestedMin);
+  if (drawn.min == null) return null;
+  const known = drawn.bars.filter((b) => b.ms != null);
+  const first = known.find((b) => b.ms === drawn.min);
+  const last = [...known].reverse().find((b) => b.ms === drawn.max);
+  const cap = Number(requestedMin);
+  const capped = Number.isFinite(cap) && cap > 0;
+  const right = capped
+    ? t("filters.arrivalGapEnd", { time: formatDurationMin(cap) })
+    : (last?.clock || "");
+  const bits = drawn.bars.map((b) => (
+    b.clock
+      ? t("filters.arrivalBarLabel", { origin: b.origin || "—", clock: b.clock })
+      : t("filters.arrivalNoClock", { origin: b.origin || "—" })
+  ));
+  return (
+    <div className="fm-arr" role="img" aria-label={`${t("filters.arrivalBars")}. ${bits.join(". ")}`}>
+      <div className="fm-arr-scale" aria-hidden="true">
+        <span>{first?.clock || ""}</span>
+        <span>{right}</span>
+      </div>
+      {drawn.bars.map((b, i) => {
+        const slot = travelerSlot(origins, b.origin);
+        const width = b.pct == null ? 0 : Math.round(b.pct * 1000) / 10;
+        return (
+          <div key={`${b.origin || "x"}-${i}`} className={`fm-arr-row trav-c${slot}`} aria-hidden="true">
+            <span className="fm-arr-code">{b.origin || "—"}</span>
+            <span className={`fm-arr-track${capped ? " fm-arr-track--cap" : ""}`}>
+              {b.pct != null && <span className="fm-arr-bar" style={{ width: `${width}%` }} />}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ResultFilters({
   flights = [], listedCount = 0, filters, onChange, onReset, multiOrigin = false, status = null,
   domesticCountry = null, domesticName = "", domesticChoices = 0,
+  displayDest = null, origins = [],
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -34,7 +76,8 @@ export function ResultFilters({
 
   const set = (patch) => onChange({ ...filters, ...patch });
   const count = (patch) => applyResultFilters(flights, { ...filters, ...patch }, { country: domesticCountry }).length;
-  const active = (filters.arrival && filters.arrival !== "any" ? 1 : 0)
+  const arrivalOn = (filters.arrival && filters.arrival !== "any") || filters.maxArrivalMin != null;
+  const active = (arrivalOn ? 1 : 0)
     + (filters.stops && filters.stops !== "any" ? 1 : 0)
     + (filters.maxDurationMin != null ? 1 : 0)
     + (Array.isArray(filters.airlines) ? 1 : 0)
@@ -66,6 +109,41 @@ export function ResultFilters({
   };
   const directLabel = t("filters.stopsDirect");
   const directCount = showStops ? count({ stops: "direct" }) : 0;
+  const gaps = showArrival ? arrivalGapChoices(flights) : [];
+  const requestedMin = filters.arrival === "within4h"
+    ? 240
+    : (filters.maxArrivalMin != null ? Number(filters.maxArrivalMin) : null);
+  const hasBars = showArrival && arrivalBars(displayDest?.flights || [], requestedMin).min != null;
+  const caption = hasBars
+    ? (status?.kind === "partial"
+      ? t("filters.arrivalPartial")
+      : (requestedMin
+        ? t("filters.arrivalRequested", { time: formatDurationMin(requestedMin) })
+        : statusText))
+    : "";
+  const pickGap = (min) => {
+    const on = filters.maxArrivalMin === min || (min === 240 && filters.arrival === "within4h");
+    if (on) {
+      set({ maxArrivalMin: null, arrival: filters.arrival === "closest" ? "closest" : "any" });
+      return;
+    }
+    set({
+      maxArrivalMin: min,
+      arrival: filters.arrival === "closest" ? "closest" : "gap",
+    });
+  };
+  const capNow = filters.arrival === "within4h" ? 240 : filters.maxArrivalMin;
+  const gapActive = capNow != null && filters.arrival !== "sameDay";
+  const looseArrival = filters.arrival === "gap" || filters.arrival === "within4h" ? "any" : filters.arrival;
+  const cappedCount = gapActive
+    ? count({
+      arrival: filters.arrival === "within4h" ? "within4h" : (filters.arrival === "closest" ? "closest" : "gap"),
+      maxArrivalMin: filters.arrival === "within4h" ? null : capNow,
+    })
+    : 0;
+  const gapAlready = gapActive
+    && cappedCount > 0
+    && cappedCount === count({ arrival: looseArrival, maxArrivalMin: null });
 
   return (
     <aside className={`fm-filters${open ? " fm-filters--open" : ""}`} aria-label={t("filters.title")}>
@@ -97,13 +175,34 @@ export function ResultFilters({
         {showArrival && (
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-arrival">{t("filters.arrival")}</span>
+            {hasBars && (
+              <ArrivalStrip dest={displayDest} origins={origins} requestedMin={requestedMin} />
+            )}
+            {caption && <p className="fm-filter-hint">{caption}</p>}
+            {gaps.length > 0 && (
+              <div className="fm-filter-gaps" role="group" aria-labelledby="fm-filter-arrival">
+                {gaps.map((min) => {
+                  const label = t("filters.arrivalUpTo", { time: formatDurationMin(min) });
+                  const pressed = filters.maxArrivalMin === min || (min === 240 && filters.arrival === "within4h");
+                  const gapCount = count({
+                    arrival: filters.arrival === "closest" ? "closest" : "gap",
+                    maxArrivalMin: min,
+                  });
+                  return (
+                    <Opt key={min} pressed={pressed} label={label} count={gapCount} onClick={() => pickGap(min)}>
+                      {formatDurationMin(min)}
+                    </Opt>
+                  );
+                })}
+              </div>
+            )}
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-arrival">
-              <Opt pressed={filters.arrival === "any"} label={t("filters.arrivalAny")} count={count({ arrival: "any" })} onClick={() => set({ arrival: "any" })}>{t("filters.arrivalAny")}</Opt>
+              <Opt pressed={(!filters.arrival || filters.arrival === "any") && filters.maxArrivalMin == null} label={t("filters.arrivalAny")} count={count({ arrival: "any", maxArrivalMin: null })} onClick={() => set({ arrival: "any", maxArrivalMin: null })}>{t("filters.arrivalAny")}</Opt>
               <Opt pressed={filters.arrival === "closest"} label={t("filters.arrivalClosest")} count={count({ arrival: "closest" })} onClick={() => set({ arrival: "closest" })}>{t("filters.arrivalClosest")}</Opt>
-              <Opt pressed={filters.arrival === "within4h"} label={t("filters.arrival4h")} count={count({ arrival: "within4h" })} onClick={() => set({ arrival: "within4h" })}>{t("filters.arrival4h")}</Opt>
-              <Opt pressed={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay" })} onClick={() => set({ arrival: "sameDay" })}>{t("filters.arrivalSameDay")}</Opt>
+              <Opt pressed={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay", maxArrivalMin: null })} onClick={() => set({ arrival: "sameDay", maxArrivalMin: null })}>{t("filters.arrivalSameDay")}</Opt>
             </div>
-            <p className="fm-filter-hint">{statusText || t("filters.arrivalHint")}</p>
+            {!hasBars && <p className="fm-filter-hint">{statusText || t("filters.arrivalHint")}</p>}
+            {gapAlready && <p className="fm-filter-hint">{t("filters.gapAlready")}</p>}
           </div>
         )}
 
