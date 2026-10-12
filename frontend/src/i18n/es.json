@@ -61,7 +61,7 @@
       },
       {
         "q": "¿Los precios son exactos?",
-        "a": "No. Son estimaciones basadas en búsquedas recientes y pueden haber cambiado. Antes de reservar puedes comprobar en vivo el precio del destino recomendado, y el precio final es el de la web donde reserves."
+        "a": "No. Son estimaciones basadas en búsquedas recientes y pueden haber cambiado. La app comprueba en vivo el precio del destino que estás viendo; si no puede, lo dice y el número sigue siendo una estimación. El precio final es el de la web donde reserves."
       }
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",
@@ -288,8 +288,6 @@
     "fdLocal": "hora local",
     "fdFlight": "Vuelo",
     "fdTravelers": "Pasajeros",
-    "verifyCta": "Comprobar precio en vivo",
-    "verifyCaption": "Estimación basada en búsquedas recientes · compruébala contra Google Flights",
     "verifyChecking": "Comprobando precio en vivo…",
     "verifyUnavailable": "No se pudo comprobar el precio en vivo ahora — sigue siendo una estimación en caché.",
     "maxSpread": "Diferencia máxima",

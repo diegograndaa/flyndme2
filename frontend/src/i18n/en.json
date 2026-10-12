@@ -61,7 +61,7 @@
       },
       {
         "q": "Are the prices exact?",
-        "a": "No. They're estimates based on recent searches and may have changed. Before booking you can check the recommended destination's price live, and the final price is the one on the site where you book."
+        "a": "No. They're estimates based on recent searches and may have changed. The app checks the price of the destination you're looking at live; if it can't, it says so and the number stays an estimate. The final price is the one on the site where you book."
       }
     ],
     "testimonialsTitle": "What travelers say",
@@ -288,8 +288,6 @@
     "fdLocal": "local time",
     "fdFlight": "Flight",
     "fdTravelers": "Travelers",
-    "verifyCta": "Check live price",
-    "verifyCaption": "Estimate based on recent searches · check it against Google Flights",
     "verifyChecking": "Checking live price…",
     "verifyUnavailable": "Couldn't check live prices right now — still a cached estimate.",
     "maxSpread": "Max spread",

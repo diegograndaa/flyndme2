@@ -21,9 +21,9 @@ export function shouldVerify(dest, { partial = false } = {}) {
   return true;
 }
 
-// ¿Disparar la comprobación solos, sin esperar al botón? Una vez por destino
-// y búsqueda: `attempted` guarda los códigos ya pedidos. Si falla, el botón
-// puede repetir; esta función no vuelve a decir que sí para el mismo código.
+// ¿Disparar la comprobación solos? Una vez por destino y búsqueda: `attempted`
+// guarda los códigos ya pedidos. Si la red falla, App.jsx reintenta una vez
+// por su cuenta; esta función no vuelve a decir que sí para el mismo código.
 export function autoVerifyDecision(dest, { partial = false, code, attempted } = {}) {
   if (!shouldVerify(dest, { partial })) return false;
   const key = String(code || dest.destination || "").trim().toUpperCase();

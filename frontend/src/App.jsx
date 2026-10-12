@@ -19,7 +19,7 @@ import { listResults, DEFAULT_FILTERS, arrivalStatus } from "./utils/resultFilte
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
-import { shouldVerify, autoVerifyDecision, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
+import { autoVerifyDecision, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
 import { isOffline } from "./utils/network";
 import { paxByOrigin, totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "./utils/passengers";
@@ -1031,7 +1031,8 @@ export default function App() {
   // destino contra POST /api/flights/verify (Google Flights, 10-20 s). El
   // número grande sigue siendo la caché hasta que la respuesta es completa;
   // entonces mergeVerification lo sustituye. Una respuesta a medias no toca
-  // el precio. No se re-ordena la lista. El botón queda para repetir si falló.
+  // el precio. No se re-ordena la lista. Si la red falla, la app lo reintenta
+  // una vez; no hay un botón para que lo haga el usuario.
 
   const applyVerification = (destCode, verification) => {
     const code = normalizeCode(destCode);
@@ -1041,15 +1042,13 @@ export default function App() {
     setBestByCriterion((prev) => ({ ...prev, total: upd(prev.total), fairness: upd(prev.fairness) }));
   };
 
-  const handleVerifyWinner = (winner, { manual = false } = {}) => {
+  const handleVerifyWinner = (winner, { retry = false } = {}) => {
     const code = normalizeCode(winner?.destination);
-    if (!manual) {
+    if (!retry) {
       if (!autoVerifyDecision(winner, { partial: partialResults, code, attempted: verifyAttemptedRef.current })) return;
-    } else if (!winner || !shouldVerify(winner, { partial: partialResults })) {
-      return;
+      verifyAttemptedRef.current.add(code);
+      trackEvent("verify_auto", { dest: code });
     }
-    verifyAttemptedRef.current.add(code);
-    trackEvent(manual ? "verify_click" : "verify_auto", { dest: code });
     const gen = searchGenRef.current;
     setLiveCheck({ code, phase: "loading" });
 
@@ -1062,7 +1061,7 @@ export default function App() {
     }
     verifyAbortRef.current = ticket;
     // Sin respuesta en 35 s (el backend corta a los 20 s y Render a los ~30 s):
-    // se aborta y el botón pasa a «no se pudo comprobar» en vez de quedarse girando.
+    // se aborta. La app lo intenta una vez más; si tampoco hay respuesta, avisa.
     const verifyTimer = setTimeout(() => ticket.controller.abort(), 35000);
 
     fetch(`${API_BASE}/api/flights/verify`, {
@@ -1071,7 +1070,12 @@ export default function App() {
       body: JSON.stringify(payload),
       signal: ticket.controller.signal,
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.ok) return res.json();
+        const err = new Error("verify-http");
+        err.status = res.status;
+        throw err;
+      })
       .then((data) => {
         if (searchGenRef.current !== gen || ticket.superseded) return;
         if (isFullyVerified(winner, data)) {
@@ -1080,15 +1084,24 @@ export default function App() {
         } else {
           // skipped/partial/failed/timeout: NO mergeamos (un total mezcla no es
           // verificado). Seguimos en "estimación en caché" + aviso honesto.
+          // No se reintenta: la respuesta ya gastó la consulta en vivo.
           setLiveCheck({ code, phase: "unavailable" });
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (searchGenRef.current !== gen) return;
         // Otra ciudad (o una búsqueda nueva) sustituyó esta petición: se podrá
         // volver a pedir si el usuario regresa a este destino.
         if (ticket.superseded) {
           verifyAttemptedRef.current.delete(code);
+          return;
+        }
+        // Corte de red, tiempo agotado o proxy dormido (502/503/504): la app
+        // lo repite sola, una vez. Un 429 o un 400 no se repite.
+        const status = err && err.status;
+        const retryable = status == null || status === 502 || status === 503 || status === 504;
+        if (!retry && retryable) {
+          handleVerifyWinner(winner, { retry: true });
           return;
         }
         setLiveCheck({ code, phase: "unavailable" });
@@ -1097,13 +1110,13 @@ export default function App() {
   };
 
   // El destino que se ve (ganador al buscar, u otro si lo eligen en Salidas o
-  // en el mapa) se comprueba solo. Una vez por código; el botón repite si falló.
+  // en el mapa) se comprueba solo. Una vez por código.
   const shownVerifyKey = displayDest
     ? `${normalizeCode(displayDest.destination)}:${displayDest.verificationStatus || ""}`
     : "";
   useEffect(() => {
     if (view !== "results" || !displayDest) return;
-    handleVerifyWinner(displayDest, { manual: false });
+    handleVerifyWinner(displayDest);
   // handleVerifyWinner cierra sobre la búsqueda actual; la clave evita repetir
   // el efecto en cada render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2118,7 +2131,6 @@ export default function App() {
             shareStatus={shareStatus}
             onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
             onChangeSearch={() => setView("search")}
-            onVerify={() => handleVerifyWinner(displayDest, { manual: true })}
             verifyPhase={liveCheck.code === normalizeCode(displayDest.destination) ? liveCheck.phase : null}
             currency={currency}
             isFav={isFav(displayDest.destination)}

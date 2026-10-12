@@ -49,7 +49,7 @@ const WinnerCard = React.memo(function WinnerCard({
   flightsCount, allFlights = [], lastBestPrice = 0,
   onShare, onShareWhatsApp, onShareTelegram, onShareEmail, onShareNative, onCopySearchLink, shareStatus,
   onViewAlternatives, onChangeSearch,
-  onVerify, verifyPhase = null,
+  verifyPhase = null,
   currency = "EUR",
   searchBadges = [],
   isFav = false, onToggleFav,
@@ -424,29 +424,17 @@ const WinnerCard = React.memo(function WinnerCard({
             {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
           </div>
 
-          {/* El número de arriba es la caché hasta que la comprobación termina.
-              Si falla, el botón permite repetirla. */}
+          {/* El número de arriba es la caché hasta que la app termina de
+              comprobarlo. No hay botón: esa comprobación no se le pide al usuario. */}
           <div className="wc-total-foot" aria-live="polite">
             {verifyPhase === "loading" ? (
               <span className="wc-verify-status">
                 <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
               </span>
             ) : verifyPhase === "unavailable" ? (
-              <>
-                <span className="wc-verify-status">
-                  <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
-                </span>
-                <button type="button" className="wc-verify-btn" onClick={onVerify}>
-                  <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
-                </button>
-              </>
-            ) : dest.verificationStatus === "skipped" ? (
-              <>
-                <span className="wc-verify-caption">{t("results.verifyCaption")}</span>
-                <button type="button" className="wc-verify-btn" onClick={onVerify}>
-                  <ShieldCheck size={15} aria-hidden="true" /> {t("results.verifyCta")}
-                </button>
-              </>
+              <span className="wc-verify-status">
+                <Info size={14} aria-hidden="true" /> {t("results.verifyUnavailable")}
+              </span>
             ) : dest.verificationStatus === "verified" || dest.verificationStatus === "changed" ? (
               <span className="wc-verify-caption wc-verify-caption--ok">
                 <ShieldCheck size={14} aria-hidden="true" /> {dest.verificationStatus === "changed" ? t("results.totalChanged") : t("results.totalVerified")}

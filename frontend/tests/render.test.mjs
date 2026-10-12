@@ -322,19 +322,23 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   assert.ok(html.includes("Rome") || html.includes("ROM"));
 });
 
-test("render: al comprobar el precio se avisa, y si falla el botón sigue", async () => {
+test("render: la app comprueba el precio sola; no hay botón para el usuario", async () => {
   const { default: WinnerCard } = await import("../src/components/WinnerCard.jsx");
   const dest = { ...FIXTURE_DEST, verificationStatus: "skipped" };
   const base = {
     dest, origins: ["MAD", "LON"], departureDate: "2026-09-15", tripType: "oneway",
-    currency: "EUR", uiCriterion: "total", onVerify: () => {},
+    currency: "EUR", uiCriterion: "total",
   };
   const loading = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: "loading" }));
   assert.ok(loading.includes("aria-busy=\"true\""));
   assert.ok(/Checking live price|Comprobando precio en vivo/.test(loading));
   assert.ok(!loading.includes("wc-verify-btn"));
   const failed = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: "unavailable" }));
-  assert.ok(failed.includes("wc-verify-btn"), "se puede repetir la comprobación");
+  assert.ok(!failed.includes("wc-verify-btn"), "si falla, no se le pide al usuario que lo repita");
+  assert.ok(/No se pudo comprobar|check live prices right now/i.test(failed));
+  const waiting = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: null }));
+  assert.ok(!waiting.includes("wc-verify-btn"));
+  assert.ok(!/Comprobar precio en vivo|Check live price/.test(waiting));
 });
 
 test("render: instrumentos de cabina (odómetro, ILS, conmutadores)", async () => {
