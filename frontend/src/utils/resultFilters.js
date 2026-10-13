@@ -290,6 +290,43 @@ export function listResults(flights, filters, criterion, ctx) {
   return sortByCriterion(visible, criterion);
 }
 
+/** El filtro sigue recortando o reordenando la decisión. Sin eso, la tarjeta vuelve al destino de antes. */
+export function filtersHoldResults(filters) {
+  const f = filters || {};
+  return (f.arrival && f.arrival !== "any")
+    || f.maxArrivalMin != null
+    || (f.stops && f.stops !== "any")
+    || f.maxDurationMin != null
+    || Array.isArray(f.airlines)
+    || !!f.domestic;
+}
+
+/**
+ * Destino de la tarjeta al mover un filtro.
+ * Si el filtro aparta el que se veía, se recuerda su código y se enseña el primero que queda.
+ * Al quitarlo, si ese código vuelve a estar en la lista, se recupera.
+ * «Lo más cerca» manda mientras está activo. Un clic del usuario borra el recuerdo (anchor null).
+ */
+export function nextShownDestination({ listed, current, anchor, arrival }) {
+  const rows = listed || [];
+  if (!rows.length) return { dest: null, anchor: anchor || null };
+  const code = normalizeCode(current?.destination) || null;
+  const top = rows[0];
+  if (arrival === "closest") {
+    if (normalizeCode(top?.destination) !== code) {
+      return { dest: top, anchor: anchor || code };
+    }
+    return { dest: current, anchor: anchor || null };
+  }
+  const saved = anchor
+    ? rows.find((d) => normalizeCode(d.destination) === anchor)
+    : null;
+  if (saved && anchor !== code) return { dest: saved, anchor };
+  const stillThere = rows.some((d) => normalizeCode(d.destination) === code);
+  if (!stillThere) return { dest: top, anchor: anchor || code };
+  return { dest: current, anchor: anchor || null };
+}
+
 export function airlinesIn(flights) {
   const set = new Set();
   for (const dest of flights || []) {

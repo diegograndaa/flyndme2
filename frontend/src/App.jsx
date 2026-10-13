@@ -15,7 +15,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes } from "./utils/resultFilters";
+import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults } from "./utils/resultFilters";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
@@ -315,6 +315,8 @@ export default function App() {
   // al reset de filtros de handleSubmit; el otro guarda la selección anterior.
   const keepDomesticRef = useRef(false);
   const destBeforeDomesticRef = useRef(null);
+  // Destino que se veía antes de que un filtro lo apartara. Al quitar el filtro, vuelve.
+  const filterAnchorRef = useRef(null);
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
@@ -533,6 +535,7 @@ export default function App() {
         setSharedAt(Number(data.createdAt) || Date.now());
         setFlights(shared);
         lastSearchRef.current = null;
+        filterAnchorRef.current = null;
         // Se respeta el destino que el usuario tenía en su tarjeta al
         // compartir, si existe entre los datos normalizados; si no, el mejor.
         const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
@@ -715,12 +718,15 @@ export default function App() {
     const nowDomestic = !!next.domestic;
     setResultFilters(next);
     const listed = listResults(flights, next, uiCriterion, { country: homeCountry });
-    if (listed.length) {
-      const code = normalizeCode(bestDestination?.destination);
-      const keep = listed.some((d) => normalizeCode(d.destination) === code);
-      if (next.arrival === "closest" || !keep) {
-        setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: listed[0] }));
-      }
+    const shown = nextShownDestination({
+      listed,
+      current: bestDestination,
+      anchor: filterAnchorRef.current,
+      arrival: next.arrival,
+    });
+    filterAnchorRef.current = filtersHoldResults(next) ? shown.anchor : null;
+    if (shown.dest && normalizeCode(shown.dest.destination) !== normalizeCode(bestDestination?.destination)) {
+      setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: shown.dest }));
     }
     if (nowDomestic && !wasDomestic) {
       if (!homeCodes.length || sameCodeSet(selectedDests, homeCodes)) return;
@@ -740,6 +746,10 @@ export default function App() {
     }
   };
   const resetFilters = () => changeFilters(DEFAULT_FILTERS);
+  const chooseDestination = (dest) => {
+    filterAnchorRef.current = null;
+    setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: dest }));
+  };
 
   // Fechas vecinas: la misma búsqueda, un día a un lado. Sin precios en los
   // chips (no los tenemos hasta buscar). La ida y la vuelta se mueven juntas.
@@ -1477,6 +1487,7 @@ export default function App() {
     loadWinnerCard().catch(() => {});
     setFlights([]);
     setBestByCriterion({ total: null, fairness: null });
+    filterAnchorRef.current = null;
     setSharedAt(null);
     setCheaperDates([]);
     const useDomestic = keepDomesticRef.current || (homeCodes.length > 0 && sameCodeSet(selectedDests, homeCodes));
@@ -1889,7 +1900,7 @@ export default function App() {
     const code = normalizeCode(f.code);
     const match = (flights || []).find((x) => normalizeCode(x.destination) === code);
     if (match) {
-      setBestByCriterion((prev) => ({ ...prev, [uiCriterion]: match }));
+      chooseDestination(match);
       setShowAlt(false);
       setView("results");
       requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
@@ -2284,7 +2295,7 @@ export default function App() {
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
                   <DestinationMap inline flights={listedFlights} bestDestination={displayDest} origins={cleanOrigins}
                     currency={currency}
-                    onSelect={(dest) => setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }))} />
+                    onSelect={chooseDestination} />
                 </Suspense>
               </ErrorBoundary>
             ) : null}
@@ -2411,7 +2422,7 @@ export default function App() {
             currency={currency}
             savings={listedFlights.length >= 2 ? Math.max(...listedFlights.map(f => f.totalCostEUR || 0)) - (displayDest || bestDestination).totalCostEUR : 0}
             onSelect={(dest) => {
-              setBestByCriterion(prev => ({ ...prev, [uiCriterion]: dest }));
+              chooseDestination(dest);
               setTimeout(() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
             }}
           />
