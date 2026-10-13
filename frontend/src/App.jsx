@@ -692,8 +692,8 @@ export default function App() {
         ? t("pageTitle.resultsDest", {
             city: cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination,
             price: currency === "EUR"
-              ? formatEur(bestDestination.averageCostPerTraveler, 0)
-              : convertPrice(bestDestination.averageCostPerTraveler, currency),
+              ? formatEur(bestDestination.totalCostEUR, 0)
+              : convertPrice(bestDestination.totalCostEUR, currency),
           })
         : t("pageTitle.results");
     }
@@ -2000,8 +2000,8 @@ export default function App() {
                   found: flights.length === 1 ? t("a11y.foundOne") : t("a11y.foundMany", { n: flights.length }),
                   dest: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
                   price: currency === "EUR"
-                    ? formatEur(bestDestination.averageCostPerTraveler, 0)
-                    : convertPrice(bestDestination.averageCostPerTraveler, currency),
+                    ? formatEur(bestDestination.totalCostEUR, 0)
+                    : convertPrice(bestDestination.totalCostEUR, currency),
                 }),
                 verified ? t("a11y.priceVerified") : "",
               ].join(" ").trim();
@@ -2116,7 +2116,7 @@ export default function App() {
       )}
 
       {view === "results" && bestDestination && (
-        <div className="container py-4 view-enter" key="results" style={{ maxWidth: 1080 }}>
+        <div className="container fm-results-page view-enter" key="results" style={{ maxWidth: 1080 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
             {t(cleanOrigins.length <= 1 ? "results.buyTitleOne" : "results.buyTitle", {
@@ -2210,7 +2210,10 @@ export default function App() {
           <div className="fm-sticky-bar">
             <div className="fm-sticky-inner">
               <span className="fm-sticky-dest"><Plane size={14} aria-hidden="true" /> {cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination)}</span>
-              <span className="fm-sticky-price">{currency === "EUR" ? formatEur(bestDestination.averageCostPerTraveler, 0) : convertPrice(bestDestination.averageCostPerTraveler, currency)}/pp</span>
+              <span className="fm-sticky-price">
+                <span className="sr-only">{t(totalTravelers <= 1 ? "results.totalOne" : "results.groupTotal")}: </span>
+                {currency === "EUR" ? formatEur(bestDestination.totalCostEUR, 0) : convertPrice(bestDestination.totalCostEUR, currency)}
+              </span>
               <span className="fm-sticky-origins">{cleanOrigins.join(" · ")}</span>
               <div className="fm-currency-switcher" role="group" aria-label={t("search.currencyLabel")}>
                 {["EUR", "GBP", "USD"].map(c => (

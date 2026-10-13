@@ -682,23 +682,23 @@
   letter-spacing: .14em;
 }
 
-/* Cabecera del vuelo del grupo (navy fijo en ambos temas) */
+/* Cabecera del vuelo: contexto, no la decisión. Sin tarjeta propia. */
 .fm-flight-head {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px 18px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin: 0 0 18px;
-  padding: 14px 18px;
-  background: var(--panel-bg);
+  margin: 0 0 6px;
+  padding: 0;
+  background: transparent;
   color: var(--panel-muted);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--panel-line);
-  box-shadow: var(--panel-shadow);
+  border: 0;
+  box-shadow: none;
   animation: board-rise .5s var(--ease-out-expo) backwards;
 }
-[data-theme="dark"] .fm-flight-head { background: var(--panel-bg); }
+.fm-results-page { padding-top: 12px; padding-bottom: 24px; }
 
 /* Tira de días bajo la cabecera, y al lado las fechas que abaratan el grupo.
    El día buscado es cartel de posición («estás aquí»); los vecinos relanzan
@@ -707,25 +707,27 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 12px;
+  gap: 6px;
+  margin: 0 0 8px;
 }
 .fm-date-strip {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  padding: 8px 10px 8px 14px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-line);
-  border-radius: var(--radius-md);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 .fm-date-strip-label {
   flex: 0 1 auto;
-  max-width: 9rem;
+  max-width: none;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -749,9 +751,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 52px;
-  min-height: 44px;
-  padding: 4px 8px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 2px 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -763,19 +765,20 @@ button.fm-date-strip-day { cursor: pointer; }
 button.fm-date-strip-day:hover { border-color: var(--primary); }
 button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-date-strip-wd { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: capitalize; }
-.fm-date-strip-n { font-size: 15px; font-weight: 700; }
+.fm-date-strip-n { font-size: 13px; font-weight: 700; }
 .fm-date-recs {
-  flex: 1 1 280px;
+  position: relative;
+  flex: 1 1 220px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 6px 8px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-line);
-  border-radius: var(--radius-md);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 .fm-date-recs-label {
   font-family: var(--font-mono);
@@ -809,17 +812,52 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-date-rec:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-date-rec-save { font-weight: 700; }
 @media (max-width: 600px) {
-  .fm-date-row { flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
+  .fm-results-page { padding-top: 4px; }
+  .fm-flight-head { flex-wrap: nowrap; align-items: center; }
+  .fm-flight-head-main { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; }
+  .fm-flight-head .fm-board-label,
+  .fm-flight-head-btn-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .fm-flight-head-row { min-width: 0; flex-wrap: nowrap; gap: 4px; }
+  .fm-flight-head-meta {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fm-flight-head-btn { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .fm-date-strip-label,
+  .fm-date-recs-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .fm-date-row { flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
   .fm-date-strip {
     flex: 0 1 auto;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    gap: 6px;
+    padding: 0;
     min-width: 0;
     max-width: 100%;
   }
-  .fm-date-strip-label { max-width: 6.5rem; flex: 0 0 auto; }
+  .fm-date-strip-label { max-width: none; flex: 0 0 auto; }
   .fm-date-recs {
     flex: 0 1 auto;
     flex-wrap: nowrap;
@@ -1015,12 +1053,18 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 @media (max-width: 860px) {
   .fm-filters { padding: 8px; position: relative; z-index: 91; }
 }
-.fm-flight-head-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.fm-flight-head .fm-board-label { color: var(--panel-faint); }
-.fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; }
-.fm-flight-head-origins { display: inline-flex; flex-wrap: wrap; gap: 8px; }
-.fm-flight-head-origins .flap--sm { font-size: 15px; }
-.fm-flight-head-arrow { color: var(--sign-line); font-weight: 800; font-size: 18px; }
+.fm-flight-head-main { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
+.fm-flight-head .fm-board-label { color: var(--panel-faint); font-size: 12px; letter-spacing: .08em; }
+.fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.fm-flight-head-origins { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.fm-flight-head-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--navy);
+}
+.fm-flight-head-arrow { color: var(--sign-line); font-weight: 800; font-size: 14px; }
 .fm-flight-head-meta {
   display: inline-flex;
   align-items: center;
@@ -1035,18 +1079,22 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   padding: 2px 8px;
   border: 1px solid var(--panel-line);
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--panel-muted);
 }
 .fm-flight-head-btn {
   flex: 0 0 auto;
-  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 10px;
   background: transparent;
   color: var(--panel-ink);
   border: 1px solid var(--panel-line);
   border-radius: var(--radius-full);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   transition: background-color .2s ease, border-color .2s ease, transform .18s var(--ease-out-expo);
 }
 .fm-flight-head-btn:hover { background: var(--panel-hover); border-color: var(--panel-line); transform: translateY(-1px); }
@@ -1259,8 +1307,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 
 /* Paneles en claro: borde fino de papel en vez de bloque oscuro */
 .fm-board.fm-board,
-.fm-flight-head.fm-flight-head,
 .fm-searching-board.fm-searching-board { border: 1px solid var(--panel-line); }
+.fm-flight-head.fm-flight-head { border: 0; background: transparent; box-shadow: none; }
 .sf-summary-bar.sf-summary-bar { background: var(--panel-stub); border-color: var(--panel-line); box-shadow: none; }
 .fm-flight-head-btn.fm-flight-head-btn { border-color: var(--slate-300); }
 .fm-flight-head-btn.fm-flight-head-btn:hover { border-color: var(--panel-ink); }
@@ -1935,7 +1983,7 @@ button,
 .fm-decision:focus { outline: none; }
 .fm-decision .wc-card.wc-card { margin: 0; }
 .fm-decision .fm-group-block { margin: 14px 0 0; }
-.fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 14px; }
+.fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 8px; }
 .fm-zone-num {
   flex: 0 0 auto;
   display: inline-grid; place-items: center;
@@ -2023,17 +2071,17 @@ button,
 .fm-notice--partial { border-left-color: var(--slate-400); }
 .fm-notice--partial .fm-notice-text { font-weight: 500; font-size: 13px; }
 @media (max-width: 600px) {
-  .fm-decision { padding: 12px 10px 12px; border-radius: 8px; }
-  .fm-zone-head { gap: 10px; }
-  .fm-zone-title { font-size: 13.5px; letter-spacing: .12em; }
+  .fm-decision { padding: 8px 10px 10px; border-radius: 8px; }
+  .fm-zone-head { gap: 8px; }
+  .fm-zone-title { font-size: 12px; letter-spacing: .08em; }
+  .fm-zone-num { min-width: 32px; height: 24px; }
   .fm-notice-btn { width: 100%; }
   .fm-zone-perf { margin: 24px 6px 20px; }
 }
 
-/* ══ 23. La decisión = lo que hay que comprar + el total ═════════════════
-   La tarjeta empieza, tras la foto, por los vuelos a reservar (un billete
-   por viajero) y cierra con el cómputo global como un ticket de caja:
-   la suma de los vuelos = total del grupo. El reparto va aparte, plegado. */
+/* ══ 23. La decisión = el total del grupo y, debajo, cada viajero ═══════
+   Tras la foto va el cómputo global. Los billetes de cada ciudad van
+   después. El reparto sigue plegado. */
 .wc-card .wc-buy { padding: 22px 28px 20px; background: var(--white); }
 .wc-buy-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; margin-bottom: 14px; }
 .wc-buy-heading { min-width: 0; }
@@ -2041,7 +2089,7 @@ button,
   font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .14em; color: var(--slate-500);
 }
-.wc-buy-title { margin: 4px 0 2px; font-size: 22px; font-weight: 700; letter-spacing: -.015em; color: var(--navy); }
+.wc-buy-title { margin: 4px 0 2px; font-size: 18px; font-weight: 700; letter-spacing: -.015em; color: var(--navy); }
 .wc-buy-sub { margin: 0; font-size: 13px; color: var(--slate-500); }
 .wc-buy .wc-criterion-pills { flex: 0 0 auto; }
 .wc-card .wc-buy .wc-booking-cards { display: flex; flex-direction: column; gap: 10px; overflow: visible; }
@@ -2049,7 +2097,7 @@ button,
 /* Ticket del total */
 .wc-total {
   position: relative;
-  margin-top: 14px;
+  margin: 0 0 16px;
   padding: 14px 18px 12px;
   background: var(--panel-stub);
   border: 2px solid var(--navy);
@@ -2148,11 +2196,17 @@ button,
 }
 .wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn:hover { border-color: var(--navy); }
 @media (max-width: 600px) {
-  .wc-card .wc-buy { padding: 16px 14px 16px; }
-  .wc-buy-title { font-size: 19px; }
+  .wc-card .wc-buy { padding: 14px 14px 16px; }
+  .wc-buy-title { font-size: 16px; }
   .wc-buy .wc-criterion-pills { width: 100%; }
   .wc-total { padding: 12px 14px 10px; }
-  .wc-card .wc-total-price.wc-total-price { font-size: 28px; }
+  /* El aviso de ahorro es ancho: si comparte fila con el total, parte
+     «Total del grupo» y empuja la cifra. En el teléfono la cifra va sola. */
+  .wc-total-main { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .wc-total-label { letter-spacing: .08em; }
+  .wc-total-figure { align-items: flex-start; }
+  .wc-total-savings { order: 2; text-align: left; }
+  .wc-card .wc-total-price.wc-total-price { order: 1; font-size: 32px; }
   .wc-total-hint-btn { width: 100%; }
 }
 
@@ -2967,10 +3021,10 @@ button,
   .app-header .fm-lang-btn { min-width: 30px; padding: 0 5px; }
   .app-header .theme-toggle { width: 34px; height: 34px; }
   /* Skyscanner | Google Flights se montaban uno sobre otro */
-  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 4px; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; }
+  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (max-width: 340px) {
   .wc-buy .wc-flight-ctas { gap: 6px; }
-  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 2px; font-size: 11px; letter-spacing: -.01em; }
-  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 34px; }
+  .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 2px; font-size: 12px; letter-spacing: -.01em; }
+  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 40px; }
 }

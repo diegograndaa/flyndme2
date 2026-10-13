@@ -98,6 +98,20 @@ test("render: el mapa de la portada dibuja las ciudades del formulario", async (
   assert.ok(!live.includes(">¿LIS?<") && !/[€£$]\d/.test(live));
 });
 
+test("render: la cabecera del vuelo enseña los códigos quietos", async () => {
+  const { FlightHeader } = await import("../src/components/BoardPanels.jsx");
+  const html = renderWithI18n(React.createElement(FlightHeader, {
+    origins: ["BCN", "MAD"],
+    departureDate: "2026-10-16",
+    tripType: "oneway",
+    travelers: 2,
+    onChange: () => {},
+  }));
+  assert.equal((html.match(/fm-flight-head-code/g) || []).length, 2);
+  assert.ok(html.includes(">BCN<") && html.includes(">MAD<"));
+  assert.ok(!html.includes("flap-cell"), "la cabecera no gira los códigos de origen");
+});
+
 test("render: DeparturesBoard con un solo destino no pinta nada", async () => {
   const { DeparturesBoard } = await import("../src/components/BoardPanels.jsx");
   const html = renderWithI18n(React.createElement(DeparturesBoard, { flights: [FIXTURE_DEST], current: FIXTURE_DEST }));
@@ -320,6 +334,9 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("Rome") || html.includes("ROM"));
+  const totalAt = html.indexOf("wc-total");
+  const legAt = html.indexOf("wc-flight-card");
+  assert.ok(totalAt > 0 && legAt > totalAt, "el total del grupo va antes que el precio de cada viajero");
 });
 
 test("render: la app comprueba el precio sola; no hay botón para el usuario", async () => {
