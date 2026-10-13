@@ -380,6 +380,10 @@ test("render: WinnerCard extraída renderiza con fixture verificado", async () =
   const totalAt = html.indexOf("wc-total");
   const legAt = html.indexOf("wc-flight-card");
   assert.ok(totalAt > 0 && legAt > totalAt, "el total del grupo va antes que el precio de cada viajero");
+  assert.ok(html.includes("wc-leg-hhmm"), "el billete enseña la hora");
+  assert.ok(html.includes("08:30") && html.includes("11:00"), "salida y llegada del tramo directo");
+  assert.ok(html.includes("2 h 30 min"), "la duración se lee en horas y minutos");
+  assert.ok(html.includes("Iberia"), "la aerolínea conocida se nombra");
 });
 
 test("render: la app comprueba el precio sola; no hay botón para el usuario", async () => {
