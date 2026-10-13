@@ -4,6 +4,7 @@ import {
   applyResultFilters, listResults, arrivalSpreadMs, matchesArrival,
   airlinesIn, durationSteps, DEFAULT_FILTERS, sharedCountry, domesticCodes,
   nextAirlines, countryKey, arrivalBars, arrivalGapChoices, arrivalSliderRange, ticketClock,
+  nextShownDestination, filtersHoldResults,
 } from "../src/utils/resultFilters.js";
 
 function leg({ date = "2026-11-15", at = "08:30", dur = "PT2H", transfers = 0, airline = "IB", flightDate = null } = {}) {
@@ -196,4 +197,29 @@ test("el primer toque de aerolínea la oculta, no vacía el resto", () => {
   assert.deepEqual(nextAirlines(null, "IB", ["IB", "FR", "VY"]), ["FR", "VY"]);
   assert.deepEqual(nextAirlines(["FR", "VY"], "IB", ["IB", "FR", "VY"]), null);
   assert.deepEqual(nextAirlines(["VY"], "VY", ["IB", "FR", "VY"]), ["VY"]);
+});
+
+test("quitar un filtro devuelve el destino que se veía antes", () => {
+  const par = dest("PAR", [leg()], 100);
+  const lis = dest("LIS", [leg()], 160);
+  const mil = dest("MIL", [leg()], 200);
+  const all = [par, lis, mil];
+  const on = nextShownDestination({ listed: [lis], current: par, anchor: null, arrival: "any" });
+  assert.equal(on.dest.destination, "LIS");
+  assert.equal(on.anchor, "PAR");
+  const off = nextShownDestination({ listed: all, current: lis, anchor: on.anchor, arrival: "any" });
+  assert.equal(off.dest.destination, "PAR");
+  const closest = nextShownDestination({ listed: [lis, par, mil], current: par, anchor: null, arrival: "closest" });
+  assert.equal(closest.dest.destination, "LIS");
+  assert.equal(closest.anchor, "PAR");
+  const closestOff = nextShownDestination({ listed: all, current: lis, anchor: closest.anchor, arrival: "any" });
+  assert.equal(closestOff.dest.destination, "PAR");
+  const kept = nextShownDestination({ listed: [mil], current: lis, anchor: "PAR", arrival: "any" });
+  assert.equal(kept.dest.destination, "MIL");
+  assert.equal(kept.anchor, "PAR");
+  const chosen = nextShownDestination({ listed: all, current: mil, anchor: null, arrival: "any" });
+  assert.equal(chosen.dest.destination, "MIL");
+  assert.equal(chosen.anchor, null);
+  assert.equal(filtersHoldResults({ ...DEFAULT_FILTERS, stops: "direct" }), true);
+  assert.equal(filtersHoldResults(DEFAULT_FILTERS), false);
 });
