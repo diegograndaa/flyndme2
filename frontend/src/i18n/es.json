@@ -709,6 +709,7 @@
     "arrivalRequested": "Pedís llegar en {{time}}",
     "arrivalGapEnd": "+{{time}}",
     "arrivalUpTo": "Hasta {{time}}",
+    "arrivalSlider": "Franja entre la primera y la última llegada",
     "arrivalBarLabel": "{{origin}}, {{clock}}",
     "arrivalNoClock": "{{origin}}, sin hora",
     "gapAlready": "Con estos vuelos ya llegáis dentro de la franja.",

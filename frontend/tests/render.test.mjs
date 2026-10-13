@@ -112,6 +112,49 @@ test("render: la cabecera del vuelo enseña los códigos quietos", async () => {
   assert.ok(!html.includes("flap-cell"), "la cabecera no gira los códigos de origen");
 });
 
+test("render: los filtros son checks y la franja de llegada es una barra", async () => {
+  const { ResultFilters } = await import("../src/components/ResultFilters.jsx");
+  const leg = (origin, at, airline) => ({
+    origin,
+    price: 80,
+    passengers: 1,
+    totalForOrigin: 80,
+    offer: {
+      transfers: 0,
+      validatingAirlineCodes: [airline],
+      itineraries: [{
+        duration: "PT3H",
+        segments: [{
+          departure: { iataCode: origin, at: "2026-11-15T08:00:00" },
+          arrival: { iataCode: "FCO", at: `2026-11-15T${at}:00` },
+        }],
+      }],
+    },
+  });
+  const rome = {
+    destination: "ROM", totalCostEUR: 200, fairnessScore: 80,
+    flights: [leg("BCN", "10:00", "IB"), leg("MAD", "12:00", "VY")],
+  };
+  const paris = {
+    destination: "PAR", totalCostEUR: 280, fairnessScore: 70,
+    flights: [leg("BCN", "10:00", "IB"), leg("MAD", "18:00", "VY")],
+  };
+  const html = renderWithI18n(React.createElement(ResultFilters, {
+    flights: [rome, paris],
+    listedCount: 2,
+    filters: { arrival: "any", maxArrivalMin: null, stops: "any", maxDurationMin: null, airlines: null, domestic: false },
+    onChange: () => {},
+    onReset: () => {},
+    multiOrigin: true,
+    displayDest: rome,
+    origins: ["BCN", "MAD"],
+  }));
+  assert.ok(html.includes("fm-arr-slider"), "la franja se arrastra");
+  assert.ok(html.includes('type="range"'));
+  assert.ok(html.includes("fm-check") && html.includes('role="checkbox"'));
+  assert.ok(html.includes(">IB<") && html.includes(">VY<"));
+});
+
 test("render: DeparturesBoard con un solo destino no pinta nada", async () => {
   const { DeparturesBoard } = await import("../src/components/BoardPanels.jsx");
   const html = renderWithI18n(React.createElement(DeparturesBoard, { flights: [FIXTURE_DEST], current: FIXTURE_DEST }));

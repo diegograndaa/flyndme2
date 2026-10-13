@@ -709,6 +709,7 @@
     "arrivalRequested": "You asked to land within {{time}}",
     "arrivalGapEnd": "+{{time}}",
     "arrivalUpTo": "Within {{time}}",
+    "arrivalSlider": "Window between the first and last arrival",
     "arrivalBarLabel": "{{origin}}, {{clock}}",
     "arrivalNoClock": "{{origin}}, no time",
     "gapAlready": "These flights already land inside this window.",

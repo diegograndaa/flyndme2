@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   applyResultFilters, listResults, arrivalSpreadMs, matchesArrival,
   airlinesIn, durationSteps, DEFAULT_FILTERS, sharedCountry, domesticCodes,
-  nextAirlines, countryKey, arrivalBars, arrivalGapChoices, ticketClock,
+  nextAirlines, countryKey, arrivalBars, arrivalGapChoices, arrivalSliderRange, ticketClock,
 } from "../src/utils/resultFilters.js";
 
 function leg({ date = "2026-11-15", at = "08:30", dur = "PT2H", transfers = 0, airline = "IB", flightDate = null } = {}) {
@@ -168,6 +168,16 @@ test("una franja de 2 h deja fuera un hueco de 7 h y una escala", () => {
     "total",
   );
   assert.deepEqual(sorted.map((d) => d.destination), ["ROM", "PAR"]);
+});
+
+test("la barra de llegada recorre el hueco real, de 30 en 30 minutos", () => {
+  const tight = dest("ROM", [leg({ at: "08:00" }), leg({ at: "09:00" })]);
+  const wide = dest("PAR", [leg({ at: "08:00" }), leg({ at: "15:00" })]);
+  const days = dest("LIS", [leg({ flightDate: "2026-11-15" }), leg({ flightDate: "2026-11-16", at: "12:00" })]);
+  assert.deepEqual(arrivalSliderRange([tight]), { min: 30, max: 60, step: 30 });
+  assert.deepEqual(arrivalSliderRange([tight, wide]), { min: 30, max: 420, step: 30 });
+  assert.equal(arrivalSliderRange([days]), null);
+  assert.equal(arrivalSliderRange([]), null);
 });
 
 test("las franjas ofrecidas salen de los huecos reales del mismo día", () => {
