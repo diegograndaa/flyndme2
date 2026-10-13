@@ -125,5 +125,13 @@ export function parseSearchLinkParams(search) {
   const destinations = knownDestinations(params.getAll("d"), origins);
   if (destinations.length) out.destinations = destinations;
 
+  // basis=cheaper solo cuando no hay ciudades a mano: esas mandan.
+  if (!out.destinations && params.get("basis") === "cheaper") out.destBasis = "cheaper";
+
   return out;
+}
+
+/** ?basis=cheaper cuando el modo está activo y no hay ciudades elegidas a mano. */
+export function appendDestBasisParam(params, destBasis, destinations) {
+  if (destBasis === "cheaper" && !(destinations && destinations.length)) params.set("basis", "cheaper");
 }

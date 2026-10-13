@@ -2848,6 +2848,25 @@ button,
   .sf-ret-col { animation: none; }
 }
 
+/* Cómo se eligen las ciudades a comparar: dos mitades, diana de 44 px. */
+.sf-basis.sf-basis { margin-top: 4px; }
+.sf-basis .sf-pills.sf-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+.sf-basis .sf-pill.sf-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+.sf-basis .sf-hint { margin-top: 6px; }
+
 /* ══ 26. Móvil compacto (oct-2026) ════════════════════════════════════════
    El formulario perdía 150 px de 390 en márgenes anidados (tarjeta → sección
    → fila) y por eso cada viajero ocupaba 2-3 líneas: número arriba, campo en

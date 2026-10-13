@@ -186,6 +186,50 @@ test("share: ids malformados → 404 y /og redirige a la portada", async () => {
   assert.equal(og.status, 302);
 });
 
+test("search: destBasis cheaper usa la lista corta; una lista a mano no", async () => {
+  const { pickCheaperDestinations } = require("../services/cheaperDestinations");
+  const EUROPE = require("../data/europeCodes.json");
+  const mock = require("../services/mockFlightService");
+  const departureDate = futureDate(70);
+  const month = departureDate.slice(0, 7);
+  const origins = ["MAD", "LON"];
+  const byOrigin = {};
+  for (const origin of origins) byOrigin[origin] = await mock.getCheapDestinations(origin, month);
+  const picked = pickCheaperDestinations({ origins, byOrigin, allow: EUROPE, limit: 12, minCommon: 6 });
+  assert.ok(picked && picked.length >= 6, "el mock deja al menos 6 ciudades en común");
+
+  const usual = await post("/api/flights/multi-origin", {
+    origins, departureDate, tripType: "oneway", optimizeBy: "total",
+  });
+  assert.equal(usual.status, 200);
+  assert.equal(usual.body.destinationBasis, "usual");
+
+  const cheap = await post("/api/flights/multi-origin", {
+    origins, departureDate, tripType: "oneway", optimizeBy: "total", destBasis: "cheaper",
+  });
+  assert.equal(cheap.status, 200);
+  assert.equal(cheap.body.destinationBasis, "cheaper");
+  assert.equal(cheap.body.cheapPrices, undefined);
+  const got = cheap.body.flights.map((f) => f.destination).sort();
+  assert.deepEqual(got, picked.slice(0, 6).sort());
+  assert.notEqual(
+    got.join(","),
+    usual.body.flights.map((f) => f.destination).sort().join(","),
+    "la lista personalizada no repite las ciudades habituales",
+  );
+  for (const flight of cheap.body.bestDestination.flights) {
+    assert.equal(typeof flight.price, "number");
+    assert.ok(flight.price > 0);
+  }
+
+  const pinned = await post("/api/flights/multi-origin", {
+    origins, destinations: ["LIS"], departureDate, tripType: "oneway", destBasis: "cheaper",
+  });
+  assert.equal(pinned.status, 200);
+  assert.equal(pinned.body.destinationBasis, "usual");
+  assert.equal(pinned.body.bestDestination.destination, "LIS");
+});
+
 test("share: el enlace caduca a las 48 h", async () => {
   const r = await post("/api/share", { results: { flights: [] }, searchParams: { origins: ["MAD"] } });
   assert.equal(r.status, 200);

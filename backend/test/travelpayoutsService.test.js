@@ -529,3 +529,40 @@ test("buildAffiliateLink: sin TRAVELPAYOUTS_MARKER → link absoluto sin marker"
     require.cache[servicePath] = savedModule; // el resto del fichero sigue con la instancia original
   }
 });
+
+test("getCheapDestinations: pide el mes, se queda el mínimo y no repite la llamada", async () => {
+  const calls = [];
+  setTransport(async (url, config) => {
+    calls.push({ url, params: config.params, headers: config.headers });
+    return {
+      data: {
+        success: true,
+        data: {
+          BCN: { "0": { price: 40 }, "1": { price: 22 } },
+          PAR: { "0": { price: 19 } },
+        },
+      },
+    };
+  });
+  const first = await tp.getCheapDestinations("mad", "2026-11-20");
+  const second = await tp.getCheapDestinations("MAD", "2026-11");
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].url.endsWith("/v1/prices/cheap"));
+  assert.equal(calls[0].params.origin, "MAD");
+  assert.equal(calls[0].params.depart_date, "2026-11");
+  assert.equal(calls[0].params.currency, "eur");
+  assert.equal(calls[0].headers["X-Access-Token"], "test-token");
+  assert.deepEqual(first, second);
+  const byCode = Object.fromEntries(first.map((r) => [r.destination, r.price]));
+  assert.equal(byCode.BCN, 22);
+  assert.equal(byCode.PAR, 19);
+});
+
+test("getCheapDestinations: un fallo o un mes raro devuelve lista vacía", async () => {
+  let calls = 0;
+  setTransport(async () => { calls++; throw new Error("boom"); });
+  assert.deepEqual(await tp.getCheapDestinations("LON", "2026-12"), []);
+  assert.equal(calls, 1);
+  assert.deepEqual(await tp.getCheapDestinations("LON", "noviembre"), []);
+  assert.equal(calls, 1);
+});

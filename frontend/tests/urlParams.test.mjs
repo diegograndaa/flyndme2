@@ -137,3 +137,20 @@ test("urlParams: el enlace escrito con flex y presupuesto se vuelve a leer igual
   assert.equal(off.has("flex"), false);
   assert.equal(off.has("budget"), false);
 });
+
+test("urlParams: basis=cheaper se lee y se escribe; con ciudades a mano no", async () => {
+  const { appendDestBasisParam, parseSearchLinkParams } = await import("../src/utils/urlParams.js");
+  assert.equal(parseSearchLinkParams("?o=MAD").destBasis, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&basis=usual").destBasis, undefined);
+  assert.equal(parseSearchLinkParams("?o=MAD&basis=cheaper").destBasis, "cheaper");
+  assert.equal(parseSearchLinkParams("?o=MAD&d=LIS&basis=cheaper").destBasis, undefined);
+  const params = new URLSearchParams("o=MAD");
+  appendDestBasisParam(params, "cheaper", []);
+  assert.equal(parseSearchLinkParams(`?${params.toString()}`).destBasis, "cheaper");
+  const pinned = new URLSearchParams("o=MAD");
+  appendDestBasisParam(pinned, "cheaper", ["LIS"]);
+  assert.equal(pinned.has("basis"), false);
+  const usual = new URLSearchParams("o=MAD");
+  appendDestBasisParam(usual, "usual", []);
+  assert.equal(usual.has("basis"), false);
+});

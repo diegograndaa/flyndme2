@@ -20,8 +20,11 @@ if (!PROVIDER_MODULES[FLIGHT_PROVIDER]) {
 const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODULES.travelpayouts);
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
+const getCheapDestinations = typeof flightService.getCheapDestinations === "function" ? flightService.getCheapDestinations : null;
 const { findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
+const { pickCheaperDestinations } = require("../services/cheaperDestinations");
 const { candidateNights } = require("../services/tripLength");
+const EUROPE_CODES = require("../data/europeCodes.json");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
 // oferta concreta: la verificación del ganador se omite ("skipped") y el
@@ -73,6 +76,11 @@ const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
 // ~30s: mejor devolver lo encontrado hasta ahora (partial: true) que un 502
 // tras quemar quota. 0 = sin límite.
 const SEARCH_TIME_BUDGET_MS     = Number(process.env.SEARCH_TIME_BUDGET_MS || 25000);
+// La lista «suelen ser más baratos» consulta la caché del mes antes de buscar.
+// Cabe dentro del presupuesto de 25 s: si tarda más, se usan las 24 habituales.
+const CHEAP_LOOKUP_MS           = Number(process.env.CHEAP_LOOKUP_MS || 7000);
+const CHEAP_SHORTLIST           = 12;
+const CHEAP_MIN_COMMON          = 6;
 // Timeout global del endpoint POST /verify (capa 2, SerpAPI). Generoso a
 // propósito: es un endpoint dedicado con casi toda la ventana de ~30s del
 // proxy de Render para él solo, y una búsqueda de Google Flights puede tardar
@@ -319,7 +327,17 @@ async function verifyDestination(result) {
 // Build the list of destination tiers to search. User-supplied destinations
 // bypass the tiered fallback and are treated as a single tier — they asked
 // for them explicitly, so we don't apply early-break across the list.
-function buildSearchTiers(customDestinations, originList) {
+function withTimeout(promise, ms) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), ms);
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      () => { clearTimeout(timer); resolve(null); }
+    );
+  });
+}
+
+function buildSearchTiers(customDestinations, originList, { ranked = false } = {}) {
   const dropOrigins = (arr) => arr.filter((d) => !originList.includes(d));
 
   if (Array.isArray(customDestinations) && customDestinations.length > 0) {
@@ -327,7 +345,9 @@ function buildSearchTiers(customDestinations, originList) {
       .map((d) => String(d || "").trim().toUpperCase())
       .filter(isValidIata);
     const filtered = dropOrigins([...new Set(list)]);
-    return { tiers: filtered.length ? [filtered] : [], explicit: true };
+    // ranked: lista corta ya ordenada. Se corta al llegar a TARGET_RESULTS,
+    // igual que el pool habitual. Una lista pedida a mano se consulta entera.
+    return { tiers: filtered.length ? [filtered] : [], explicit: filtered.length > 0 && !ranked };
   }
 
   return {
@@ -390,10 +410,12 @@ router.post("/multi-origin", async (req, res) => {
       optimizeBy,
       maxBudgetPerTraveler,
       maxBudgetPerFlight,
+      destBasis,
     } = req.body;
 
     // Normalise enums
     tripType = tripType === "roundtrip" ? "roundtrip" : "oneway";
+    destBasis = String(destBasis || "").trim().toLowerCase() === "cheaper" ? "cheaper" : "usual";
     dateMode = dateMode === "flex"      ? "flex"      : "exact";
     flexDays = typeof flexDays === "number" && flexDays >= 0 ? Math.min(flexDays, 5) : 0;
     // nonStop: solo true explicito (boolean o "true"); cualquier otra cosa → sin filtro
@@ -506,7 +528,47 @@ router.post("/multi-origin", async (req, res) => {
       ? Number(maxBudgetPerFlight) : null;
 
     // ── Destination tiers ─────────────────────────────────────────────────────
-    const { tiers: searchTiers, explicit: explicitDestinations } = buildSearchTiers(destinations, originList);
+    // «Suelen ser más baratos»: la caché del mes solo elige la lista. El precio
+    // que se devuelve sale después, de la fecha pedida. Si no hay al menos 6
+    // ciudades con tarifa desde todos los orígenes, se usan las 24 habituales
+    // y no se dice que la lista sea personalizada. Una lista a mano manda.
+    const searchStarted = Date.now();
+    const handPicked = Array.isArray(destinations)
+      && destinations.some((d) => isValidIata(String(d || "").trim().toUpperCase()));
+    let rankedDestinations = null;
+    let destinationBasis = "usual";
+    if (destBasis === "cheaper" && !handPicked && getCheapDestinations) {
+      const month = String(departureDate).slice(0, 7);
+      const lists = await withTimeout(
+        Promise.all(originList.map((origin) => Promise.resolve()
+          .then(() => getCheapDestinations(origin, month))
+          .catch(() => []))),
+        CHEAP_LOOKUP_MS
+      );
+      if (lists) {
+        const byOrigin = {};
+        originList.forEach((origin, i) => {
+          byOrigin[origin] = Array.isArray(lists[i]) ? lists[i] : [];
+        });
+        const picked = pickCheaperDestinations({
+          origins: originList,
+          byOrigin,
+          allow: EUROPE_CODES,
+          limit: CHEAP_SHORTLIST,
+          minCommon: CHEAP_MIN_COMMON,
+        });
+        if (picked && picked.length) {
+          rankedDestinations = picked;
+          destinationBasis = "cheaper";
+        }
+      }
+      console.log(`[search] lista ${destinationBasis === "cheaper" ? "de tarifas recientes" : "habitual (sin suficientes tarifas en común)"}`);
+    }
+    const { tiers: searchTiers, explicit: explicitDestinations } = buildSearchTiers(
+      rankedDestinations || destinations,
+      originList,
+      { ranked: Boolean(rankedDestinations) }
+    );
     const destinationList = searchTiers.flat(); // used only for combination guard + logging
     // Lista pedida por el usuario: se consultan todas (sigue el tope de tiempo).
     // El pool por defecto sigue cortando al llegar a TARGET_RESULTS.
@@ -526,6 +588,7 @@ router.post("/multi-origin", async (req, res) => {
     const cacheKey = JSON.stringify({
       originList, originPax, destinationList, departureDate, returnDate,
       tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
+      destinationBasis,
     });
     const cached = getCached(cacheKey);
     if (cached) {
@@ -584,7 +647,7 @@ router.post("/multi-origin", async (req, res) => {
     let destsTouched  = 0; // for logging savings vs worst case
 
     console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas (worst case ${combinations} llamadas, target ${TARGET_RESULTS} resultados)`);
-    const t0 = Date.now();
+    const t0 = searchStarted;
 
     // Tier-aware processing: tier N is only entered if previous tiers yielded
     // fewer than TARGET_RESULTS. Within a tier, destinations are chunked for
@@ -721,6 +784,7 @@ router.post("/multi-origin", async (req, res) => {
       // Parte de las consultas al proveedor falló: puede faltar algún destino.
       ...(health !== "ok" ? { degraded: true } : {}),
       provider:         FLIGHT_PROVIDER,
+      destinationBasis,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
     };
