@@ -16,8 +16,8 @@ import {
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
 import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults } from "./utils/resultFilters";
-import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams } from "./utils/urlParams";
-import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "./utils/recentSearch";
+import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams, appendDestBasisParam } from "./utils/urlParams";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, restoreDestBasis, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
 import { autoVerifyDecision, buildVerifyPayload, mergeVerification, isFullyVerified } from "./utils/verification";
 import { makeWatch, watchId, readWatches, writeWatches, addWatch, removeWatch, activeWatches, priceDrop, safeStorage, readChecks, writeChecks, isCheckDue } from "./utils/priceWatch";
@@ -330,6 +330,9 @@ export default function App() {
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
+  // usual = las 24 ciudades. cheaper = lista corta según tarifas recientes.
+  const [destBasis, setDestBasis] = useState("usual");
+  const [resultBasis, setResultBasis] = useState("usual");
   const [passengers,    setPassengers]    = useState([1, 1]); // passengers per origin
   const [directOnly,    setDirectOnly]    = useState(false);
   const [cabinClass,    setCabinClass]    = useState("ECONOMY");
@@ -415,6 +418,7 @@ export default function App() {
         directOnly: params.directOnly === true,
         cabinClass: savedCabin(params.cabinClass),
         destinations: params.destinations || [],
+        destBasis: params.destBasis === "cheaper" ? "cheaper" : "usual",
         ts: Date.now(),
       };
       // Misma ruta con otra vuelta, otros viajeros, ±días o tope es otra búsqueda.
@@ -454,6 +458,7 @@ export default function App() {
     setCabinClass(cabin.cabinClass);
     // Sin destinos guardados: el pool. Si no, se quedarían los de la búsqueda anterior.
     setSelectedDests(restoreDestinations(entry));
+    setDestBasis(restoreDestBasis(entry));
   }, []);
 
   // ── Sin borradores ───────────────────────────────────────────────────────
@@ -533,6 +538,7 @@ export default function App() {
         const shared = normalizeSharedFlights(results?.flights);
         if (!shared.length) { const e = new Error("empty"); e.expired = true; throw e; }
         setSharedAt(Number(data.createdAt) || Date.now());
+        setResultBasis("usual");
         setFlights(shared);
         lastSearchRef.current = null;
         filterAnchorRef.current = null;
@@ -624,6 +630,7 @@ export default function App() {
     if (parsed.flexDays) { setFlexEnabled(true); setFlexDays(parsed.flexDays); }
     if (parsed.maxBudget) { setBudgetEnabled(true); setMaxBudget(parsed.maxBudget); }
     if (parsed.destinations) setSelectedDests(parsed.destinations);
+    setDestBasis(parsed.destBasis === "cheaper" ? "cheaper" : "usual");
     setView("search");
     window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -974,6 +981,7 @@ export default function App() {
     if (currency !== "EUR") params.set("cur", currency);
     appendFlexBudgetParams(params, { flexEnabled, flexDays, budgetEnabled, maxBudget });
     appendDestinationParams(params, selectedDests, rows.map((r) => r.code));
+    appendDestBasisParam(params, destBasis, selectedDests);
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
 
@@ -1534,6 +1542,7 @@ export default function App() {
         ...(tripType === "roundtrip" && { returnDate }),
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
         ...(selectedDests.length > 0 && { destinations: selectedDests }),
+        ...(selectedDests.length === 0 && destBasis === "cheaper" && { destBasis: "cheaper" }),
         ...(directOnly && { nonStop: true }),
         ...(cabinClass !== "ECONOMY" && { travelClass: cabinClass }),
       };
@@ -1604,6 +1613,7 @@ export default function App() {
           setFlights(adjusted);
           lastSearchRef.current = body;
           setPartialResults(Boolean(data.partial));
+          setResultBasis(data.destinationBasis === "cheaper" ? "cheaper" : "usual");
           setProviderDegraded(Boolean(data.degraded));
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
@@ -1633,6 +1643,7 @@ export default function App() {
             directOnly: directOnly === true,
             cabinClass: savedCabin(cabinClass),
             destinations: savedDestinations(selectedDests, cleanOrigins),
+            destBasis: selectedDests.length === 0 && destBasis === "cheaper" ? "cheaper" : "usual",
           });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
@@ -2058,6 +2069,7 @@ export default function App() {
               flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
               flexDays={flexDays}         setFlexDays={setFlexDays}
               selectedDests={selectedDests} setSelectedDests={setSelectedDests}
+              destBasis={destBasis} setDestBasis={setDestBasis}
               passengers={passengers}     setPassengers={setPassengers}
               directOnly={directOnly}     setDirectOnly={setDirectOnly}
               cabinClass={cabinClass}     setCabinClass={setCabinClass}
@@ -2247,6 +2259,10 @@ export default function App() {
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} />
+          {resultBasis === "cheaper" && (
+            <Notice variant="partial" tag={t("board.tagNotice")}
+              text={t("results.destBasisCheaper")} />
+          )}
           {sharedAt && (
             <Notice variant="partial" tag={t("board.tagNotice")}
               text={t("results.sharedNotice", {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, recentSearchKey } from "../src/utils/recentSearch.js";
+import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, restoreDestBasis, recentSearchKey } from "../src/utils/recentSearch.js";
 
 test("recentSearch: solo se guarda un margen que el formulario enseña", () => {
   assert.equal(savedFlexDays(true, 2), 2);
@@ -61,6 +61,10 @@ test("recentSearch: la clave distingue vuelta, viajeros, margen y tope", () => {
     recentSearchKey({ ...base, destinations: ["ROM", "LIS"] }),
   );
   assert.equal(recentSearchKey(base), recentSearchKey({ ...base, destinations: [] }));
+  assert.equal(restoreDestBasis({}), "usual");
+  assert.equal(restoreDestBasis({ destBasis: "cheaper" }), "cheaper");
+  assert.equal(recentSearchKey(base), recentSearchKey({ ...base, destBasis: "usual" }));
+  assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, destBasis: "cheaper" }));
   assert.notEqual(recentSearchKey(base), recentSearchKey({ ...base, tripType: "roundtrip", returnDate: "2026-11-22" }));
   // Una reciente vieja, sin viajeros ni extras, es la misma que 1 por ciudad en día exacto.
   assert.equal(

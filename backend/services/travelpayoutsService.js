@@ -22,6 +22,7 @@
 const axios = require("axios");
 const https = require("https");
 const { TtlCache } = require("../utils/ttlCache");
+const { rowsFromCheapPayload } = require("./cheaperDestinations");
 
 const httpsAgent = new https.Agent({ keepAlive: true });
 const http = axios.create({ httpsAgent, timeout: 15000 });
@@ -648,12 +649,39 @@ async function getDatedPrices(origin, destination, departureDate, options = {}) 
   });
 }
 
+// Tarifas en caché del mes, solo para ELEGIR ciudades (no se enseñan).
+// /v1/prices/cheap devuelve, por destino, el mínimo visto ese mes.
+// Un fallo devuelve []: la búsqueda sigue con las 24 habituales.
+async function getCheapDestinations(origin, departMonth) {
+  const o = String(origin || "").trim().toUpperCase();
+  const month = String(departMonth || "").slice(0, 7);
+  if (!/^[A-Z]{3}$/.test(o) || !/^\d{4}-\d{2}$/.test(month) || !TOKEN) return [];
+  const key = `cheap|${o}|${month}`;
+  const hit = searchCache.get(key);
+  if (hit) return hit;
+  try {
+    const response = await requestWithRetry(
+      () => transport(`${BASE_URL}/v1/prices/cheap`, {
+        params: { origin: o, currency: "eur", depart_date: month, token: TOKEN },
+        headers: { "X-Access-Token": TOKEN, "Accept-Encoding": "gzip, deflate" },
+      }),
+      `cheap ${o} ${month}`
+    );
+    const rows = rowsFromCheapPayload(response?.data);
+    searchCache.set(key, rows);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 module.exports = {
   getAccessToken,
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
   getDatedPrices,
+  getCheapDestinations,
   priceFlightOffer,
   healthCheck,
   budgetStatus,

@@ -64,6 +64,11 @@ export function restoreDestinations(entry) {
   return savedDestinations(entry?.destinations, entry?.origins);
 }
 
+/** Sin el campo (búsquedas viejas): las 24 ciudades habituales. */
+export function restoreDestBasis(entry) {
+  return entry?.destBasis === "cheaper" ? "cheaper" : "usual";
+}
+
 /** Sin el campo (búsquedas viejas): directo apagado y turista. */
 export function restoreDirectCabin(entry) {
   const cabin = String(entry?.cabinClass || "").toUpperCase();
@@ -95,5 +100,6 @@ export function recentSearchKey(entry) {
     entry?.directOnly === true ? 1 : 0,
     CABINS.has(String(entry?.cabinClass || "").toUpperCase()) ? String(entry.cabinClass).toUpperCase() : "ECONOMY",
     restoreDestinations(entry).slice().sort().join(","),
+    restoreDestBasis(entry),
   ].join("|");
 }

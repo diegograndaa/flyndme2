@@ -229,12 +229,34 @@ function budgetStatus() {
   return { month: new Date().toISOString().slice(0, 7), used: 0, budget: 0, remaining: Infinity, unlimited: true };
 }
 
+// Ciudades de encuentro reconocibles. El precio es el del mock (determinista)
+// y solo sirve para ordenar la lista corta; la búsqueda de la fecha real
+// sigue siendo getCheapestOffer.
+const CHEAP_CANDIDATES = [
+  "LON", "PAR", "ROM", "AMS", "MIL", "LIS", "BER", "MAD", "BCN",
+  "DUB", "VIE", "PRG", "ATH", "BUD", "OPO", "CPH", "IST",
+  "AGP", "PMI", "NCE", "DBV", "MLA", "NAP", "ZRH",
+  "KRK", "BEG", "OTP", "SOF", "TIA", "TLL", "RIX", "VNO", "SKG",
+  "WAW", "VLC", "EDI", "BRU", "MUC", "FRA", "GVA", "HEL", "OSL", "STO", "SPU", "ZAG", "BIO", "SVQ", "ALC",
+];
+
+async function getCheapDestinations(origin, departMonth) {
+  const o = String(origin || "").trim().toUpperCase();
+  const month = String(departMonth || "").slice(0, 7);
+  if (!/^[A-Z]{3}$/.test(o) || !/^\d{4}-\d{2}$/.test(month)) return [];
+  const day = `${month}-15`;
+  return CHEAP_CANDIDATES
+    .filter((d) => d !== o)
+    .map((d) => ({ destination: d, price: mockPrice(o, d, day) }));
+}
+
 module.exports = {
   getAccessToken,
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
   getDatedPrices,
+  getCheapDestinations,
   priceFlightOffer,
   healthCheck,
   budgetStatus,
