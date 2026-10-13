@@ -6,9 +6,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
-  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag, airportName,
+  buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag,
 } from "../utils/helpers";
 import { buildAirlineBookingUrl } from "../utils/airlineBooking";
+import { airlineName, legSchedule } from "../utils/flightTime";
 import GroupSalePanel from "./GroupSalePanel";
 import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
@@ -35,6 +36,56 @@ const AIRLINE_LOGO_SOURCES = [
   (c) => `https://pics.avs.io/72/24/${c}@2x.png`,
   (c) => `https://images.kiwi.com/airlines/64/${c}.png`,
 ];
+function durationLabel(parts, t) {
+  if (!parts) return "";
+  if (parts.h > 0 && parts.m > 0) return t("results.durHM", { h: parts.h, m: parts.m });
+  if (parts.h > 0) return t("results.durH", { h: parts.h });
+  if (parts.m > 0) return t("results.durM", { m: parts.m });
+  return "";
+}
+
+function LegStrip({ kicker, schedule, t }) {
+  if (!schedule) return null;
+  const { from, to, dep, arr, stops, carrier, duration } = schedule;
+  const dur = durationLabel(duration, t);
+  const name = airlineName(carrier) || carrier;
+  const stopsLabel = stops == null ? "" : (stops === 0 ? t("results.direct") : t("results.stops", { n: stops }));
+  if (!dep && !arr && !dur && stops == null && !name && !from && !to) return null;
+  return (
+    <div className="wc-leg">
+      {(name || kicker) && (
+        <div className="wc-leg-airline">
+          {carrier ? <AirlineLogo code={carrier} /> : null}
+          {name ? <span className="wc-leg-name">{name}</span> : null}
+          {kicker ? <span className="wc-leg-kicker">{kicker}</span> : null}
+        </div>
+      )}
+      {(from || to || dep || arr || dur || stopsLabel) && (
+        <div className="wc-leg-row">
+          <div className="wc-leg-end">
+            {dep ? <span className="wc-leg-hhmm">{dep}</span> : null}
+            {from ? <span className="wc-leg-iata">{from}</span> : null}
+          </div>
+          <div className="wc-leg-mid">
+            {dur ? <span className="wc-leg-dur">{dur}</span> : null}
+            <span className="wc-leg-track" aria-hidden="true">
+              <span className="wc-leg-line" />
+              <Plane size={12} />
+            </span>
+            {stopsLabel ? (
+              <span className={stops === 0 ? "wc-leg-kind wc-leg-kind--direct" : "wc-leg-kind"}>{stopsLabel}</span>
+            ) : null}
+          </div>
+          <div className="wc-leg-end wc-leg-end--arr">
+            {arr ? <span className="wc-leg-hhmm">{arr}</span> : null}
+            {to ? <span className="wc-leg-iata">{to}</span> : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AirlineLogo({ code }) {
   const [src, setSrc] = useState(0);
   const iata = String(code || "").toUpperCase();
@@ -275,37 +326,34 @@ const WinnerCard = React.memo(function WinnerCard({
                   adults: Number(finfo.passengers) || Number(offer?.passengers) || 1 });
                 const gfUrl = buildGoogleFlightsUrl({ origin: ssOrigin, destination: ssDest, departureDate: effDep, returnDate: effRet, tripType });
 
-                // Extract itinerary details (outbound)
+                // Horario del billete. La salida es la hora local del texto;
+                // la llegada solo si el instante trae zona y conocemos la del
+                // destino. Una escala sin segmentos no lleva relojes.
                 const itin = offer?.itineraries?.[0];
                 const segments = itin?.segments || [];
-                const stops = segments.length > 0 ? segments.length - 1 : null;
-                const airline = offer?.validatingAirlineCodes?.[0] || "";
-                const duration = itin?.duration || "";
-                const durationText = duration
-                  ? duration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
-                  : "";
-                const depAirport = segments[0]?.departure?.iataCode || "";
-                const arrAirport = segments[segments.length - 1]?.arrival?.iataCode || "";
-                const depName = airportName(depAirport);
-                const arrName = airportName(arrAirport);
-
-                // Extract return itinerary (roundtrip only)
+                const out = legSchedule({
+                  itinerary: itin,
+                  transfers: offer?.transfers,
+                  from: ssOrigin,
+                  to: ssDest,
+                  airline: offer?.validatingAirlineCodes?.[0] || "",
+                });
                 const retItin = tripType === "roundtrip" ? offer?.itineraries?.[1] : null;
                 const retSegments = retItin?.segments || [];
-                const retStops = retSegments.length > 0 ? retSegments.length - 1 : null;
-                const retDuration = retItin?.duration || "";
-                const retDurationText = retDuration
-                  ? retDuration.replace("PT", "").replace("H", "h ").replace("M", "m").trim()
-                  : "";
-                const retDepAirport = retSegments[0]?.departure?.iataCode || "";
-                const retArrAirport = retSegments[retSegments.length - 1]?.arrival?.iataCode || "";
-                const retDepName = airportName(retDepAirport);
-                const retArrName = airportName(retArrAirport);
+                const back = retItin ? legSchedule({
+                  itinerary: retItin,
+                  transfers: offer?.returnTransfers,
+                  from: ssDest,
+                  to: ssOrigin,
+                  airline: retSegments[0]?.carrierCode || "",
+                }) : null;
 
-                // Detalle al abrir la ruta (datos del billete, nada inventado)
                 const routeOpen = openRoute === origin;
-                const depTime = hhmm(segments[0]?.departure?.at);
-                const retTime = hhmm(retSegments[0]?.departure?.at);
+                const depTime = out?.dep || hhmm(segments[0]?.departure?.at);
+                const arrTime = out?.arr || "";
+                const retTime = back?.dep || "";
+                const retArr = back?.arr || "";
+                const durationText = durationLabel(out?.duration, t);
                 const flightNo = segments[0]?.carrierCode && segments[0]?.number ? `${segments[0].carrierCode} ${segments[0].number}` : "";
                 const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
                 const airlineCode = segments[0]?.carrierCode || offer?.validatingAirlineCodes?.[0] || "";
@@ -383,9 +431,9 @@ const WinnerCard = React.memo(function WinnerCard({
                       <ChevronDown size={16} className="wc-flight-chev" aria-hidden="true" />
                       <span className="flap-sr">{routeOpen ? t("results.fdClose") : t("results.fdOpen")}</span>
                     </button>
-                    {/* Detalle del vuelo: solo datos reales del billete (hora de
-                        salida local tal cual la da el proveedor; la de llegada
-                        no, porque no conocemos la zona horaria del destino). */}
+                    {/* Detalle: salida = dígitos locales del proveedor. Llegada
+                        solo cuando el instante trae zona y conocemos la del
+                        aeropuerto (si no, la franja tampoco la pinta). */}
                     {routeOpen && (
                       <dl id={`wc-fd-${origin}`} className="wc-fd">
                         {effDep && (
@@ -394,10 +442,16 @@ const WinnerCard = React.memo(function WinnerCard({
                             <dd>{formatDate(effDep)}{depTime ? ` · ${depTime} ${t("results.fdLocal")}` : ""}</dd>
                           </div>
                         )}
+                        {arrTime && (
+                          <div className="wc-fd-item">
+                            <dt>{t("results.fdArrival")}</dt>
+                            <dd>{arrTime} {t("results.fdLocal")}</dd>
+                          </div>
+                        )}
                         {tripType === "roundtrip" && effRet && (
                           <div className="wc-fd-item">
                             <dt>{t("results.fdReturn")}</dt>
-                            <dd>{formatDate(effRet)}{retTime ? ` · ${retTime} ${t("results.fdLocal")}` : ""}</dd>
+                            <dd>{formatDate(effRet)}{(retTime || retArr) ? ` · ${[retTime, retArr].filter(Boolean).join(" → ")} ${t("results.fdLocal")}` : ""}</dd>
                           </div>
                         )}
                         {flightNo && (
@@ -414,41 +468,8 @@ const WinnerCard = React.memo(function WinnerCard({
                         )}
                       </dl>
                     )}
-                    {/* Outbound itinerary */}
-                    {(airline || stops !== null || durationText) && (
-                      <div className="wc-flight-meta">
-                        <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.outbound")}</span>
-                        {airline && <span className="wc-flight-meta-item wc-flight-meta-airline"><AirlineLogo code={airline} /><span className="wc-airline-badge">{airline}</span></span>}
-                        {durationText && <span className="wc-flight-meta-item">{durationText}</span>}
-                        {stops !== null && (
-                          <span className={`wc-flight-meta-item ${stops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
-                            {stops === 0 ? t("results.direct") : t("results.stops", { n: stops })}
-                          </span>
-                        )}
-                        {(depName || arrName) && (
-                          <span className="wc-flight-meta-item wc-flight-meta-airport">
-                            {depAirport}{depName ? ` ${depName}` : ""} → {arrAirport}{arrName ? ` ${arrName}` : ""}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {/* Return itinerary */}
-                    {retItin && (retStops !== null || retDurationText) && (
-                      <div className="wc-flight-meta wc-flight-meta--return">
-                        <span className="wc-flight-meta-item wc-flight-meta-leg">{t("results.returnLeg")}</span>
-                        {retDurationText && <span className="wc-flight-meta-item">{retDurationText}</span>}
-                        {retStops !== null && (
-                          <span className={`wc-flight-meta-item ${retStops === 0 ? "wc-flight-meta--direct" : "wc-flight-meta--stops"}`}>
-                            {retStops === 0 ? t("results.direct") : t("results.stops", { n: retStops })}
-                          </span>
-                        )}
-                        {(retDepName || retArrName) && (
-                          <span className="wc-flight-meta-item wc-flight-meta-airport">
-                            {retDepAirport}{retDepName ? ` ${retDepName}` : ""} → {retArrAirport}{retArrName ? ` ${retArrName}` : ""}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <LegStrip schedule={out} t={t} />
+                    {back && <LegStrip kicker={t("results.returnLeg")} schedule={back} t={t} />}
                     <div className="wc-flight-ctas">
                       {/* Reservar abre la web de esa aerolínea. Si no la
                           tenemos, el mismo botón abre Skyscanner. */}
@@ -476,7 +497,10 @@ const WinnerCard = React.memo(function WinnerCard({
                         </a>
                       )}
                       <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
-                        const txt = `${originCity || origin} → ${destCity} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
+                        const when = (out?.dep || out?.arr)
+                          ? [out.dep, out.from, "→", out.arr, out.to].filter(Boolean).join(" ")
+                          : "";
+                        const txt = `${originCity || origin} → ${destCity}${when ? ` · ${when}` : ""} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
                         setCopied({ origin, ok: await copyText(txt) });
                       }} title={t("results.copyFlight")} aria-label={t("results.copyFlight")}>
                         {copied?.origin === origin && copied.ok
