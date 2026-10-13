@@ -173,8 +173,6 @@ export function ResultFilters({
           <span className="fm-filter-label">{t("filters.title")}</span>
           <span className="fm-filter-count">{t("filters.count", { n: listedCount, total: flights.length })}</span>
         </div>
-        <p className="fm-filter-hint">{t("filters.note")}</p>
-
         {showDomestic && (
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-domestic">{t("filters.domestic")}</span>
@@ -183,7 +181,6 @@ export function ResultFilters({
                 count={count({ domestic: true }) || null}
                 onClick={() => set({ domestic: !filters.domestic })}>{t("filters.domesticOnly", { country: domesticName })}</CheckRow>
             </div>
-            <p className="fm-filter-hint">{t("filters.domesticHint", { country: domesticName })}</p>
           </div>
         )}
 
@@ -274,7 +271,6 @@ export function ResultFilters({
                 );
               })}
             </div>
-            <p className="fm-filter-hint">{t("filters.airlinesHint")}</p>
           </div>
         )}
 

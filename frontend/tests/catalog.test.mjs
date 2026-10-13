@@ -28,6 +28,17 @@ test("catálogo: cada destino del backend tiene foto, coordenadas, nombre y band
   assert.deepEqual(missing, []);
 });
 
+test("catálogo: cada aeropuerto elegible tiene foto de su ciudad", async () => {
+  const { getCityImageUrl } = await import("../src/utils/cityImages.js");
+  const { AIRPORTS } = await import("../src/utils/helpers.js");
+  const missing = AIRPORTS.filter((a) => !getCityImageUrl(a.code)).map((a) => a.code);
+  assert.deepEqual(missing, []);
+  assert.match(getCityImageUrl("ALC"), /photo-1552057031-5071f53c5757/);
+  assert.match(getCityImageUrl("VLC"), /photo-1577990432593-6bf35f43beed/);
+  assert.match(getCityImageUrl("SVQ"), /photo-1634010405255-2ce3fdd0946d/);
+  assert.match(getCityImageUrl("BIO"), /photo-1663844234274-7089dd2d8243/);
+});
+
 test("cityImages: URL de Unsplash con tamaño y respaldo local para códigos sin foto", async () => {
   const { getCityImageUrl, getCityImage } = await import("../src/utils/cityImages.js");
   const u = getCityImageUrl("par", { w: 320, h: 200 });

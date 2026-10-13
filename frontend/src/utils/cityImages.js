@@ -61,6 +61,11 @@ const CITY_PHOTO_IDS = {
   CMN: "1538230575309-59dfc388ae36",      // Casablanca Hassan II Mosque
   MUC: "1705075833771-1f5e5b99ddeb",   // Munich Marienplatz town hall
   FRA: "1607879344639-d5f8dec22a60",   // Frankfurt skyline at dusk
+  // ── España fuera del pool por defecto (solo nacionales) ──
+  ALC: "1552057031-5071f53c5757",      // Alicante, castillo de Santa Bárbara y Postiguet
+  VLC: "1577990432593-6bf35f43beed",   // Valencia, Ciudad de las Artes y las Ciencias
+  SVQ: "1634010405255-2ce3fdd0946d",   // Sevilla, Plaza de España
+  BIO: "1663844234274-7089dd2d8243",   // Bilbao, Guggenheim desde la ría
 };
 
 /**
