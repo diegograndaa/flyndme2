@@ -3,6 +3,7 @@
 // primer paso del troceo de App.jsx. Sin React, sin DOM, sin estado.
 
 import { normalizeCode, cityOf } from "./helpers.js";
+import { EUROPE_EXTRA } from "./europeAirports.js";
 
 // ── Conversión de moneda (tasas estáticas aproximadas) ──────────────────────
 export const FX_RATES = { EUR: 1, GBP: 0.86, USD: 1.09 };
@@ -39,6 +40,9 @@ export const AIRPORT_COORDS = {
   RIX: [56.92, 23.97], VNO: [54.63, 25.29], SKG: [40.52, 22.97], RHO: [36.41, 28.09],
   ZAG: [45.74, 16.07], CMN: [33.37, -7.59],
 };
+for (const a of EUROPE_EXTRA) {
+  if (!AIRPORT_COORDS[a.code]) AIRPORT_COORDS[a.code] = [a.lat, a.lon];
+}
 
 // Distancia haversine aproximada entre dos aeropuertos; null si falta alguno.
 export function approxDistKm(code1, code2) {

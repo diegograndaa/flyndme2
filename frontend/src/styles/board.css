@@ -2755,6 +2755,9 @@ button,
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-country.sf-ac-country { color: rgba(230,232,236,.72); }
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-code.sf-ac-code { background: var(--sign); color: #1A1A1A; }
 .sf-ac-dropdown .sf-ac-item--hl .sf-ac-mark { background: rgba(var(--sign-rgb), .28); }
+/* Buscar un aeropuerto que no está en las fichas (Asturias, Lanzarote…). */
+.sf-dest-find.sf-dest-find { flex: none; margin-bottom: 10px; }
+.sf-dest-find .sf-input.sf-input { padding-right: 12px !important; min-height: 44px; }
 .sf-ac-item--hl .sf-ac-go { opacity: 1; transform: none; }
 [data-theme="dark"] .sf-ac-dropdown.sf-ac-dropdown { background: var(--white); border-color: var(--line); }
 @keyframes sf-ac-drop { from { opacity: 0; transform: translateY(-4px) scaleY(.96); } }

@@ -28,15 +28,44 @@ test("catálogo: cada destino del backend tiene foto, coordenadas, nombre y band
   assert.deepEqual(missing, []);
 });
 
-test("catálogo: cada aeropuerto elegible tiene foto de su ciudad", async () => {
-  const { getCityImageUrl } = await import("../src/utils/cityImages.js");
-  const { AIRPORTS } = await import("../src/utils/helpers.js");
-  const missing = AIRPORTS.filter((a) => !getCityImageUrl(a.code)).map((a) => a.code);
+test("catálogo: las ciudades de siempre conservan su foto; un aeropuerto nuevo no se inventa", async () => {
+  const { getCityImageUrl, getCityImage } = await import("../src/utils/cityImages.js");
+  const { CURATED_CODES } = await import("../src/utils/helpers.js");
+  const missing = CURATED_CODES.filter((code) => !getCityImageUrl(code));
   assert.deepEqual(missing, []);
   assert.match(getCityImageUrl("ALC"), /photo-1552057031-5071f53c5757/);
   assert.match(getCityImageUrl("VLC"), /photo-1577990432593-6bf35f43beed/);
   assert.match(getCityImageUrl("SVQ"), /photo-1634010405255-2ce3fdd0946d/);
   assert.match(getCityImageUrl("BIO"), /photo-1663844234274-7089dd2d8243/);
+  assert.equal(getCityImageUrl("OVD"), null);
+  assert.match(getCityImage("OVD", "/base/"), /\/base\/destinations\/OVD\.jpg$/);
+});
+
+test("catálogo: Asturias y el resto de Europa se pueden elegir, sin cambiar la búsqueda habitual", async () => {
+  const { searchAirports, resolveOriginCode, AIRPORT_MAP, countryFlag, SEARCH_POOL, cityOf } = await import("../src/utils/helpers.js");
+  const { CITY_COORDS } = await import("../src/utils/geo.js");
+  const { AIRPORT_COORDS } = await import("../src/utils/resultsLogic.js");
+  const { domesticCodes } = await import("../src/utils/resultFilters.js");
+  assert.equal(searchAirports("asturias")[0].code, "OVD");
+  assert.equal(searchAirports("oviedo")[0].code, "OVD");
+  assert.equal(resolveOriginCode("Avilés"), "OVD");
+  assert.equal(AIRPORT_MAP.OVD.city, "Asturias");
+  assert.equal(AIRPORT_MAP.OVD.country, "Spain");
+  assert.equal(countryFlag("OVD"), "🇪🇸");
+  assert.ok(CITY_COORDS.OVD[0] < -5 && CITY_COORDS.OVD[0] > -7, "lon de Asturias");
+  assert.ok(CITY_COORDS.OVD[1] > 43 && CITY_COORDS.OVD[1] < 44, "lat de Asturias");
+  assert.ok(Math.abs(AIRPORT_COORDS.OVD[0] - CITY_COORDS.OVD[1]) < 0.02);
+  assert.equal(SEARCH_POOL.includes("OVD"), false);
+  for (const code of ["LPA", "TFN", "ACE", "FUE", "GMZ", "SCQ", "KBP", "LHR", "CDG"]) {
+    assert.ok(AIRPORT_MAP[code], code);
+    assert.ok(countryFlag(code), `${code} bandera`);
+  }
+  assert.equal(AIRPORT_MAP.OVB, undefined);
+  const spain = domesticCodes("Spain", ["MAD"]);
+  assert.ok(spain.includes("OVD") && spain.includes("LPA"));
+  assert.equal(spain.includes("MAD"), false);
+  assert.equal(cityOf("OVD"), "Asturias");
+  assert.equal(cityOf("LHR"), "London Heathrow");
 });
 
 test("cityImages: URL de Unsplash con tamaño y respaldo local para códigos sin foto", async () => {

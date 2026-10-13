@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
 import {
-  AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, SEARCH_POOL, normalizeCode, cityOf, destLabel, formatEur,
+  AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, SEARCH_POOL, CURATED_CODES, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
   nextDestSelection, sameCodeSet,
 } from "../utils/helpers";
@@ -96,6 +96,9 @@ const SearchPage = React.memo(function SearchPage({
   const headcount = totalPax(origins, passengers);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
+  const [destQuery, setDestQuery] = useState("");
+  const [destOpen, setDestOpen] = useState(false);
+  const [destHi, setDestHi] = useState(0);
   const [acFocus, setAcFocus] = useState(-1); // which origin input has autocomplete open
   const [acHighlight, setAcHighlight] = useState(0); // keyboard nav index
   const [dragIdx, setDragIdx] = useState(-1); // drag-drop reorder
@@ -143,11 +146,15 @@ const SearchPage = React.memo(function SearchPage({
     [origins],
   );
 
-  // Memoize destination airports (excludes selected origins)
+  // Chips: el catálogo corto, más cualquier aeropuerto que ya se haya elegido
+  // (Asturias, por ejemplo). El resto de Europa se busca en el campo, no en
+  // una rejilla de cientos de fichas.
   const destAirports = useMemo(() => {
     const originCodes = new Set(origins.map(o => resolveOriginCode(o)));
-    return AIRPORTS.filter(a => !originCodes.has(a.code));
-  }, [origins]);
+    const curated = new Set(CURATED_CODES);
+    const extra = new Set(selectedDests);
+    return AIRPORTS.filter(a => !originCodes.has(a.code) && (curated.has(a.code) || extra.has(a.code)));
+  }, [origins, selectedDests]);
   const searchPool = useMemo(
     () => SEARCH_POOL.filter((c) => !setCodes.includes(c)),
     [setCodes],
@@ -157,6 +164,16 @@ const SearchPage = React.memo(function SearchPage({
     () => (homeCountry ? domesticCodes(homeCountry, setCodes) : []),
     [homeCountry, setCodes],
   );
+  const destHits = useMemo(() => {
+    const exclude = origins.map((o) => resolveOriginCode(o)).filter((c) => AIRPORT_MAP[c]);
+    return searchAirports(destQuery, { exclude, limit: 6 });
+  }, [destQuery, origins]);
+  const addDest = (code) => {
+    setSelectedDests(nextDestSelection(selectedDests, code, searchPool));
+    setDestQuery("");
+    setDestOpen(false);
+    setDestHi(0);
+  };
 
   const BUDGET_MIN = 30; const BUDGET_MAX = 800; const BUDGET_STEP = 10;
 
@@ -611,6 +628,46 @@ const SearchPage = React.memo(function SearchPage({
                   </div>
                   {showDestPicker && (
                     <div className="sf-dest-picker mt-3">
+                      <div className="sf-input-wrap sf-dest-find">
+                        <input
+                          type="text"
+                          className="form-control sf-input"
+                          placeholder={t("search.placeholder")}
+                          aria-label={t("search.placeholder")}
+                          role="combobox"
+                          aria-autocomplete="list"
+                          aria-expanded={destOpen && destHits.length > 0}
+                          value={destQuery}
+                          onChange={(e) => { setDestQuery(e.target.value); setDestOpen(true); setDestHi(0); }}
+                          onFocus={() => { setDestOpen(true); setDestHi(0); }}
+                          onBlur={() => setTimeout(() => setDestOpen(false), 150)}
+                          onKeyDown={(e) => {
+                            if (!destHits.length) return;
+                            if (e.key === "ArrowDown") { e.preventDefault(); setDestHi((h) => Math.min(h + 1, destHits.length - 1)); }
+                            else if (e.key === "ArrowUp") { e.preventDefault(); setDestHi((h) => Math.max(h - 1, 0)); }
+                            else if (e.key === "Enter" && destHits[destHi]) { e.preventDefault(); addDest(destHits[destHi].code); }
+                            else if (e.key === "Escape") setDestOpen(false);
+                          }}
+                          disabled={loading}
+                          autoComplete="off"
+                        />
+                        {destOpen && destHits.length > 0 && (
+                          <div className="sf-ac-dropdown" role="listbox" aria-label={t("search.acMatches")}>
+                            {destHits.map((a, ai) => (
+                              <div key={a.code} role="option" aria-selected={ai === destHi}
+                                className={`sf-ac-item${ai === destHi ? " sf-ac-item--hl" : ""}`}
+                                onMouseDown={(e) => { e.preventDefault(); addDest(a.code); }}
+                                onMouseEnter={() => setDestHi(ai)}>
+                                <span className="sf-ac-code">{a.code}</span>
+                                <span className="sf-ac-city">
+                                  {cityOf(a.code)}
+                                  {a.alias ? <span className="sf-ac-alias"> · {a.alias}</span> : null}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       {/* Quick category filters */}
                       <div className="sf-dest-categories">
                         {[
