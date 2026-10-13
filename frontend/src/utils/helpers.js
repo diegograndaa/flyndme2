@@ -1,6 +1,9 @@
 // ─── Airport data ─────────────────────────────────────────────────────────────
+// El catálogo corto de abajo es el que tiene foto y sale en el selector.
+// El resto de Europa (Asturias, Canarias, etc.) vive en europeAirports.js.
+import { EUROPE_EXTRA, EUROPE_COUNTRY_FLAGS, EUROPE_COUNTRY_ALIASES, EUROPE_CITY_ES } from "./europeAirports.js";
 
-export const AIRPORTS = [
+const CURATED_AIRPORTS = [
   // ── Western Europe ──
   { code: "MAD", city: "Madrid",              country: "Spain" },
   { code: "BCN", city: "Barcelona",           country: "Spain" },
@@ -60,6 +63,16 @@ export const AIRPORTS = [
   { code: "RAK", city: "Marrakech",           country: "Morocco" },
   { code: "CMN", city: "Casablanca",          country: "Morocco" },
   { code: "TLV", city: "Tel Aviv",            country: "Israel" },
+];
+
+const curatedCodeSet = new Set(CURATED_AIRPORTS.map((a) => a.code));
+// Los chips del formulario solo enseñan el catálogo corto. El resto se busca.
+export const CURATED_CODES = CURATED_AIRPORTS.map((a) => a.code);
+export const AIRPORTS = [
+  ...CURATED_AIRPORTS,
+  ...EUROPE_EXTRA
+    .filter((a) => !curatedCodeSet.has(a.code))
+    .map(({ code, city, country }) => ({ code, city, country })),
 ];
 
 // ── Multi-airport mapping: city codes → specific airports ───────────────────
@@ -134,6 +147,11 @@ const AIRPORT_ALIASES = {
   BEG: ["Belgrado"], CPH: ["Copenhague"], STO: ["Estocolmo"], TLL: ["Tallin"],
   VNO: ["Vilna"], ATH: ["Atenas"], SKG: ["Salónica", "Tesalónica"], RHO: ["Rodas"],
   IST: ["Estambul"], RAK: ["Marrakech", "Marrakesh"], TLV: ["Tel Aviv-Yafo"],
+  ...Object.fromEntries(
+    EUROPE_EXTRA
+      .filter((a) => a.aliases?.length && !curatedCodeSet.has(a.code))
+      .map((a) => [a.code, a.aliases]),
+  ),
 };
 const COUNTRY_ALIASES = {
   Spain: ["España"], "United Kingdom": ["Reino Unido", "UK", "Inglaterra", "Escocia"],
@@ -143,6 +161,7 @@ const COUNTRY_ALIASES = {
   Hungary: ["Hungría"], Romania: ["Rumanía"], Croatia: ["Croacia"], Denmark: ["Dinamarca"],
   Finland: ["Finlandia"], Norway: ["Noruega"], Sweden: ["Suecia"], Latvia: ["Letonia"],
   Lithuania: ["Lituania"], Greece: ["Grecia"], Turkey: ["Turquía"], Morocco: ["Marruecos"],
+  ...EUROPE_COUNTRY_ALIASES,
 };
 
 // Minúsculas y sin acentos ("MÚNICH" → "munich")
@@ -235,6 +254,7 @@ const CITY_ES = {
   PRG: "Praga", WAW: "Varsovia", KRK: "Cracovia", OTP: "Bucarest", SOF: "Sofía",
   BEG: "Belgrado", CPH: "Copenhague", STO: "Estocolmo", TLL: "Tallin", VNO: "Vilna",
   ATH: "Atenas", SKG: "Salónica", RHO: "Rodas", IST: "Estambul",
+  ...EUROPE_CITY_ES,
 };
 
 // Nombre de la ciudad en el idioma de la interfaz ("Milán", "Roma", "Lisboa"
@@ -380,6 +400,7 @@ const COUNTRY_FLAGS = {
   "Romania": "🇷🇴", "Bulgaria": "🇧🇬", "Serbia": "🇷🇸", "Turkey": "🇹🇷",
   "Morocco": "🇲🇦", "Malta": "🇲🇹", "Albania": "🇦🇱", "Israel": "🇮🇱",
   "Estonia": "🇪🇪", "Latvia": "🇱🇻", "Lithuania": "🇱🇹",
+  ...EUROPE_COUNTRY_FLAGS,
 };
 export function countryFlag(code) {
   const ap = AIRPORT_MAP[code];

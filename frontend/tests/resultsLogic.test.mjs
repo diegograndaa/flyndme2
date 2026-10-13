@@ -24,8 +24,8 @@ test("approxDistKm: distancias plausibles y null si falta aeropuerto", () => {
 
 test("AIRPORT_COORDS: lat/lon en rangos válidos", () => {
   for (const [code, [lat, lon]] of Object.entries(AIRPORT_COORDS)) {
-    assert.ok(lat > 25 && lat < 65, `lat fuera de rango en ${code}`);
-    assert.ok(lon > -20 && lon < 40, `lon fuera de rango en ${code}`);
+    assert.ok(lat > 26 && lat < 81, `lat fuera de rango en ${code}: ${lat}`);
+    assert.ok(lon > -33 && lon < 62, `lon fuera de rango en ${code}: ${lon}`);
   }
 });
 

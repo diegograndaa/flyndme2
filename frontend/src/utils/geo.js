@@ -1,6 +1,7 @@
 // ─── geo ─────────────────────────────────────────────────────────────────────
 // Coordenadas de ciudades (lon, lat) y distancias ortodrómicas. Lo usan el mapa
 // de rutas y el radar del hero. Solo geometría: nada de precios.
+import { EUROPE_EXTRA } from "./europeAirports.js";
 
 // ── City coordinates (lon, lat) for European destinations ────────────────────
 export const CITY_COORDS = {
@@ -24,6 +25,11 @@ export const CITY_COORDS = {
   IST: [28.98, 41.01], MLA: [14.51, 35.90], RAK: [-8.00, 31.63],
   CMN: [-7.59, 33.57], TLV: [34.79, 32.08],
 };
+// Aeropuertos añadidos: coordenadas del campo, no de un punto inventado.
+// Las ciudades que ya estaban conservan su coordenada.
+for (const a of EUROPE_EXTRA) {
+  if (!CITY_COORDS[a.code]) CITY_COORDS[a.code] = [a.lon, a.lat];
+}
 
 const EARTH_KM = 6371;
 const rad = (d) => (d * Math.PI) / 180;

@@ -157,7 +157,8 @@ test("searchAirports: código y prefijo antes que coincidencias a mitad de palab
   const { searchAirports } = await import("../src/utils/helpers.js");
   const lon = searchAirports("lon").map((a) => a.code);
   assert.equal(lon[0], "LON", "LON primero");
-  assert.ok(lon.indexOf("BCN") > 0, "Barce·lon·a después");
+  const lonWide = searchAirports("lon", { limit: 30 }).map((a) => a.code);
+  assert.ok(lonWide.indexOf("BCN") > lonWide.indexOf("LON"), "Barce·lon·a después");
   assert.equal(searchAirports("MAD")[0].code, "MAD");
 });
 

@@ -26,6 +26,7 @@ test("geo: tiempo de vuelo estimado en múltiplos de 5 min y null sin distancia"
 test("geo: coordenadas (lon, lat) plausibles para Europa", () => {
   for (const [code, [lon, lat]] of Object.entries(CITY_COORDS)) {
     assert.match(code, /^[A-Z]{3}$/);
-    assert.ok(lon > -20 && lon < 40 && lat > 25 && lat < 65, `${code} fuera de Europa`);
+    // De las Azores al lado europeo de los Urales, y de Canarias a Svalbard.
+    assert.ok(lon > -33 && lon < 62 && lat > 26 && lat < 81, `${code} fuera de Europa: ${lon},${lat}`);
   }
 });

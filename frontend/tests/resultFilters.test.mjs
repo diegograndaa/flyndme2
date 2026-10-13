@@ -85,7 +85,8 @@ test("solo nacional: mismo país, y un código desconocido no cuenta", () => {
   assert.equal(sharedCountry(["MAD", "LON"]), null);
   assert.equal(sharedCountry(["ZZZ"]), null);
   assert.equal(countryKey("AGP"), "Spain");
-  assert.equal(countryKey("LHR"), null);
+  assert.equal(countryKey("LHR"), "United Kingdom");
+  assert.equal(countryKey("QQQ"), null);
   const spain = domesticCodes("Spain", ["MAD", "BCN"]);
   assert.ok(spain.includes("AGP") && spain.includes("PMI") && spain.includes("VLC"));
   assert.ok(!spain.includes("MAD") && !spain.includes("PAR"));
