@@ -183,6 +183,26 @@ export function matchesArrival(dest, mode, maxArrivalMin) {
   return true;
 }
 
+/**
+ * Recorrido del control de la franja, en minutos, a partir de los huecos
+ * reales del mismo día. null si nadie tiene hora en todos los tramos.
+ * El máximo es el hueco más ancho (redondeado a 30 min): llevar la barra
+ * hasta ahí no recorta. Por debajo, sí.
+ */
+export function arrivalSliderRange(flights) {
+  const spreads = [];
+  for (const dest of flights || []) {
+    const sp = computeArrivalSpread(dest?.flights || []);
+    if (sp.partial || sp.differentDays || sp.legsWithTime < 2 || sp.spreadMs == null) continue;
+    spreads.push(sp.spreadMs);
+  }
+  if (!spreads.length) return null;
+  const step = 30;
+  const widestMin = Math.max(...spreads) / 60000;
+  const max = Math.max(step, Math.ceil(widestMin / step) * step);
+  return { min: step, max, step };
+}
+
 /** 2 h y 4 h si hay alguna franja medible el mismo día; 8 h si alguien se pasa de 4 h. */
 export function arrivalGapChoices(flights) {
   const spreads = [];

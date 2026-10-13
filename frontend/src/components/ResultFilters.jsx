@@ -1,25 +1,26 @@
 import React, { useState } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { travelerSlot } from "../utils/resultsLogic";
 import {
-  airlinesIn, applyResultFilters, arrivalBars, arrivalGapChoices, durationSteps,
+  airlinesIn, applyResultFilters, arrivalBars, arrivalSliderRange, durationSteps,
   formatDurationMin, legAirline, nextAirlines,
 } from "../utils/resultFilters";
 
-function Opt({ pressed, onClick, children, count, label }) {
+function CheckRow({ checked, onClick, children, count, label }) {
   return (
-    <button type="button" className={`fm-filter-opt${pressed ? " fm-filter-opt--on" : ""}`}
-      aria-pressed={pressed}
-      aria-label={count == null ? undefined : `${label} (${count})`}
+    <button type="button" className={`fm-check${checked ? " fm-check--on" : ""}`}
+      role="checkbox" aria-checked={checked}
+      aria-label={count == null ? label : `${label} (${count})`}
       onClick={onClick}>
-      <span>{children}</span>
+      <span className="fm-check-box" aria-hidden="true">{checked ? <Check size={14} strokeWidth={3} /> : null}</span>
+      <span className="fm-check-label">{children}</span>
       {count != null && <span className="fm-filter-opt-n" aria-hidden="true">{count}</span>}
     </button>
   );
 }
 
-function ArrivalStrip({ dest, origins, requestedMin }) {
+function ArrivalStrip({ dest, origins, requestedMin, hideScale = false }) {
   const { t } = useI18n();
   const drawn = arrivalBars(dest?.flights || [], requestedMin);
   if (drawn.min == null) return null;
@@ -38,10 +39,12 @@ function ArrivalStrip({ dest, origins, requestedMin }) {
   ));
   return (
     <div className="fm-arr" role="img" aria-label={`${t("filters.arrivalBars")}. ${bits.join(". ")}`}>
-      <div className="fm-arr-scale" aria-hidden="true">
-        <span>{first?.clock || ""}</span>
-        <span>{right}</span>
-      </div>
+      {!hideScale && (
+        <div className="fm-arr-scale" aria-hidden="true">
+          <span>{first?.clock || ""}</span>
+          <span>{right}</span>
+        </div>
+      )}
       {drawn.bars.map((b, i) => {
         const slot = travelerSlot(origins, b.origin);
         const width = b.pct == null ? 0 : Math.round(b.pct * 1000) / 10;
@@ -109,11 +112,24 @@ export function ResultFilters({
   };
   const directLabel = t("filters.stopsDirect");
   const directCount = showStops ? count({ stops: "direct" }) : 0;
-  const gaps = showArrival ? arrivalGapChoices(flights) : [];
-  const requestedMin = filters.arrival === "within4h"
-    ? 240
-    : (filters.maxArrivalMin != null ? Number(filters.maxArrivalMin) : null);
-  const hasBars = showArrival && arrivalBars(displayDest?.flights || [], requestedMin).min != null;
+  const slider = showArrival ? arrivalSliderRange(flights) : null;
+  const capNow = filters.arrival === "within4h" ? 240 : (filters.maxArrivalMin != null ? Number(filters.maxArrivalMin) : null);
+  const sliderCapped = capNow != null && filters.arrival !== "sameDay";
+  const sliderValue = slider
+    ? (sliderCapped ? Math.min(slider.max, Math.max(slider.min, capNow)) : slider.max)
+    : null;
+  const requestedMin = sliderCapped ? capNow : null;
+  const drawn = showArrival ? arrivalBars(displayDest?.flights || [], requestedMin) : null;
+  const hasBars = drawn?.min != null;
+  const knownMarks = (drawn?.bars || []).filter((b) => b.ms != null);
+  const firstClock = knownMarks.find((b) => b.ms === drawn?.min)?.clock || "";
+  const lastClock = [...knownMarks].reverse().find((b) => b.ms === drawn?.max)?.clock || "";
+  const sliderRight = requestedMin
+    ? t("filters.arrivalGapEnd", { time: formatDurationMin(requestedMin) })
+    : lastClock;
+  const sliderPct = slider && slider.max > slider.min
+    ? Math.round(((sliderValue - slider.min) / (slider.max - slider.min)) * 1000) / 10
+    : 100;
   const caption = hasBars
     ? (status?.kind === "partial"
       ? t("filters.arrivalPartial")
@@ -121,19 +137,19 @@ export function ResultFilters({
         ? t("filters.arrivalRequested", { time: formatDurationMin(requestedMin) })
         : statusText))
     : "";
-  const pickGap = (min) => {
-    const on = filters.maxArrivalMin === min || (min === 240 && filters.arrival === "within4h");
-    if (on) {
+  const moveSlider = (raw) => {
+    const value = Number(raw);
+    if (!slider || !Number.isFinite(value)) return;
+    if (value >= slider.max) {
       set({ maxArrivalMin: null, arrival: filters.arrival === "closest" ? "closest" : "any" });
       return;
     }
     set({
-      maxArrivalMin: min,
+      maxArrivalMin: value,
       arrival: filters.arrival === "closest" ? "closest" : "gap",
     });
   };
-  const capNow = filters.arrival === "within4h" ? 240 : filters.maxArrivalMin;
-  const gapActive = capNow != null && filters.arrival !== "sameDay";
+  const gapActive = sliderCapped;
   const looseArrival = filters.arrival === "gap" || filters.arrival === "within4h" ? "any" : filters.arrival;
   const cappedCount = gapActive
     ? count({
@@ -163,10 +179,9 @@ export function ResultFilters({
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-domestic">{t("filters.domestic")}</span>
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-domestic">
-              <Opt pressed={!filters.domestic} label={t("filters.domesticAny")} onClick={() => set({ domestic: false })}>{t("filters.domesticAny")}</Opt>
-              <Opt pressed={!!filters.domestic} label={t("filters.domesticOnly", { country: domesticName })}
+              <CheckRow checked={!!filters.domestic} label={t("filters.domesticOnly", { country: domesticName })}
                 count={count({ domestic: true }) || null}
-                onClick={() => set({ domestic: true })}>{t("filters.domesticOnly", { country: domesticName })}</Opt>
+                onClick={() => set({ domestic: !filters.domestic })}>{t("filters.domesticOnly", { country: domesticName })}</CheckRow>
             </div>
             <p className="fm-filter-hint">{t("filters.domesticHint", { country: domesticName })}</p>
           </div>
@@ -175,31 +190,41 @@ export function ResultFilters({
         {showArrival && (
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-arrival">{t("filters.arrival")}</span>
-            {hasBars && (
-              <ArrivalStrip dest={displayDest} origins={origins} requestedMin={requestedMin} />
-            )}
-            {caption && <p className="fm-filter-hint">{caption}</p>}
-            {gaps.length > 0 && (
-              <div className="fm-filter-gaps" role="group" aria-labelledby="fm-filter-arrival">
-                {gaps.map((min) => {
-                  const label = t("filters.arrivalUpTo", { time: formatDurationMin(min) });
-                  const pressed = filters.maxArrivalMin === min || (min === 240 && filters.arrival === "within4h");
-                  const gapCount = count({
-                    arrival: filters.arrival === "closest" ? "closest" : "gap",
-                    maxArrivalMin: min,
-                  });
-                  return (
-                    <Opt key={min} pressed={pressed} label={label} count={gapCount} onClick={() => pickGap(min)}>
-                      {formatDurationMin(min)}
-                    </Opt>
-                  );
-                })}
+            {slider && (
+              <div className="fm-arr-control">
+                <div className="fm-arr-scale" aria-hidden="true">
+                  <span>{firstClock}</span>
+                  <span>{sliderRight}</span>
+                </div>
+                <div className="fm-arr-range">
+                  <span className="fm-arr-range-fill" style={{ width: `${sliderPct}%` }} />
+                  <input
+                    type="range"
+                    className="fm-arr-slider"
+                    min={slider.min}
+                    max={slider.max}
+                    step={slider.step}
+                    value={sliderValue}
+                    disabled={slider.max <= slider.min}
+                    aria-label={t("filters.arrivalSlider")}
+                    aria-valuemin={slider.min}
+                    aria-valuemax={slider.max}
+                    aria-valuenow={sliderValue}
+                    aria-valuetext={requestedMin
+                      ? t("filters.arrivalUpTo", { time: formatDurationMin(requestedMin) })
+                      : t("filters.arrivalAny")}
+                    onChange={(e) => moveSlider(e.target.value)}
+                  />
+                </div>
               </div>
             )}
+            {hasBars && (
+              <ArrivalStrip dest={displayDest} origins={origins} requestedMin={requestedMin} hideScale={!!slider} />
+            )}
+            {caption && <p className="fm-filter-hint">{caption}</p>}
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-arrival">
-              <Opt pressed={(!filters.arrival || filters.arrival === "any") && filters.maxArrivalMin == null} label={t("filters.arrivalAny")} count={count({ arrival: "any", maxArrivalMin: null })} onClick={() => set({ arrival: "any", maxArrivalMin: null })}>{t("filters.arrivalAny")}</Opt>
-              <Opt pressed={filters.arrival === "closest"} label={t("filters.arrivalClosest")} count={count({ arrival: "closest" })} onClick={() => set({ arrival: "closest" })}>{t("filters.arrivalClosest")}</Opt>
-              <Opt pressed={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay", maxArrivalMin: null })} onClick={() => set({ arrival: "sameDay", maxArrivalMin: null })}>{t("filters.arrivalSameDay")}</Opt>
+              <CheckRow checked={filters.arrival === "closest"} label={t("filters.arrivalClosest")} count={count({ arrival: "closest" })} onClick={() => set({ arrival: filters.arrival === "closest" ? "any" : "closest" })}>{t("filters.arrivalClosest")}</CheckRow>
+              <CheckRow checked={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay", maxArrivalMin: null })} onClick={() => set(filters.arrival === "sameDay" ? { arrival: "any", maxArrivalMin: null } : { arrival: "sameDay", maxArrivalMin: null })}>{t("filters.arrivalSameDay")}</CheckRow>
             </div>
             {!hasBars && <p className="fm-filter-hint">{statusText || t("filters.arrivalHint")}</p>}
             {gapAlready && <p className="fm-filter-hint">{t("filters.gapAlready")}</p>}
@@ -210,9 +235,8 @@ export function ResultFilters({
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-stops">{t("filters.stops")}</span>
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-stops">
-              <Opt pressed={!filters.stops || filters.stops === "any"} label={t("filters.stopsAny")} count={count({ stops: "any" })} onClick={() => set({ stops: "any" })}>{t("filters.stopsAny")}</Opt>
-              <Opt pressed={filters.stops === "direct"} label={directLabel} count={directCount} onClick={() => set({ stops: "direct" })}>{directLabel}</Opt>
-              <Opt pressed={filters.stops === "max1"} label={t("filters.stopsMax1")} count={count({ stops: "max1" })} onClick={() => set({ stops: "max1" })}>{t("filters.stopsMax1")}</Opt>
+              <CheckRow checked={filters.stops === "direct"} label={directLabel} count={directCount} onClick={() => set({ stops: filters.stops === "direct" ? "any" : "direct" })}>{directLabel}</CheckRow>
+              <CheckRow checked={filters.stops === "max1"} label={t("filters.stopsMax1")} count={count({ stops: "max1" })} onClick={() => set({ stops: filters.stops === "max1" ? "any" : "max1" })}>{t("filters.stopsMax1")}</CheckRow>
             </div>
             {filters.stops === "direct" && directCount === count({ stops: "any" }) && directCount > 0 && (
               <p className="fm-filter-hint">{t("filters.stopsAlready")}</p>
@@ -224,13 +248,12 @@ export function ResultFilters({
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-dur">{t("filters.duration")}</span>
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-dur">
-              <Opt pressed={filters.maxDurationMin == null} label={t("filters.durationAny")} count={count({ maxDurationMin: null })} onClick={() => set({ maxDurationMin: null })}>{t("filters.durationAny")}</Opt>
               {steps.map((min) => {
                 const label = t("filters.durationUpTo", { time: formatDurationMin(min) });
                 return (
-                  <Opt key={min} pressed={filters.maxDurationMin === min} label={label} count={count({ maxDurationMin: min })} onClick={() => set({ maxDurationMin: min })}>
+                  <CheckRow key={min} checked={filters.maxDurationMin === min} label={label} count={count({ maxDurationMin: min })} onClick={() => set({ maxDurationMin: filters.maxDurationMin === min ? null : min })}>
                     {label}
-                  </Opt>
+                  </CheckRow>
                 );
               })}
             </div>
@@ -240,18 +263,14 @@ export function ResultFilters({
         {showAirlines && (
           <div className="fm-filter-block">
             <span className="fm-filter-label" id="fm-filter-air">{t("filters.airlines")}</span>
-            <div className="fm-filter-airlines" role="group" aria-labelledby="fm-filter-air">
+            <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-air">
               {airlines.map((code) => {
                 const on = !Array.isArray(filters.airlines) || filters.airlines.includes(code);
-                const only = Array.isArray(filters.airlines) && on;
                 const used = flights.filter((d) => (d.flights || []).some((leg) => legAirline(leg) === code)).length;
                 return (
-                  <button key={code} type="button"
-                    className={`fm-filter-opt fm-filter-opt--air${on ? " fm-filter-opt--picked" : ""}${only ? " fm-filter-opt--on" : ""}`}
-                    aria-pressed={on} aria-label={`${code} (${used})`} onClick={() => toggleAirline(code)}>
-                    <span>{code}</span>
-                    <span className="fm-filter-opt-n" aria-hidden="true">{used}</span>
-                  </button>
+                  <CheckRow key={code} checked={on} label={code} count={used} onClick={() => toggleAirline(code)}>
+                    {code}
+                  </CheckRow>
                 );
               })}
             </div>
