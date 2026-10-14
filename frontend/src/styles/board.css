@@ -2241,7 +2241,6 @@ button,
   border: 1px solid var(--sign); border-radius: 4px;
   font-size: 15px; font-weight: 700; text-decoration: none;
 }
-.wc-sale-out { display: grid; gap: 8px; margin-top: 8px; }
 .wc-sale-btn:disabled { opacity: .65; }
 .wc-sale-btn--ghost { background: transparent; color: var(--navy); border-color: var(--navy); }
 .wc-sale-hint, .wc-sale-note, .wc-sale-kicker {

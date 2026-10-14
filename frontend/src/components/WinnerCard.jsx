@@ -207,35 +207,6 @@ const WinnerCard = React.memo(function WinnerCard({
       passengers: Number(finfo.passengers) || Number(offer?.passengers) || 1,
     };
   });
-  // Misma salida que el botón Reservar de cada vuelo: la web de la aerolínea,
-  // o Skyscanner si no la tenemos. Sirve cuando la compra dentro de la app
-  // no está conectada.
-  const bookings = cleanOrigins.map((origin) => {
-    const offer = offerMap[origin];
-    const finfo = flightInfoMap[origin] || {};
-    const effDep = finfo.flightDate || dep;
-    const effRet = tripType === "roundtrip" ? (finfo.flightReturnDate || ret) : "";
-    const from = offer?.tp?.originAirport || origin;
-    const to = offer?.tp?.destinationAirport || code;
-    const pax = Number(finfo.passengers) || Number(offer?.passengers) || 1;
-    const segment = offer?.itineraries?.[0]?.segments?.[0] || {};
-    const airlineCode = segment.carrierCode || offer?.validatingAirlineCodes?.[0] || "";
-    const built = buildAirlineBookingUrl({
-      airline: airlineCode,
-      origin: from,
-      destination: to,
-      departureDate: effDep,
-      returnDate: tripType === "roundtrip" ? effRet : "",
-      adults: pax,
-      flightNumber: segment.number || "",
-    });
-    const url = built?.url || buildSkyscannerUrl({
-      origin: from, destination: to, departureDate: effDep, returnDate: effRet, tripType, adults: pax,
-    });
-    if (!url) return null;
-    return { origin, url, airline: built?.airlineName || "Skyscanner" };
-  }).filter(Boolean);
-
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
       {/* Foto del destino + mapa de rutas, lado a lado (oct-2026): el mapa ya
@@ -319,7 +290,6 @@ const WinnerCard = React.memo(function WinnerCard({
           {!singleOrigin && (
             <GroupSalePanel
               legs={saleLegs}
-              bookings={bookings}
               sale={sale}
               onRequest={onRequestSale}
               onSubmit={onSubmitPassengers}
