@@ -131,3 +131,47 @@ test("sin venta conectada no se inventa un cobro", () => {
   assert.ok(!html.includes("wc-sale-lines"), "sin tarifa no hay desglose de cobro");
   assert.ok(!html.includes("saleRetry") && !/Volver a pedir la tarifa|Ask for the fare again/.test(html));
 });
+
+test("si no se emite el billete se dice si el cobro volvió", () => {
+  const refunded = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: {
+      phase: "error",
+      code: "SALE_REFUNDED",
+      refund: { status: "refunded", amount: "65.96", currency: "EUR" },
+    },
+  }));
+  assert.ok(/Se ha devuelto el cobro de|has been refunded/.test(refunded), refunded);
+  assert.ok(refunded.includes("65.96") || refunded.includes("€65.96"), refunded);
+  assert.ok(!/no se ha podido devolver|could not be refunded/i.test(refunded));
+
+  const failed = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: {
+      phase: "error",
+      code: "REFUND_FAILED",
+      refund: { status: "failed", amount: "65.96", currency: "EUR" },
+    },
+  }));
+  assert.ok(/no se ha podido devolver|could not be refunded/i.test(failed), failed);
+  assert.ok(!/Volver a pedir la tarifa|Ask for the fare again/.test(failed));
+});
+
+test("un tramo emitido enseña su localizador y la devolución del otro", () => {
+  const html = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: {
+      phase: "partial",
+      code: "TICKET_PARTIAL",
+      failedOrigin: "BCN",
+      orders: [{ origin: "MAD", bookingReference: "ABC123" }],
+      refund: { status: "refunded", amount: "21.63", currency: "EUR" },
+    },
+  }));
+  assert.ok(html.includes("ABC123"), html);
+  assert.ok(/Se ha devuelto|has been refunded/.test(html), html);
+  assert.ok(html.includes("BCN"), html);
+});

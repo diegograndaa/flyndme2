@@ -19,6 +19,12 @@ function peopleFor(quote, prev = []) {
   return Array.from({ length: n }, (_, i) => prev[i] || blankPerson());
 }
 
+function moneyOf(sale) {
+  const refund = sale?.refund;
+  if (!refund?.amount) return "";
+  return saleMoney(refund.amount, refund.currency || "EUR");
+}
+
 function saleMoney(amount, currency) {
   const cur = String(currency || "").toUpperCase();
   if (cur === "EUR") return formatEur(Number(amount), 2);
@@ -35,6 +41,14 @@ function saleMessage(t, sale) {
   if (code === "FLIGHT_NOT_IDENTIFIED") return t("results.saleNotIdentified");
   if (code === "QUOTE_EXPIRED") return t("results.saleExpired");
   if (code === "PAYMENT_NOT_CONFIRMED" || code === "PAYMENT_MISMATCH") return t("results.saleNotPaid");
+  if (code === "SALE_REFUNDED") return t("results.saleRefunded", { amount: moneyOf(sale) });
+  if (code === "REFUND_FAILED") return t("results.saleRefundFailed", { amount: moneyOf(sale) });
+  if (code === "TICKET_PARTIAL" && sale?.refund?.status === "refunded") {
+    return t("results.salePartialRefunded", { origin: sale.failedOrigin || sale.origin || "", amount: moneyOf(sale) });
+  }
+  if (code === "TICKET_PARTIAL" && sale?.refund?.status === "failed") {
+    return t("results.salePartialRefundFailed", { origin: sale.failedOrigin || sale.origin || "", amount: moneyOf(sale) });
+  }
   if (code === "TICKET_PARTIAL") return t("results.salePartial", { origin: sale.failedOrigin || sale.origin || "" });
   if (code === "INVALID_NAME") return t("results.saleInvalidName");
   if (code === "INVALID_BIRTH_DATE") return t("results.saleInvalidBirth");
@@ -62,7 +76,7 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
   const phase = sale?.phase || "idle";
   const busy = phase === "quoting" || phase === "paying" || phase === "completing";
   const showBuy = phase === "idle" || phase === "quoting";
-  const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED"].includes(sale?.code);
+  const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED"].includes(sale?.code);
   const showForm = quote && (phase === "quote" || phase === "paying");
   const showPay = phase === "card" && sale?.clientToken;
   const cur = quote?.currency || "EUR";
@@ -163,7 +177,7 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
         </Suspense>
       )}
       {phase === "completing" && <p className="wc-sale-note" role="status">{t("results.saleCompleting")}</p>}
-      {phase === "issued" && (
+      {(phase === "issued" || (phase === "partial" && refs.length > 0)) && (
         <p className="wc-sale-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
       )}
       {retryable && (

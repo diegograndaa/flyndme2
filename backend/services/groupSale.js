@@ -1,17 +1,28 @@
 // Venta del grupo en FlyndMe. La tarifa sale de una oferta emitible (Duffel),
 // no de la caché. La comisión y el coste del cobro se calculan aparte y se
 // enseñan. Sin token no se cobra ni se finge un billete.
+//
+// El presupuesto se guarda (memoria o Upstash). Si el billete no se emite
+// después de un cobro confirmado, se pide la devolución de esos tramos.
 
 const crypto = require("crypto");
+const { createStore } = require("../utils/kvStore");
 
 const DUFFEL_URL = "https://api.duffel.com";
 const QUOTE_TTL_MS = 15 * 60 * 1000;
+const SALE_KEEP_MS = 14 * 24 * 60 * 60 * 1000;
 const MAX_LEGS = 8;
 const MAX_PAX_PER_LEG = 9;
 const TOTAL_PAX_CAP = 16;
 const PAID_STATUSES = new Set(["succeeded", "captured", "confirmed", "paid"]);
 
 const quotes = new Map();
+const saleStore = createStore({
+  namespace: "sale",
+  ttlMs: SALE_KEEP_MS,
+  maxSize: 500,
+  sweepEveryMs: 60 * 60 * 1000,
+});
 let transport = null;
 
 function token() {
@@ -159,18 +170,59 @@ function purgeQuotes() {
   }
 }
 
-function remember(quote) {
-  purgeQuotes();
-  const quoteId = crypto.randomBytes(12).toString("base64url");
-  quotes.set(quoteId, { ...quote, expires: Date.now() + QUOTE_TTL_MS });
-  return quoteId;
+async function saveQuote(quote, ttlMs) {
+  quotes.set(quote.quoteId, quote);
+  await saleStore.set(quote.quoteId, quote, { ttlMs });
+  return quote;
 }
 
-function readQuote(quoteId) {
-  purgeQuotes();
-  const quote = quotes.get(String(quoteId || ""));
-  if (!quote) return null;
-  return quote;
+async function readQuote(quoteId) {
+  const id = String(quoteId || "");
+  if (!id) return null;
+  const now = Date.now();
+  const hot = quotes.get(id);
+  if (hot) {
+    if (hot.expires > now) return hot;
+    quotes.delete(id);
+  }
+  const stored = await saleStore.get(id);
+  if (!stored || typeof stored !== "object") return null;
+  if (typeof stored.expires === "number" && stored.expires <= now) return null;
+  quotes.set(id, stored);
+  return stored;
+}
+
+function unissuedCents(quote, issuedCount) {
+  return quote.legs.slice(issuedCount).reduce((sum, leg) => sum + (Number(leg.charge) || 0), 0);
+}
+
+async function refundUnissued(quote, issuedCount) {
+  if (quote.refund) return quote.refund;
+  const due = unissuedCents(quote, issuedCount);
+  if (due <= 0 || !quote.intentId) return null;
+  const amount = euros(due);
+  try {
+    const refund = await duffel("POST", "/payments/refunds", {
+      payment_intent_id: quote.intentId,
+      amount,
+      currency: quote.currency,
+    });
+    quote.refund = { status: "refunded", id: refund?.id || null, amount, currency: quote.currency };
+  } catch {
+    quote.refund = { status: "failed", id: null, amount, currency: quote.currency };
+  }
+  return quote.refund;
+}
+
+function resultFrom(quote) {
+  const refund = quote.refund || null;
+  const orders = quote.orders || [];
+  const failedOrigin = quote.failedOrigin || null;
+  if (quote.status === "issued") return { ok: true, status: "issued", orders, refund };
+  if (quote.status === "refunded") return { ok: false, code: "SALE_REFUNDED", orders, failedOrigin, refund };
+  if (quote.status === "refund_failed") return { ok: false, code: "REFUND_FAILED", orders, failedOrigin, refund };
+  if (quote.status === "partial") return { ok: false, code: "TICKET_PARTIAL", orders, failedOrigin, refund };
+  return null;
 }
 
 async function searchLeg(leg) {
@@ -226,7 +278,16 @@ async function quoteLegs(rawLegs, today) {
     });
   }
   const totals = sumParts(priced);
-  const quoteId = remember({ legs: priced, totals, currency: priced[0].currency, rate });
+  const quoteId = crypto.randomBytes(12).toString("base64url");
+  await saveQuote({
+    quoteId,
+    legs: priced,
+    totals,
+    currency: priced[0].currency,
+    rate,
+    expires: Date.now() + QUOTE_TTL_MS,
+    status: "quoted",
+  }, QUOTE_TTL_MS);
   return {
     available: true,
     quoteId,
@@ -277,9 +338,13 @@ function normalizeTraveler(raw, email, phone) {
 
 async function startPayment(quoteId, people, email, phone) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
-  const quote = readQuote(quoteId);
+  const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
-  if (quote.orders) return { ok: true, already: true, orders: quote.orders };
+  const done = resultFrom(quote);
+  if (done) return done;
+  if (quote.intentId && quote.clientToken) {
+    return { ok: true, clientToken: quote.clientToken, charge: euros(quote.totals.charge), currency: quote.currency };
+  }
   const expected = quote.legs.reduce((s, leg) => s + leg.passengers, 0);
   if (!Array.isArray(people) || people.length !== expected) return { ok: false, code: "INVALID_PASSENGERS" };
   const travelers = [];
@@ -295,14 +360,19 @@ async function startPayment(quoteId, people, email, phone) {
   if (!intent?.id || !intent?.client_token) return { ok: false, code: "SALE_FAILED" };
   quote.travelers = travelers;
   quote.intentId = intent.id;
+  quote.clientToken = intent.client_token;
+  quote.status = "paying";
+  quote.expires = Date.now() + SALE_KEEP_MS;
+  await saveQuote(quote, SALE_KEEP_MS);
   return { ok: true, clientToken: intent.client_token, charge: euros(quote.totals.charge), currency: quote.currency };
 }
 
 async function completeSale(quoteId) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
-  const quote = readQuote(quoteId);
+  const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
-  if (quote.orders) return { ok: true, status: quote.partial ? "partial" : "issued", orders: quote.orders, failedOrigin: quote.failedOrigin || null };
+  const done = resultFrom(quote);
+  if (done) return done;
   if (!quote.intentId || !quote.travelers) return { ok: false, code: "PAYMENT_NOT_CONFIRMED" };
   const intent = await duffel("GET", `/payments/payment_intents/${quote.intentId}`);
   const status = String(intent?.status || "").toLowerCase();
@@ -327,13 +397,21 @@ async function completeSale(quoteId) {
       orders.push({ origin: leg.origin, orderId: order.id, bookingReference: order.booking_reference || null });
     } catch {
       quote.orders = orders;
-      quote.partial = true;
       quote.failedOrigin = leg.origin;
-      return { ok: false, code: "TICKET_PARTIAL", orders, failedOrigin: leg.origin };
+      await refundUnissued(quote, orders.length);
+      quote.status = orders.length === 0
+        ? (quote.refund?.status === "refunded" ? "refunded" : "refund_failed")
+        : "partial";
+      quote.expires = Date.now() + SALE_KEEP_MS;
+      await saveQuote(quote, SALE_KEEP_MS);
+      return resultFrom(quote);
     }
   }
   quote.orders = orders;
-  return { ok: true, status: "issued", orders };
+  quote.status = "issued";
+  quote.expires = Date.now() + SALE_KEEP_MS;
+  await saveQuote(quote, SALE_KEEP_MS);
+  return resultFrom(quote);
 }
 
 module.exports = {
@@ -346,6 +424,11 @@ module.exports = {
   validateLegs,
   __test: {
     setTransport(fn) { transport = fn; },
-    reset() { transport = null; quotes.clear(); },
+    reset() {
+      transport = null;
+      quotes.clear();
+      if (saleStore._map) saleStore._map.clear();
+    },
+    forgetMemory() { quotes.clear(); },
   },
 };

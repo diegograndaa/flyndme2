@@ -1243,9 +1243,25 @@ export default function App() {
         setGroupSale((s) => (s ? { ...s, phase: "issued", orders: data.orders || [], code: null } : s));
         return;
       }
+      if (data?.code === "SALE_REFUNDED" || data?.code === "REFUND_FAILED") {
+        setGroupSale((s) => (s ? {
+          ...s,
+          phase: "error",
+          code: data.code,
+          orders: data.orders || [],
+          failedOrigin: data.failedOrigin || null,
+          refund: data.refund || null,
+        } : s));
+        return;
+      }
       if (data?.code === "TICKET_PARTIAL" || data?.status === "partial") {
         setGroupSale((s) => (s ? {
-          ...s, phase: "partial", code: "TICKET_PARTIAL", orders: data.orders || [], failedOrigin: data.failedOrigin || null,
+          ...s,
+          phase: "partial",
+          code: "TICKET_PARTIAL",
+          orders: data.orders || [],
+          failedOrigin: data.failedOrigin || null,
+          refund: data.refund || null,
         } : s));
         return;
       }

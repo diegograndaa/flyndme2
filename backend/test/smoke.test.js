@@ -564,7 +564,10 @@ test("price-check: devuelve el precio actual del mismo destino con la misma mate
   assert.ok(p, "hay precio");
   assert.equal(p.destination, "PAR");
   assert.equal(p.totalPassengers, 3);
-  assert.equal(p.totalCostEUR, w.totalCostEUR, "mismo total que la búsqueda (mismos datos)");
+  // La búsqueda puede sustituir el total por el precio verificado. price-check
+  // repite la tarifa de la búsqueda, la de antes de esa sustitución.
+  const searchTotal = w.cachedTotalCostEUR != null ? w.cachedTotalCostEUR : w.totalCostEUR;
+  assert.equal(p.totalCostEUR, searchTotal, "mismo total que la búsqueda (mismos datos)");
   const calc = p.flights.reduce((s, f) => s + f.price * f.passengers, 0);
   assert.ok(Math.abs(p.totalCostEUR - calc) < 0.5);
 });
