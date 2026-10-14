@@ -57,8 +57,9 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece comprar el g
   assert.ok(html.includes("origin=BCN"), html);
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
-  assert.match(html, /Comprar MAD en Wizz Air|Buy MAD on Wizz Air/);
   assert.match(html, /Comprar los vuelos del grupo|Buy the group/);
+  assert.match(html, /Un solo pago aquí|One payment here/);
+  assert.ok(!/Cada billete se reserva|Each ticket is booked/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
   assert.ok(saleAt >= 0 && titleAt > saleAt, "la compra está en el total, antes de la lista de vuelos");
@@ -127,19 +128,16 @@ test("la tarifa emitible se enseña aparte de la estimación, con comisión", ()
   assert.ok(!html.includes("aviasales.com"));
 });
 
-test("sin venta conectada el total abre la aerolínea y no inventa un cobro", () => {
+test("sin venta conectada el total no inventa un cobro ni manda a la aerolínea", () => {
   const html = render(React.createElement(WinnerCard, {
     ...base, dest: LONDON, sale: { phase: "error", code: "BOOKING_NOT_CONFIGURED" },
   }));
-  assert.ok(!/no está conectada|not connected yet/i.test(html), html);
-  assert.match(html, /Cada billete se reserva|Each ticket is booked/);
-  assert.ok(html.includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), html);
-  assert.ok(html.includes("https://www.easyjet.com/en/buy/flights?"), html);
-  const saleAt = html.indexOf('class="wc-sale"');
-  const titleAt = html.indexOf("wc-buy-title");
-  assert.ok(saleAt >= 0 && titleAt > saleAt, "la compra está en el total, antes de la lista de vuelos");
+  assert.match(html, /El pago dentro de FlyndMe aún no está conectado|Payment inside FlyndMe is not connected yet/);
+  assert.ok(!/Cada billete se reserva|Each ticket is booked|Comprar MAD en|Buy MAD on/.test(html));
+  const sale = html.slice(html.indexOf('class="wc-sale"'), html.indexOf("wc-buy-title"));
+  assert.ok(sale.length > 0 && !sale.includes("wizzair.com") && !sale.includes("easyjet.com"), sale);
   assert.ok(!html.includes("wc-sale-lines"), "sin tarifa no hay desglose de cobro");
-  assert.ok(!html.includes("saleRetry") && !/Volver a pedir la tarifa|Ask for the fare again/.test(html));
+  assert.ok(!/Volver a pedir la tarifa|Ask for the fare again/.test(html));
 });
 
 test("si no se emite el billete se dice si el cobro volvió", () => {

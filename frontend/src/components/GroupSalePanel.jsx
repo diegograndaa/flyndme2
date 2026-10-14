@@ -60,7 +60,7 @@ function saleMessage(t, sale) {
   return t("results.saleFailed");
 }
 
-export default function GroupSalePanel({ legs = [], bookings = [], sale = null, onRequest, onSubmit, onPaid, onFail }) {
+export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSubmit, onPaid, onFail }) {
   const { t } = useI18n();
   const quote = sale?.quote || null;
   const quoteId = quote?.quoteId || "";
@@ -74,19 +74,16 @@ export default function GroupSalePanel({ legs = [], bookings = [], sale = null, 
   }
 
   const phase = sale?.phase || "idle";
-  const offline = phase === "error" && sale?.code === "BOOKING_NOT_CONFIGURED" && bookings.length > 0;
   const busy = phase === "quoting" || phase === "paying" || phase === "completing";
-  const inApp = Boolean(quote) || ["card", "completing", "issued", "partial"].includes(phase);
-  // Sin cobro dentro de la app, el botón del total abre la web donde se reserva
-  // ese billete. No hace falta pulsar antes y leer que la venta no está conectada.
-  const showOut = bookings.length > 0 && !inApp;
-  const showBuy = (phase === "idle" || phase === "quoting") && !offline;
-  const retryable = phase === "error" && !offline && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED"].includes(sale?.code);
+  // El botón del total cobra aquí: tarifa emitible, comisión y coste del cobro.
+  // No abre la web de la aerolínea.
+  const showBuy = phase === "idle" || phase === "quoting";
+  const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED"].includes(sale?.code);
   const showForm = quote && (phase === "quote" || phase === "paying");
   const showPay = phase === "card" && sale?.clientToken;
   const cur = quote?.currency || "EUR";
   const money = (amount) => saleMoney(amount, cur);
-  const note = offline ? "" : saleMessage(t, sale);
+  const note = saleMessage(t, sale);
   const refs = (sale?.orders || []).map((o) => o.bookingReference || o.orderId).filter(Boolean);
 
   let cursor = 0;
@@ -102,25 +99,14 @@ export default function GroupSalePanel({ legs = [], bookings = [], sale = null, 
 
   return (
     <div className="wc-sale">
-      {showOut && (
-        <div className="wc-sale-out">
-          {bookings.map((b) => (
-            <a key={b.origin} href={b.url} target="_blank" rel="noreferrer" className="wc-sale-btn">
-              <Ticket size={16} aria-hidden="true" />
-              {t("results.saleBuyLeg", { origin: b.origin, airline: b.airline })}
-            </a>
-          ))}
-          <p className="wc-sale-note" role="status">{t("results.saleBuyOut")}</p>
-        </div>
-      )}
       {showBuy && (
-        <button type="button" className={showOut ? "wc-sale-btn wc-sale-btn--ghost" : "wc-sale-btn"} disabled={busy}
+        <button type="button" className="wc-sale-btn" disabled={busy}
           onClick={() => onRequest?.(legs)}>
           <Ticket size={16} aria-hidden="true" />
           {phase === "quoting" ? t("results.saleQuoting") : t("results.buyGroup")}
         </button>
       )}
-      {phase === "idle" && !showOut && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
+      {phase === "idle" && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
       {phase === "quoting" && (
         <p className="wc-sale-note" role="status">{t("results.saleQuoting")}</p>
       )}
