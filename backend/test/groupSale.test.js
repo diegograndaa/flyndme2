@@ -177,4 +177,102 @@ test("no emite el billete si el cobro no está confirmado, y sí cuando cuadra",
   assert.equal(calls.filter((c) => c.includes("/air/orders")).length, 2);
 });
 
+function peopleNamed(names) {
+  return names.map((familyName) => ({
+    givenName: "Ana", familyName, bornOn: "1990-04-02", gender: "f", title: "ms",
+  }));
+}
+
+function transportWith({ failOrigin = null, refundStatus = 201 } = {}) {
+  const calls = [];
+  let charge = null;
+  const send = async (url, options) => {
+    calls.push(`${options.method} ${url}`);
+    if (url.includes("offer_requests")) {
+      const origin = JSON.parse(options.body).data.slices[0].origin;
+      const row = origin === "MAD" ? offer({ id: "off_mad" }) : offer({ id: "off_bcn", airline: "U2", number: "808", amount: "20.00" });
+      return { status: 200, data: { data: { offers: [row] } } };
+    }
+    if (options.method === "POST" && url.endsWith("/payments/payment_intents")) {
+      charge = JSON.parse(options.body).data.amount;
+      return { status: 201, data: { data: { id: "pit_1", client_token: "client_tok", amount: charge, currency: "EUR", status: "requires_payment" } } };
+    }
+    if (options.method === "GET" && url.includes("/payments/payment_intents/pit_1")) {
+      return { status: 200, data: { data: { id: "pit_1", status: "succeeded", amount: charge, currency: "EUR" } } };
+    }
+    if (options.method === "POST" && url.endsWith("/payments/refunds")) {
+      if (refundStatus >= 400) return { status: refundStatus, data: { errors: [{ message: "no" }] } };
+      const body = JSON.parse(options.body).data;
+      return { status: 201, data: { data: { id: "ref_1", amount: body.amount, currency: body.currency } } };
+    }
+    if (url.endsWith("/air/orders")) {
+      const offerId = JSON.parse(options.body).data.selected_offers[0];
+      const origin = offerId === "off_mad" ? "MAD" : "BCN";
+      if (origin === failOrigin) return { status: 500, data: null };
+      return { status: 201, data: { data: { id: `ord_${offerId}`, booking_reference: "ABC123" } } };
+    }
+    throw new Error(`url no prevista ${url}`);
+  };
+  return { calls, send };
+}
+
+test("si no se emite ningún billete se devuelve el cobro entero", async () => {
+  const tp = transportWith({ failOrigin: "MAD" });
+  sale.__test.setTransport(tp.send);
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  sale.__test.forgetMemory();
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.code, "SALE_REFUNDED");
+  assert.equal(done.orders.length, 0);
+  assert.equal(done.refund.status, "refunded");
+  assert.equal(done.refund.amount, quote.charge);
+  const refunds = tp.calls.filter((c) => c.includes("/payments/refunds"));
+  assert.equal(refunds.length, 1);
+  const again = await sale.completeSale(quote.quoteId);
+  assert.equal(again.code, "SALE_REFUNDED");
+  assert.equal(tp.calls.filter((c) => c.includes("/payments/refunds")).length, 1);
+});
+
+test("si falla el segundo tramo se devuelve solo ese cobro", async () => {
+  const tp = transportWith({ failOrigin: "BCN" });
+  sale.__test.setTransport(tp.send);
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.code, "TICKET_PARTIAL");
+  assert.equal(done.orders.length, 1);
+  assert.equal(done.orders[0].bookingReference, "ABC123");
+  assert.equal(done.failedOrigin, "BCN");
+  assert.equal(done.refund.status, "refunded");
+  assert.notEqual(done.refund.amount, quote.charge);
+  const refunded = Math.round(Number(done.refund.amount) * 100);
+  const kept = Math.round(Number(quote.legs[0].charge) * 100);
+  const total = Math.round(Number(quote.charge) * 100);
+  assert.equal(refunded + kept, total);
+});
+
+test("si la devolución falla no se dice que el dinero ha vuelto", async () => {
+  const tp = transportWith({ failOrigin: "MAD", refundStatus: 500 });
+  sale.__test.setTransport(tp.send);
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.code, "REFUND_FAILED");
+  assert.equal(done.refund.status, "failed");
+  assert.equal(done.refund.amount, quote.charge);
+  assert.equal(done.orders.length, 0);
+});
+
+test("repetir el pago no abre un segundo cobro", async () => {
+  const tp = transportWith();
+  sale.__test.setTransport(tp.send);
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  const people = peopleNamed(["Ruiz", "Sanz"]);
+  const first = await sale.startPayment(quote.quoteId, people, "ana@example.com", "+34600111222");
+  const second = await sale.startPayment(quote.quoteId, people, "ana@example.com", "+34600111222");
+  assert.equal(second.clientToken, first.clientToken);
+  assert.equal(tp.calls.filter((c) => c.endsWith("/payments/payment_intents")).length, 1);
+});
+
 });

@@ -19,6 +19,12 @@ function peopleFor(quote, prev = []) {
   return Array.from({ length: n }, (_, i) => prev[i] || blankPerson());
 }
 
+function moneyOf(sale) {
+  const refund = sale?.refund;
+  if (!refund?.amount) return "";
+  return saleMoney(refund.amount, refund.currency || "EUR");
+}
+
 function saleMoney(amount, currency) {
   const cur = String(currency || "").toUpperCase();
   if (cur === "EUR") return formatEur(Number(amount), 2);
@@ -35,6 +41,14 @@ function saleMessage(t, sale) {
   if (code === "FLIGHT_NOT_IDENTIFIED") return t("results.saleNotIdentified");
   if (code === "QUOTE_EXPIRED") return t("results.saleExpired");
   if (code === "PAYMENT_NOT_CONFIRMED" || code === "PAYMENT_MISMATCH") return t("results.saleNotPaid");
+  if (code === "SALE_REFUNDED") return t("results.saleRefunded", { amount: moneyOf(sale) });
+  if (code === "REFUND_FAILED") return t("results.saleRefundFailed", { amount: moneyOf(sale) });
+  if (code === "TICKET_PARTIAL" && sale?.refund?.status === "refunded") {
+    return t("results.salePartialRefunded", { origin: sale.failedOrigin || sale.origin || "", amount: moneyOf(sale) });
+  }
+  if (code === "TICKET_PARTIAL" && sale?.refund?.status === "failed") {
+    return t("results.salePartialRefundFailed", { origin: sale.failedOrigin || sale.origin || "", amount: moneyOf(sale) });
+  }
   if (code === "TICKET_PARTIAL") return t("results.salePartial", { origin: sale.failedOrigin || sale.origin || "" });
   if (code === "INVALID_NAME") return t("results.saleInvalidName");
   if (code === "INVALID_BIRTH_DATE") return t("results.saleInvalidBirth");
@@ -46,7 +60,7 @@ function saleMessage(t, sale) {
   return t("results.saleFailed");
 }
 
-export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSubmit, onPaid, onFail }) {
+export default function GroupSalePanel({ legs = [], bookings = [], sale = null, onRequest, onSubmit, onPaid, onFail }) {
   const { t } = useI18n();
   const quote = sale?.quote || null;
   const quoteId = quote?.quoteId || "";
@@ -60,14 +74,19 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
   }
 
   const phase = sale?.phase || "idle";
+  const offline = phase === "error" && sale?.code === "BOOKING_NOT_CONFIGURED" && bookings.length > 0;
   const busy = phase === "quoting" || phase === "paying" || phase === "completing";
-  const showBuy = phase === "idle" || phase === "quoting";
-  const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED"].includes(sale?.code);
+  const inApp = Boolean(quote) || ["card", "completing", "issued", "partial"].includes(phase);
+  // Sin cobro dentro de la app, el botón del total abre la web donde se reserva
+  // ese billete. No hace falta pulsar antes y leer que la venta no está conectada.
+  const showOut = bookings.length > 0 && !inApp;
+  const showBuy = (phase === "idle" || phase === "quoting") && !offline;
+  const retryable = phase === "error" && !offline && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED"].includes(sale?.code);
   const showForm = quote && (phase === "quote" || phase === "paying");
   const showPay = phase === "card" && sale?.clientToken;
   const cur = quote?.currency || "EUR";
   const money = (amount) => saleMoney(amount, cur);
-  const note = saleMessage(t, sale);
+  const note = offline ? "" : saleMessage(t, sale);
   const refs = (sale?.orders || []).map((o) => o.bookingReference || o.orderId).filter(Boolean);
 
   let cursor = 0;
@@ -83,14 +102,25 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
 
   return (
     <div className="wc-sale">
+      {showOut && (
+        <div className="wc-sale-out">
+          {bookings.map((b) => (
+            <a key={b.origin} href={b.url} target="_blank" rel="noreferrer" className="wc-sale-btn">
+              <Ticket size={16} aria-hidden="true" />
+              {t("results.saleBuyLeg", { origin: b.origin, airline: b.airline })}
+            </a>
+          ))}
+          <p className="wc-sale-note" role="status">{t("results.saleBuyOut")}</p>
+        </div>
+      )}
       {showBuy && (
-        <button type="button" className="wc-sale-btn" disabled={busy}
+        <button type="button" className={showOut ? "wc-sale-btn wc-sale-btn--ghost" : "wc-sale-btn"} disabled={busy}
           onClick={() => onRequest?.(legs)}>
           <Ticket size={16} aria-hidden="true" />
           {phase === "quoting" ? t("results.saleQuoting") : t("results.buyGroup")}
         </button>
       )}
-      {phase === "idle" && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
+      {phase === "idle" && !showOut && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
       {phase === "quoting" && (
         <p className="wc-sale-note" role="status">{t("results.saleQuoting")}</p>
       )}
@@ -163,7 +193,7 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
         </Suspense>
       )}
       {phase === "completing" && <p className="wc-sale-note" role="status">{t("results.saleCompleting")}</p>}
-      {phase === "issued" && (
+      {(phase === "issued" || (phase === "partial" && refs.length > 0)) && (
         <p className="wc-sale-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
       )}
       {retryable && (

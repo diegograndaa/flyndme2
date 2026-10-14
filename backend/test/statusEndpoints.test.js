@@ -75,7 +75,7 @@ test("GET /api/health → stores en memoria sin Upstash y métricas del loop", a
   const r = await get("/api/health");
   assert.equal(r.status, 200);
   assert.equal(r.body.status, "healthy");
-  assert.deepEqual(r.body.stores, { share: "memory", group: "memory" });
+  assert.deepEqual(r.body.stores, { sale: "memory", share: "memory", group: "memory" });
   assert.equal(typeof r.body.metrics, "object");
   assert.equal(typeof r.body.memory.rss, "number");
   assertNoSecrets(r.text, "/api/health");
