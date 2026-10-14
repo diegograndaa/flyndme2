@@ -314,6 +314,8 @@
     "saleTotal": "A pagar",
     "saleQuoting": "Buscando la tarifa que se puede emitir…",
     "saleNotConfigured": "La venta desde FlyndMe aún no está conectada. No se cobra nada. Reservar abre la web de la aerolínea, o Skyscanner con la misma ruta y fecha.",
+    "saleBuyOut": "Cada billete se reserva en la web de su aerolínea. El precio allí es el suyo.",
+    "saleBuyLeg": "Comprar {{origin}} en {{airline}}",
     "saleNotForSale": "El vuelo de {{origin}} no está a la venta ahora. No lo cambiamos por otro.",
     "saleNotIdentified": "No se puede identificar el vuelo exacto. No se cobra nada.",
     "saleFailed": "No se ha podido preparar la compra. No se ha cobrado.",

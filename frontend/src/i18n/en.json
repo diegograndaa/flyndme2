@@ -314,6 +314,8 @@
     "saleTotal": "To pay",
     "saleQuoting": "Looking up the fare that can be issued…",
     "saleNotConfigured": "Selling from FlyndMe is not connected yet. Nothing is charged. Reserve opens the airline's site, or Skyscanner for the same route and date.",
+    "saleBuyOut": "Each ticket is booked on its airline's site. The price there is theirs.",
+    "saleBuyLeg": "Buy {{origin}} on {{airline}}",
     "saleNotForSale": "The flight from {{origin}} is not for sale right now. We do not swap it for another.",
     "saleNotIdentified": "The exact flight cannot be identified. Nothing is charged.",
     "saleFailed": "The purchase could not be prepared. Nothing was charged.",
