@@ -1,6 +1,7 @@
 // ─── Airport data ─────────────────────────────────────────────────────────────
-// El catálogo corto de abajo es el que tiene foto y sale en el selector.
-// El resto de Europa (Asturias, Canarias, etc.) vive en europeAirports.js.
+// El catálogo corto de abajo sale en los chips del selector.
+// El resto de Europa (Asturias, Canarias, etc.) vive en europeAirports.js
+// y su foto en cityWikiPhotos.js.
 import { EUROPE_EXTRA, EUROPE_COUNTRY_FLAGS, EUROPE_COUNTRY_ALIASES, EUROPE_CITY_ES } from "./europeAirports.js";
 
 const CURATED_AIRPORTS = [

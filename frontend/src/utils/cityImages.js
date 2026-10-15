@@ -1,10 +1,10 @@
-// ─── High-quality city images via Unsplash ─────────────────────────────────────
-// Using curated Unsplash photo IDs for beautiful, consistent city photography.
+import { CITY_WIKI_PHOTOS } from "./cityWikiPhotos.js";
+
+// Las 54 ciudades de siempre usan una foto de Unsplash revisada a mano.
 // Format: https://images.unsplash.com/photo-{ID}?w={width}&h={height}&fit=crop&q=80
-//
-// This replaces the low-quality local JPGs and covers ALL destination cities.
 // Photo IDs audited & fixed (jun-2026): 20 dead IDs and 7 wrong-city photos
 // replaced with verified landmark shots (checked visually via Unsplash).
+// El resto del catálogo europeo está en cityWikiPhotos.js.
 
 const UNSPLASH_BASE = "https://images.unsplash.com";
 
@@ -69,24 +69,26 @@ const CITY_PHOTO_IDS = {
 };
 
 /**
- * Get a high-quality city image URL.
- * @param {string} code - IATA airport code (e.g. "MAD")
- * @param {object} opts - { w: width, h: height }
- * @returns {string} Unsplash image URL or placeholder
+ * Foto del aeropuerto. Primero la de Unsplash (las 54 revisadas a mano);
+ * si no hay, la de Wikimedia del catálogo europeo. Sin foto comprobada, null.
+ * @param {string} code - código IATA (p. ej. "MAD")
+ * @param {object} opts - { w, h } solo aplican a Unsplash
+ * @returns {string|null}
  */
 export function getCityImageUrl(code, { w = 800, h = 400 } = {}) {
-  const id = CITY_PHOTO_IDS[code?.toUpperCase()];
-  if (!id) return null;
-  return `${UNSPLASH_BASE}/photo-${id}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
+  const key = code?.toUpperCase();
+  const id = CITY_PHOTO_IDS[key];
+  if (id) return `${UNSPLASH_BASE}/photo-${id}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
+  return CITY_WIKI_PHOTOS[key] || null;
 }
 
 /**
- * Get image URL with local fallback.
- * Tries Unsplash first, falls back to local /destinations/{code}.jpg
+ * Foto con respaldo local. Unsplash o Wikimedia; si el código no tiene
+ * ninguna, /destinations/{code}.jpg.
  */
 export function getCityImage(code, baseUrl = "/", { w = 800, h = 400 } = {}) {
-  const unsplash = getCityImageUrl(code, { w, h });
-  return unsplash || `${baseUrl}destinations/${code}.jpg`;
+  const remote = getCityImageUrl(code, { w, h });
+  return remote || `${baseUrl}destinations/${code}.jpg`;
 }
 
 // Cuántas fotos de destino precargar al pintar resultados (para que cambiar de
