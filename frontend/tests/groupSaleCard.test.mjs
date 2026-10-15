@@ -50,23 +50,21 @@ const base = {
   uiCriterion: "total",
 };
 
-test("Reservar abre Wizz y easyJet, no Aviasales, y Wizz no entra en el pago", () => {
+test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el grupo", () => {
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
   assert.ok(html.includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), html);
   assert.ok(html.includes("https://www.easyjet.com/en/buy/flights?"), html);
   assert.ok(html.includes("origin=BCN"), html);
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
-  assert.match(html, /Pagar los demás aquí|Pay the others here/);
-  assert.match(html, /Ryanair y Wizz se reservan en su web|Ryanair and Wizz are booked on their sites/);
-  assert.ok(!/Un solo pago aquí|One payment here/.test(html));
-  assert.ok(!/Cada billete se reserva|Each ticket is booked/.test(html));
+  assert.match(html, /Comprar los vuelos del grupo|Buy the group(?:'|&#x27;)s flights/);
+  assert.match(html, /Un solo pago aquí|One payment here/);
+  assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
   assert.ok(saleAt >= 0 && titleAt > saleAt, "la compra está en el total, antes de la lista de vuelos");
   const sale = html.slice(saleAt, titleAt);
-  assert.ok(sale.includes("wizzair.com"), "Wizz se reserva desde el total");
-  assert.ok(!sale.includes("easyjet.com"), "easyJet se puede pagar aquí");
+  assert.ok(!sale.includes("wizzair.com") && !sale.includes("easyjet.com"), sale);
 });
 
 test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () => {
@@ -228,7 +226,7 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
         commission: "2.60",
         cardFee: "1.63",
         charge: "56.23",
-        legs: [{ origin: "OVD", destination: "ORY", airline: "V7", flightNumber: "1201", departureDate: "2026-10-18", passengers: 1 }],
+        legs: [{ origin: "OVD", destination: "ORY", airline: "V7", airlineName: "Volotea", flightNumber: "1201", departsAt: "11:25", sameFlight: false, departureDate: "2026-10-18", passengers: 1 }],
         external: [{ origin: "MAD", destination: "CDG", airline: "VY", flightNumber: "8024", departureDate: "2026-10-18", passengers: 1, reason: "FLIGHT_NOT_FOR_SALE" }],
       },
     },
@@ -239,6 +237,10 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
   assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && missAt > saleAt, "la comprobación de Google queda aparte de la compra");
   assert.ok(html.includes("sale-OVD-0-given"), "el vuelo que sí está se paga aquí");
   assert.ok(!html.includes("sale-MAD-"), "Madrid no entra en el formulario de pago");
+  assert.ok(/Este es el vuelo que se emite ahora|This is the flight being issued now/.test(html));
+  assert.ok(html.includes("Volotea 1201"));
+  assert.ok(html.includes("11:25"));
+  assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   assert.ok(html.includes("tickets.vueling.com/booking"), html);
   assert.ok(html.includes("56.23") || html.includes("€56.23"));
   assert.ok(!/El vuelo de MAD no está a la venta ahora|The flight from MAD is not for sale right now/.test(html));

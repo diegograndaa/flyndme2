@@ -9,8 +9,6 @@ import { formatEur, buildSkyscannerUrl } from "../utils/helpers";
 import { buildAirlineBookingUrl } from "../utils/airlineBooking";
 import { airlineName } from "../utils/flightTime";
 
-const AIRLINE_SITE = new Set(["FR", "RK", "AL", "RR", "W6", "W9", "W4", "5W"]);
-
 const DuffelPay = React.lazy(() => import("./DuffelPay"));
 
 const TITLES = ["mr", "mrs", "ms", "miss", "dr"];
@@ -38,8 +36,12 @@ function saleMoney(amount, currency) {
   return `${n.toFixed(2)} ${cur}`;
 }
 
-function isSiteAirline(code) {
-  return AIRLINE_SITE.has(String(code || "").trim().toUpperCase());
+function flightLabel(leg) {
+  const who = leg.airlineName || leg.airline || "";
+  const num = leg.flightNumber ? ` ${leg.flightNumber}` : "";
+  const route = `${leg.origin} → ${leg.destination}`;
+  const time = leg.departsAt ? ` · ${leg.departsAt}` : "";
+  return who ? `${who}${num} · ${route}${time}` : `${route}${time}`;
 }
 
 function bookTarget(leg) {
@@ -109,13 +111,11 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
 
   const phase = sale?.phase || "idle";
   const busy = phase === "quoting" || phase === "paying" || phase === "completing";
-  const sitePreview = legs.filter((leg) => isSiteAirline(leg.airline));
-  const canPayHere = legs.some((leg) => !isSiteAirline(leg.airline));
   const quoted = quote && phase !== "error";
-  const external = quoted ? (quote.external || []) : (phase === "error" ? (sale?.external || []) : sitePreview);
-  // El botón del total cobra aquí: tarifa emitible, comisión y coste del cobro.
-  // Ryanair, Wizz y el vuelo que no está a la venta se reservan aparte.
-  const showBuy = canPayHere && (phase === "idle" || phase === "quoting");
+  const external = quoted ? (quote.external || []) : (phase === "error" ? (sale?.external || []) : []);
+  // Un botón. Duffel busca la tarifa que puede emitir; el cobro es esa tarifa.
+  const showBuy = phase === "idle" || phase === "quoting";
+  const substituted = (quote?.legs || []).some((leg) => leg.sameFlight === false);
   const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED", "AIRLINE_SITE"].includes(sale?.code);
   const showForm = quote && (phase === "quote" || phase === "paying");
   const showPay = phase === "card" && sale?.clientToken;
@@ -141,24 +141,24 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest, onSu
         <button type="button" className="wc-sale-btn" disabled={busy}
           onClick={() => onRequest?.(legs)}>
           <Ticket size={16} aria-hidden="true" />
-          {phase === "quoting"
-            ? t("results.saleQuoting")
-            : (sitePreview.length ? t("results.buyGroupRest") : t("results.buyGroup"))}
+          {phase === "quoting" ? t("results.saleQuoting") : t("results.buyGroup")}
         </button>
       )}
-      {phase === "idle" && canPayHere && sitePreview.length > 0 && (
-        <p className="wc-sale-hint">{t("results.buyGroupHintSplit")}</p>
-      )}
-      {phase === "idle" && canPayHere && sitePreview.length === 0 && (
-        <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>
-      )}
-      {phase === "idle" && !canPayHere && (
-        <p className="wc-sale-hint">{t("results.saleAirlineOnly")}</p>
-      )}
+      {phase === "idle" && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
       {phase === "quoting" && (
         <p className="wc-sale-note" role="status">{t("results.saleQuoting")}</p>
       )}
       {note && <p className="wc-sale-note" role="alert">{note}</p>}
+      {quoted && substituted && (
+        <p className="wc-sale-note" role="status">{t("results.saleThisFlight")}</p>
+      )}
+      {quoted && (
+        <ul className="wc-sale-flights">
+          {(quote.legs || []).map((leg) => (
+            <li key={`${leg.origin}-${leg.flightNumber || ""}`}>{flightLabel(leg)}</li>
+          ))}
+        </ul>
+      )}
       {quoted && external.length > 0 && (
         <p className="wc-sale-kicker">{t("results.saleHere")}</p>
       )}

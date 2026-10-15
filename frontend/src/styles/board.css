@@ -2264,6 +2264,8 @@ button,
   background: var(--white); color: var(--navy);
 }
 .wc-sale-field-hint { font-size: 12px; font-weight: 500; color: var(--slate-500); }
+.wc-sale-flights { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.wc-sale-flights li { font-family: var(--font-mono); font-size: 13px; color: var(--navy); }
 .wc-sale-else { margin-top: 12px; display: grid; gap: 8px; }
 .wc-sale-else-row { display: grid; gap: 6px; }
 .wc-sale-else-row p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--navy); }

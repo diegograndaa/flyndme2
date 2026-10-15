@@ -98,7 +98,12 @@ function validateLegs(legs, today) {
     if (leg.returnDate && (!isISODate(leg.returnDate) || leg.returnDate <= leg.departureDate)) {
       return { code: "INVALID_RETURN_DATE" };
     }
-    if (!/^[A-Z0-9]{2}$/.test(leg.airline) || !leg.flightNumber) return { code: "FLIGHT_NOT_IDENTIFIED" };
+    // La caché a menudo no trae número, y a veces el código de aerolínea no
+    // es IATA. Eso no corta la compra: se busca la tarifa emitible del trayecto.
+    if (!/^[A-Z0-9]{2}$/.test(leg.airline)) {
+      leg.airline = "";
+      leg.flightNumber = "";
+    }
     if (!Number.isInteger(leg.passengers) || leg.passengers < 1 || leg.passengers > MAX_PAX_PER_LEG) {
       return { code: "INVALID_PASSENGERS" };
     }
@@ -135,6 +140,47 @@ function pickOffer(offers, leg) {
   const hits = (offers || []).filter((o) => offerMatches(o, leg));
   hits.sort((a, b) => Number(a.total_amount) - Number(b.total_amount));
   return hits[0] || null;
+}
+
+function fallbackMatches(offer, leg) {
+  const slices = offer?.slices || [];
+  const out = segmentFlight(slices[0]?.segments?.[0]);
+  if (!out.date || out.date !== leg.departureDate) return false;
+  if (airlineSite(out.airline)) return false;
+  if (leg.returnDate) {
+    const back = segmentFlight(slices[1]?.segments?.[0]);
+    if (back.date !== leg.returnDate) return false;
+  } else if (slices.length !== 1) {
+    return false;
+  }
+  const pax = Array.isArray(offer.passengers) ? offer.passengers.length : 0;
+  return pax === leg.passengers;
+}
+
+// El mismo vuelo si Duffel lo tiene. Si no, la tarifa emitible más barata de
+// ese trayecto y ese día. El precio que se cobra es el de esa oferta.
+function chooseOffer(offers, leg) {
+  if (leg.airline && leg.flightNumber && !airlineSite(leg.airline)) {
+    const exact = pickOffer(offers, leg);
+    if (exact) return { offer: exact, sameFlight: true };
+  }
+  const hits = (offers || []).filter((o) => fallbackMatches(o, leg));
+  hits.sort((a, b) => Number(a.total_amount) - Number(b.total_amount));
+  return hits[0] ? { offer: hits[0], sameFlight: false } : null;
+}
+
+function describeOffer(offer) {
+  const seg = offer?.slices?.[0]?.segments?.[0] || {};
+  const airline = String(seg.marketing_carrier?.iata_code || "").toUpperCase();
+  const airlineName = String(seg.marketing_carrier?.name || "").trim();
+  const flightNumber = String(seg.marketing_carrier_flight_number || "").replace(/\s+/g, "");
+  const departingAt = String(seg.departing_at || "");
+  return {
+    airline,
+    airlineName,
+    flightNumber,
+    departsAt: departingAt.length >= 16 ? departingAt.slice(11, 16) : "",
+  };
 }
 
 function airlineSite(code) {
@@ -253,6 +299,9 @@ async function searchLeg(leg) {
     slices,
     passengers: Array.from({ length: leg.passengers }, () => ({ type: "adult" })),
     cabin_class: "economy",
+    // 15 s por aerolínea. Las ciudades se piden a la vez, así el grupo cabe
+    // en el corte del proxy (~30 s) y el botón no se queda colgado.
+    supplier_timeout: 15000,
   });
   return data?.offers || [];
 }
@@ -274,19 +323,23 @@ async function quoteLegs(rawLegs, today) {
   const fee = feeRate();
   const priced = [];
   const external = [];
-  for (const leg of checked.legs) {
-    if (airlineSite(leg.airline)) {
-      external.push(publicExternal(leg, "AIRLINE_SITE"));
+  const searched = await Promise.all(checked.legs.map(async (leg) => {
+    try {
+      return { leg, offers: await searchLeg(leg) };
+    } catch {
+      return { leg, offers: [] };
+    }
+  }));
+  for (const { leg, offers } of searched) {
+    const chosen = chooseOffer(offers, leg);
+    // Sin oferta emitible no se inventa un billete. Ryanair y Wizz, si Duffel
+    // no trae otro vuelo de ese trayecto, se reservan en su web.
+    if (!chosen) {
+      external.push(publicExternal(leg, airlineSite(leg.airline) ? "AIRLINE_SITE" : "FLIGHT_NOT_FOR_SALE"));
       continue;
     }
-    const offers = await searchLeg(leg);
-    const offer = pickOffer(offers, leg);
-    // Sin la tarifa exacta no se cambia el vuelo. Ese tramo se reserva en la
-    // aerolínea y el resto del grupo puede pagarse aquí.
-    if (!offer) {
-      external.push(publicExternal(leg, "FLIGHT_NOT_FOR_SALE"));
-      continue;
-    }
+    const offer = chosen.offer;
+    const described = describeOffer(offer);
     const fareCents = cents(offer.total_amount);
     if (fareCents == null) return { available: false, code: "SALE_FAILED" };
     const currency = String(offer.total_currency || "").toUpperCase();
@@ -295,8 +348,11 @@ async function quoteLegs(rawLegs, today) {
     priced.push({
       origin: leg.origin,
       destination: leg.destination,
-      airline: leg.airline,
-      flightNumber: leg.flightNumber,
+      airline: described.airline || leg.airline,
+      airlineName: described.airlineName,
+      flightNumber: described.flightNumber || leg.flightNumber,
+      departsAt: described.departsAt,
+      sameFlight: chosen.sameFlight,
       departureDate: leg.departureDate,
       returnDate: leg.returnDate || null,
       passengers: leg.passengers,
@@ -333,7 +389,10 @@ async function quoteLegs(rawLegs, today) {
       origin: leg.origin,
       destination: leg.destination,
       airline: leg.airline,
+      airlineName: leg.airlineName || "",
       flightNumber: leg.flightNumber,
+      departsAt: leg.departsAt || "",
+      sameFlight: leg.sameFlight === true,
       departureDate: leg.departureDate,
       passengers: leg.passengers,
       fare: euros(leg.fare),
@@ -456,6 +515,7 @@ module.exports = {
   priceLeg,
   offerMatches,
   pickOffer,
+  chooseOffer,
   validateLegs,
   __test: {
     setTransport(fn) { transport = fn; },
