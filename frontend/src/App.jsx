@@ -1191,7 +1191,13 @@ export default function App() {
       const data = await res.json().catch(() => ({}));
       if (seq !== saleSeq.current) return;
       if (!data?.available) {
-        setGroupSale({ phase: "error", key, code: data?.code || "SALE_FAILED", origin: data?.origin || null });
+        setGroupSale({
+          phase: "error",
+          key,
+          code: data?.code || "SALE_FAILED",
+          origin: data?.origin || null,
+          external: Array.isArray(data?.external) ? data.external : [],
+        });
         return;
       }
       setGroupSale({ phase: "quote", key, quote: data });

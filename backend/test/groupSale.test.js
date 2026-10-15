@@ -14,7 +14,7 @@ function futureDate(days) {
 const DEP = futureDate(40);
 const TODAY = new Date().toISOString().slice(0, 10);
 
-function offer({ id = "off_mad", amount = "41.00", airline = "W9", number = "1234", date = DEP, pax = 1, back = null } = {}) {
+function offer({ id = "off_mad", amount = "41.00", airline = "VY", number = "1234", date = DEP, pax = 1, back = null } = {}) {
   const slices = [{
     segments: [{
       marketing_carrier: { iata_code: airline },
@@ -42,7 +42,7 @@ function offer({ id = "off_mad", amount = "41.00", airline = "W9", number = "123
 
 function leg(overrides = {}) {
   return {
-    origin: "MAD", destination: "LTN", departureDate: DEP, airline: "W9", flightNumber: "1234", passengers: 1,
+    origin: "MAD", destination: "LTN", departureDate: DEP, airline: "VY", flightNumber: "1234", passengers: 1,
     ...overrides,
   };
 }
@@ -91,13 +91,13 @@ test("sin token no hay presupuesto ni cobro", async () => {
   }
 });
 
-test("un vuelo que no está a la venta no se sustituye por otro", async () => {
+test("si el vuelo de la tarjeta no está, se emite la tarifa que sí se puede vender", async () => {
   sale.__test.setTransport(async (url, options) => {
     assert.equal(url.includes("duffel_test_token"), false);
     if (url.includes("offer_requests")) {
       const body = JSON.parse(options.body).data;
       const origin = body.slices[0].origin;
-      const offers = origin === "MAD" ? [offer({})] : [offer({ airline: "U2", number: "1", id: "off_other" })];
+      const offers = origin === "MAD" ? [offer({})] : [offer({ airline: "U2", number: "1", id: "off_other", amount: "20.00" })];
       return { status: 200, data: { data: { offers } } };
     }
     throw new Error("no debería cobrar");
@@ -106,9 +106,101 @@ test("un vuelo que no está a la venta no se sustituye por otro", async () => {
     leg(),
     leg({ origin: "BCN", airline: "U2", flightNumber: "999", destination: "LTN" }),
   ], TODAY);
+  assert.equal(quote.available, true);
+  assert.equal(quote.legs.length, 2);
+  assert.equal(quote.legs[0].origin, "MAD");
+  assert.equal(quote.legs[0].flightNumber, "1234");
+  assert.equal(quote.legs[0].sameFlight, true);
+  assert.equal(quote.legs[1].origin, "BCN");
+  assert.equal(quote.legs[1].airline, "U2");
+  assert.equal(quote.legs[1].flightNumber, "1");
+  assert.equal(quote.legs[1].sameFlight, false);
+  assert.equal(quote.legs[1].departsAt, "08:30");
+  assert.equal(quote.passengerCount, 2);
+  assert.equal(quote.external.length, 0);
+  assert.equal(quote.fare, "61.00");
+});
+
+test("sin número de vuelo también se emite la tarifa del trayecto", async () => {
+  let timeout = null;
+  sale.__test.setTransport(async (url, options) => {
+    timeout = JSON.parse(options.body).data.supplier_timeout;
+    return { status: 200, data: { data: { offers: [offer({})] } } };
+  });
+  const quote = await sale.quoteLegs([
+    leg({ airline: "Vueling", flightNumber: "" }),
+    leg({ origin: "BCN", airline: "", flightNumber: "" }),
+  ], TODAY);
+  assert.equal(timeout, 15000);
+  assert.equal(quote.available, true);
+  assert.equal(quote.code, undefined);
+  assert.equal(quote.legs.length, 2);
+  assert.equal(quote.legs[0].airline, "VY");
+  assert.equal(quote.legs[0].sameFlight, false);
+  assert.equal(quote.legs[1].flightNumber, "1234");
+});
+
+test("Ryanair se cambia por el vuelo que sí se puede emitir en ese trayecto", async () => {
+  const origins = [];
+  sale.__test.setTransport(async (url, options) => {
+    if (!url.includes("offer_requests")) throw new Error("no debería cobrar");
+    origins.push(JSON.parse(options.body).data.slices[0].origin);
+    return { status: 200, data: { data: { offers: [offer({})] } } };
+  });
+  const quote = await sale.quoteLegs([
+    leg(),
+    leg({ origin: "BCN", airline: "FR", flightNumber: "202" }),
+  ], TODAY);
+  assert.deepEqual(origins, ["MAD", "BCN"]);
+  assert.equal(quote.available, true);
+  assert.equal(quote.legs.length, 2);
+  assert.equal(quote.passengerCount, 2);
+  assert.equal(quote.legs[1].airline, "VY");
+  assert.equal(quote.legs[1].sameFlight, false);
+  assert.equal(quote.external.length, 0);
+  const tooFew = await sale.startPayment(quote.quoteId, [{}], "ana@example.com", "+34600111222");
+  assert.equal(tooFew.code, "INVALID_PASSENGERS");
+});
+
+test("un fallo de Duffel en un tramo no tumba el pago del otro", async () => {
+  sale.__test.setTransport(async (url, options) => {
+    const origin = JSON.parse(options.body).data.slices[0].origin;
+    if (origin === "BCN") return { status: 500, data: {} };
+    return { status: 200, data: { data: { offers: [offer({})] } } };
+  });
+  const quote = await sale.quoteLegs([
+    leg(),
+    leg({ origin: "BCN", airline: "U2", flightNumber: "1" }),
+  ], TODAY);
+  assert.equal(quote.available, true);
+  assert.equal(quote.legs.length, 1);
+  assert.equal(quote.legs[0].origin, "MAD");
+  assert.equal(quote.external[0].origin, "BCN");
+  assert.equal(quote.external[0].reason, "FLIGHT_NOT_FOR_SALE");
+});
+
+test("si Duffel no tiene ningún vuelo para Ryanair o Wizz no hay cobro", async () => {
+  sale.__test.setTransport(async () => ({ status: 200, data: { data: { offers: [] } } }));
+  const quote = await sale.quoteLegs([
+    leg({ airline: "FR" }),
+    leg({ origin: "BCN", airline: "W6", flightNumber: "10" }),
+  ], TODAY);
+  assert.equal(quote.available, false);
+  assert.equal(quote.code, "AIRLINE_SITE");
+  assert.equal(quote.external.length, 2);
+  assert.equal(quote.fare, undefined);
+});
+
+test("si ninguno está a la venta se nombran los dos y no hay cobro", async () => {
+  sale.__test.setTransport(async () => ({ status: 200, data: { data: { offers: [] } } }));
+  const quote = await sale.quoteLegs([
+    leg(),
+    leg({ origin: "BCN", airline: "U2", flightNumber: "1" }),
+  ], TODAY);
   assert.equal(quote.available, false);
   assert.equal(quote.code, "FLIGHT_NOT_FOR_SALE");
-  assert.equal(quote.origin, "BCN");
+  assert.deepEqual(quote.external.map((leg) => leg.origin), ["MAD", "BCN"]);
+  assert.equal(quote.fare, undefined);
 });
 
 test("el presupuesto usa la oferta emitible y separa la comisión", async () => {
