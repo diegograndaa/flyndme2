@@ -69,6 +69,8 @@
   --on-primary:    #FFC20E;   /* texto sobre --primary: cartel de posición */
   --on-solid:      #FFFFFF;   /* texto sobre un relleno --primary (botón neutro) */
   --pos-bg:        #1A1A1A;   /* cartel de posición: negro + texto/filete amarillos */
+  --card:          #FFFFFF;
+  --card-line:     #8C8378;
   --line:          #E5E0D8;
   --shadow-xs:     none;
   --shadow-sm:     none;
@@ -138,6 +140,8 @@
   --on-primary:    #121316;
   --on-solid:      #121316;
   --pos-bg:        #0A0B0D;
+  --card:          #242830;
+  --card-line:     #6A7384;
   --line:          #25282F;
   --shadow-xs:     none;
   --shadow-sm:     none;
@@ -945,7 +949,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: var(--trav, var(--navy));
+  color: var(--navy);
 }
 .fm-arr-track {
   position: relative;
@@ -992,6 +996,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   cursor: pointer;
 }
 .fm-arr-slider:disabled { cursor: default; }
+[data-theme="dark"] .fm-arr-slider { background: transparent; }
 .fm-arr-slider:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-arr-slider::-webkit-slider-runnable-track { height: 8px; background: transparent; }
 .fm-arr-slider::-webkit-slider-thumb {
@@ -1451,8 +1456,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-split-card.fm-split-card,
 .fm-quick-research.fm-quick-research,
 .fm-plan-trip.fm-plan-trip,
-.gp.gp { border: 1px solid var(--line); box-shadow: none; }
-.sf-section.sf-section { border: 1px solid var(--line); }
+.gp.gp { border: 1px solid var(--card-line); box-shadow: none; }
+.sf-section.sf-section { border: 1px solid var(--card-line); }
 .wc-card .wc-booking.wc-booking,
 .wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
 .wc-card .wc-flight-card.wc-flight-card:hover,
@@ -2273,20 +2278,100 @@ button,
   .wc-sale-codes { font-size: 22px; }
 }
 .caja-page {
-  min-height: 100vh; margin: 0; padding: 24px 16px 48px;
+  min-height: 100vh; margin: 0; padding: 32px 24px 80px;
   background: var(--bg); color: var(--navy);
 }
-.caja-bar { display: flex; align-items: center; gap: 8px; max-width: 440px; margin: 0 auto 16px; font-weight: 700; }
-.caja-card {
-  max-width: 440px; margin: 0 auto; padding: 20px 16px 24px;
-  background: var(--white); color: var(--navy);
-  border: 1px solid var(--line); border-radius: 4px;
+.caja-bar, .caja-kicker, .caja-steps, .caja-layout, .caja-done {
+  max-width: 1040px; margin-left: auto; margin-right: auto;
 }
-.caja-kicker { margin: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.caja-amount { margin: 8px 0 0; font-family: var(--font-mono); font-size: 40px; font-weight: 700; line-height: 1; }
+.caja-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 36px; font-weight: 700; }
+.caja-kicker {
+  margin: 0 0 20px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--slate-500);
+}
+.caja-steps { display: flex; gap: 0; margin-bottom: 32px; }
+.caja-steps button {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 8px 4px 12px; margin-bottom: 0;
+  background: transparent; border: 0; border-bottom: 2px solid var(--line);
+  font-size: 15px; font-weight: 600; color: var(--slate-500); text-align: left;
+}
+.caja-step-n {
+  display: inline-grid; place-items: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--card);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--navy);
+}
+.caja-steps button[aria-current="step"] { color: var(--navy); border-bottom-color: var(--navy); }
+.caja-steps button[aria-current="step"] .caja-step-n {
+  background: var(--navy); color: var(--on-solid); border-color: var(--navy);
+}
+.caja-steps button:disabled { cursor: default; }
+.caja-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+.caja-side {
+  position: sticky; top: 20px;
+  display: grid; gap: 14px; padding: 24px 22px;
+  background: var(--card); border: 2px solid var(--navy); border-radius: 8px;
+}
+.caja-side-actions { display: grid; gap: 8px; }
+.caja-amount-label {
+  margin: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--slate-500);
+}
+.caja-itin {
+  margin: 0 0 16px; padding: 28px 24px 20px;
+  background: var(--card); border: 1px solid var(--card-line); border-radius: 8px;
+}
+.caja-itin-ends {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center; gap: 12px;
+}
+.caja-itin-mid { display: flex; align-items: center; gap: 8px; min-width: 88px; }
+.caja-itin-end--arr { text-align: right; }
+.caja-itin-code {
+  display: block; font-family: var(--font-mono); font-size: 40px; font-weight: 700;
+  letter-spacing: .04em; line-height: 1; color: var(--navy);
+}
+.caja-itin-city { display: block; margin-top: 6px; font-size: 14px; color: var(--slate-500); }
+.caja-itin-rule { flex: 1 1 20px; height: 2px; min-width: 16px; background: var(--navy); }
+.caja-itin-time { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.caja-itin-meta {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 20px 0 0; padding-top: 14px; border-top: 1px solid var(--line);
+  font-size: 14px; color: var(--slate-700);
+}
+.caja-itin-meta strong { margin-left: auto; font-family: var(--font-mono); font-size: 20px; color: var(--navy); }
+.caja-page .wc-sale-lines--total { margin-top: 0; padding-top: 0; border-top: 0; }
+.caja-amount { margin: 0; font-family: var(--font-mono); font-size: 42px; font-weight: 700; line-height: 1; }
 .caja-lead, .caja-note { margin: 10px 0 0; font-size: 14px; line-height: 1.45; }
-.caja-pay { margin-top: 16px; }
-.caja-out { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--line); }
+.caja-pay { padding: 28px 24px; background: var(--card); border: 1px solid var(--card-line); border-radius: 8px; }
+.caja-done {
+  max-width: 480px; padding: 36px 28px;
+  background: var(--card); border: 2px solid var(--navy); border-radius: 8px;
+}
+.caja-out { margin-top: 8px; }
+.caja-page .wc-sale-form { gap: 16px; margin-top: 0; }
+.caja-page .wc-sale-person {
+  padding: 22px 20px; gap: 14px;
+  background: var(--card); border: 1px solid var(--card-line); border-radius: 8px;
+}
+.caja-page .wc-sale-person-fields { gap: 14px; }
+.caja-page .wc-sale-field { gap: 6px; font-size: 13px; }
+.caja-page .wc-sale-field input,
+.caja-page .wc-sale-field select {
+  min-height: 48px; padding: 10px 12px;
+  background: var(--bg); border-color: var(--card-line);
+}
+@media (max-width: 760px) {
+  .caja-page { padding: 20px 16px 48px; }
+  .caja-layout { grid-template-columns: 1fr; }
+  .caja-side { position: static; }
+  .caja-itin { padding: 22px 16px 16px; }
+  .caja-itin-code { font-size: 30px; }
+  .caja-itin-ends { gap: 8px; }
+  .caja-itin-mid { min-width: 72px; gap: 6px; }
+  .caja-steps button { font-size: 14px; gap: 8px; padding-right: 8px; }
+}
 .wc-sale-form { display: grid; gap: 10px; margin-top: 12px; }
 .wc-sale-person {
   display: grid; gap: 8px; margin: 0; padding: 10px;

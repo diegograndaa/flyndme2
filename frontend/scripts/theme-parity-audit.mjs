@@ -120,7 +120,7 @@ const diffState = async (name) => {
     if (a.contraste && a.contraste < 4.5) diffs.push(`CONTRASTE claro ${a.contraste}`);
     if (b.contraste && b.contraste < 4.5) diffs.push(`CONTRASTE oscuro ${b.contraste}`);
     // Aceptado por diseño: el cartel de posición es NEGRO en los dos temas (de noche lo dibuja su filete amarillo)
-    const SIGN = /sf-pill--active|rv-tab--active|wc-criterion-pill--active|fm-split-pill--active|lp-step-num|cmp-rank|fm-notice-tag|fm-lang-btn--active|sf-ac-item--hl|sk-step-dot/;
+    const SIGN = /sf-pill--active|rv-tab--active|wc-criterion-pill--active|fm-split-pill--active|fm-date-strip-day--current|fm-filter-opt--on|lp-step-num|cmp-rank|fm-notice-tag|fm-lang-btn--active|sf-ac-item--hl|sk-step-dot/;
     const DECOR = /dm-tooltip|dm-key--dest|dm-key--origin|dm-chip-bg|dm-chip-text|dm-dot--best|fm-sticky-inner|cv-lit|cv-dest-pin|cv-origin-lit|fm-flight-head-arrow|wc-image-wrap|flap-cell|sf-summary-chip|sf-ac-code|fm-zone-num|sf-badge--set|wc-badge-winner|dep-thumb|hm-chip|hm-dest|wc-airline-logo/;
     for (let k = diffs.length - 1; k >= 0; k--) {
       if (SIGN.test(a.sig) && /^(fondo: neutro·FUERTE|outline|sombra)/.test(diffs[k])) diffs.splice(k, 1);

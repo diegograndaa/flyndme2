@@ -42,6 +42,7 @@ export default function CheckoutPage({ quoteId }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [phase, setPhase] = useState("loading");
+  const [step, setStep] = useState("trip");
   const [code, setCode] = useState("");
   const [clientToken, setClientToken] = useState("");
   const [refs, setRefs] = useState([]);
@@ -155,6 +156,39 @@ export default function CheckoutPage({ quoteId }) {
     PAYMENT_MISMATCH: "results.saleMismatch",
   };
   const note = code ? t(known[code] || "results.saleFailed") : "";
+  const ready = quote && quoteAddsUp(quote);
+  const showPeople = phase === "ready" || phase === "paying";
+  const showPay = phase === "card" || phase === "completing";
+
+  const steps = [
+    ["trip", t("results.saleStepTrip")],
+    ["people", t("results.saleStepPeople")],
+    ["pay", t("results.saleStepPay")],
+  ];
+  const onStep = phase === "issued" ? "pay" : (showPay ? "pay" : step);
+
+  const side = ready ? (
+    <aside className="caja-side">
+      <p className="caja-amount-label">{t("results.saleTotal")}</p>
+      <p className="caja-amount">{money(quote.charge)}</p>
+      <SaleBreakdown quote={quote} t={t} part="fees" />
+      {onStep === "trip" && (
+        <button type="button" className="wc-sale-btn" onClick={() => setStep("people")}>
+          {t("results.saleNext")}
+        </button>
+      )}
+      {onStep === "people" && (
+        <div className="caja-side-actions">
+          <button type="button" className="wc-sale-btn wc-sale-btn--ghost" onClick={() => setStep("trip")}>
+            {t("results.saleBack")}
+          </button>
+          <button type="submit" className="wc-sale-btn" disabled={phase === "paying"}>
+            {phase === "paying" ? t("results.salePaying") : t("results.saleOpen", { amount: money(quote.charge) })}
+          </button>
+        </div>
+      )}
+    </aside>
+  ) : null;
 
   return (
     <main className="caja-page">
@@ -162,16 +196,43 @@ export default function CheckoutPage({ quoteId }) {
         <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="" width={28} height={28} />
         <span>FlyndMe</span>
       </header>
-      <section className="caja-card" aria-busy={phase === "loading" ? "true" : undefined}>
-        <p className="caja-kicker">{t("results.saleDeskTitle")}</p>
-        {quote && quoteAddsUp(quote) && (
+      <p className="caja-kicker">{t("results.saleDeskTitle")}</p>
+      {phase === "loading" && <p className="caja-note" role="status">{t("results.salePaying")}</p>}
+      {(missing || note) && phase !== "loading" && <p className="caja-note" role="alert">{note || t("results.saleDeskMissing")}</p>}
+      {ready && phase !== "issued" && (
+        <nav className="caja-steps" aria-label={t("results.saleDeskTitle")}>
+          {steps.map(([id, label], i) => {
+            const current = onStep === id;
+            const locked = id === "pay" || (id === "people" && showPay);
+            return (
+              <button key={id} type="button" aria-current={current ? "step" : undefined}
+                disabled={locked || showPay}
+                onClick={() => { if (id === "trip" || id === "people") setStep(id); }}>
+                <span className="caja-step-n" aria-hidden="true">{i + 1}</span>
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
+      {ready && phase === "issued" && (
+        <section className="caja-done">
           <p className="caja-amount">{money(quote.charge)}</p>
-        )}
-        {quote && quoteAddsUp(quote) && <SaleBreakdown quote={quote} t={t} />}
-        {(missing || note) && <p className="caja-note" role="alert">{note || t("results.saleDeskMissing")}</p>}
-        {phase === "loading" && <p className="caja-note" role="status">{t("results.salePaying")}</p>}
-        {phase === "ready" || phase === "paying" ? (
-          <form className="wc-sale-form" onSubmit={pay}>
+          <p className="caja-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
+        </section>
+      )}
+      {ready && onStep === "trip" && phase !== "issued" && (
+        <div className="caja-layout">
+          <div className="caja-main">
+            <SaleBreakdown quote={quote} t={t} part="flights" variant="itinerary" />
+            {external.length > 0 && <div className="caja-out"><SaleElsewhere legs={external} t={t} /></div>}
+          </div>
+          {side}
+        </div>
+      )}
+      {ready && showPeople && onStep === "people" && (
+        <form className="caja-layout" onSubmit={pay}>
+          <div className="caja-main wc-sale-form">
             {groups.map(({ leg, start }) => (
               <fieldset key={`${leg.origin}-${start}`} className="wc-sale-person">
                 <legend className="wc-sale-codes">{`${leg.origin} → ${leg.destination}`}</legend>
@@ -213,36 +274,35 @@ export default function CheckoutPage({ quoteId }) {
                 })}
               </fieldset>
             ))}
-            <label className="wc-sale-field" htmlFor="caja-email">{t("results.saleEmail")}
-              <input id="caja-email" type="email" autoComplete="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} />
-            </label>
-            <label className="wc-sale-field" htmlFor="caja-phone">{t("results.salePhone")}
-              <input id="caja-phone" type="tel" inputMode="tel" autoComplete="tel" required
-                placeholder="+34600000000" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </label>
-            <button type="submit" className="wc-sale-btn" disabled={phase === "paying"}>
-              {phase === "paying" ? t("results.salePaying") : t("results.saleOpen", { amount: money(quote.charge) })}
-            </button>
-          </form>
-        ) : null}
-        {phase === "card" && clientToken && (
-          <div className="caja-pay">
-            <Suspense fallback={<p className="caja-note">{t("results.salePaying")}</p>}>
-              <DuffelPay clientToken={clientToken} onSuccess={finish} onFail={() => { setPhase("ready"); setClientToken(""); setCode("PAYMENT_NOT_CONFIRMED"); }} />
-            </Suspense>
+            <fieldset className="wc-sale-person">
+              <legend className="wc-sale-codes">{t("results.saleContact")}</legend>
+              <label className="wc-sale-field" htmlFor="caja-email">{t("results.saleEmail")}
+                <input id="caja-email" type="email" autoComplete="email" required value={email}
+                  onChange={(e) => setEmail(e.target.value)} />
+              </label>
+              <label className="wc-sale-field" htmlFor="caja-phone">{t("results.salePhone")}
+                <input id="caja-phone" type="tel" inputMode="tel" autoComplete="tel" required
+                  placeholder="+34600000000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </label>
+            </fieldset>
           </div>
-        )}
-        {phase === "completing" && <p className="caja-note" role="status">{t("results.saleCompleting")}</p>}
-        {phase === "issued" && (
-          <p className="caja-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
-        )}
-        {external.length > 0 && (
-          <div className="caja-out">
-            <SaleElsewhere legs={external} t={t} />
+          {side}
+        </form>
+      )}
+      {ready && showPay && (
+        <div className="caja-layout">
+          <div className="caja-main caja-pay">
+            {phase === "completing" ? (
+              <p className="caja-note" role="status">{t("results.saleCompleting")}</p>
+            ) : (
+              <Suspense fallback={<p className="caja-note">{t("results.salePaying")}</p>}>
+                <DuffelPay clientToken={clientToken} onSuccess={finish} onFail={() => { setPhase("ready"); setStep("people"); setClientToken(""); setCode("PAYMENT_NOT_CONFIRMED"); }} />
+              </Suspense>
+            )}
           </div>
-        )}
-      </section>
+          {side}
+        </div>
+      )}
     </main>
   );
 }

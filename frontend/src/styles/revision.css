@@ -434,8 +434,9 @@
    fecha, «siguiente paso», fila elegida y botón de subir pasan a tinta/papel
    para que no compitan entre sí.                                          */
 .fm-zone-head--decision .fm-zone-num.fm-zone-num { background: var(--board-cell-bot, #18191C); color: #fff; box-shadow: var(--ficha-canto); }
-[data-theme="dark"] .fm-decision { --decision-line: #3A3E47; }
-[data-theme="dark"] .wc-total { border-color: var(--decision-line); }
+/* El marco de la decisión y la caja del total siguen la tinta del tema
+   (carbón de día, hueso de noche). Un filete más claro de noche los
+   hacía desaparecer contra la pantalla. */
 .wc-card .wc-badge-winner.wc-badge-winner { background: var(--board-cell-bot, #18191C); color: #fff; border-radius: 3px; box-shadow: var(--ficha-canto); }
 .wc-total-hint.wc-total-hint { background: transparent; border: 1px dashed var(--slate-300); border-left: 1px dashed var(--slate-300); }
 .wc-total-hint-btn.wc-total-hint-btn { background: transparent; color: var(--navy); border: 1px solid var(--navy); }

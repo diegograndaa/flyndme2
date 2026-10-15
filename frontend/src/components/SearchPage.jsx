@@ -192,7 +192,6 @@ const SearchPage = React.memo(function SearchPage({
       <div className="sf-grid">
         <div className="sf-form fm-card">
           <h2 className="sf-title">{t("search.title")}</h2>
-          <p className="sf-sub">{t("search.subtitle")}</p>
 
           {/* Recent searches */}
           {recentSearches?.length > 0 && !loading && (
@@ -550,7 +549,6 @@ const SearchPage = React.memo(function SearchPage({
                         onClick={() => { tapHaptic(); setOptimizeBy(v); }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}
                   </div>
-                  <div className="sf-hint mt-1">{t("search.optimizeHint")}</div>
                 </div>
 
                 {/* Budget */}
@@ -589,7 +587,6 @@ const SearchPage = React.memo(function SearchPage({
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
                       <div className="sf-label mb-0">{t("search.directOnly")}</div>
-                      <div className="sf-hint">{t("search.directHint")}</div>
                     </div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="directSwitch"
