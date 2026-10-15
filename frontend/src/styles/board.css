@@ -2250,8 +2250,28 @@ button,
 .wc-sale-lines { margin: 10px 0 0; display: grid; gap: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--slate-700); }
 .wc-sale-lines div { display: flex; justify-content: space-between; gap: 12px; }
 .wc-sale-lines strong { color: var(--navy); }
-.wc-sale-leg { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.wc-sale-leg { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.wc-sale-route { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wc-sale-codes {
+  font-family: var(--font-mono); font-size: 26px; font-weight: 700;
+  letter-spacing: .04em; line-height: 1.1; color: var(--navy);
+}
+.wc-sale-route strong { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--navy); }
+.wc-sale-flight {
+  display: flex; justify-content: space-between; gap: 12px;
+  margin: 4px 0 0; font-size: 13px; line-height: 1.3; color: var(--slate-500);
+}
+.wc-sale-time { font-family: var(--font-mono); font-weight: 700; color: var(--navy); }
+.wc-sale-person legend.wc-sale-codes { font-size: 22px; padding: 0; }
 .wc-sale-lines--total { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--navy); }
+.wc-sale-lines--total div:last-child { margin-top: 6px; font-size: 16px; }
+.wc-sale-lines--total div:last-child strong { font-size: 22px; }
+.wc-sale-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
+.wc-sale-pair .wc-sale-field { min-width: 0; }
+@media (max-width: 360px) {
+  .wc-sale-pair { grid-template-columns: 1fr; }
+  .wc-sale-codes { font-size: 22px; }
+}
 .caja-page {
   min-height: 100vh; margin: 0; padding: 24px 16px 48px;
   background: var(--bg); color: var(--navy);

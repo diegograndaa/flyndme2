@@ -10,12 +10,10 @@ function saleMoney(amount, currency) {
   return `${n.toFixed(2)} ${cur}`;
 }
 
-export function flightLabel(leg) {
+export function flightBits(leg) {
   const who = leg.airlineName || leg.airline || "";
   const num = leg.flightNumber ? ` ${leg.flightNumber}` : "";
-  const route = `${leg.origin} → ${leg.destination}`;
-  const time = leg.departsAt ? ` · ${leg.departsAt}` : "";
-  return who ? `${who}${num} · ${route}${time}` : `${route}${time}`;
+  return { line: who ? `${who}${num}`.trim() : "", time: leg.departsAt || "" };
 }
 
 export default function SaleBreakdown({ quote, t }) {
@@ -23,17 +21,23 @@ export default function SaleBreakdown({ quote, t }) {
   const money = (amount) => saleMoney(amount, quote.currency);
   return (
     <div className="wc-sale-legs">
-      {quote.legs.map((leg) => (
-        <section key={`${leg.origin}-${leg.flightNumber || ""}-${leg.departureDate || ""}`} className="wc-sale-leg">
-          <h2 className="wc-sale-kicker">{flightLabel(leg)}</h2>
-          <div className="wc-sale-lines">
-            <div><span>{t("results.saleFare")}</span><span>{money(leg.fare)}</span></div>
-            <div><span>{t("results.saleFee", { pct: quote.markupPercent })}</span><span>{money(leg.commission)}</span></div>
-            <div><span>{t("results.saleCardFee")}</span><span>{money(leg.cardFee)}</span></div>
-            <div><strong>{t("results.salePersonPay")}</strong><strong>{money(leg.charge)}</strong></div>
-          </div>
-        </section>
-      ))}
+      {quote.legs.map((leg) => {
+        const bits = flightBits(leg);
+        return (
+          <section key={`${leg.origin}-${leg.flightNumber || ""}-${leg.departureDate || ""}`} className="wc-sale-leg">
+            <div className="wc-sale-route">
+              <span className="wc-sale-codes">{`${leg.origin} → ${leg.destination}`}</span>
+              <strong>{money(leg.charge)}</strong>
+            </div>
+            {(bits.line || bits.time) && (
+              <p className="wc-sale-flight">
+                {bits.line && <span>{bits.line}</span>}
+                {bits.time && <span className="wc-sale-time">{bits.time}</span>}
+              </p>
+            )}
+          </section>
+        );
+      })}
       <div className="wc-sale-lines wc-sale-lines--total">
         <div><span>{t("results.saleFare")}</span><span>{money(quote.fare)}</span></div>
         <div><span>{t("results.saleFee", { pct: quote.markupPercent })}</span><span>{money(quote.commission)}</span></div>

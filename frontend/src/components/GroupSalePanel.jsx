@@ -27,9 +27,7 @@ function saleMoney(amount, currency) {
 function flightLabel(leg) {
   const who = leg.airlineName || leg.airline || "";
   const num = leg.flightNumber ? ` ${leg.flightNumber}` : "";
-  const route = `${leg.origin} → ${leg.destination}`;
-  const time = leg.departsAt ? ` · ${leg.departsAt}` : "";
-  return who ? `${who}${num} · ${route}${time}` : `${route}${time}`;
+  return `${leg.origin} → ${leg.destination}${who ? ` · ${who}${num}` : ""}`;
 }
 
 function saleMessage(t, sale) {
@@ -71,7 +69,6 @@ export default function GroupSalePanel({ legs = [], sale = null, estimateLabel =
   const external = quoted ? (quote.external || []) : (phase === "error" ? (sale?.external || []) : []);
   // Un botón. Duffel busca la tarifa que puede emitir; el cobro es esa tarifa.
   const showBuy = phase === "idle" || phase === "quoting";
-  const substituted = (quote?.legs || []).some((leg) => leg.sameFlight === false);
   const retryable = phase === "error" && !["BOOKING_NOT_CONFIGURED", "FLIGHT_NOT_IDENTIFIED", "REFUND_FAILED", "AIRLINE_SITE"].includes(sale?.code);
   const balanced = Boolean(quoted && quoteAddsUp(quote));
   const cur = quote?.currency || "EUR";
@@ -88,14 +85,10 @@ export default function GroupSalePanel({ legs = [], sale = null, estimateLabel =
           {phase === "quoting" ? t("results.saleQuoting") : t("results.buyGroup")}
         </button>
       )}
-      {phase === "idle" && <p className="wc-sale-hint">{t("results.buyGroupHint")}</p>}
       {phase === "quoting" && (
         <p className="wc-sale-note" role="status">{t("results.saleQuoting")}</p>
       )}
       {note && <p className="wc-sale-note" role="alert">{note}</p>}
-      {quoted && substituted && (
-        <p className="wc-sale-note" role="status">{t("results.saleThisFlight")}</p>
-      )}
       {quoted && !balanced && (
         <ul className="wc-sale-flights">
           {(quote.legs || []).map((leg) => (
@@ -106,11 +99,10 @@ export default function GroupSalePanel({ legs = [], sale = null, estimateLabel =
       {quoted && external.length > 0 && (
         <p className="wc-sale-kicker">{t("results.saleHere")}</p>
       )}
-      {balanced && quote.legs.length > 1 && <p className="wc-sale-note">{t("results.saleTogether")}</p>}
-      {balanced && estimateLabel && (
-        <p className="wc-sale-note">{t("results.saleEstimateApart", { amount: estimateLabel })}</p>
-      )}
       {balanced && <SaleBreakdown quote={quote} t={t} />}
+      {balanced && estimateLabel && (
+        <p className="wc-sale-flight">{t("results.saleEstimateApart", { amount: estimateLabel })}</p>
+      )}
       {quoted && !balanced && <p className="wc-sale-note" role="alert">{t("results.saleMismatch")}</p>}
       {balanced && (
         <a className="wc-sale-btn" href={checkoutPath(quote.quoteId)} target="_blank" rel="noopener noreferrer">

@@ -167,41 +167,42 @@ export default function CheckoutPage({ quoteId }) {
         {quote && quoteAddsUp(quote) && (
           <p className="caja-amount">{money(quote.charge)}</p>
         )}
-        <p className="caja-lead">{t("results.saleDeskLead")}</p>
-        {quote && quote.legs.length > 1 && <p className="caja-note">{t("results.saleTogether")}</p>}
         {quote && quoteAddsUp(quote) && <SaleBreakdown quote={quote} t={t} />}
         {(missing || note) && <p className="caja-note" role="alert">{note || t("results.saleDeskMissing")}</p>}
         {phase === "loading" && <p className="caja-note" role="status">{t("results.salePaying")}</p>}
         {phase === "ready" || phase === "paying" ? (
           <form className="wc-sale-form" onSubmit={pay}>
-            <p className="wc-sale-kicker">{t("results.salePassengers")}</p>
             {groups.map(({ leg, start }) => (
               <fieldset key={`${leg.origin}-${start}`} className="wc-sale-person">
-                <legend>{leg.origin} → {leg.destination}</legend>
+                <legend className="wc-sale-codes">{`${leg.origin} → ${leg.destination}`}</legend>
                 {Array.from({ length: Number(leg.passengers) || 0 }, (_, j) => {
                   const i = start + j;
                   const person = people[i] || blankPerson();
                   const id = `caja-${leg.origin}-${i}`;
                   return (
                     <div key={id} className="wc-sale-person-fields">
-                      <label className="wc-sale-field" htmlFor={`${id}-given`}>{t("results.saleGiven")}
-                        <input id={`${id}-given`} name="given-name" autoComplete="given-name" required maxLength={40}
-                          value={person.givenName} onChange={(e) => setPerson(i, { givenName: e.target.value })} />
-                      </label>
-                      <label className="wc-sale-field" htmlFor={`${id}-family`}>{t("results.saleFamily")}
-                        <input id={`${id}-family`} name="family-name" autoComplete="family-name" required maxLength={40}
-                          value={person.familyName} onChange={(e) => setPerson(i, { familyName: e.target.value })} />
-                      </label>
-                      <label className="wc-sale-field" htmlFor={`${id}-born`}>{t("results.saleBorn")}
-                        <input id={`${id}-born`} type="date" required value={person.bornOn}
-                          onChange={(e) => setPerson(i, { bornOn: e.target.value })} />
-                      </label>
-                      <label className="wc-sale-field" htmlFor={`${id}-gender`}>{t("results.saleGender")}
-                        <select id={`${id}-gender`} value={person.gender} onChange={(e) => setPerson(i, { gender: e.target.value })}>
-                          <option value="m">{t("results.saleGenderM")}</option>
-                          <option value="f">{t("results.saleGenderF")}</option>
-                        </select>
-                      </label>
+                      <div className="wc-sale-pair">
+                        <label className="wc-sale-field" htmlFor={`${id}-given`}>{t("results.saleGiven")}
+                          <input id={`${id}-given`} name="given-name" autoComplete="given-name" required maxLength={40}
+                            value={person.givenName} onChange={(e) => setPerson(i, { givenName: e.target.value })} />
+                        </label>
+                        <label className="wc-sale-field" htmlFor={`${id}-family`}>{t("results.saleFamily")}
+                          <input id={`${id}-family`} name="family-name" autoComplete="family-name" required maxLength={40}
+                            value={person.familyName} onChange={(e) => setPerson(i, { familyName: e.target.value })} />
+                        </label>
+                      </div>
+                      <div className="wc-sale-pair">
+                        <label className="wc-sale-field" htmlFor={`${id}-born`}>{t("results.saleBorn")}
+                          <input id={`${id}-born`} type="date" required value={person.bornOn}
+                            onChange={(e) => setPerson(i, { bornOn: e.target.value })} />
+                        </label>
+                        <label className="wc-sale-field" htmlFor={`${id}-gender`}>{t("results.saleGender")}
+                          <select id={`${id}-gender`} value={person.gender} onChange={(e) => setPerson(i, { gender: e.target.value })}>
+                            <option value="m">{t("results.saleGenderM")}</option>
+                            <option value="f">{t("results.saleGenderF")}</option>
+                          </select>
+                        </label>
+                      </div>
                       <label className="wc-sale-field" htmlFor={`${id}-title`}>{t("results.saleTitle")}
                         <select id={`${id}-title`} value={person.title} onChange={(e) => setPerson(i, { title: e.target.value })}>
                           {TITLES.map((title) => <option key={title} value={title}>{t(`results.saleTitle_${title}`)}</option>)}
@@ -219,7 +220,6 @@ export default function CheckoutPage({ quoteId }) {
             <label className="wc-sale-field" htmlFor="caja-phone">{t("results.salePhone")}
               <input id="caja-phone" type="tel" inputMode="tel" autoComplete="tel" required
                 placeholder="+34600000000" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              <span className="wc-sale-field-hint">{t("results.salePhoneHint")}</span>
             </label>
             <button type="submit" className="wc-sale-btn" disabled={phase === "paying"}>
               {phase === "paying" ? t("results.salePaying") : t("results.saleOpen", { amount: money(quote.charge) })}

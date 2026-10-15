@@ -58,7 +58,6 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el gru
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
   assert.match(html, /Comprar los vuelos del grupo|Buy the group(?:'|&#x27;)s flights/);
-  assert.match(html, /Un solo pago aquí|One payment here/);
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
@@ -125,9 +124,10 @@ test("la tarifa emitible se enseña aparte de la estimación, con comisión", ()
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON, sale }));
   assert.ok(html.includes("65.96") || html.includes("€65.96"), html);
   assert.ok(html.includes("44.33") && html.includes("21.63"), "cada viajero tiene su pago");
-  assert.ok(/Comisión FlyndMe \(5%\)|FlyndMe commission \(5%\)/.test(html), html);
-  assert.ok(/Se pagan juntos|They pay together/.test(html));
-  assert.ok(/estimación de la búsqueda|search estimate/.test(html));
+  assert.match(html, /wc-sale-codes">MAD[^<]*LTN/);
+  assert.match(html, /wc-sale-codes">BCN[^<]*LTN/);
+  assert.ok(/Comisión 5%|Fee 5%/.test(html), html);
+  assert.ok(/Estimación|Estimate/.test(html));
   assert.ok(html.includes('href="/?caja=q1"') && html.includes('target="_blank"'), "el pago abre en otra pestaña");
   assert.ok(!html.includes("sale-MAD-0-given") && !html.includes('type="date"'), "el formulario no está en la ficha");
   assert.ok(!html.includes("aviasales.com"));
@@ -236,11 +236,11 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
   }));
   const verifiedAt = Math.max(html.indexOf("Tarifa comprobada en vivo"), html.indexOf("Fare checked live"));
   const saleAt = html.indexOf('class="wc-sale"');
-  const noteAt = Math.max(html.indexOf("en esa misma página"), html.indexOf("on that same page"));
+  const noteAt = Math.max(html.indexOf("en esta página"), html.indexOf("on this page"));
   assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && noteAt > saleAt, "la comprobación de Google queda aparte de la compra");
   assert.ok(html.includes('href="/?caja=q2"'), "el vuelo que sí está se paga en la otra pestaña");
   assert.ok(!html.includes("sale-MAD-") && !html.includes("sale-OVD-"), "el formulario no está en la ficha");
-  assert.ok(/Este es el vuelo que se emite ahora|This is the flight being issued now/.test(html));
+  assert.match(html, /wc-sale-codes">OVD[^<]*ORY/);
   assert.ok(html.includes("Volotea 1201"));
   assert.ok(html.includes("11:25"));
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
@@ -271,7 +271,7 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
     },
   }));
   assert.ok(/Pagar aquí|Pay here/.test(html));
-  assert.ok(/en esa misma página|on that same page/.test(html));
+  assert.ok(/en esta página|on this page/.test(html));
   assert.ok(!html.includes("ryanair.com"), "Ryanair se reserva en la página de pago");
   assert.ok(html.includes('href="/?caja=q3"'));
   assert.ok(!html.includes("sale-BCN-") && !html.includes("sale-MAD-"));
