@@ -2860,6 +2860,9 @@ button,
   grid-template-columns: 1fr 1fr;
   width: 100%;
 }
+.sf-gap .sf-pill {
+  min-height: 44px;
+}
 .sf-basis .sf-pill.sf-pill {
   display: flex;
   align-items: center;

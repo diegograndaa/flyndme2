@@ -15,7 +15,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults } from "./utils/resultFilters";
+import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults, validArrivalGap } from "./utils/resultFilters";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams, appendDestBasisParam } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, restoreDestBasis, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
@@ -335,6 +335,8 @@ export default function App() {
   const [resultBasis, setResultBasis] = useState("usual");
   const [passengers,    setPassengers]    = useState([1, 1]); // passengers per origin
   const [directOnly,    setDirectOnly]    = useState(false);
+  // Franja pedida en el formulario: minutos entre la primera y la última llegada.
+  const [arrivalGapMin, setArrivalGapMin] = useState(null);
   const [cabinClass,    setCabinClass]    = useState("ECONOMY");
   const [currency,      setCurrency]      = useState("EUR");
 
@@ -1522,7 +1524,12 @@ export default function App() {
     setCheaperDates([]);
     const useDomestic = keepDomesticRef.current || (homeCodes.length > 0 && sameCodeSet(selectedDests, homeCodes));
     keepDomesticRef.current = useDomestic;
-    setResultFilters(useDomestic ? { ...DEFAULT_FILTERS, domestic: true } : DEFAULT_FILTERS);
+    const gap = cleanOrigins.length >= 2 ? validArrivalGap(arrivalGapMin) : null;
+    setResultFilters({
+      ...DEFAULT_FILTERS,
+      ...(useDomestic ? { domestic: true } : {}),
+      ...(gap ? { arrival: "gap", maxArrivalMin: gap } : {}),
+    });
     setTripHint(null);
     setShowAlt(false);
     setLoading(true);
@@ -2094,6 +2101,7 @@ export default function App() {
               destBasis={destBasis} setDestBasis={setDestBasis}
               passengers={passengers}     setPassengers={setPassengers}
               directOnly={directOnly}     setDirectOnly={setDirectOnly}
+              arrivalGapMin={arrivalGapMin} setArrivalGapMin={setArrivalGapMin}
               cabinClass={cabinClass}     setCabinClass={setCabinClass}
               currency={currency}         setCurrency={setCurrency}
               loading={loading}           error={error}

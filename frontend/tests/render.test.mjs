@@ -229,6 +229,8 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.ok(html.includes("Destinations to compare"), "el nombre accesible dice que son destinos");
   assert.match(html, /sf-summary-dest[\s\S]*ROM/);
   assert.ok(html.includes("×2"), "la fila de Madrid enseña sus 2 viajeros");
+  assert.ok(html.includes("Same arrival window"), "con dos ciudades se pide la franja de llegada");
+  assert.ok(html.includes("cheapest direct flight"), "la franja avisa de que solo hay hora en directos");
   const ordered = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD", "LON"], setOrigins: noop,
     tripType: "roundtrip", setTripType: noop,
@@ -242,12 +244,14 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     selectedDests: [], setSelectedDests: noop,
     passengers: [1, 1], setPassengers: noop,
     directOnly: false, setDirectOnly: noop,
+    arrivalGapMin: 120, setArrivalGapMin: noop,
     cabinClass: "ECONOMY", setCabinClass: noop,
     currency: "EUR", setCurrency: noop,
     loading: false, error: "", onSubmit: noop,
     recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
+  assert.ok(ordered.includes("≤2 h"), "el resumen enseña la franja pedida");
   assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
   assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
   const many = renderWithI18n(React.createElement(SearchPage, {
@@ -270,6 +274,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(many.includes("4 destinations selected"));
+  assert.ok(!many.includes("Same arrival window"), "con una ciudad no hay franja entre llegadas");
   assert.ok(!many.includes("sf-summary-dest\">ROM"), "con más de tres no se listan los códigos");
   const all = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD"], setOrigins: noop,

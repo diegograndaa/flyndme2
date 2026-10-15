@@ -21,6 +21,12 @@ export const DEFAULT_FILTERS = Object.freeze({
 /** Franjas que se pueden pedir (minutos). 2 h y 4 h siempre que haya horas; 8 h solo si alguien se pasa de 4. */
 export const ARRIVAL_GAPS = Object.freeze([120, 240, 480]);
 
+/** 2 h, 4 h u 8 h. Cualquier otro valor es «sin límite». */
+export function validArrivalGap(value) {
+  const n = Number(value);
+  return ARRIVAL_GAPS.includes(n) ? n : null;
+}
+
 export function countryKey(code) {
   return AIRPORT_MAP[normalizeCode(code)]?.country || null;
 }

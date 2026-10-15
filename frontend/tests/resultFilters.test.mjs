@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   applyResultFilters, listResults, arrivalSpreadMs, matchesArrival,
   airlinesIn, durationSteps, DEFAULT_FILTERS, sharedCountry, domesticCodes,
-  nextAirlines, countryKey, arrivalBars, arrivalGapChoices, arrivalSliderRange, ticketClock,
+  nextAirlines, countryKey, arrivalBars, arrivalGapChoices, arrivalSliderRange, ticketClock, validArrivalGap,
   nextShownDestination, filtersHoldResults,
 } from "../src/utils/resultFilters.js";
 
@@ -223,4 +223,8 @@ test("quitar un filtro devuelve el destino que se veía antes", () => {
   assert.equal(chosen.anchor, null);
   assert.equal(filtersHoldResults({ ...DEFAULT_FILTERS, stops: "direct" }), true);
   assert.equal(filtersHoldResults(DEFAULT_FILTERS), false);
+  assert.equal(validArrivalGap(120), 120);
+  assert.equal(validArrivalGap("240"), 240);
+  assert.equal(validArrivalGap(90), null);
+  assert.equal(validArrivalGap(null), null);
 });
