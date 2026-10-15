@@ -37,8 +37,35 @@ test("catálogo: las ciudades de siempre conservan su foto; un aeropuerto nuevo 
   assert.match(getCityImageUrl("VLC"), /photo-1577990432593-6bf35f43beed/);
   assert.match(getCityImageUrl("SVQ"), /photo-1634010405255-2ce3fdd0946d/);
   assert.match(getCityImageUrl("BIO"), /photo-1663844234274-7089dd2d8243/);
-  assert.equal(getCityImageUrl("OVD"), null);
-  assert.match(getCityImage("OVD", "/base/"), /\/base\/destinations\/OVD\.jpg$/);
+  assert.match(getCityImageUrl("OVD"), /commons\.wikimedia\.org\/wiki\/Special:FilePath\/Vistageneraldeoviedo/);
+  assert.equal(getCityImage("OVD", "/base/"), getCityImageUrl("OVD"));
+});
+
+test("catálogo: cada aeropuerto tiene una foto real y ninguna es un avión o un mapa", async () => {
+  const { getCityImageUrl } = await import("../src/utils/cityImages.js");
+  const { CITY_WIKI_PHOTOS } = await import("../src/utils/cityWikiPhotos.js");
+  const { AIRPORTS, CURATED_CODES, SEARCH_POOL } = await import("../src/utils/helpers.js");
+  const missing = AIRPORTS.filter((a) => !getCityImageUrl(a.code)).map((a) => a.code);
+  assert.deepEqual(missing, []);
+  for (const code of CURATED_CODES) {
+    assert.match(getCityImageUrl(code), /^https:\/\/images\.unsplash\.com\//, code);
+  }
+  assert.match(decodeURIComponent(getCityImageUrl("SZG")), /Salzburg/);
+  assert.match(decodeURIComponent(getCityImageUrl("LHR")), /London/);
+  assert.match(decodeURIComponent(getCityImageUrl("SOT")), /Sodankyl/);
+  assert.match(decodeURIComponent(getCityImageUrl("KAU")), /Kauhava Church/);
+  assert.match(decodeURIComponent(getCityImageUrl("BOO")), /Bodø/);
+  assert.match(decodeURIComponent(getCityImageUrl("URS")), /Курск/);
+  assert.match(decodeURIComponent(getCityImageUrl("ZAO")), /Cahors/);
+  assert.match(decodeURIComponent(getCityImageUrl("NIT")), /Niort/);
+  assert.match(decodeURIComponent(getCityImageUrl("ERD")), /Berdyansk/);
+  const banned = /cessna|airbus|boeing|\bf-16\b|\bf-15\b|су-30|nasa firms|\.svg|\.tif|\.tiff|locator map|coat of arms/i;
+  const bad = Object.entries(CITY_WIKI_PHOTOS)
+    .filter(([, url]) => banned.test(decodeURIComponent(url)))
+    .map(([code]) => code);
+  assert.deepEqual(bad, []);
+  assert.equal(SEARCH_POOL.includes("OVD"), false);
+  assert.equal(Object.keys(CITY_WIKI_PHOTOS).length, AIRPORTS.length - CURATED_CODES.length);
 });
 
 test("catálogo: Asturias y el resto de Europa se pueden elegir, sin cambiar la búsqueda habitual", async () => {
