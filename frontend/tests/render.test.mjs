@@ -252,6 +252,8 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(ordered.includes("≤2 h"), "el resumen enseña la franja pedida");
+  assert.ok(ordered.includes("low recent fares"), "la búsqueda personalizada es la única");
+  assert.ok(!ordered.includes("Usual cities"), "ya no se elige la lista habitual");
   assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
   assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
   const many = renderWithI18n(React.createElement(SearchPage, {

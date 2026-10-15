@@ -150,7 +150,7 @@ test("urlParams: basis=cheaper se lee y se escribe; con ciudades a mano no", asy
   const pinned = new URLSearchParams("o=MAD");
   appendDestBasisParam(pinned, "cheaper", ["LIS"]);
   assert.equal(pinned.has("basis"), false);
-  const usual = new URLSearchParams("o=MAD");
-  appendDestBasisParam(usual, "usual", []);
-  assert.equal(usual.has("basis"), false);
+  const open = new URLSearchParams("o=MAD");
+  appendDestBasisParam(open, "usual", []);
+  assert.equal(open.get("basis"), "cheaper");
 });

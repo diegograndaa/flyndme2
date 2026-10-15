@@ -84,7 +84,6 @@ const SearchPage = React.memo(function SearchPage({
   flexEnabled, setFlexEnabled,
   flexDays, setFlexDays,
   selectedDests, setSelectedDests,
-  destBasis = "usual", setDestBasis = () => {},
   passengers, setPassengers,
   directOnly, setDirectOnly,
   arrivalGapMin = null, setArrivalGapMin = () => {},
@@ -637,7 +636,7 @@ const SearchPage = React.memo(function SearchPage({
                       <div className="sf-hint">
                         {selectedDests.length > 0
                           ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
-                          : (destBasis === "cheaper" ? t("search.destBasisCheaperHint") : t("search.destAll"))}
+                          : t("search.destBasisCheaperHint")}
                       </div>
                     </div>
                     <button type="button" className="btn btn-sm btn-outline-primary"
@@ -753,28 +752,12 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               </div>
             )}
-            <div className="sf-section sf-basis">
+            <div className="sf-section">
               <div className="sf-label mb-1">{t("search.destLabel")}</div>
-              <div className="sf-pills" role="group" aria-label={t("search.destLabel")}>
-                <button type="button"
-                  aria-pressed={destBasis !== "cheaper"}
-                  className={`sf-pill fm-switch${destBasis !== "cheaper" ? " sf-pill--active" : ""}`}
-                  onClick={() => setDestBasis("usual")} disabled={loading}>
-                  {t("search.destBasisUsual")}
-                </button>
-                <button type="button"
-                  aria-pressed={destBasis === "cheaper"}
-                  className={`sf-pill fm-switch${destBasis === "cheaper" ? " sf-pill--active" : ""}`}
-                  onClick={() => setDestBasis("cheaper")} disabled={loading}>
-                  {t("search.destBasisCheaper")}
-                </button>
-              </div>
               <div className="sf-hint">
-                {selectedDests.length > 0 && destBasis === "cheaper"
+                {selectedDests.length > 0
                   ? t("search.destBasisCheaperOverride")
-                  : destBasis === "cheaper"
-                    ? t("search.destBasisCheaperHint")
-                    : t("search.destAll")}
+                  : t("search.destBasisCheaperHint")}
               </div>
             </div>
 

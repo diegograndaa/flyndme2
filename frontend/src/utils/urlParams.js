@@ -131,7 +131,7 @@ export function parseSearchLinkParams(search) {
   return out;
 }
 
-/** ?basis=cheaper cuando el modo está activo y no hay ciudades elegidas a mano. */
-export function appendDestBasisParam(params, destBasis, destinations) {
-  if (destBasis === "cheaper" && !(destinations && destinations.length)) params.set("basis", "cheaper");
+/** Sin ciudades a mano la búsqueda es la lista personalizada. El enlace lo dice. */
+export function appendDestBasisParam(params, _destBasis, destinations) {
+  if (!(destinations && destinations.length)) params.set("basis", "cheaper");
 }
