@@ -117,16 +117,19 @@ test("la tarifa emitible se enseña aparte de la estimación, con comisión", ()
       cardFee: "1.91",
       charge: "65.96",
       legs: [
-        { origin: "MAD", destination: "LTN", passengers: 1 },
-        { origin: "BCN", destination: "LTN", passengers: 1 },
+        { origin: "MAD", destination: "LTN", passengers: 1, fare: "41.00", commission: "2.05", cardFee: "1.28", charge: "44.33" },
+        { origin: "BCN", destination: "LTN", passengers: 1, fare: "20.00", commission: "1.00", cardFee: "0.63", charge: "21.63" },
       ],
     },
   };
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON, sale }));
   assert.ok(html.includes("65.96") || html.includes("€65.96"), html);
+  assert.ok(html.includes("44.33") && html.includes("21.63"), "cada viajero tiene su pago");
   assert.ok(/Comisión FlyndMe \(5%\)|FlyndMe commission \(5%\)/.test(html), html);
-  assert.ok(html.includes("sale-MAD-0-given"), "un viajero por tramo");
-  assert.ok(html.includes("sale-BCN-1-given"));
+  assert.ok(/Se pagan juntos|They pay together/.test(html));
+  assert.ok(/estimación de la búsqueda|search estimate/.test(html));
+  assert.ok(html.includes('href="/?caja=q1"') && html.includes('target="_blank"'), "el pago abre en otra pestaña");
+  assert.ok(!html.includes("sale-MAD-0-given") && !html.includes('type="date"'), "el formulario no está en la ficha");
   assert.ok(!html.includes("aviasales.com"));
 });
 
@@ -226,7 +229,7 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
         commission: "2.60",
         cardFee: "1.63",
         charge: "56.23",
-        legs: [{ origin: "OVD", destination: "ORY", airline: "V7", airlineName: "Volotea", flightNumber: "1201", departsAt: "11:25", sameFlight: false, departureDate: "2026-10-18", passengers: 1 }],
+        legs: [{ origin: "OVD", destination: "ORY", airline: "V7", airlineName: "Volotea", flightNumber: "1201", departsAt: "11:25", sameFlight: false, departureDate: "2026-10-18", passengers: 1, fare: "52.00", commission: "2.60", cardFee: "1.63", charge: "56.23" }],
         external: [{ origin: "MAD", destination: "CDG", airline: "VY", flightNumber: "8024", departureDate: "2026-10-18", passengers: 1, reason: "FLIGHT_NOT_FOR_SALE" }],
       },
     },
@@ -235,8 +238,8 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
   const saleAt = html.indexOf('class="wc-sale"');
   const missAt = Math.max(html.indexOf("MAD no está a la venta aquí"), html.indexOf("MAD is not for sale here"));
   assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && missAt > saleAt, "la comprobación de Google queda aparte de la compra");
-  assert.ok(html.includes("sale-OVD-0-given"), "el vuelo que sí está se paga aquí");
-  assert.ok(!html.includes("sale-MAD-"), "Madrid no entra en el formulario de pago");
+  assert.ok(html.includes('href="/?caja=q2"'), "el vuelo que sí está se paga en la otra pestaña");
+  assert.ok(!html.includes("sale-MAD-") && !html.includes("sale-OVD-"), "el formulario no está en la ficha");
   assert.ok(/Este es el vuelo que se emite ahora|This is the flight being issued now/.test(html));
   assert.ok(html.includes("Volotea 1201"));
   assert.ok(html.includes("11:25"));
@@ -261,7 +264,7 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
         commission: "1.00",
         cardFee: "0.63",
         charge: "21.63",
-        legs: [{ origin: "BCN", destination: "LTN", airline: "U2", flightNumber: "5678", departureDate: "2026-10-15", passengers: 1 }],
+        legs: [{ origin: "BCN", destination: "LTN", airline: "U2", flightNumber: "5678", departureDate: "2026-10-15", passengers: 1, fare: "20.00", commission: "1.00", cardFee: "0.63", charge: "21.63" }],
         external: [{ origin: "MAD", destination: "LTN", airline: "FR", flightNumber: "1234", departureDate: "2026-10-15", passengers: 1, reason: "AIRLINE_SITE" }],
       },
     },
@@ -269,7 +272,16 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
   assert.ok(/Pagar aquí|Pay here/.test(html));
   assert.ok(/Ryanair se reserva en su web|Ryanair is booked on its site/.test(html));
   assert.ok(html.includes("ryanair.com"));
-  assert.ok(html.includes("sale-BCN-0-given"));
-  assert.ok(!html.includes("sale-MAD-"));
+  assert.ok(html.includes('href="/?caja=q3"'));
+  assert.ok(!html.includes("sale-BCN-") && !html.includes("sale-MAD-"));
   assert.ok(!/no está a la venta aquí|is not for sale here/.test(html));
+});
+
+test("la pestaña de pago no pinta un importe antes de leer la caja", async () => {
+  const { default: CheckoutPage } = await import("../src/components/CheckoutPage.jsx");
+  const html = render(React.createElement(CheckoutPage, { quoteId: "abcdefghijklmnop" }));
+  assert.ok(/Pago del grupo|Group payment/.test(html));
+  assert.ok(!html.includes("caja-amount"), "sin respuesta no hay cifra");
+  assert.ok(!html.includes("64.60"));
+  assert.ok(!html.includes('type="date"'), "el formulario espera a la caja");
 });

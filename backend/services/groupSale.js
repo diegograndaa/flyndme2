@@ -368,8 +368,7 @@ async function quoteLegs(rawLegs, today) {
   }
   const totals = sumParts(priced);
   const quoteId = crypto.randomBytes(12).toString("base64url");
-  const passengerCount = priced.reduce((sum, leg) => sum + leg.passengers, 0);
-  await saveQuote({
+  const stored = {
     quoteId,
     legs: priced,
     totals,
@@ -377,15 +376,21 @@ async function quoteLegs(rawLegs, today) {
     rate,
     expires: Date.now() + QUOTE_TTL_MS,
     status: "quoted",
-  }, QUOTE_TTL_MS);
+  };
+  await saveQuote(stored, QUOTE_TTL_MS);
+  return publicView(stored, { available: true, external });
+}
+
+// Lo que ve el cliente. Sin oferta, sin token de la tarjeta y sin datos del viajero.
+function publicView(quote, extra = {}) {
   return {
-    available: true,
-    quoteId,
-    currency: priced[0].currency,
-    markupPercent: Math.round(rate * 1000) / 10,
-    passengerCount,
-    external,
-    legs: priced.map((leg) => ({
+    ...extra,
+    quoteId: quote.quoteId,
+    currency: quote.currency,
+    markupPercent: Math.round(Number(quote.rate) * 1000) / 10,
+    passengerCount: quote.legs.reduce((sum, leg) => sum + leg.passengers, 0),
+    status: quote.status,
+    legs: quote.legs.map((leg) => ({
       origin: leg.origin,
       destination: leg.destination,
       airline: leg.airline,
@@ -400,11 +405,25 @@ async function quoteLegs(rawLegs, today) {
       cardFee: euros(leg.cardFee),
       charge: euros(leg.charge),
     })),
-    fare: euros(totals.fare),
-    commission: euros(totals.commission),
-    cardFee: euros(totals.cardFee),
-    charge: euros(totals.charge),
+    orders: (quote.orders || []).map((order) => ({
+      origin: order.origin,
+      bookingReference: order.bookingReference || null,
+    })),
+    fare: euros(quote.totals.fare),
+    commission: euros(quote.totals.commission),
+    cardFee: euros(quote.totals.cardFee),
+    charge: euros(quote.totals.charge),
   };
+}
+
+async function publicQuote(quoteId) {
+  if (!/^[A-Za-z0-9_-]{16}$/.test(String(quoteId || ""))) return null;
+  const quote = await readQuote(quoteId);
+  if (!quote?.totals || !Array.isArray(quote.legs) || !quote.legs.length) return null;
+  const view = publicView(quote);
+  const raw = JSON.stringify(view);
+  if (raw.includes("offerId") || raw.includes("clientToken") || raw.includes("passengerIds")) return null;
+  return view;
 }
 
 function validName(s) {
@@ -510,6 +529,7 @@ async function completeSale(quoteId) {
 
 module.exports = {
   quoteLegs,
+  publicQuote,
   startPayment,
   completeSale,
   priceLeg,

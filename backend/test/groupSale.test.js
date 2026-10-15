@@ -119,6 +119,29 @@ test("si el vuelo de la tarjeta no está, se emite la tarifa que sí se puede ve
   assert.equal(quote.passengerCount, 2);
   assert.equal(quote.external.length, 0);
   assert.equal(quote.fare, "61.00");
+  const cents = (amount) => Math.round(Number(amount) * 100);
+  assert.equal(quote.legs.reduce((sum, leg) => sum + cents(leg.fare), 0), cents(quote.fare));
+  assert.equal(quote.legs.reduce((sum, leg) => sum + cents(leg.commission), 0), cents(quote.commission));
+  assert.equal(quote.legs.reduce((sum, leg) => sum + cents(leg.cardFee), 0), cents(quote.cardFee));
+  assert.equal(quote.legs.reduce((sum, leg) => sum + cents(leg.charge), 0), cents(quote.charge));
+  assert.equal(cents(quote.fare) + cents(quote.commission) + cents(quote.cardFee), cents(quote.charge));
+  for (const leg of quote.legs) {
+    assert.equal(cents(leg.fare) + cents(leg.commission) + cents(leg.cardFee), cents(leg.charge));
+  }
+});
+
+test("la caja enseña el mismo importe y no la oferta ni el token", async () => {
+  sale.__test.setTransport(async () => ({ status: 200, data: { data: { offers: [offer({})] } } }));
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN" })], TODAY);
+  const desk = await sale.publicQuote(quote.quoteId);
+  assert.equal(desk.charge, quote.charge);
+  assert.equal(desk.legs[0].charge, quote.legs[0].charge);
+  assert.equal(desk.legs[1].charge, quote.legs[1].charge);
+  const raw = JSON.stringify(desk);
+  assert.equal(raw.includes("offerId"), false);
+  assert.equal(raw.includes("clientToken"), false);
+  assert.equal(raw.includes("off_mad"), false);
+  assert.equal(await sale.publicQuote("no"), null);
 });
 
 test("sin número de vuelo también se emite la tarifa del trayecto", async () => {

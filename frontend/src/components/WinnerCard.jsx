@@ -108,7 +108,7 @@ const WinnerCard = React.memo(function WinnerCard({
   isFav = false, onToggleFav,
   watched = false, onToggleWatch,
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
-  onRequestSale, sale = null, onSubmitPassengers, onSalePaid, onSaleFailed,
+  onRequestSale, sale = null,
 }) {
   const { t, lang } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -291,10 +291,8 @@ const WinnerCard = React.memo(function WinnerCard({
             <GroupSalePanel
               legs={saleLegs}
               sale={sale}
+              estimateLabel={money(dest.totalCostEUR)}
               onRequest={onRequestSale}
-              onSubmit={onSubmitPassengers}
-              onPaid={onSalePaid}
-              onFail={onSaleFailed}
             />
           )}
         </div>
