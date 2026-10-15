@@ -15,7 +15,7 @@ import {
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
 import { computeArrivalSpread, splitSpread } from "./utils/arrivalSpread";
-import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults } from "./utils/resultFilters";
+import { listResults, DEFAULT_FILTERS, arrivalStatus, sharedCountry, domesticCodes, nextShownDestination, filtersHoldResults, validArrivalGap } from "./utils/resultFilters";
 import { parseSearchLinkParams, appendFlexBudgetParams, appendDestinationParams, appendDestBasisParam } from "./utils/urlParams";
 import { savedFlexDays, savedBudget, savedCabin, savedDestinations, restoreFlexBudget, restoreDirectCabin, restoreDestinations, restoreDestBasis, recentSearchKey } from "./utils/recentSearch";
 import { track } from "./utils/analytics";
@@ -330,11 +330,13 @@ export default function App() {
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
-  // usual = las 24 ciudades. cheaper = lista corta según tarifas recientes.
-  const [destBasis, setDestBasis] = useState("usual");
+  // Sin ciudades a mano se pide la lista según tarifas recientes de esas salidas.
+  const [destBasis, setDestBasis] = useState("cheaper");
   const [resultBasis, setResultBasis] = useState("usual");
   const [passengers,    setPassengers]    = useState([1, 1]); // passengers per origin
   const [directOnly,    setDirectOnly]    = useState(false);
+  // Franja pedida en el formulario: minutos entre la primera y la última llegada.
+  const [arrivalGapMin, setArrivalGapMin] = useState(null);
   const [cabinClass,    setCabinClass]    = useState("ECONOMY");
   const [currency,      setCurrency]      = useState("EUR");
 
@@ -630,7 +632,7 @@ export default function App() {
     if (parsed.flexDays) { setFlexEnabled(true); setFlexDays(parsed.flexDays); }
     if (parsed.maxBudget) { setBudgetEnabled(true); setMaxBudget(parsed.maxBudget); }
     if (parsed.destinations) setSelectedDests(parsed.destinations);
-    setDestBasis(parsed.destBasis === "cheaper" ? "cheaper" : "usual");
+    setDestBasis(parsed.destinations?.length ? "usual" : "cheaper");
     setView("search");
     window.history.replaceState({}, "", window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1522,7 +1524,12 @@ export default function App() {
     setCheaperDates([]);
     const useDomestic = keepDomesticRef.current || (homeCodes.length > 0 && sameCodeSet(selectedDests, homeCodes));
     keepDomesticRef.current = useDomestic;
-    setResultFilters(useDomestic ? { ...DEFAULT_FILTERS, domestic: true } : DEFAULT_FILTERS);
+    const gap = cleanOrigins.length >= 2 ? validArrivalGap(arrivalGapMin) : null;
+    setResultFilters({
+      ...DEFAULT_FILTERS,
+      ...(useDomestic ? { domestic: true } : {}),
+      ...(gap ? { arrival: "gap", maxArrivalMin: gap } : {}),
+    });
     setTripHint(null);
     setShowAlt(false);
     setLoading(true);
@@ -1564,7 +1571,7 @@ export default function App() {
         ...(tripType === "roundtrip" && { returnDate }),
         ...(budgetEnabled && { maxBudgetPerTraveler: maxBudget }),
         ...(selectedDests.length > 0 && { destinations: selectedDests }),
-        ...(selectedDests.length === 0 && destBasis === "cheaper" && { destBasis: "cheaper" }),
+        ...(selectedDests.length === 0 && { destBasis: "cheaper" }),
         ...(directOnly && { nonStop: true }),
         ...(cabinClass !== "ECONOMY" && { travelClass: cabinClass }),
       };
@@ -1665,7 +1672,7 @@ export default function App() {
             directOnly: directOnly === true,
             cabinClass: savedCabin(cabinClass),
             destinations: savedDestinations(selectedDests, cleanOrigins),
-            destBasis: selectedDests.length === 0 && destBasis === "cheaper" ? "cheaper" : "usual",
+            destBasis: selectedDests.length === 0 ? "cheaper" : "usual",
           });
           // Save best price for next-search comparison
           const bestTotal = pickBest(adjusted, "total");
@@ -2091,9 +2098,9 @@ export default function App() {
               flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
               flexDays={flexDays}         setFlexDays={setFlexDays}
               selectedDests={selectedDests} setSelectedDests={setSelectedDests}
-              destBasis={destBasis} setDestBasis={setDestBasis}
               passengers={passengers}     setPassengers={setPassengers}
               directOnly={directOnly}     setDirectOnly={setDirectOnly}
+              arrivalGapMin={arrivalGapMin} setArrivalGapMin={setArrivalGapMin}
               cabinClass={cabinClass}     setCabinClass={setCabinClass}
               currency={currency}         setCurrency={setCurrency}
               loading={loading}           error={error}

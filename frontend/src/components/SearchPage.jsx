@@ -84,9 +84,9 @@ const SearchPage = React.memo(function SearchPage({
   flexEnabled, setFlexEnabled,
   flexDays, setFlexDays,
   selectedDests, setSelectedDests,
-  destBasis = "usual", setDestBasis = () => {},
   passengers, setPassengers,
   directOnly, setDirectOnly,
+  arrivalGapMin = null, setArrivalGapMin = () => {},
   cabinClass, setCabinClass,
   currency, setCurrency,
   loading, error, errorHint = null, // { tag, text, detail, actionLabel, onAction }: alternativa real a un 0 resultados
@@ -474,6 +474,23 @@ const SearchPage = React.memo(function SearchPage({
               </div>
             </div>
 
+            {origins.length > 1 && (
+              <div className="sf-section sf-gap">
+                <div className="sf-label">{t("search.arrivalGapLabel")}</div>
+                <div className="sf-pills" role="group" aria-label={t("search.arrivalGapLabel")}>
+                  {[[null, t("search.arrivalGapAny")], [120, "2 h"], [240, "4 h"], [480, "8 h"]].map(([minutes, label]) => (
+                    <button key={minutes ?? "any"} type="button"
+                      aria-pressed={(arrivalGapMin ?? null) === minutes}
+                      className={`sf-pill${(arrivalGapMin ?? null) === minutes ? " sf-pill--active" : ""}`}
+                      onClick={() => setArrivalGapMin(minutes)} disabled={loading}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="sf-hint mt-1">{t("search.arrivalGapHint")}</div>
+              </div>
+            )}
+
             {/* Advanced options toggle */}
             <button
               type="button"
@@ -619,7 +636,7 @@ const SearchPage = React.memo(function SearchPage({
                       <div className="sf-hint">
                         {selectedDests.length > 0
                           ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
-                          : (destBasis === "cheaper" ? t("search.destBasisCheaperHint") : t("search.destAll"))}
+                          : t("search.destBasisCheaperHint")}
                       </div>
                     </div>
                     <button type="button" className="btn btn-sm btn-outline-primary"
@@ -735,28 +752,12 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               </div>
             )}
-            <div className="sf-section sf-basis">
+            <div className="sf-section">
               <div className="sf-label mb-1">{t("search.destLabel")}</div>
-              <div className="sf-pills" role="group" aria-label={t("search.destLabel")}>
-                <button type="button"
-                  aria-pressed={destBasis !== "cheaper"}
-                  className={`sf-pill fm-switch${destBasis !== "cheaper" ? " sf-pill--active" : ""}`}
-                  onClick={() => setDestBasis("usual")} disabled={loading}>
-                  {t("search.destBasisUsual")}
-                </button>
-                <button type="button"
-                  aria-pressed={destBasis === "cheaper"}
-                  className={`sf-pill fm-switch${destBasis === "cheaper" ? " sf-pill--active" : ""}`}
-                  onClick={() => setDestBasis("cheaper")} disabled={loading}>
-                  {t("search.destBasisCheaper")}
-                </button>
-              </div>
               <div className="sf-hint">
-                {selectedDests.length > 0 && destBasis === "cheaper"
+                {selectedDests.length > 0
                   ? t("search.destBasisCheaperOverride")
-                  : destBasis === "cheaper"
-                    ? t("search.destBasisCheaperHint")
-                    : t("search.destAll")}
+                  : t("search.destBasisCheaperHint")}
               </div>
             </div>
 
@@ -785,6 +786,7 @@ const SearchPage = React.memo(function SearchPage({
                   {departureDate && <span>{formatDate(departureDate)}</span>}
                   {tripType === "roundtrip" && returnDate && <span> → {formatDate(returnDate)}</span>}
                   {flexEnabled && <span className="sf-summary-flex">±{flexDays}d</span>}
+                  {origins.length > 1 && arrivalGapMin ? <span className="sf-summary-flex">{`≤${arrivalGapMin / 60} h`}</span> : null}
                   {selectedDests.length > 0 && (
                     <span className="sf-summary-flex sf-summary-dest">
                       <span className="sr-only">{t("search.destLabel")}: </span>
