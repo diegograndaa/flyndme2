@@ -522,6 +522,38 @@ test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redon
   assert.ok(!gbp.includes("wc-total-sum"), "£9 + £9 = £17 no se pinta");
 });
 
+test("render: el cobro del grupo desglosa los dos y abre el pago con esa cifra", async () => {
+  const { default: GroupSalePanel } = await import("../src/components/GroupSalePanel.jsx");
+  const quote = {
+    quoteId: "abcdefghijklmnop",
+    currency: "EUR",
+    markupPercent: 5,
+    passengerCount: 2,
+    fare: "59.74",
+    commission: "2.99",
+    cardFee: "1.87",
+    charge: "64.60",
+    legs: [
+      { origin: "BCN", destination: "ALC", airline: "VY", airlineName: "Vueling", flightNumber: "1300", departsAt: "08:30", passengers: 1, fare: "30.00", commission: "1.50", cardFee: "0.94", charge: "32.44" },
+      { origin: "ORY", destination: "ALC", airline: "TO", airlineName: "Transavia France", flightNumber: "4704", departsAt: "06:35", passengers: 1, fare: "29.74", commission: "1.49", cardFee: "0.93", charge: "32.16" },
+    ],
+  };
+  const html = renderWithI18n(React.createElement(GroupSalePanel, {
+    sale: { phase: "quote", quote },
+    estimateLabel: "€240",
+  }));
+  assert.ok(html.includes("32.44") && html.includes("32.16") && html.includes("64.60"));
+  assert.ok(html.includes("Pay 64.60") || html.includes("Pagar 64,60") || html.includes("64.60"));
+  assert.ok(html.includes("/?caja=abcdefghijklmnop"));
+  assert.ok(html.includes("€240"));
+  assert.ok(!html.includes('type="date"'), "el formulario de pago no está en la ficha");
+  const broken = renderWithI18n(React.createElement(GroupSalePanel, {
+    sale: { phase: "quote", quote: { ...quote, charge: "64.61" } },
+  }));
+  assert.ok(broken.includes("do not add up") || broken.includes("no cuadran"));
+  assert.ok(!broken.includes("/?caja="));
+});
+
 test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión import roto)", async () => {
   // Con favoritos en localStorage, isFav ejecuta normalizeCode durante el
   // render; sin el import en useAppHooks.js lanzaba ReferenceError (solo se

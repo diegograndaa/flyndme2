@@ -2250,6 +2250,43 @@ button,
 .wc-sale-lines { margin: 10px 0 0; display: grid; gap: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--slate-700); }
 .wc-sale-lines div { display: flex; justify-content: space-between; gap: 12px; }
 .wc-sale-lines strong { color: var(--navy); }
+.wc-sale-leg { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.wc-sale-route { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wc-sale-codes {
+  font-family: var(--font-mono); font-size: 26px; font-weight: 700;
+  letter-spacing: .04em; line-height: 1.1; color: var(--navy);
+}
+.wc-sale-route strong { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--navy); }
+.wc-sale-flight {
+  display: flex; justify-content: space-between; gap: 12px;
+  margin: 4px 0 0; font-size: 13px; line-height: 1.3; color: var(--slate-500);
+}
+.wc-sale-time { font-family: var(--font-mono); font-weight: 700; color: var(--navy); }
+.wc-sale-person legend.wc-sale-codes { font-size: 22px; padding: 0; }
+.wc-sale-lines--total { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--navy); }
+.wc-sale-lines--total div:last-child { margin-top: 6px; font-size: 16px; }
+.wc-sale-lines--total div:last-child strong { font-size: 22px; }
+.wc-sale-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-width: 0; }
+.wc-sale-pair .wc-sale-field { min-width: 0; }
+@media (max-width: 360px) {
+  .wc-sale-pair { grid-template-columns: 1fr; }
+  .wc-sale-codes { font-size: 22px; }
+}
+.caja-page {
+  min-height: 100vh; margin: 0; padding: 24px 16px 48px;
+  background: var(--bg); color: var(--navy);
+}
+.caja-bar { display: flex; align-items: center; gap: 8px; max-width: 440px; margin: 0 auto 16px; font-weight: 700; }
+.caja-card {
+  max-width: 440px; margin: 0 auto; padding: 20px 16px 24px;
+  background: var(--white); color: var(--navy);
+  border: 1px solid var(--line); border-radius: 4px;
+}
+.caja-kicker { margin: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.caja-amount { margin: 8px 0 0; font-family: var(--font-mono); font-size: 40px; font-weight: 700; line-height: 1; }
+.caja-lead, .caja-note { margin: 10px 0 0; font-size: 14px; line-height: 1.45; }
+.caja-pay { margin-top: 16px; }
+.caja-out { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--line); }
 .wc-sale-form { display: grid; gap: 10px; margin-top: 12px; }
 .wc-sale-person {
   display: grid; gap: 8px; margin: 0; padding: 10px;
@@ -2259,6 +2296,7 @@ button,
 .wc-sale-person-fields { display: grid; gap: 8px; }
 .wc-sale-field { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--navy); }
 .wc-sale-field input, .wc-sale-field select {
+  width: 100%; box-sizing: border-box;
   font-size: 16px; min-height: 44px; padding: 8px 10px;
   border: 1px solid var(--line); border-radius: 4px;
   background: var(--white); color: var(--navy);
@@ -2269,9 +2307,7 @@ button,
 .wc-sale-else { margin-top: 12px; display: grid; gap: 8px; }
 .wc-sale-else-row { display: grid; gap: 6px; }
 .wc-sale-else-row p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--navy); }
-@media (min-width: 700px) {
-  .wc-sale-person-fields { grid-template-columns: 1fr 1fr; }
-}
+.caja-card .wc-sale-person, .caja-card .wc-sale-field { min-width: 0; }
 .wc-total-foot .wc-verify-status { font-size: 12.5px; color: var(--slate-700); display: inline-flex; align-items: center; gap: 6px; }
 .wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn {
   display: inline-flex; align-items: center; gap: 6px;

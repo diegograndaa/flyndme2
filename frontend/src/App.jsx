@@ -42,6 +42,7 @@ import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage, imagePreloadCount } from "./utils/cityImages";
 import { resolveApiBase } from "./utils/apiBase";
+import { SALE_CHANNEL } from "./utils/saleCheckout";
 import { downloadText } from "./utils/download";
 import { readStoredList, isRecentSearchEntry } from "./utils/storage";
 import { normalizeSharedFlights } from "./utils/sharedResults";
@@ -1209,80 +1210,31 @@ export default function App() {
     }
   };
 
-  const submitSalePassengers = async (people, email, phone) => {
-    const quoteId = groupSale?.quote?.quoteId;
-    if (!quoteId) return;
-    const seq = saleSeq.current;
-    setGroupSale((s) => (s ? { ...s, phase: "paying", code: null } : s));
-    try {
-      const res = await fetch(`${API_BASE}/api/flights/group-sale/pay`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId, passengers: people, email, phone }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (seq !== saleSeq.current) return;
-      const keepForm = ["INVALID_NAME", "INVALID_BIRTH_DATE", "ADULT_REQUIRED", "INVALID_GENDER", "INVALID_TITLE", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSENGERS"].includes(data?.code);
-      if (!data?.ok || !data.clientToken) {
-        setGroupSale((s) => (s ? { ...s, phase: keepForm ? "quote" : "error", code: data?.code || "SALE_FAILED" } : s));
+  // La pestaña de pago avisa aquí cuando el cobro termina. El importe no viaja
+  // en el mensaje: la cifra ya está en el presupuesto de esta pantalla.
+  const saleQuoteId = groupSale?.quote?.quoteId || "";
+  useEffect(() => {
+    if (!saleQuoteId) return undefined;
+    let channel;
+    try { channel = new BroadcastChannel(SALE_CHANNEL); } catch { return undefined; }
+    channel.onmessage = (event) => {
+      const msg = event.data;
+      if (!msg || msg.quoteId !== saleQuoteId) return;
+      if (msg.phase === "issued") {
+        setGroupSale((s) => (s ? { ...s, phase: "issued", orders: msg.orders || [], code: null } : s));
         return;
       }
-      setGroupSale((s) => (s ? { ...s, phase: "card", clientToken: data.clientToken, code: null } : s));
-    } catch {
-      if (seq !== saleSeq.current) return;
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
-    }
-  };
-
-  const finishGroupSale = async () => {
-    const quoteId = groupSale?.quote?.quoteId;
-    if (!quoteId) return;
-    const seq = saleSeq.current;
-    setGroupSale((s) => (s ? { ...s, phase: "completing" } : s));
-    try {
-      const res = await fetch(`${API_BASE}/api/flights/group-sale/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (seq !== saleSeq.current) return;
-      if (data?.ok && data.status === "issued") {
-        setGroupSale((s) => (s ? { ...s, phase: "issued", orders: data.orders || [], code: null } : s));
-        return;
-      }
-      if (data?.code === "SALE_REFUNDED" || data?.code === "REFUND_FAILED") {
-        setGroupSale((s) => (s ? {
-          ...s,
-          phase: "error",
-          code: data.code,
-          orders: data.orders || [],
-          failedOrigin: data.failedOrigin || null,
-          refund: data.refund || null,
-        } : s));
-        return;
-      }
-      if (data?.code === "TICKET_PARTIAL" || data?.status === "partial") {
-        setGroupSale((s) => (s ? {
-          ...s,
-          phase: "partial",
-          code: "TICKET_PARTIAL",
-          orders: data.orders || [],
-          failedOrigin: data.failedOrigin || null,
-          refund: data.refund || null,
-        } : s));
-        return;
-      }
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: data?.code || "SALE_FAILED" } : s));
-    } catch {
-      if (seq !== saleSeq.current) return;
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
-    }
-  };
-
-  const failGroupSale = () => {
-    setGroupSale((s) => (s ? { ...s, phase: "error", code: "PAYMENT_NOT_CONFIRMED", clientToken: null } : s));
-  };
+      setGroupSale((s) => (s ? {
+        ...s,
+        phase: msg.code === "TICKET_PARTIAL" ? "partial" : "error",
+        code: msg.code || "SALE_FAILED",
+        orders: msg.orders || [],
+        failedOrigin: msg.failedOrigin || null,
+        refund: msg.refund || null,
+      } : s));
+    };
+    return () => channel.close();
+  }, [saleQuoteId]);
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
   // fecha cercana donde el GRUPO pague menos? En ida y vuelta el backend mueve
@@ -2332,9 +2284,6 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
-            onSubmitPassengers={submitSalePassengers}
-            onSalePaid={finishGroupSale}
-            onSaleFailed={failGroupSale}
             mapSlot={listedFlights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
