@@ -1236,7 +1236,7 @@ function groupSaleHttp(code) {
   if (code === "BOOKING_NOT_CONFIGURED") return 503;
   if (code === "SALE_FAILED") return 502;
   if (code === "QUOTE_EXPIRED" || code === "PAYMENT_NOT_CONFIRMED" || code === "PAYMENT_MISMATCH" || code === "TICKET_PARTIAL") return 409;
-  if (code === "FLIGHT_NOT_FOR_SALE" || code === "MIXED_CURRENCY") return 200;
+  if (code === "FLIGHT_NOT_FOR_SALE" || code === "AIRLINE_SITE" || code === "MIXED_CURRENCY") return 200;
   return 400;
 }
 

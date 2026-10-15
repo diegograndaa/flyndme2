@@ -50,19 +50,23 @@ const base = {
   uiCriterion: "total",
 };
 
-test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece comprar el grupo", () => {
+test("Reservar abre Wizz y easyJet, no Aviasales, y Wizz no entra en el pago", () => {
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
   assert.ok(html.includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), html);
   assert.ok(html.includes("https://www.easyjet.com/en/buy/flights?"), html);
   assert.ok(html.includes("origin=BCN"), html);
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
-  assert.match(html, /Comprar los vuelos del grupo|Buy the group/);
-  assert.match(html, /Un solo pago aquí|One payment here/);
+  assert.match(html, /Pagar los demás aquí|Pay the others here/);
+  assert.match(html, /Ryanair y Wizz se reservan en su web|Ryanair and Wizz are booked on their sites/);
+  assert.ok(!/Un solo pago aquí|One payment here/.test(html));
   assert.ok(!/Cada billete se reserva|Each ticket is booked/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
   assert.ok(saleAt >= 0 && titleAt > saleAt, "la compra está en el total, antes de la lista de vuelos");
+  const sale = html.slice(saleAt, titleAt);
+  assert.ok(sale.includes("wizzair.com"), "Wizz se reserva desde el total");
+  assert.ok(!sale.includes("easyjet.com"), "easyJet se puede pagar aquí");
 });
 
 test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () => {
@@ -182,4 +186,88 @@ test("un tramo emitido enseña su localizador y la devolución del otro", () => 
   assert.ok(html.includes("ABC123"), html);
   assert.ok(/Se ha devuelto|has been refunded/.test(html), html);
   assert.ok(html.includes("BCN"), html);
+});
+
+test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su web", () => {
+  const paris = {
+    ...LONDON,
+    destination: "PAR",
+    verificationStatus: "verified",
+    flights: [
+      {
+        origin: "OVD", price: 52, passengers: 1, totalForOrigin: 52,
+        offer: {
+          validatingAirlineCodes: ["V7"],
+          tp: { originAirport: "OVD", destinationAirport: "ORY" },
+          itineraries: [{ segments: [{ carrierCode: "V7", number: "1201", departure: { iataCode: "OVD", at: "2026-10-18T11:25:00" }, arrival: { iataCode: "ORY" } }] }],
+        },
+      },
+      {
+        origin: "MAD", price: 64, passengers: 1, totalForOrigin: 64,
+        offer: {
+          validatingAirlineCodes: ["VY"],
+          tp: { originAirport: "MAD", destinationAirport: "CDG" },
+          itineraries: [{ segments: [{ carrierCode: "VY", number: "8024", departure: { iataCode: "MAD", at: "2026-10-18T21:45:00" }, arrival: { iataCode: "CDG" } }] }],
+        },
+      },
+    ],
+  };
+  const html = render(React.createElement(WinnerCard, {
+    ...base,
+    origins: ["OVD", "MAD"],
+    departureDate: "2026-10-18",
+    dest: paris,
+    sale: {
+      phase: "quote",
+      quote: {
+        quoteId: "q2",
+        currency: "EUR",
+        markupPercent: 5,
+        passengerCount: 1,
+        fare: "52.00",
+        commission: "2.60",
+        cardFee: "1.63",
+        charge: "56.23",
+        legs: [{ origin: "OVD", destination: "ORY", airline: "V7", flightNumber: "1201", departureDate: "2026-10-18", passengers: 1 }],
+        external: [{ origin: "MAD", destination: "CDG", airline: "VY", flightNumber: "8024", departureDate: "2026-10-18", passengers: 1, reason: "FLIGHT_NOT_FOR_SALE" }],
+      },
+    },
+  }));
+  const verifiedAt = Math.max(html.indexOf("Tarifa comprobada en vivo"), html.indexOf("Fare checked live"));
+  const saleAt = html.indexOf('class="wc-sale"');
+  const missAt = Math.max(html.indexOf("MAD no está a la venta aquí"), html.indexOf("MAD is not for sale here"));
+  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && missAt > saleAt, "la comprobación de Google queda aparte de la compra");
+  assert.ok(html.includes("sale-OVD-0-given"), "el vuelo que sí está se paga aquí");
+  assert.ok(!html.includes("sale-MAD-"), "Madrid no entra en el formulario de pago");
+  assert.ok(html.includes("tickets.vueling.com/booking"), html);
+  assert.ok(html.includes("56.23") || html.includes("€56.23"));
+  assert.ok(!/El vuelo de MAD no está a la venta ahora|The flight from MAD is not for sale right now/.test(html));
+});
+
+test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => {
+  const html = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: {
+      phase: "quote",
+      quote: {
+        quoteId: "q3",
+        currency: "EUR",
+        markupPercent: 5,
+        passengerCount: 1,
+        fare: "20.00",
+        commission: "1.00",
+        cardFee: "0.63",
+        charge: "21.63",
+        legs: [{ origin: "BCN", destination: "LTN", airline: "U2", flightNumber: "5678", departureDate: "2026-10-15", passengers: 1 }],
+        external: [{ origin: "MAD", destination: "LTN", airline: "FR", flightNumber: "1234", departureDate: "2026-10-15", passengers: 1, reason: "AIRLINE_SITE" }],
+      },
+    },
+  }));
+  assert.ok(/Pagar aquí|Pay here/.test(html));
+  assert.ok(/Ryanair se reserva en su web|Ryanair is booked on its site/.test(html));
+  assert.ok(html.includes("ryanair.com"));
+  assert.ok(html.includes("sale-BCN-0-given"));
+  assert.ok(!html.includes("sale-MAD-"));
+  assert.ok(!/no está a la venta aquí|is not for sale here/.test(html));
 });

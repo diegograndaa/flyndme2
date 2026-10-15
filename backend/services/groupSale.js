@@ -15,6 +15,8 @@ const MAX_LEGS = 8;
 const MAX_PAX_PER_LEG = 9;
 const TOTAL_PAX_CAP = 16;
 const PAID_STATUSES = new Set(["succeeded", "captured", "confirmed", "paid"]);
+// Ryanair y Wizz no se emiten por Duffel. No se les pide tarifa ni se cobran aquí.
+const AIRLINE_SITE = new Set(["FR", "RK", "AL", "RR", "W6", "W9", "W4", "5W"]);
 
 const quotes = new Map();
 const saleStore = createStore({
@@ -133,6 +135,23 @@ function pickOffer(offers, leg) {
   const hits = (offers || []).filter((o) => offerMatches(o, leg));
   hits.sort((a, b) => Number(a.total_amount) - Number(b.total_amount));
   return hits[0] || null;
+}
+
+function airlineSite(code) {
+  return AIRLINE_SITE.has(String(code || "").toUpperCase());
+}
+
+function publicExternal(leg, reason) {
+  return {
+    origin: leg.origin,
+    destination: leg.destination,
+    airline: leg.airline,
+    flightNumber: leg.flightNumber,
+    departureDate: leg.departureDate,
+    returnDate: leg.returnDate || null,
+    passengers: leg.passengers,
+    reason,
+  };
 }
 
 async function defaultTransport(url, options) {
@@ -254,10 +273,20 @@ async function quoteLegs(rawLegs, today) {
   const rate = markupRate();
   const fee = feeRate();
   const priced = [];
+  const external = [];
   for (const leg of checked.legs) {
+    if (airlineSite(leg.airline)) {
+      external.push(publicExternal(leg, "AIRLINE_SITE"));
+      continue;
+    }
     const offers = await searchLeg(leg);
     const offer = pickOffer(offers, leg);
-    if (!offer) return { available: false, code: "FLIGHT_NOT_FOR_SALE", origin: leg.origin };
+    // Sin la tarifa exacta no se cambia el vuelo. Ese tramo se reserva en la
+    // aerolínea y el resto del grupo puede pagarse aquí.
+    if (!offer) {
+      external.push(publicExternal(leg, "FLIGHT_NOT_FOR_SALE"));
+      continue;
+    }
     const fareCents = cents(offer.total_amount);
     if (fareCents == null) return { available: false, code: "SALE_FAILED" };
     const currency = String(offer.total_currency || "").toUpperCase();
@@ -277,8 +306,13 @@ async function quoteLegs(rawLegs, today) {
       ...money,
     });
   }
+  if (!priced.length) {
+    const code = external.every((leg) => leg.reason === "AIRLINE_SITE") ? "AIRLINE_SITE" : "FLIGHT_NOT_FOR_SALE";
+    return { available: false, code, external };
+  }
   const totals = sumParts(priced);
   const quoteId = crypto.randomBytes(12).toString("base64url");
+  const passengerCount = priced.reduce((sum, leg) => sum + leg.passengers, 0);
   await saveQuote({
     quoteId,
     legs: priced,
@@ -293,7 +327,8 @@ async function quoteLegs(rawLegs, today) {
     quoteId,
     currency: priced[0].currency,
     markupPercent: Math.round(rate * 1000) / 10,
-    passengerCount: checked.totalPax,
+    passengerCount,
+    external,
     legs: priced.map((leg) => ({
       origin: leg.origin,
       destination: leg.destination,
