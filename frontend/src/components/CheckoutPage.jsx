@@ -11,6 +11,7 @@ import { resolveApiBase } from "../utils/apiBase";
 import { getBaseUrl } from "../utils/helpers";
 import { centsOf, quoteAddsUp, SALE_CHANNEL } from "../utils/saleCheckout";
 import SaleBreakdown, { saleMoney } from "./SaleBreakdown";
+import SaleElsewhere from "./SaleElsewhere";
 
 const DuffelPay = React.lazy(() => import("./DuffelPay"));
 const API_BASE = resolveApiBase(import.meta.env);
@@ -44,6 +45,7 @@ export default function CheckoutPage({ quoteId }) {
   const [code, setCode] = useState("");
   const [clientToken, setClientToken] = useState("");
   const [refs, setRefs] = useState([]);
+  const [external, setExternal] = useState([]);
 
   useEffect(() => {
     let live = true;
@@ -51,6 +53,7 @@ export default function CheckoutPage({ quoteId }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!live) return;
+        setExternal(Array.isArray(data?.external) ? data.external : []);
         if (!data?.quoteId || !quoteAddsUp(data)) {
           setMissing(true);
           setPhase("error");
@@ -233,6 +236,11 @@ export default function CheckoutPage({ quoteId }) {
         {phase === "completing" && <p className="caja-note" role="status">{t("results.saleCompleting")}</p>}
         {phase === "issued" && (
           <p className="caja-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
+        )}
+        {external.length > 0 && (
+          <div className="caja-out">
+            <SaleElsewhere legs={external} t={t} />
+          </div>
         )}
       </section>
     </main>

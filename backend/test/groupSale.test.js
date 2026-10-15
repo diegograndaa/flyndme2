@@ -200,6 +200,33 @@ test("un fallo de Duffel en un tramo no tumba el pago del otro", async () => {
   assert.equal(quote.legs[0].origin, "MAD");
   assert.equal(quote.external[0].origin, "BCN");
   assert.equal(quote.external[0].reason, "FLIGHT_NOT_FOR_SALE");
+  const desk = await sale.publicQuote(quote.quoteId);
+  assert.equal(desk.legs.length, 1);
+  assert.equal(desk.charge, quote.charge);
+  assert.equal(desk.external[0].origin, "BCN");
+  assert.equal(desk.passengerCount, quote.passengerCount);
+});
+
+test("la caja guarda Ryanair aparte del cobro", async () => {
+  sale.__test.setTransport(async (url, options) => {
+    const origin = JSON.parse(options.body).data.slices[0].origin;
+    if (origin === "BCN") return { status: 200, data: { data: { offers: [] } } };
+    return { status: 200, data: { data: { offers: [offer({})] } } };
+  });
+  const quote = await sale.quoteLegs([
+    leg(),
+    leg({ origin: "BCN", airline: "FR", flightNumber: "202" }),
+  ], TODAY);
+  assert.equal(quote.available, true);
+  assert.equal(quote.legs.length, 1);
+  assert.equal(quote.external[0].airline, "FR");
+  assert.equal(quote.external[0].reason, "AIRLINE_SITE");
+  const desk = await sale.publicQuote(quote.quoteId);
+  assert.equal(desk.external[0].airline, "FR");
+  assert.equal(desk.external[0].origin, "BCN");
+  assert.equal(desk.charge, quote.charge);
+  assert.equal(desk.legs.some((row) => row.airline === "FR"), false);
+  assert.equal(JSON.stringify(desk).includes("offerId"), false);
 });
 
 test("si Duffel no tiene ningún vuelo para Ryanair o Wizz no hay cobro", async () => {

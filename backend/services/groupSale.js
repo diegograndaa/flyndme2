@@ -376,9 +376,10 @@ async function quoteLegs(rawLegs, today) {
     rate,
     expires: Date.now() + QUOTE_TTL_MS,
     status: "quoted",
+    external,
   };
   await saveQuote(stored, QUOTE_TTL_MS);
-  return publicView(stored, { available: true, external });
+  return publicView(stored, { available: true });
 }
 
 // Lo que ve el cliente. Sin oferta, sin token de la tarjeta y sin datos del viajero.
@@ -413,6 +414,16 @@ function publicView(quote, extra = {}) {
     commission: euros(quote.totals.commission),
     cardFee: euros(quote.totals.cardFee),
     charge: euros(quote.totals.charge),
+    external: (Array.isArray(quote.external) ? quote.external : []).map((leg) => ({
+      origin: leg.origin,
+      destination: leg.destination,
+      airline: leg.airline,
+      flightNumber: leg.flightNumber,
+      departureDate: leg.departureDate,
+      returnDate: leg.returnDate || null,
+      passengers: leg.passengers,
+      reason: leg.reason === "AIRLINE_SITE" ? "AIRLINE_SITE" : "FLIGHT_NOT_FOR_SALE",
+    })),
   };
 }
 

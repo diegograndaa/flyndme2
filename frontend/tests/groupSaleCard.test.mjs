@@ -236,15 +236,16 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
   }));
   const verifiedAt = Math.max(html.indexOf("Tarifa comprobada en vivo"), html.indexOf("Fare checked live"));
   const saleAt = html.indexOf('class="wc-sale"');
-  const missAt = Math.max(html.indexOf("MAD no está a la venta aquí"), html.indexOf("MAD is not for sale here"));
-  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && missAt > saleAt, "la comprobación de Google queda aparte de la compra");
+  const noteAt = Math.max(html.indexOf("en esa misma página"), html.indexOf("on that same page"));
+  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && noteAt > saleAt, "la comprobación de Google queda aparte de la compra");
   assert.ok(html.includes('href="/?caja=q2"'), "el vuelo que sí está se paga en la otra pestaña");
   assert.ok(!html.includes("sale-MAD-") && !html.includes("sale-OVD-"), "el formulario no está en la ficha");
   assert.ok(/Este es el vuelo que se emite ahora|This is the flight being issued now/.test(html));
   assert.ok(html.includes("Volotea 1201"));
   assert.ok(html.includes("11:25"));
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
-  assert.ok(html.includes("tickets.vueling.com/booking"), html);
+  const sale = html.slice(saleAt, html.indexOf("wc-buy-title"));
+  assert.ok(!sale.includes("tickets.vueling.com"), "en la ficha, Vueling no tiene otro botón: está en la página de pago");
   assert.ok(html.includes("56.23") || html.includes("€56.23"));
   assert.ok(!/El vuelo de MAD no está a la venta ahora|The flight from MAD is not for sale right now/.test(html));
 });
@@ -270,11 +271,47 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
     },
   }));
   assert.ok(/Pagar aquí|Pay here/.test(html));
-  assert.ok(/Ryanair se reserva en su web|Ryanair is booked on its site/.test(html));
-  assert.ok(html.includes("ryanair.com"));
+  assert.ok(/en esa misma página|on that same page/.test(html));
+  assert.ok(!html.includes("ryanair.com"), "Ryanair se reserva en la página de pago");
   assert.ok(html.includes('href="/?caja=q3"'));
   assert.ok(!html.includes("sale-BCN-") && !html.includes("sale-MAD-"));
+  assert.ok(!html.includes('type="date"'));
   assert.ok(!/no está a la venta aquí|is not for sale here/.test(html));
+});
+
+test("sin página de pago, Ryanair sigue en la ficha", () => {
+  const html = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: {
+      phase: "error",
+      code: "AIRLINE_SITE",
+      external: [{ origin: "MAD", destination: "LTN", airline: "FR", flightNumber: "1234", departureDate: "2026-10-15", passengers: 1, reason: "AIRLINE_SITE" }],
+    },
+  }));
+  assert.ok(html.includes("ryanair.com"));
+  assert.ok(!html.includes("/?caja="));
+  assert.ok(!html.includes('type="date"'));
+});
+
+test("la página de pago lleva el botón de Ryanair y no pide sus datos", async () => {
+  const { default: SaleElsewhere } = await import("../src/components/SaleElsewhere.jsx");
+  const { useI18n } = await import("../src/i18n/useI18n.jsx");
+  function Probe() {
+    const { t } = useI18n();
+    return React.createElement(SaleElsewhere, {
+      t,
+      legs: [
+        { origin: "MAD", destination: "LTN", airline: "FR", flightNumber: "1234", departureDate: "2026-10-15", passengers: 1, reason: "AIRLINE_SITE" },
+        { origin: "BCN", destination: "LTN", airline: "W6", flightNumber: "10", departureDate: "2026-10-15", passengers: 1, reason: "AIRLINE_SITE" },
+      ],
+    });
+  }
+  const html = render(React.createElement(Probe));
+  assert.ok(html.includes("ryanair.com"));
+  assert.ok(html.includes("wizzair.com"));
+  assert.equal([...html.matchAll(/<a\b/g)].length, 2);
+  assert.ok(!html.includes('type="date"') && !html.includes("<input"));
 });
 
 test("la pestaña de pago no pinta un importe antes de leer la caja", async () => {

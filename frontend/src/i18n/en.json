@@ -333,6 +333,7 @@
     "saleDeskTitle": "Group payment",
     "saleDeskLead": "One payment for the flights being issued now. The figure above is what is charged to the card.",
     "saleDeskMissing": "This fare is no longer available. Go back to the search and ask for it again.",
+    "saleDeskAlso": "Anything not issued here is booked on that same page, below the charge.",
     "saleQuoting": "Looking up the fare that can be issued…",
     "saleNotConfigured": "Payment inside FlyndMe is not connected yet. Nothing has been charged.",
     "saleNotForSale": "The flight from {{origin}} is not for sale right now. We do not swap it for another.",
