@@ -34,7 +34,7 @@ const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
-import { FlightHeader, ZoneHead, Notice, DeparturesBoard } from "./components/BoardPanels";
+import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
@@ -1915,7 +1915,6 @@ export default function App() {
             <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
-            <span className="app-logo-sub">{t("header.tagline")}</span>
             <span className={`fm-backend-dot fm-backend-dot--${backendStatus}`} title={backendStatus === "online" ? t("header.serverOnline") : backendStatus === "offline" ? t("header.serverWaking") : ""} />
           </div>
           <div className="d-flex align-items-center gap-2">
@@ -1928,12 +1927,6 @@ export default function App() {
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
-            {view === "results" && (
-              <button type="button" className="btn btn-sm btn-outline-secondary fm-header-newsearch"
-                onClick={() => { setView("search"); setShowAlt(false); }}>
-                {t("header.newSearch")}
-              </button>
-            )}
           </div>
         </div>
         {!pwa.online && <OfflineStrip />}
@@ -2149,7 +2142,7 @@ export default function App() {
               Al lado, solo si el calendario trae fechas que abaratan el grupo. */}
           <div className="fm-date-row">
           <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
-            <span className="fm-date-strip-label">{t("results.tryNearbyDates")}</span>
+            <span className="fm-date-strip-label sr-only">{t("results.tryNearbyDates")}</span>
             <div className="fm-date-strip-days">
               {[-2, -1, 0, 1, 2].map((offset) => {
                 const iso = addDaysISO(departureDate || todayISO(), offset);
@@ -2177,7 +2170,7 @@ export default function App() {
           {dateRecs.length > 0 && (
             <aside className="fm-date-recs" aria-live="polite"
               aria-label={t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}>
-              <span className="fm-date-recs-label">
+              <span className="fm-date-recs-label sr-only">
                 {t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}
               </span>
               {dateRecs.map((d) => (
@@ -2238,8 +2231,7 @@ export default function App() {
               la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
               decisión) + reparto del grupo + siguiente paso. */}
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
-          <ZoneHead id="fm-decision-title" variant="decision" num="01"
-            title={t("results.decisionTitle")} />
+          <h2 id="fm-decision-title" className="sr-only">{t("results.decisionTitle")}</h2>
           {sharedAt && (
             <Notice variant="partial" tag={t("board.tagNotice")}
               text={t("results.sharedNotice", {
@@ -2371,16 +2363,7 @@ export default function App() {
               actionLabel={t("filters.reset")} onAction={resetFilters} />
           )}
 
-          {/* Plan de grupo: una línea y el botón. El párrafo explicaba el producto. */}
-          <Notice variant="next"
-            text={t("results.groupNudge.title")}
-            actionLabel={groupBusy ? t("group.creating") : t("results.groupNudge.cta")}
-            onAction={createGroup}
-            disabled={groupBusy} />
           </section>
-
-          {/* Troquel: aquí termina la decisión y empieza la exploración */}
-          <div className="fm-zone-perf" aria-hidden="true" />
 
           {/* Salidas: el panel ya se nombra solo. Con un único destino, una línea
               dice por qué no hay alternativas. */}
@@ -2530,11 +2513,7 @@ export default function App() {
               </svg>
               {t("footerBrand")}
             </span>
-            <span className="app-footer-tagline">{t("footerTagline")}</span>
             <nav className="app-footer-links">
-              {/* Botones, no <a> sin href: los anchors sin href no reciben foco de teclado */}
-              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</button>
-              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: scrollBehavior() }); }, 100); }}>{t("footerFaq")}</button>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
               <button type="button" className="app-footer-link" onClick={() => setShowShortcuts(true)}>{t("shortcuts.title")}</button>
             </nav>

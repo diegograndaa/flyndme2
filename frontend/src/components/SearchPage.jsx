@@ -484,7 +484,7 @@ const SearchPage = React.memo(function SearchPage({
                     </button>
                   ))}
                 </div>
-                <div className="sf-hint mt-1">{t("search.arrivalGapHint")}</div>
+                <p className="sr-only">{t("search.arrivalGapHint")}</p>
               </div>
             )}
 

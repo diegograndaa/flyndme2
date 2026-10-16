@@ -297,7 +297,7 @@ const WinnerCard = React.memo(function WinnerCard({
           )}
         </div>
         <div className="wc-buy-head">
-          <h3 className="wc-buy-title">
+          <h3 className="wc-buy-title sr-only">
             {singleOrigin ? t("results.buyTitleOne", { city: city || code }) : t("results.buyTitle", { city: city || code })}
           </h3>
           {/* Criterio: control único que gobierna ganador Y alternativas */}
@@ -521,15 +521,6 @@ const WinnerCard = React.memo(function WinnerCard({
           </div>
         )}
 
-      </div>
-
-      {/* Troquel: separa la compra de compartir. El sello lleva código y fecha. */}
-      <div className="wc-perf">
-        <span key={code} className="wc-stamp" aria-hidden="true">
-          <span className="wc-stamp-label">{t("results.stampLabel")}</span>
-          <span className="wc-stamp-code">{code}</span>
-          {dep && <span className="wc-stamp-date">{formatDate(dep)}</span>}
-        </span>
       </div>
 
       {/* Body */}

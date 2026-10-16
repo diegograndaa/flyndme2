@@ -38,7 +38,7 @@ export const FlightHeader = React.memo(function FlightHeader({
   return (
     <div className="fm-flight-head">
       <div className="fm-flight-head-main">
-        <span className="fm-board-label">{t("board.flightHead")}</span>
+        <span className="fm-board-label sr-only">{t("board.flightHead")}</span>
         <div className="fm-flight-head-row">
           <span className="fm-flight-head-origins">
             {origins.map((o, i) => <span key={o + i} className="fm-flight-head-code">{o}</span>)}

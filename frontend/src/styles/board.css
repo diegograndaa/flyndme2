@@ -883,25 +883,30 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   align-items: start;
 }
 @media (min-width: 861px) {
-  /* Lateral estrecho: la decisión (foto y vuelos) sigue siendo lo ancho. */
-  .fm-results-layout:has(.fm-filters) { grid-template-columns: 156px minmax(0, 1fr); gap: 10px; }
+  .fm-results-layout:has(.fm-filters) { grid-template-columns: minmax(0, 1fr); }
 }
 .fm-filters {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.fm-filters--open {
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
   border-radius: var(--radius-md);
   padding: 10px;
 }
 .fm-filters-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 10px;
+  width: auto;
+  min-height: 40px;
+  padding: 4px 2px;
   background: transparent;
   color: var(--navy);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 14px;
@@ -1109,15 +1114,12 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-filter-reset:hover { border-color: var(--primary); }
 .fm-filter-reset:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 @media (min-width: 861px) {
-  .fm-filters-toggle { display: none; }
-  .fm-filters-body { display: flex; gap: 10px; }
-  .fm-filters--open .fm-filters-body { margin-top: 0; }
-  .fm-filters {
+  .fm-filters--open .fm-filters-body { display: flex; gap: 10px; }
+  .fm-filters--open {
     position: sticky;
     top: 72px;
     max-height: calc(100dvh - 88px);
     overflow: auto;
-    padding: 8px;
   }
   .fm-filter-block { gap: 4px; }
   .fm-filter-opts { gap: 4px; }
@@ -1136,7 +1138,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 }
 .fm-results-main { min-width: 0; }
 @media (max-width: 860px) {
-  .fm-filters { padding: 8px; position: relative; z-index: 91; }
+  .fm-filters--open { position: relative; z-index: 91; }
 }
 .fm-flight-head-main { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .fm-flight-head .fm-board-label { color: var(--panel-faint); font-size: 12px; letter-spacing: .08em; }
@@ -1335,17 +1337,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 /* Secciones principales numeradas como puertas: 01 · 02 */
 .sf-form form { counter-reset: sf-gate; }
 .sf-form form > .sf-section > .sf-label:first-child::before {
-  counter-increment: sf-gate;
-  content: counter(sf-gate, decimal-leading-zero);
-  display: inline-block;
-  margin-right: 8px;
-  padding: 1px 6px;
-  font-family: var(--font-mono);
-  font-weight: 800;
-  letter-spacing: .04em;
-  color: #fff;
-  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
-  border-radius: 4px;
+  content: none;
+  display: none;
 }
 .sf-form .sf-label.sf-label { font-family: var(--font-mono); letter-spacing: .1em; }
 
@@ -1457,7 +1450,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-quick-research.fm-quick-research,
 .fm-plan-trip.fm-plan-trip,
 .gp.gp { border: 1px solid var(--card-line); box-shadow: none; }
-.sf-section.sf-section { border: 1px solid var(--card-line); }
+.sf-section.sf-section { border: 0; background: transparent; }
 .wc-card .wc-booking.wc-booking,
 .wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
 .wc-card .wc-flight-card.wc-flight-card:hover,
@@ -2045,14 +2038,14 @@ button,
    01 en cartel amarillo) y se separa de la exploración con un troquel de
    billete. La exploración queda en segundo plano: cabecera en contorno.   */
 .fm-decision {
-  --decision-bg: #ECE7DD;
-  --decision-line: #1A1A1A;
+  --decision-bg: transparent;
+  --decision-line: var(--card-line);
   position: relative;
   margin: 4px 0 0;
-  padding: 16px 16px 16px;
-  background: var(--decision-bg);
-  border: 2px solid var(--decision-line);
-  border-radius: 10px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   scroll-margin-top: 76px;
   animation: board-rise .55s var(--ease-out-expo) backwards;
 }

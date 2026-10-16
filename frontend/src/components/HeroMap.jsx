@@ -21,7 +21,6 @@ import { cityOf } from "../utils/helpers";
 import { CITY_COORDS, distanceKm, estimatedFlightMinutes } from "../utils/geo";
 import { travelerSlot } from "../utils/resultsLogic";
 import { project, COUNTRY_PATHS, flightArc, flightArcMid, PLANE_D, placeLabels } from "./mapProjection";
-import { FlapText } from "./FlapBoard";
 
 const EXAMPLE_ORIGINS = ["MAD", "LON", "BER"];
 const CANDIDATES = ["PAR", "ROM", "LIS", "PRG", "BCN", "AMS"];
@@ -250,13 +249,6 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
         </span>
       </div>
 
-      <div className="hm-foot">
-        <span className="hm-meet">
-          <span className="hm-meet-label">{t("landing.diagramMeet")}</span>
-          <FlapText text={dest} size="sm" className="hm-meet-flap" settleMs={520} />
-          <span className="hm-meet-q" aria-hidden="true">?</span>
-        </span>
-      </div>
     </div>
   );
 }
