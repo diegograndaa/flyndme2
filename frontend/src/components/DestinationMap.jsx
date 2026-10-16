@@ -170,7 +170,6 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
       {!inline && <div className="dm-header">
         <div>
           <h3 className="dm-title">{t("map.title")}</h3>
-          {onSelect && destPoints.length > 1 && <p className="dm-sub">{t("map.subtitle")}</p>}
         </div>
         <div className="dm-legend" aria-hidden="true">
           <span className="dm-legend-item"><span className="dm-key dm-key--best" /> {t("map.meetPoint")}</span>
@@ -336,13 +335,9 @@ export default function DestinationMap({ flights, bestDestination, origins, curr
                 {hoveredPoint.fairness >= 65 ? t("board.payEven") : t("board.paySpread", { amount: money(paySpread(hoveredPoint.flight)) })}
               </div>
             )}
-            <div className="dm-tooltip-hint">{hoveredPoint.isBest ? t("board.selected") : t("map.tapHint")}</div>
           </div>
         )}
       </div>
-      {inline
-        ? (onSelect && destPoints.length > 1 && <span className="dm-inline-hint" aria-hidden="true">{t("map.subtitleShort")}</span>)
-        : <p className="dm-note">{t("board.estimateNote")}</p>}
     </div>
   );
 }

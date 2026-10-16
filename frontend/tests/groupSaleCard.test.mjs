@@ -234,10 +234,9 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
       },
     },
   }));
-  const verifiedAt = Math.max(html.indexOf("Tarifa comprobada en vivo"), html.indexOf("Fare checked live"));
+  const verifiedAt = Math.max(html.indexOf("Comprobada"), html.indexOf("Checked"));
   const saleAt = html.indexOf('class="wc-sale"');
-  const noteAt = Math.max(html.indexOf("en esta página"), html.indexOf("on this page"));
-  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt && noteAt > saleAt, "la comprobación de Google queda aparte de la compra");
+  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt, "la comprobación queda aparte de la compra");
   assert.ok(html.includes('href="/?caja=q2"'), "el vuelo que sí está se paga en la otra pestaña");
   assert.ok(!html.includes("sale-MAD-") && !html.includes("sale-OVD-"), "el formulario no está en la ficha");
   assert.match(html, /wc-sale-codes">OVD[^<]*ORY/);
@@ -271,7 +270,6 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
     },
   }));
   assert.ok(/Pagar aquí|Pay here/.test(html));
-  assert.ok(/en esta página|on this page/.test(html));
   assert.ok(!html.includes("ryanair.com"), "Ryanair se reserva en la página de pago");
   assert.ok(html.includes('href="/?caja=q3"'));
   assert.ok(!html.includes("sale-BCN-") && !html.includes("sale-MAD-"));

@@ -122,7 +122,7 @@ function DestThumb({ code }) {
  * puede pulsar para verlo arriba. Con un solo origen no hay reparto.
  */
 export const DeparturesBoard = React.memo(function DeparturesBoard({
-  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
+  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", onSelect, origins = [],
   preserveOrder = false,
 }) {
   const { t } = useI18n();
@@ -142,11 +142,6 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
         </div>
-        {savings > 10 && (
-          <span className="fm-board-savings">
-            {t("results.groupSavings", { amount: money(savings, currency) })}
-          </span>
-        )}
       </div>
 
       <div className="dep-cols" aria-hidden="true">

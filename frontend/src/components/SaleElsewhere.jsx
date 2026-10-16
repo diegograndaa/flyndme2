@@ -37,11 +37,9 @@ export default function SaleElsewhere({ legs = [], t }) {
         const name = target.airline || leg.origin;
         return (
           <div key={`${leg.origin}-${leg.flightNumber || ""}`} className="wc-sale-else-row">
-            <p>
-              {leg.reason === "FLIGHT_NOT_FOR_SALE"
-                ? t("results.saleNotHere", { origin: leg.origin })
-                : t("results.saleOnAirline", { airline: name })}
-            </p>
+            {!target.url && (
+              <p>{t("results.saleNotHere", { origin: leg.origin })}</p>
+            )}
             {target.url && (
               <a className="wc-sale-btn wc-sale-btn--ghost" href={target.url} target="_blank" rel="noopener noreferrer">
                 {target.sky ? t("results.saleBookSky") : t("results.bookOnAirline", { airline: name })}

@@ -1968,7 +1968,6 @@ export default function App() {
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
-                <p className="fm-fav-panel-note">{t("favorites.priceNote")}</p>
               </div>
             )}
           </div>
@@ -2011,7 +2010,7 @@ export default function App() {
         <div className="view-enter" key="home">
           {groupLoading && (
             <div className="container fm-price-alerts" style={{ maxWidth: 1080 }}>
-              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} detail={t("group.loadingDetail")} />
+              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} />
             </div>
           )}
           {priceAlerts.length > 0 && (
@@ -2025,7 +2024,6 @@ export default function App() {
                     now: money(a.currentTotalEUR),
                     saving: money(a.savingEUR),
                   })}
-                  detail={t("watch.dropDetail")}
                   actionLabel={t("watch.view")}
                   onAction={() => openWatch(a.watch)} />
               ))}
@@ -2057,7 +2055,6 @@ export default function App() {
                   count: tripHint.destinationsCount,
                   total: money(tripHint.cheapest.totalCostEUR),
                 }),
-                detail: t("tripHint.detail"),
                 actionLabel: t("tripHint.use"),
                 onAction: () => useTripHint(tripHint),
               } : null}
@@ -2237,7 +2234,6 @@ export default function App() {
               text={t("results.sharedNotice", {
                 when: new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(sharedAt)),
               })}
-              detail={t("results.sharedDetail")}
               actionLabel={t("results.sharedRefresh")}
               onAction={refreshShared} disabled={loading} />
           )}
@@ -2346,9 +2342,6 @@ export default function App() {
                 <span className="fm-arrival-spread-icon" aria-hidden="true"><Icon size={18} /></span>
                 <div className="fm-arrival-spread-body">
                   <span className="fm-arrival-spread-text">{msg}</span>
-                  {sp.partial && (
-                    <span className="fm-arrival-spread-note">{t("arrivalCoord.partialNote")}</span>
-                  )}
                 </div>
               </div>
             );
@@ -2367,14 +2360,7 @@ export default function App() {
 
           {/* Salidas: el panel ya se nombra solo. Con un único destino, una línea
               dice por qué no hay alternativas. */}
-          <section className="fm-explore" aria-labelledby={listedFlights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
-          {listedFlights.length < 2 && (
-            <p id="fm-explore-note" className="fm-explore-note">
-              {flights.length <= 1
-                ? t("results.exploreSubOne")
-                : (listedFlights.length === 0 ? t("filters.empty") : t("filters.onlyOne"))}
-            </p>
-          )}
+          <section className="fm-explore" aria-label={t("results.exploreTitle")}>
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
           )}

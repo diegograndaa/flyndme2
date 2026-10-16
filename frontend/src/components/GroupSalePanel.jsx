@@ -109,9 +109,6 @@ export default function GroupSalePanel({ legs = [], sale = null, estimateLabel =
           {t("results.saleOpen", { amount: money(quote.charge) })}
         </a>
       )}
-      {balanced && external.length > 0 && (
-        <p className="wc-sale-note">{t("results.saleDeskAlso")}</p>
-      )}
       {phase === "completing" && <p className="wc-sale-note" role="status">{t("results.saleCompleting")}</p>}
       {(phase === "issued" || (phase === "partial" && refs.length > 0)) && (
         <p className="wc-sale-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>

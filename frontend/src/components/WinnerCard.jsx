@@ -11,7 +11,7 @@ import {
 import { buildAirlineBookingUrl } from "../utils/airlineBooking";
 import { airlineName, legSchedule } from "../utils/flightTime";
 import GroupSalePanel from "./GroupSalePanel";
-import { convertPrice, travelerSlot, paySpread, fxRateLabel } from "../utils/resultsLogic";
+import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
@@ -110,7 +110,7 @@ const WinnerCard = React.memo(function WinnerCard({
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
   onRequestSale, sale = null,
 }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const [entered, setEntered] = useState(false);
   const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
   const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
@@ -229,7 +229,7 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Solo si el precio no es de la fecha pedida: es un dato, no un adorno. */}
         {dest.hasDateFallback && (
           <div className="wc-chips-overlay">
-            <span className="wc-trip-days-chip" title={t("results.dateFallbackHint")}>
+            <span className="wc-trip-days-chip">
               <Calendar size={13} aria-hidden="true" /> {t("results.dateFallbackBadge")}
             </span>
           </div>
@@ -249,7 +249,7 @@ const WinnerCard = React.memo(function WinnerCard({
             <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
             <div className="wc-total-figure">
               {savingsPct > 5 && (
-                <span className="wc-total-savings" title={t("results.savingsPctHint", { n: allFlights.length })}>
+                <span className="wc-total-savings">
                   {t("results.savingsPct", { pct: savingsPct })}
                   <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
                 </span>
@@ -284,9 +284,6 @@ const WinnerCard = React.memo(function WinnerCard({
               <span className="wc-verify-caption">{t("board.estimateNote")}</span>
             )}
           </div>
-          {fxRateLabel(currency, lang) && (
-            <p className="wc-fx-note">{t("results.fxNote", { rate: fxRateLabel(currency, lang) })}</p>
-          )}
           {!singleOrigin && (
             <GroupSalePanel
               legs={saleLegs}
@@ -380,14 +377,12 @@ const WinnerCard = React.memo(function WinnerCard({
                     url: booking.url,
                     provider: "airline",
                     airline: booking.airlineName,
-                    hint: t("results.bookOnAirlineHint", { airline: booking.airlineName }),
                   }
                   : (ssUrl
                     ? {
                       url: ssUrl,
                       provider: "skyscanner",
                       airline: "Skyscanner",
-                      hint: t("results.bookOnSkyscannerHint"),
                     }
                     : null);
                 const legEq = typeof price === "number"
@@ -397,7 +392,7 @@ const WinnerCard = React.memo(function WinnerCard({
                 return (
                   <div key={origin} className="wc-flight-card">
                     {finfo.dateFallback && (
-                      <div className="wc-flight-meta" title={t("results.dateFallbackHint")}>
+                      <div className="wc-flight-meta">
                         <span className="wc-flight-meta-item wc-flight-meta--stops">
                           <Calendar size={13} aria-hidden="true" /> {t("results.dateFallbackChip", { date: formatDate(effDep) })}{tripType === "roundtrip" && effRet ? ` → ${formatDate(effRet)}` : ""}
                         </span>
@@ -482,8 +477,7 @@ const WinnerCard = React.memo(function WinnerCard({
                           tenemos, el mismo botón abre Skyscanner. */}
                       {book && (
                         <a href={book.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
-                          title={book.hint}
-                          aria-label={book.hint}
+                          aria-label={book.airline ? `${t("results.bookCta")} · ${book.airline}` : t("results.bookCta")}
                           onClick={() => track("book_click", { provider: book.provider, airline: book.airline, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
@@ -566,13 +560,12 @@ const WinnerCard = React.memo(function WinnerCard({
           )}
           {onToggleWatch && (
             <button type="button" className={`wc-action-btn wc-action-btn--watch${watched ? " wc-action-btn--on" : ""}`}
-              onClick={onToggleWatch} aria-pressed={watched} title={t("watch.hint")}>
+              onClick={onToggleWatch} aria-pressed={watched}>
               {watched ? <BellRing size={14} aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}
               {" "}{watched ? t("watch.on") : t("watch.cta")}
             </button>
           )}
         </div>
-        {watched && <p className="wc-watch-note">{t("watch.hint")}</p>}
 
         {/* Search badges */}
         {searchBadges.length > 0 && (
@@ -671,7 +664,6 @@ export function WhoPaysStrip({ dest, currency = "EUR", origins = [] }) {
           );
         })}
       </div>
-      {!sel && <div className="wc-ils-hint">{t("results.ilsHint")}</div>}
     </div>
   );
 }

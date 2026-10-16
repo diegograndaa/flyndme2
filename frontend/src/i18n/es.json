@@ -297,8 +297,8 @@
     "fdLocal": "hora local",
     "fdFlight": "Vuelo",
     "fdTravelers": "Pasajeros",
-    "verifyChecking": "Comprobando precio en vivo…",
-    "verifyUnavailable": "No se pudo comprobar el precio en vivo ahora — sigue siendo una estimación en caché.",
+    "verifyChecking": "Comprobando…",
+    "verifyUnavailable": "Sin comprobar",
     "maxSpread": "Diferencia máxima",
     "spreadSub": "Entre el vuelo más caro y el más barato",
     "destsFound": "Destinos encontrados",
@@ -432,10 +432,10 @@
     "splitSummaryEqual": "a partes iguales, {{amount}} cada uno",
     "splitSummaryMore": "Ver detalle",
     "splitSummaryLess": "Ocultar",
-    "totalVerified": "Tarifa comprobada en vivo con Google Flights",
+    "totalVerified": "Comprobada",
     "travelerOne": "1 viajero",
     "totalOne": "Total",
-    "totalChanged": "Precio actualizado en vivo con Google Flights",
+    "totalChanged": "Actualizada",
     "vsLastCheaper": "{{pct}}% más barato que la última búsqueda",
     "vsLastPricier": "{{pct}}% más caro que la última búsqueda",
     "copyFlight": "Copiar info del vuelo",
@@ -521,7 +521,7 @@
     "selected": "En tu tarjeta",
     "select": "Ver {{city}}",
     "more": "Más opciones",
-    "estimateNote": "Estimación · búsquedas recientes",
+    "estimateNote": "Estimación",
     "exportCsv": "Descargar CSV"
   },
   "fairness": {
@@ -679,7 +679,7 @@
     "open": "Ver detalles de {{city}}",
     "notInResults": "{{city}} no está en los resultados actuales. Haz una búsqueda para ver sus detalles.",
     "priceNote": "Precio estimado el día que lo guardaste. Busca de nuevo para ver el de hoy.",
-    "empty": "Aún no tienes favoritos. Pulsa el corazón en cualquier destino para guardarlo aquí."
+    "empty": "Sin favoritos"
   },
   "a11y": {
     "skipToContent": "Ir al contenido",
@@ -795,7 +795,7 @@
     "shareText": "✈ ¡Organizamos un viaje en FlyndMe! Añade tu ciudad de salida y busca el sitio más barato y justo para vernos todos 👉",
     "rosterTitle": "Pasajeros ({{n}})",
     "refresh": "Sincronizar pasajeros",
-    "empty": "Nadie ha añadido su ciudad todavía. Añade la tuya abajo.",
+    "empty": "Sin viajeros",
     "travelerN": "Viajero {{n}}",
     "travelers": "Viajeros",
     "remove": "Quitar",
