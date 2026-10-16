@@ -1240,6 +1240,17 @@ function groupSaleHttp(code) {
   return 400;
 }
 
+router.get("/group-sale/desk/:quoteId", async (req, res) => {
+  try {
+    const quote = await groupSale.publicQuote(req.params.quoteId);
+    if (!quote) return res.status(404).json({ code: "QUOTE_EXPIRED" });
+    return res.json(quote);
+  } catch (err) {
+    console.error("[group-sale] desk", err.code || err.message);
+    return res.status(502).json({ code: "SALE_FAILED" });
+  }
+});
+
 router.post("/group-sale/quote", async (req, res) => {
   try {
     const result = await groupSale.quoteLegs(req.body?.legs, toISODate(new Date()));

@@ -38,7 +38,7 @@ export const FlightHeader = React.memo(function FlightHeader({
   return (
     <div className="fm-flight-head">
       <div className="fm-flight-head-main">
-        <span className="fm-board-label">{t("board.flightHead")}</span>
+        <span className="fm-board-label sr-only">{t("board.flightHead")}</span>
         <div className="fm-flight-head-row">
           <span className="fm-flight-head-origins">
             {origins.map((o, i) => <span key={o + i} className="fm-flight-head-code">{o}</span>)}
@@ -122,7 +122,7 @@ function DestThumb({ code }) {
  * puede pulsar para verlo arriba. Con un solo origen no hay reparto.
  */
 export const DeparturesBoard = React.memo(function DeparturesBoard({
-  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
+  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", onSelect, origins = [],
   preserveOrder = false,
 }) {
   const { t } = useI18n();
@@ -141,13 +141,7 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
       <div className="fm-board-top">
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
-          <p className="fm-board-sub">{t("board.departuresSub", { n: flights.length })}</p>
         </div>
-        {savings > 10 && (
-          <span className="fm-board-savings">
-            {t("results.groupSavings", { amount: money(savings, currency) })}
-          </span>
-        )}
       </div>
 
       <div className="dep-cols" aria-hidden="true">

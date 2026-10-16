@@ -3,7 +3,7 @@
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
-import { Map as MapIcon, User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, Zap, Lightbulb, PlaneTakeoff, Plane } from "lucide-react";
+import { User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, SEARCH_POOL, CURATED_CODES, normalizeCode, cityOf, destLabel, formatEur,
   formatDate, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
@@ -44,29 +44,10 @@ function useDateWarnings(departureDate, returnDate, tripType) {
 
     if (dep < today) {
       warnings.push({ key: "past", text: t("search.dateWarnPast"), type: "error" });
-    } else {
-      const diffDays = Math.round((dep - today) / 86400000);
-      if (diffDays <= 3) {
-        warnings.push({ key: "soon", text: t("search.dateWarnSoon"), type: "warn" });
-      }
-      if (diffDays > 330) {
-        warnings.push({ key: "far", text: t("search.dateWarnFar"), type: "warn" });
-      }
-      if (diffDays >= 42 && diffDays <= 56) {
-        warnings.push({ key: "sweet", text: t("search.dateWarnSweet"), type: "tip" });
-      }
     }
 
-    if (tripType === "roundtrip" && returnDate && departureDate) {
-      if (returnDate <= departureDate) {
-        warnings.push({ key: "order", text: t("search.dateWarnOrder"), type: "error" });
-      } else {
-        const ret = new Date(returnDate + "T00:00:00");
-        const tripLen = Math.round((ret - dep) / 86400000);
-        if (tripLen > 30) {
-          warnings.push({ key: "long", text: t("search.dateWarnLong"), type: "warn" });
-        }
-      }
+    if (tripType === "roundtrip" && returnDate && returnDate <= departureDate) {
+      warnings.push({ key: "order", text: t("search.dateWarnOrder"), type: "error" });
     }
 
     return warnings;
@@ -191,9 +172,6 @@ const SearchPage = React.memo(function SearchPage({
           sugerencias del propio campo ya cubren la búsqueda y la exploración). */}
       <div className="sf-grid">
         <div className="sf-form fm-card">
-          <h2 className="sf-title">{t("search.title")}</h2>
-          <p className="sf-sub">{t("search.subtitle")}</p>
-
           {/* Recent searches */}
           {recentSearches?.length > 0 && !loading && (
             <div className="sf-recent">
@@ -230,14 +208,6 @@ const SearchPage = React.memo(function SearchPage({
           )}
 
           <form onSubmit={onSubmit} noValidate>
-            {/* Empty state prompt */}
-            {origins.length === 1 && !origins[0].trim() && !loading && (
-              <div className="sf-empty-state">
-                <div className="sf-empty-icon"><MapIcon size={28} aria-hidden="true" /></div>
-                <div className="sf-empty-text">{t("search.emptyHint")}</div>
-              </div>
-            )}
-
             {/* Tipo de billete + fechas, en una sola fila en escritorio */}
             <div className="sf-section sf-section--when">
               <div className={`sf-when${tripType === "roundtrip" ? " sf-when--two" : ""}`}>
@@ -280,7 +250,7 @@ const SearchPage = React.memo(function SearchPage({
                 <div className="sf-date-warnings mt-2">
                   {dateWarnings.map((w) => (
                     <div key={w.key} className={`sf-date-warn sf-date-warn--${w.type}`}>
-                      <span className="sf-date-warn-icon">{w.type === "error" ? <AlertTriangle size={15} /> : w.type === "warn" ? <Zap size={15} /> : <Lightbulb size={15} />}</span>
+                      <span className="sf-date-warn-icon"><AlertTriangle size={15} aria-hidden="true" /></span>
                       <span>{w.text}</span>
                     </div>
                   ))}
@@ -487,7 +457,7 @@ const SearchPage = React.memo(function SearchPage({
                     </button>
                   ))}
                 </div>
-                <div className="sf-hint mt-1">{t("search.arrivalGapHint")}</div>
+                <p className="sr-only">{t("search.arrivalGapHint")}</p>
               </div>
             )}
 
@@ -508,14 +478,7 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Flexible dates */}
                 <div className="sf-section">
                   <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.flexLabel")}</div>
-                      <div className="sf-hint">
-                        {flexEnabled
-                          ? t("search.flexHintOn", { days: flexDays })
-                          : t("search.flexHintOff")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.flexLabel")}</div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="flexSwitch"
                         checked={flexEnabled} onChange={(e) => setFlexEnabled(e.target.checked)} disabled={loading} />
@@ -539,8 +502,6 @@ const SearchPage = React.memo(function SearchPage({
                 <div className="sf-section">
                   <div className="sf-label">
                     {t("search.optimizeLabel")}
-                    {/* aria-hidden: el texto de ayuda ya está visible en sf-hint debajo */}
-                    <span className="sf-label-help" title={t("search.optimizeHelp")} aria-hidden="true">?</span>
                   </div>
                   <div className="sf-pills" role="group" aria-label={t("search.optimizeLabel")}>
                     {[["total", t("search.optTotal")], ["fairness", t("search.optFairness")]].map(([v, l]) => (
@@ -550,18 +511,12 @@ const SearchPage = React.memo(function SearchPage({
                         onClick={() => { tapHaptic(); setOptimizeBy(v); }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}
                   </div>
-                  <div className="sf-hint mt-1">{t("search.optimizeHint")}</div>
                 </div>
 
                 {/* Budget */}
                 <div className="sf-section">
                   <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
-                      <div className="sf-hint">
-                        {budgetEnabled ? t("search.budgetHintOn", { amount: formatEur(maxBudget) }) : t("search.budgetHintOff")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="budgetSwitch"
                         checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
@@ -589,7 +544,6 @@ const SearchPage = React.memo(function SearchPage({
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
                       <div className="sf-label mb-0">{t("search.directOnly")}</div>
-                      <div className="sf-hint">{t("search.directHint")}</div>
                     </div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="directSwitch"
@@ -631,14 +585,7 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Destination filter */}
                 <div className="sf-section">
                   <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.destLabel")}</div>
-                      <div className="sf-hint">
-                        {selectedDests.length > 0
-                          ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
-                          : t("search.destBasisCheaperHint")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.destLabel")}</div>
                     <button type="button" className="btn btn-sm btn-outline-primary"
                       onClick={() => setShowDestPicker((v) => !v)} disabled={loading}>
                       {showDestPicker ? t("search.destHide") : t("search.destChoose")}
@@ -752,14 +699,9 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               </div>
             )}
-            <div className="sf-section">
-              <div className="sf-label mb-1">{t("search.destLabel")}</div>
-              <div className="sf-hint">
-                {selectedDests.length > 0
-                  ? t("search.destBasisCheaperOverride")
-                  : t("search.destBasisCheaperHint")}
-              </div>
-            </div>
+            {selectedDests.length === 0 && (
+              <p className="sr-only">{t("search.destBasisCheaperHint")}</p>
+            )}
 
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
@@ -814,11 +756,6 @@ const SearchPage = React.memo(function SearchPage({
                 <Users size={16} className="lucide" /> <span>{groupBusy ? t("group.creating") : t("group.cta")}</span>
               </button>
             )}
-            <div className="sf-footnote">
-              <span>{t("search.footnoteTime")}</span>
-              <span className="sf-kbd-hint">{t("search.kbdHint")}</span>
-              <span>{t("search.footnotePrices")}</span>
-            </div>
           </form>
         </div>
       </div>

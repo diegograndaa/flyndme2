@@ -68,7 +68,6 @@ export default function CompareChart({ flights, bestDestination, singleOrigin = 
       <header className="cmp-head">
         <div>
           <h3 className="cmp-title">{t("compare.title")}</h3>
-          <p className="cmp-sub">{t("compare.subtitle")}</p>
         </div>
         {!singleOrigin && <TravelerLegend origins={origins} />}
       </header>

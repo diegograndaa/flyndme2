@@ -87,7 +87,7 @@
 .hm-home-form .sf-form.sf-form { padding: 20px 20px 16px; }
 .hm-home-form .sf-title { font-size: 18px; margin-bottom: 2px; }
 .hm-home-form .sf-sub { font-size: 13px; margin-bottom: 12px; }
-.hm-home-form .sf-section { padding: 14px 14px 12px; margin-bottom: 10px; }
+.hm-home-form .sf-section { padding: 0; margin-bottom: 16px; border: 0; background: transparent; }
 .hm-home-form .sf-origin-row { margin-bottom: 8px; }
 .hm-home-form .sf-advanced-toggle { margin: 2px 0 8px; }
 .hm-home-form .sf-submit-wrap { margin-top: 8px; }
@@ -110,12 +110,8 @@
 /* La sección de fechas conserva su número de puerta (01) aunque su rótulo
    ya no sea hijo directo de la sección */
 .sf-form form > .sf-section--when .sf-when-type > .sf-label::before {
-  counter-increment: sf-gate;
-  content: counter(sf-gate, decimal-leading-zero);
-  display: inline-block; margin-right: 8px; padding: 1px 6px;
-  font-family: var(--font-mono); font-weight: 800; letter-spacing: .04em; color: #fff;
-  background: linear-gradient(180deg, var(--board-cell-top) 0 50%, var(--board-cell-bot) 50% 100%);
-  border-radius: 4px;
+  content: none;
+  display: none;
 }
 
 /* Insignia del viajero: ficha de tinta con SU color (el mismo del mapa y de
@@ -259,6 +255,7 @@
   position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
   -webkit-appearance: none; appearance: none; border: 0; padding: 0; background: transparent;
 }
+[data-theme="dark"] .df-native { background: transparent; border-color: transparent; }
 .df-pop {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; width: 292px; max-width: calc(100vw - 32px);
   padding: 12px; border: 1px solid var(--navy); border-radius: 6px; background: var(--white);
@@ -434,8 +431,9 @@
    fecha, «siguiente paso», fila elegida y botón de subir pasan a tinta/papel
    para que no compitan entre sí.                                          */
 .fm-zone-head--decision .fm-zone-num.fm-zone-num { background: var(--board-cell-bot, #18191C); color: #fff; box-shadow: var(--ficha-canto); }
-[data-theme="dark"] .fm-decision { --decision-line: #3A3E47; }
-[data-theme="dark"] .wc-total { border-color: var(--decision-line); }
+/* El marco de la decisión y la caja del total siguen la tinta del tema
+   (carbón de día, hueso de noche). Un filete más claro de noche los
+   hacía desaparecer contra la pantalla. */
 .wc-card .wc-badge-winner.wc-badge-winner { background: var(--board-cell-bot, #18191C); color: #fff; border-radius: 3px; box-shadow: var(--ficha-canto); }
 .wc-total-hint.wc-total-hint { background: transparent; border: 1px dashed var(--slate-300); border-left: 1px dashed var(--slate-300); }
 .wc-total-hint-btn.wc-total-hint-btn { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
