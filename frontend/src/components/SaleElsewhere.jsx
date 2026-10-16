@@ -32,7 +32,6 @@ export default function SaleElsewhere({ legs = [], t }) {
   if (!legs.length) return null;
   return (
     <div className="wc-sale-else">
-      <p className="wc-sale-kicker">{t("results.saleElsewhere")}</p>
       {legs.map((leg) => {
         const target = bookTarget(leg);
         const name = target.airline || leg.origin;
@@ -51,7 +50,6 @@ export default function SaleElsewhere({ legs = [], t }) {
           </div>
         );
       })}
-      <p className="wc-sale-hint">{t("results.saleElsewhereHint")}</p>
     </div>
   );
 }

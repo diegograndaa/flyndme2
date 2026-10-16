@@ -141,7 +141,6 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
       <div className="fm-board-top">
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
-          <p className="fm-board-sub">{t("board.departuresSub", { n: flights.length })}</p>
         </div>
         {savings > 10 && (
           <span className="fm-board-savings">

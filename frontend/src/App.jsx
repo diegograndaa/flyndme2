@@ -2240,10 +2240,6 @@ export default function App() {
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
           <ZoneHead id="fm-decision-title" variant="decision" num="01"
             title={t("results.decisionTitle")} />
-          {resultBasis === "cheaper" && (
-            <Notice variant="partial" tag={t("board.tagNotice")}
-              text={t("results.destBasisCheaper")} />
-          )}
           {sharedAt && (
             <Notice variant="partial" tag={t("board.tagNotice")}
               text={t("results.sharedNotice", {

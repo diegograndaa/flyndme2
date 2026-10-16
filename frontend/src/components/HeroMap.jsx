@@ -256,7 +256,6 @@ export default function HeroMap({ origins = [], compact = false, idSuffix = "" }
           <FlapText text={dest} size="sm" className="hm-meet-flap" settleMs={520} />
           <span className="hm-meet-q" aria-hidden="true">?</span>
         </span>
-        <span className="hm-note">{t("landing.mapNote")}</span>
       </div>
     </div>
   );

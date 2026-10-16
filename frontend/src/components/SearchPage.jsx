@@ -191,8 +191,6 @@ const SearchPage = React.memo(function SearchPage({
           sugerencias del propio campo ya cubren la búsqueda y la exploración). */}
       <div className="sf-grid">
         <div className="sf-form fm-card">
-          <h2 className="sf-title">{t("search.title")}</h2>
-
           {/* Recent searches */}
           {recentSearches?.length > 0 && !loading && (
             <div className="sf-recent">
@@ -507,14 +505,7 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Flexible dates */}
                 <div className="sf-section">
                   <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.flexLabel")}</div>
-                      <div className="sf-hint">
-                        {flexEnabled
-                          ? t("search.flexHintOn", { days: flexDays })
-                          : t("search.flexHintOff")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.flexLabel")}</div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="flexSwitch"
                         checked={flexEnabled} onChange={(e) => setFlexEnabled(e.target.checked)} disabled={loading} />
@@ -554,12 +545,7 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Budget */}
                 <div className="sf-section">
                   <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
-                      <div className="sf-hint">
-                        {budgetEnabled ? t("search.budgetHintOn", { amount: formatEur(maxBudget) }) : t("search.budgetHintOff")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.budgetLabel")}</div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" id="budgetSwitch"
                         checked={budgetEnabled} onChange={(e) => setBudgetEnabled(e.target.checked)} disabled={loading} />
@@ -628,14 +614,7 @@ const SearchPage = React.memo(function SearchPage({
                 {/* Destination filter */}
                 <div className="sf-section">
                   <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="sf-label mb-0">{t("search.destLabel")}</div>
-                      <div className="sf-hint">
-                        {selectedDests.length > 0
-                          ? (selectedDests.length === 1 ? t("search.destSelectedOne") : t("search.destSelected", { n: selectedDests.length }))
-                          : t("search.destBasisCheaperHint")}
-                      </div>
-                    </div>
+                    <div className="sf-label mb-0">{t("search.destLabel")}</div>
                     <button type="button" className="btn btn-sm btn-outline-primary"
                       onClick={() => setShowDestPicker((v) => !v)} disabled={loading}>
                       {showDestPicker ? t("search.destHide") : t("search.destChoose")}
@@ -749,14 +728,9 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               </div>
             )}
-            <div className="sf-section">
-              <div className="sf-label mb-1">{t("search.destLabel")}</div>
-              <div className="sf-hint">
-                {selectedDests.length > 0
-                  ? t("search.destBasisCheaperOverride")
-                  : t("search.destBasisCheaperHint")}
-              </div>
-            </div>
+            {selectedDests.length === 0 && (
+              <p className="sr-only">{t("search.destBasisCheaperHint")}</p>
+            )}
 
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
@@ -812,8 +786,6 @@ const SearchPage = React.memo(function SearchPage({
               </button>
             )}
             <div className="sf-footnote">
-              <span>{t("search.footnoteTime")}</span>
-              <span className="sf-kbd-hint">{t("search.kbdHint")}</span>
               <span>{t("search.footnotePrices")}</span>
             </div>
           </form>

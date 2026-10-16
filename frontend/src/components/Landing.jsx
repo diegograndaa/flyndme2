@@ -73,7 +73,6 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
                   {title.slice(i + accent.length)}
                 </>);
               })()}</h1>
-              <p className="lp-lead">{t("landing.lead")}</p>
             </div>
             <div className="hm-home-map-m">
               <MapSlot origins={mapOrigins} compact idSuffix="-m" />
@@ -107,10 +106,6 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
                 );
               })}
             </ol>
-            <div className="lp-card-meta">
-              <span>{t("landing.metaSource")}</span>
-              <span>{t("landing.metaTime")}</span>
-            </div>
           </div>
         </div>
       </section>
