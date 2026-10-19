@@ -2269,15 +2269,6 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
-            mapSlot={listedFlights.length > 0 ? (
-              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
-                <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
-                  <DestinationMap inline flights={listedFlights} bestDestination={displayDest} origins={cleanOrigins}
-                    currency={currency}
-                    onSelect={chooseDestination} />
-                </Suspense>
-              </ErrorBoundary>
-            ) : null}
           />
           </Suspense>
           </ErrorBoundary>
@@ -2378,6 +2369,24 @@ export default function App() {
             }}
           />
 
+          {/* El mapa no va en la cabecera: la decisión es la foto y el precio.
+              Aquí, bajo las salidas, se puede tocar un destino sin ocupar la
+              primera pantalla. */}
+          {listedFlights.length > 1 && (
+            <div className="fm-route-map">
+              <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
+                <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
+                  <DestinationMap inline flights={listedFlights} bestDestination={displayDest || bestDestination} origins={cleanOrigins}
+                    currency={currency}
+                    onSelect={(dest) => {
+                      chooseDestination(dest);
+                      setTimeout(() => document.querySelector(".fm-decision")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" }), 60);
+                    }} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
           {/* JSON-LD structured data for SEO */}
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -2391,8 +2400,7 @@ export default function App() {
             }
           }) }} />
 
-          {/* Pestañas: Comparar · Más opciones (el mapa de rutas vive ahora en la
-              tarjeta ganadora, junto a la foto). */}
+          {/* Pestañas: Comparar · Más opciones. El mapa va encima, bajo las salidas. */}
           <div className="rv-tabs" ref={tabContentRef}>
             {listedFlights.length > 1 && (
             <>

@@ -309,16 +309,23 @@
 }
 .sf-form .btn-outline-primary.btn-outline-primary:hover { background: var(--navy); color: var(--white); }
 
-/* ══ 30. Resultados: mapa junto a la foto + panel de salidas con fotos ═════ */
+/* ══ 30. Resultados: foto a todo el ancho + mapa bajo las salidas ═══════════ */
 
-/* Banda superior de la tarjeta: foto (a color) | mapa de rutas */
+/* La foto es la cabecera. El mapa, si llega como mapSlot, sigue al lado. */
 .wc-top--map { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); }
 .wc-card.wc-card .wc-top .wc-image-wrap { height: 230px; }
 .wc-map { position: relative; min-width: 0; min-height: 230px; border-left: 1px solid var(--line); }
 @media (min-width: 768px) {
-  .wc-card.wc-card .wc-top .wc-image-wrap { height: 280px; }
-  .wc-map { min-height: 280px; }
+  .wc-card.wc-card .wc-top .wc-image-wrap { height: 250px; }
+  .wc-map { min-height: 250px; }
 }
+/* Mapa secundario, bajo el panel de salidas. Alto bastante para leer las
+   fichas, pero fuera de la primera pantalla. */
+.fm-route-map {
+  position: relative; height: 280px; margin-top: 10px; overflow: hidden;
+  border: 1px solid var(--card-line); border-radius: var(--radius-sm); background: var(--dm-sea);
+}
+@media (max-width: 600px) { .fm-route-map { height: 220px; } }
 .dm-wrap.dm-wrap--inline { position: absolute; inset: 0; padding: 0; border: 0; border-radius: 0; background: var(--dm-sea); overflow: visible; }
 .dm-wrap--inline .dm-container { position: absolute; inset: 0; border: 0; border-radius: 0; overflow: visible; }
 .dm-wrap--inline .dm-svg { width: 100%; height: 100%; }

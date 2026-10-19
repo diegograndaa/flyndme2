@@ -194,8 +194,7 @@ const WinnerCard = React.memo(function WinnerCard({
   });
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
-      {/* Foto del destino + mapa de rutas, lado a lado (oct-2026): el mapa ya
-          no se esconde tras una pestaña al final de la página. */}
+      {/* Foto del destino a todo el ancho. El mapa va debajo de las salidas. */}
       <div className={`wc-top${mapSlot ? " wc-top--map" : ""}`}>
       <div className="wc-image-wrap">
         <img src={imgUrl} alt={city || code} className="wc-image"
