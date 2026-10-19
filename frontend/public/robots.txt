@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://flyndme2.vercel.app/sitemap.xml
+Sitemap: https://flyndme.com/sitemap.xml

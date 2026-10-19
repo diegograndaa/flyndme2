@@ -5,7 +5,7 @@ ciudades distintas se encuentre. Compara vuelos desde múltiples orígenes
 hacia múltiples destinos y optimiza por coste total del grupo o por equidad
 entre viajeros (fairness score).
 
-**Demo**: https://flyndme2.vercel.app · **API**: https://flyndme-backend.onrender.com
+**Demo**: https://flyndme.com · **API**: https://flyndme-backend.onrender.com
 
 ## Capturas
 

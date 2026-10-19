@@ -24,7 +24,7 @@ const FRONTEND_DIR = join(__dirname, "..");
 const PUBLIC_DIR = join(FRONTEND_DIR, "public");
 
 const seed = JSON.parse(readFileSync(join(__dirname, "seo-seed.json"), "utf8"));
-const SITE = String(seed.site || "https://flyndme2.vercel.app").replace(/\/+$/, "");
+const SITE = String(seed.site || "https://flyndme.com").replace(/\/+$/, "");
 const API = String(process.env.SEO_API_BASE || "https://flyndme-backend.onrender.com").replace(/\/+$/, "");
 
 // ─── Nombres de ciudad (IATA → display), localizados ────────────────────────
@@ -638,7 +638,7 @@ function renderPage(page, lang, flights) {
 
     <footer class="site-foot">
       <p>${escHtml(t.footer)}</p>
-      <p>&copy; ${NOW.getFullYear()} FlyndMe &middot; <a href="/">flyndme2.vercel.app</a></p>
+      <p>&copy; ${NOW.getFullYear()} FlyndMe &middot; <a href="/">flyndme.com</a></p>
     </footer>
   </div>
 </body>

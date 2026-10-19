@@ -204,7 +204,7 @@ router.post("/", createLimiter, asyncH(async (req, res) => {
 // the card invites participation ("Where should we all meet? · N cities · add
 // yours") instead of announcing a winner.
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://flyndme2.vercel.app";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://flyndme.com";
 
 function escapeHtml(s) {
   return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")

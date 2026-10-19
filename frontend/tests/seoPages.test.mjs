@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 
-const SITE = "https://flyndme2.vercel.app";
+const SITE = "https://flyndme.com";
 const pub = new URL("../public/", import.meta.url);
 const pages = {};
 for (const dir of ["quedar", "meet"]) {
