@@ -542,12 +542,12 @@ test("render: el cobro del grupo desglosa los dos y abre el pago con esa cifra",
   };
   const html = renderWithI18n(React.createElement(GroupSalePanel, {
     sale: { phase: "quote", quote },
-    estimateLabel: "€240",
   }));
   assert.ok(html.includes("32.44") && html.includes("32.16") && html.includes("64.60"));
   assert.ok(html.includes("Pay 64.60") || html.includes("Pagar 64,60") || html.includes("64.60"));
   assert.ok(html.includes("/?caja=abcdefghijklmnop"));
-  assert.ok(html.includes("€240"));
+  assert.ok(!html.includes("€240"));
+  assert.ok(!html.includes("wc-sale-lines"), "no se parten tarifa, comisión y tarjeta");
   assert.ok(!html.includes('type="date"'), "el formulario de pago no está en la ficha");
   const broken = renderWithI18n(React.createElement(GroupSalePanel, {
     sale: { phase: "quote", quote: { ...quote, charge: "64.61" } },

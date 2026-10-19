@@ -103,7 +103,7 @@ test("con un solo origen no hay compra de grupo", () => {
   assert.ok(html.includes("wizzair.com"), "el Reservar de ese vuelo sigue");
 });
 
-test("la tarifa emitible se enseña aparte de la estimación, con comisión", () => {
+test("con tarifa emitible el titular es el precio final, gastos incluidos", () => {
   const sale = {
     phase: "quote",
     quote: {
@@ -126,8 +126,9 @@ test("la tarifa emitible se enseña aparte de la estimación, con comisión", ()
   assert.ok(html.includes("44.33") && html.includes("21.63"), "cada viajero tiene su pago");
   assert.match(html, /wc-sale-codes">MAD[^<]*LTN/);
   assert.match(html, /wc-sale-codes">BCN[^<]*LTN/);
-  assert.ok(/Comisión 5%|Fee 5%/.test(html), html);
-  assert.ok(/Estimación|Estimate/.test(html));
+  assert.ok(/Precio final, gastos incluidos|Final price, fees included/.test(html), html);
+  assert.ok(!/Comisión 5%|Fee 5%/.test(html), "la comisión va dentro del precio");
+  assert.ok(!/Estimación €|Estimate €/.test(html));
   assert.ok(html.includes('href="/?caja=q1"') && html.includes('target="_blank"'), "el pago abre en otra pestaña");
   assert.ok(!html.includes("sale-MAD-0-given") && !html.includes('type="date"'), "el formulario no está en la ficha");
   assert.ok(!html.includes("aviasales.com"));
@@ -234,9 +235,13 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
       },
     },
   }));
-  const verifiedAt = Math.max(html.indexOf("Comprobada"), html.indexOf("Checked"));
+  const finalAt = Math.max(
+    html.indexOf("Precio final, gastos incluidos"),
+    html.indexOf("Final price, fees included"),
+  );
   const saleAt = html.indexOf('class="wc-sale"');
-  assert.ok(verifiedAt >= 0 && saleAt > verifiedAt, "la comprobación queda aparte de la compra");
+  assert.ok(finalAt >= 0 && saleAt > finalAt, "el titular es el precio a pagar, antes de la compra");
+  assert.ok(!html.includes("Comprobada") && !/\bChecked\b/.test(html), "el cobro no se etiqueta como la estimación comprobada");
   assert.ok(html.includes('href="/?caja=q2"'), "el vuelo que sí está se paga en la otra pestaña");
   assert.ok(!html.includes("sale-MAD-") && !html.includes("sale-OVD-"), "el formulario no está en la ficha");
   assert.match(html, /wc-sale-codes">OVD[^<]*ORY/);

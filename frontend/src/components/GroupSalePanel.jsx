@@ -59,7 +59,7 @@ function saleMessage(t, sale) {
   return t("results.saleFailed");
 }
 
-export default function GroupSalePanel({ legs = [], sale = null, estimateLabel = "", onRequest }) {
+export default function GroupSalePanel({ legs = [], sale = null, onRequest }) {
   const { t } = useI18n();
   const quote = sale?.quote || null;
 
@@ -99,10 +99,7 @@ export default function GroupSalePanel({ legs = [], sale = null, estimateLabel =
       {quoted && external.length > 0 && (
         <p className="wc-sale-kicker">{t("results.saleHere")}</p>
       )}
-      {balanced && <SaleBreakdown quote={quote} t={t} />}
-      {balanced && estimateLabel && (
-        <p className="wc-sale-flight">{t("results.saleEstimateApart", { amount: estimateLabel })}</p>
-      )}
+      {balanced && <SaleBreakdown quote={quote} t={t} part="flights" />}
       {quoted && !balanced && <p className="wc-sale-note" role="alert">{t("results.saleMismatch")}</p>}
       {balanced && (
         <a className="wc-sale-btn" href={checkoutPath(quote.quoteId)} target="_blank" rel="noopener noreferrer">

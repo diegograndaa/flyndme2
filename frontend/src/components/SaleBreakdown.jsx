@@ -20,7 +20,9 @@ export default function SaleBreakdown({ quote, t, part = "all", variant = "compa
   if (!quote) return null;
   const money = (amount) => saleMoney(amount, quote.currency);
   const flights = part !== "totals" && part !== "fees";
-  const totals = part !== "flights";
+  // La ficha y la caja enseñan el precio de cada vuelo ya con la comisión y
+  // la tarjeta dentro. Esas líneas sueltas hacían parecer otro importe.
+  const totals = part === "totals";
   return (
     <div className="wc-sale-legs">
       {flights && quote.legs.map((leg) => {
