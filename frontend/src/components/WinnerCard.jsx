@@ -17,7 +17,7 @@ import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
 import "../styles/results-simple.css";
-import { getCityImage } from "../utils/cityImages";
+import { cityImageSources } from "../utils/cityImages";
 import { Heart, Calendar, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
@@ -138,13 +138,17 @@ const WinnerCard = React.memo(function WinnerCard({
   // ciudad → fairness siempre "perfecta" y spread 0. Ocultamos la UI de equidad
   // (anillo, toggle precio/equidad y barra) para no mostrar métricas triviales.
   const singleOrigin = cleanOrigins.length <= 1;
+  const photoCode = normalizeCode(dest?.destination);
+  const photoSources = cityImageSources(photoCode, getBaseUrl(), { w: 1200, h: 500 });
+  const [imgStep, setImgStep] = useState(0);
+  useEffect(() => { setImgStep(0); }, [photoCode]);
 
   // Todos los hooks ya se han llamado de forma incondicional → early return seguro.
   if (!dest) return null;
 
   const code   = normalizeCode(dest.destination);
   const city   = cityOf(code);
-  const imgUrl = getCityImage(code, getBaseUrl(), { w: 1200, h: 500 });
+  const imgUrl = photoSources[Math.min(imgStep, photoSources.length - 1)];
   const dep    = dest.bestDate || "";
   const ret    = dest.bestReturnDate || (tripType === "roundtrip" ? returnDate : "");
 
@@ -236,8 +240,8 @@ const WinnerCard = React.memo(function WinnerCard({
       {/* Foto del destino a todo el ancho. El mapa va debajo de las salidas. */}
       <div className={`wc-top${mapSlot ? " wc-top--map" : ""}`}>
       <div className="wc-image-wrap">
-        <img src={imgUrl} alt={city || code} className="wc-image"
-          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `${getBaseUrl()}destinations/placeholder.jpg`; }} />
+        <img key={imgUrl} src={imgUrl} alt={city || code} className="wc-image"
+          onError={() => { if (imgStep < photoSources.length - 1) setImgStep((n) => n + 1); }} />
         {/* Foto A COLOR con degradado oscuro abajo para leer el nombre (el
             duotono amarillo hacía que todas las ciudades parecieran la misma). */}
         <div className="wc-image-overlay" />
