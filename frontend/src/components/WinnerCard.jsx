@@ -282,6 +282,16 @@ const WinnerCard = React.memo(function WinnerCard({
               <span className="wc-verify-caption">{t("board.estimateNote")}</span>
             )}
           </div>
+          <div className="wc-total-meta">
+            {(dep || depDate) && (
+              <span>
+                {formatDate(dep || depDate)}
+                {tripType === "roundtrip" && ret ? ` → ${formatDate(ret)}` : ""}
+              </span>
+            )}
+            <span>{tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway")}</span>
+            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
+          </div>
           {!singleOrigin && (
             <GroupSalePanel
               legs={saleLegs}

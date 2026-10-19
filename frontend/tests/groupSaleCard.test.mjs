@@ -58,6 +58,9 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el gru
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
   assert.match(html, />Comprar<|>Buy</);
+  assert.match(html, /wc-total-meta/);
+  assert.match(html, /Solo ida|One way/);
+  assert.match(html, /2 viajeros|2 travelers/);
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
