@@ -2110,15 +2110,29 @@ export default function App() {
       )}
 
       {view === "results" && bestDestination && (
-        <div className="container fm-results-page view-enter" key="results" style={{ maxWidth: 1080 }}>
+        <div className="container fm-results-page view-enter" key="results" style={{ maxWidth: 1280 }}>
           {/* h1 solo para lectores de pantalla: la vista no tiene heading visible */}
           <h1 className="sr-only">
             {t(cleanOrigins.length <= 1 ? "results.buyTitleOne" : "results.buyTitle", {
               city: cityOf(normalizeCode(bestDestination.destination)) || normalizeCode(bestDestination.destination),
             })}
           </h1>
-          {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
-              orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
+          <div className="fm-results-layout">
+          <ResultFilters
+            flights={flights}
+            listedCount={listedFlights.length}
+            filters={resultFilters}
+            onChange={changeFilters}
+            onReset={resetFilters}
+            multiOrigin={cleanOrigins.length > 1}
+            status={arrivalStatus(displayDest)}
+            displayDest={displayDest}
+            origins={cleanOrigins}
+            domesticCountry={homeCountry}
+            domesticName={homeCountry ? countryOf(cleanOrigins[0]) : ""}
+            domesticChoices={homeCodes.length}
+          />
+          <div className="fm-results-main">
           {/* Ruta, días vecinos y fechas más baratas en una sola línea.
               Si no caben, la franja se desplaza; no baja a otra fila. */}
           <div className="fm-results-bar">
@@ -2184,22 +2198,6 @@ export default function App() {
           </div>
           </div>
 
-          <div className="fm-results-layout">
-          <ResultFilters
-            flights={flights}
-            listedCount={listedFlights.length}
-            filters={resultFilters}
-            onChange={changeFilters}
-            onReset={resetFilters}
-            multiOrigin={cleanOrigins.length > 1}
-            status={arrivalStatus(displayDest)}
-            displayDest={displayDest}
-            origins={cleanOrigins}
-            domesticCountry={homeCountry}
-            domesticName={homeCountry ? countryOf(cleanOrigins[0]) : ""}
-            domesticChoices={homeCodes.length}
-          />
-          <div className="fm-results-main">
           {/* La barra de precio va en la columna de la decisión: si cubriera
               también los filtros, al hacer scroll no se podrían pulsar. */}
           <div className="fm-sticky-bar">
