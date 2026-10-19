@@ -48,7 +48,7 @@ import { readStoredList, isRecentSearchEntry } from "./utils/storage";
 import { normalizeSharedFlights } from "./utils/sharedResults";
 import "./styles/board.css";
 import "./styles/revision.css";
-import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Heart, X, Plane, Download, BarChart3, CalendarClock, PlaneLanding, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
@@ -2133,9 +2133,9 @@ export default function App() {
             domesticChoices={homeCodes.length}
           />
           <div className="fm-results-main">
-          {/* Ruta, días vecinos y fechas más baratas en una sola línea.
-              Si no caben, la franja se desplaza; no baja a otra fila. */}
-          <div className="fm-results-bar">
+          {/* La búsqueda a un lado y la fecha al otro, como un buscador.
+              Las fechas más baratas van en su propia línea, solo si las hay. */}
+          <div className="fm-searchline">
           <FlightHeader
             origins={cleanOrigins}
             departureDate={departureDate}
@@ -2150,53 +2150,52 @@ export default function App() {
             ].filter(Boolean)}
             onChange={() => setView("search")}
           />
-
-          <div className="fm-date-row">
-          <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
-            <span className="fm-date-strip-label sr-only">{t("results.tryNearbyDates")}</span>
-            <div className="fm-date-strip-days">
-              {[-2, -1, 0, 1, 2].map((offset) => {
-                const iso = addDaysISO(departureDate || todayISO(), offset);
-                if (!iso || iso < todayISO() || iso > horizonISO()) return null;
-                const wd = weekdayOf(iso);
-                const day = String(Number(iso.slice(8, 10)));
-                if (offset === 0) {
-                  return (
-                    <span key={offset} className="fm-date-strip-day fm-date-strip-day--current" aria-current="date">
-                      <span className="fm-date-strip-wd">{wd}</span>
-                      <span className="fm-date-strip-n">{day}</span>
-                    </span>
-                  );
-                }
-                return (
-                  <button key={offset} type="button" className="fm-date-strip-day"
-                    onClick={() => shiftDeparture(offset)}>
-                    <span className="fm-date-strip-wd">{wd}</span>
-                    <span className="fm-date-strip-n">{day}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+          {(() => {
+            const short = (iso) => formatDate(iso).replace(/\s+\d{4}$/, "");
+            const prevIso = addDaysISO(departureDate || todayISO(), -1);
+            const nextIso = addDaysISO(departureDate || todayISO(), 1);
+            const inRange = (iso) => iso && iso >= todayISO() && iso <= horizonISO();
+            const label = tripType === "roundtrip" && returnDate
+              ? `${weekdayOf(departureDate)} ${short(departureDate)} – ${short(returnDate)}`
+              : `${weekdayOf(departureDate)} ${short(departureDate)}`;
+            return (
+              <nav className="fm-date-step" aria-label={t("results.tryNearbyDates")}>
+                <button type="button" className="fm-date-step-btn" disabled={!inRange(prevIso)}
+                  aria-label={t("results.dayPrev")} onClick={() => shiftDeparture(-1)}>
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </button>
+                <span className="fm-date-step-label">{label}</span>
+                <button type="button" className="fm-date-step-btn" disabled={!inRange(nextIso)}
+                  aria-label={t("results.dayNext")} onClick={() => shiftDeparture(1)}>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
+              </nav>
+            );
+          })()}
+          </div>
           {dateRecs.length > 0 && (
             <aside className="fm-date-recs" aria-live="polite"
               aria-label={t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}>
-              <span className="fm-date-recs-label sr-only">
+              <span className="fm-date-recs-label">
                 {t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}
               </span>
               {dateRecs.map((d) => (
                 <button key={`${d.date}-${d.returnDate || ""}`} type="button" className="fm-date-rec"
+                  aria-label={t(d.returnDate ? "cheaperDate.textRoundtrip" : "cheaperDate.text", {
+                    date: formatDate(d.date),
+                    returnDate: d.returnDate ? formatDate(d.returnDate) : "",
+                    total: money(d.totalEUR),
+                    saving: money(d.savingEUR),
+                  })}
                   onClick={() => useCheaperDate(d.date, d.returnDate)}>
                   <span className="fm-date-rec-when">
-                    {formatDate(d.date)}{d.returnDate ? ` → ${formatDate(d.returnDate)}` : ""}
+                    {formatDate(d.date).replace(/\s+\d{4}$/, "")}{d.returnDate ? ` – ${formatDate(d.returnDate).replace(/\s+\d{4}$/, "")}` : ""}
                   </span>
-                  <span className="fm-date-rec-save">{money(d.totalEUR)} · −{money(d.savingEUR)}</span>
+                  <span className="fm-date-rec-save">−{money(d.savingEUR)}</span>
                 </button>
               ))}
             </aside>
           )}
-          </div>
-          </div>
 
           {/* La barra de precio va en la columna de la decisión: si cubriera
               también los filtros, al hacer scroll no se podrían pulsar. */}

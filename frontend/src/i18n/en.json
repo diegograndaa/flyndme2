@@ -442,6 +442,8 @@
     "searchTime": "Found in {{s}}s",
     "groupSavings": "Your group saves {{amount}} vs the most expensive option",
     "tryNearbyDates": "Try nearby dates",
+    "dayPrev": "Previous day",
+    "dayNext": "Next day",
     "priceTrend": "Price trend",
     "countdownToday": "Departing today!",
     "countdownTomorrow": "Departing tomorrow",

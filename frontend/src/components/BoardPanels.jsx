@@ -17,7 +17,7 @@ import { convertPrice, sortByCriterion, maxLegPrice } from "../utils/resultsLogi
 import { getCityImage } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
 import { PayBars } from "./TravelerBits";
-import { ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { useFlip } from "../hooks/useFlip";
 
 function money(v, currency) {
@@ -40,17 +40,16 @@ export const FlightHeader = React.memo(function FlightHeader({
           <span className="fm-flight-head-origins">
             {origins.map((o, i) => <span key={o + i} className="fm-flight-head-code">{o}</span>)}
           </span>
-          <span className="fm-flight-head-arrow" aria-hidden="true">→</span>
           <span className="fm-flight-head-meta">
-            {dates}
-            {travelers > 0 && <> · {travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</>}
+            <span className="sr-only">{dates}</span>
+            {travelers > 0 && (travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers }))}
             {badges.map((b) => <span key={b} className="fm-flight-head-badge">{b}</span>)}
           </span>
         </div>
       </div>
       {onChange && (
         <button type="button" className="fm-flight-head-btn" aria-label={t("results.changeSearch")} onClick={onChange}>
-          <SlidersHorizontal size={14} aria-hidden="true" />
+          <Pencil size={14} aria-hidden="true" />
           <span className="fm-flight-head-btn-text">{t("results.changeSearch")}</span>
         </button>
       )}
