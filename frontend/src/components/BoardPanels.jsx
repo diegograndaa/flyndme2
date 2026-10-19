@@ -14,7 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, formatDate, getBaseUrl } from "../utils/helpers";
 import { convertPrice, sortByCriterion, maxLegPrice } from "../utils/resultsLogic";
-import { cityImageSources } from "../utils/cityImages";
+import { cityPhotos } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
 import { PayBars } from "./TravelerBits";
 import { ChevronRight, Pencil } from "lucide-react";
@@ -99,14 +99,14 @@ export function Notice({ tag, text, detail, actionLabel, onAction, disabled, var
 /** Miniatura de la ciudad. Si una fuente falla, prueba la siguiente; el código
  *  solo se queda a la vista cuando no carga ninguna. */
 function DestThumb({ code }) {
-  const sources = cityImageSources(code, getBaseUrl(), { w: 192, h: 128 });
+  const sources = cityPhotos(code, getBaseUrl(), { w: 192, h: 128 });
   const [step, setStep] = useState(0);
   useEffect(() => { setStep(0); }, [code]);
-  const src = sources[Math.min(step, sources.length - 1)];
+  const src = sources[step];
   return (
     <span className="dep-thumb" aria-hidden="true">
       <span className="dep-thumb-code">{code}</span>
-      {step < sources.length && (
+      {src && (
         <img key={src} src={src} alt="" loading="lazy" decoding="async"
           width="96" height="64" onError={() => setStep((n) => n + 1)} />
       )}
