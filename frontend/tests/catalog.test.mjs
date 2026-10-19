@@ -38,7 +38,9 @@ test("catálogo: las ciudades de siempre conservan su foto; un aeropuerto nuevo 
   assert.match(getCityImageUrl("SVQ"), /photo-1634010405255-2ce3fdd0946d/);
   assert.match(getCityImageUrl("BIO"), /photo-1663844234274-7089dd2d8243/);
   assert.equal(getCityImageUrl("OVD"), null);
-  assert.match(getCityImage("OVD", "/base/"), /^https:\/\/photo\.hotellook\.com\/static\/cities\/800x400\/OVD\.jpg$/);
+  const ovdPhoto = getCityImage("OVD", "/base/");
+  assert.match(ovdPhoto, /^https:\/\//);
+  assert.equal(ovdPhoto.endsWith("destinations/placeholder.jpg"), false);
 });
 
 test("catálogo: Asturias y el resto de Europa se pueden elegir, sin cambiar la búsqueda habitual", async () => {
@@ -69,7 +71,7 @@ test("catálogo: Asturias y el resto de Europa se pueden elegir, sin cambiar la 
 });
 
 test("cityImages: Unsplash si hay ficha; si no, Hotellook o Wikipedia; jamás un jpg local inventado", async () => {
-  const { getCityImageUrl, getCityImage, cityImageSources, hotellookUrl } = await import("../src/utils/cityImages.js");
+  const { getCityImageUrl, getCityImage, cityImageSources, cityPhotos, hotellookUrl } = await import("../src/utils/cityImages.js");
   const { AIRPORTS } = await import("../src/utils/helpers.js");
   const u = getCityImageUrl("par", { w: 320, h: 200 });
   assert.match(u, /^https:\/\/images\.unsplash\.com\/photo-[\w-]+\?w=320&h=200&fit=crop/);
@@ -81,10 +83,17 @@ test("cityImages: Unsplash si hay ficha; si no, Hotellook o Wikipedia; jamás un
   assert.equal(hotellookUrl("OVD", { w: 192, h: 128 }), "https://photo.hotellook.com/static/cities/192x128/OVD.jpg");
   assert.equal(hotellookUrl("PAR"), null);
   const ovd = cityImageSources("OVD", "/base/", { w: 192, h: 128 });
-  assert.equal(ovd[0], "https://photo.hotellook.com/static/cities/192x128/OVD.jpg");
+  assert.ok(ovd.includes("https://photo.hotellook.com/static/cities/192x128/OVD.jpg"));
   assert.equal(ovd.at(-1), "/base/destinations/placeholder.jpg");
+  assert.equal(ovd[0].endsWith("destinations/placeholder.jpg"), false);
+  assert.equal(cityPhotos("ZZZ", "/base/").length, 0);
+  assert.equal(cityPhotos("OVD", "/base/").some((s) => s.endsWith("placeholder.jpg")), false);
   assert.match(getCityImage("BJZ"), /upload\.wikimedia\.org\/.*Badajoz/);
-  assert.match(getCityImage("LPA", "/", { w: 1200, h: 500 }), /photo\.hotellook\.com\/static\/cities\/1200x500\/LPA\.jpg/);
+  assert.ok(cityImageSources("LPA", "/", { w: 1200, h: 500 }).includes("https://photo.hotellook.com/static/cities/1200x500/LPA.jpg"));
+  const rmo = cityImageSources("RMO", "/base/", { w: 1200, h: 500 });
+  assert.match(rmo[0], /upload\.wikimedia\.org\/wikipedia\/commons\/.*Chi/);
+  assert.ok(rmo.some((s) => s.includes("/1200x500/RMO.jpg")));
+  assert.equal(getCityImage("RMO").endsWith("placeholder.jpg"), false);
   const bare = [];
   for (const { code } of AIRPORTS) {
     const first = getCityImage(code, "/");

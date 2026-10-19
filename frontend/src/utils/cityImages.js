@@ -117,20 +117,30 @@ export function hotellookUrl(code, { w = 800, h = 400 } = {}) {
 
 /**
  * Fotos del destino, de la más específica a la de respaldo.
- * Unsplash (ficha comprobada) → Hotellook de ese código → miniatura de
- * Wikipedia de esa ciudad → el recuadro local. Quien pinte la imagen avanza
- * a la siguiente si una falla: el resultado no se queda en el código a secas.
+ * Unsplash (ficha comprobada) → miniatura de Wikimedia de esa ciudad →
+ * Hotellook de ese código → el recuadro local.
+ *
+ * Wikimedia va antes que Hotellook: Hotellook responde con una redirección a
+ * img.avs.io y, si ese salto no carga, la ficha avanzaba al comodín (un naipe)
+ * y el destino parecía no tener foto. La de Wikimedia es un archivo directo.
+ * Quien pinte la imagen avanza a la siguiente si una falla, y no pinta el
+ * comodín: sin foto se queda el nombre, no un dibujo de otra cosa.
  */
 export function cityImageSources(code, baseUrl = "/", opts = {}) {
   const c = codeOf(code);
   const sources = [];
   const unsplash = getCityImageUrl(c, opts);
   if (unsplash) sources.push(unsplash);
+  if (WIKI_PHOTOS[c]) sources.push(WIKI_PHOTOS[c]);
   const hotel = hotellookUrl(c, opts);
   if (hotel) sources.push(hotel);
-  if (WIKI_PHOTOS[c]) sources.push(WIKI_PHOTOS[c]);
   sources.push(withBase(baseUrl, "destinations/placeholder.jpg"));
   return sources;
+}
+
+/** Las que se pueden pintar. El comodín local no es una foto de la ciudad. */
+export function cityPhotos(code, baseUrl = "/", opts = {}) {
+  return cityImageSources(code, baseUrl, opts).filter((src) => !String(src).endsWith("destinations/placeholder.jpg"));
 }
 
 /**
