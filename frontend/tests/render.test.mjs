@@ -445,6 +445,11 @@ test("render: Landing extraída renderiza con CTAs", async () => {
     onStart: () => {}, onStartWithRoute: () => {},
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
+  assert.match(html, /lp-legs/);
+  assert.match(html, /Vuestro itinerario en 3 pasos|Your itinerary in 3 steps/);
+  assert.match(html, /Ciudad de cada viajero|Each traveler/);
+  assert.match(html, /destino más barato|cheapest destination/);
+  assert.match(html, /reserva su vuelo|books their flight/);
 });
 
 test("render: ChromeBits y ResultsPanels extraídos", async () => {
