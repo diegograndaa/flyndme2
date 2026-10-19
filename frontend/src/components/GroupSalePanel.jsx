@@ -3,7 +3,7 @@
 // tarifa no se pinta un precio de cobro. Ryanair y Wizz, y cualquier vuelo
 // que Duffel no tenga, se reservan en su web y no entran en este pago.
 import React from "react";
-import { Ticket } from "lucide-react";
+import { ExternalLink, Ticket } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
 import { checkoutPath, quoteAddsUp } from "../utils/saleCheckout";
@@ -102,16 +102,19 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest }) {
       )}
       {balanced && <SaleBreakdown quote={quote} t={t} part="flights" />}
       {balanced && external.length > 0 && (
-        <div className="wc-sale-out">
-          {external.map((leg) => (
-            <p key={`${leg.origin}-${leg.flightNumber || ""}`} className="wc-sale-note">
-              {t("results.saleOnAirline", {
-                origin: leg.origin,
-                airline: airlineName(leg.airline) || leg.airline || leg.origin,
-              })}
-            </p>
-          ))}
-          <p className="wc-sale-note">{t("results.saleElsewhereHint")}</p>
+        <div className="wc-sale-out" role="note">
+          <ExternalLink size={18} aria-hidden="true" />
+          <div>
+            {external.map((leg) => (
+              <p key={`${leg.origin}-${leg.flightNumber || ""}`} className="wc-sale-out-line">
+                {t("results.saleOnAirline", {
+                  origin: leg.origin,
+                  airline: airlineName(leg.airline) || leg.airline || leg.origin,
+                })}
+              </p>
+            ))}
+            <p className="wc-sale-out-why">{t("results.saleElsewhereHint")}</p>
+          </div>
         </div>
       )}
       {quoted && !balanced && <p className="wc-sale-note" role="alert">{t("results.saleMismatch")}</p>}

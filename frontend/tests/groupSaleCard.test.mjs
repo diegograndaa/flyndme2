@@ -282,6 +282,7 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
   assert.ok(/Pagar aquí|Pay here/.test(html));
   assert.ok(/se reserva en la web de Ryanair|booked on Ryanair/.test(html));
   assert.ok(/no entra en este pago|not part of this payment/.test(html));
+  assert.match(html, /wc-sale-out/);
   assert.ok(!html.includes("ryanair.com"), "Ryanair se reserva en la página de pago");
   assert.ok(!html.includes("wizzair.com"), "la ficha de la búsqueda no repite otro precio");
   assert.ok(!html.includes("€41"), "la estimación no se suma debajo del cobro");
