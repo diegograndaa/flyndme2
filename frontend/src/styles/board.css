@@ -417,88 +417,37 @@
 }
 .lp-faq .lp-faq-a { padding-left: 4px; padding-right: 40px; }
 
-/* Bajo el itinerario: preguntas en dos columnas y, debajo, grupos que
-   rellenan la búsqueda. Las rutas estáticas no viven aquí ni en el pie. */
+/* Bajo el itinerario: las preguntas, en dos columnas. */
 .lp-lower {
-  padding: 12px 0 48px;
+  padding: 28px 0 56px;
   background: var(--white);
   border-top: 1px solid var(--line);
 }
-.lp-lower .lp-faq-title { margin: 8px 0 8px; font-size: 22px; }
+.lp-lower .lp-faq-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  letter-spacing: -.02em;
+}
 .lp-faq-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 48px;
-  margin-bottom: 36px;
 }
 .lp-lower .lp-faq-list { max-width: none; margin: 0; }
-.lp-lower .lp-faq-q { min-height: 48px; padding: 12px 0; }
-.lp-search-section { scroll-margin-top: 80px; }
-.lp-starts-title {
-  margin: 8px 0 6px;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -.015em;
-  color: var(--navy);
-}
-.lp-starts-lead {
-  margin: 0 0 16px;
-  max-width: 40em;
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--slate-700);
-}
-.lp-starts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.lp-start {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 14px 14px 14px 16px;
-  text-align: left;
-  font: inherit;
+.lp-lower .lp-faq-q {
+  min-height: 48px;
+  padding: 14px 0;
   font-size: 16px;
   line-height: 1.3;
-  color: var(--navy);
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--sign);
-  border-radius: 4px;
-  cursor: pointer;
 }
-.lp-start:hover { border-color: var(--navy); border-left-color: var(--sign); }
-.lp-start:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
-.lp-start:disabled { cursor: default; opacity: .55; }
-.lp-start-title { font-size: 16px; font-weight: 700; line-height: 1.2; }
-.lp-start-cities { display: flex; flex-wrap: wrap; gap: 6px 12px; }
-.lp-start-city {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 20px;
-  font-size: 13px;
-  color: var(--navy);
+.lp-lower .lp-faq-a {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--slate-700);
 }
-.lp-start-code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .04em;
-}
-.lp-start-name { color: var(--slate-700); }
-.lp-start-note { font-size: 13px; font-weight: 600; color: var(--slate-700); }
 @media (max-width: 800px) {
   .lp-faq-cols { grid-template-columns: 1fr; gap: 0; }
-  .lp-starts { grid-template-columns: 1fr; }
+  .lp-lower .lp-faq-title { font-size: 22px; }
 }
 
 /* ══ 6. Panel "buscando…" ════════════════════════════════════════════════ */

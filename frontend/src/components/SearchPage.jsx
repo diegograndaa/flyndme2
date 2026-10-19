@@ -1,7 +1,7 @@
 // ─── SearchPage ──────────────────────────────────────────────────────────────
 // Extraída de App.jsx (Mejora 20). Formulario de búsqueda completo: orígenes,
 // pasajeros, fechas (con avisos), destinos opcionales, opciones avanzadas.
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, PlaneTakeoff, Plane } from "lucide-react";
 import {
@@ -67,13 +67,10 @@ const SearchPage = React.memo(function SearchPage({
   onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
   embedded = false,
-  revealAdvanced = 0,
 }) {
   const { t } = useI18n();
   const headcount = totalPax(origins, passengers);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  // Un escenario «a medias» abre el criterio, que vive en las opciones avanzadas.
-  useEffect(() => { if (revealAdvanced) setShowAdvanced(true); }, [revealAdvanced]);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [destQuery, setDestQuery] = useState("");
   const [destOpen, setDestOpen] = useState(false);
