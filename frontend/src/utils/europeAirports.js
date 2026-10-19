@@ -1,6 +1,6 @@
 // Aeropuertos comerciales de Europa que no estaban en el catálogo corto.
 // Coordenadas publicadas (OurAirports): latitud y longitud reales, redondeadas.
-// No lleva fotos: sin una imagen comprobada de esa ciudad se usa el respaldo.
+// La foto no está en la ficha de Unsplash: cityImages la pide a Hotellook o a Wikimedia.
 // El pool de búsqueda por defecto no cambia (SEARCH_POOL).
 export const EUROPE_EXTRA = [
   { code: "KFZ", city: "Kukës", country: "Albania", lon: 20.42, lat: 42.04 },

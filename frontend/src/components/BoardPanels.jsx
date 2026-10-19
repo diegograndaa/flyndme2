@@ -10,11 +10,11 @@
 //                        (antes: podio Top 3 + barra de stats + lista aparte)
 // Presentacionales puros (reciben props, emiten eventos). Datos 100% reales:
 // precios/equidad vienen tal cual del backend, nada se inventa.
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, formatDate, getBaseUrl } from "../utils/helpers";
 import { convertPrice, sortByCriterion, maxLegPrice } from "../utils/resultsLogic";
-import { getCityImage } from "../utils/cityImages";
+import { cityImageSources } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
 import { PayBars } from "./TravelerBits";
 import { ChevronRight, Pencil } from "lucide-react";
@@ -96,15 +96,19 @@ export function Notice({ tag, text, detail, actionLabel, onAction, disabled, var
   );
 }
 
-/** Miniatura de la ciudad (foto a color). Sin foto → bloque con el código. */
+/** Miniatura de la ciudad. Si una fuente falla, prueba la siguiente; el código
+ *  solo se queda a la vista cuando no carga ninguna. */
 function DestThumb({ code }) {
-  const [failed, setFailed] = useState(false);
+  const sources = cityImageSources(code, getBaseUrl(), { w: 192, h: 128 });
+  const [step, setStep] = useState(0);
+  useEffect(() => { setStep(0); }, [code]);
+  const src = sources[Math.min(step, sources.length - 1)];
   return (
     <span className="dep-thumb" aria-hidden="true">
       <span className="dep-thumb-code">{code}</span>
-      {!failed && (
-        <img src={getCityImage(code, getBaseUrl(), { w: 192, h: 128 })} alt="" loading="lazy" decoding="async"
-          width="96" height="64" onError={() => setFailed(true)} />
+      {step < sources.length && (
+        <img key={src} src={src} alt="" loading="lazy" decoding="async"
+          width="96" height="64" onError={() => setStep((n) => n + 1)} />
       )}
     </span>
   );

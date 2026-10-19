@@ -2,11 +2,18 @@
 // Using curated Unsplash photo IDs for beautiful, consistent city photography.
 // Format: https://images.unsplash.com/photo-{ID}?w={width}&h={height}&fit=crop&q=80
 //
-// This replaces the low-quality local JPGs and covers ALL destination cities.
+// Las 54 ciudades de siempre. El resto del catálogo (cityPhotoFallbacks.js)
+// usa una foto real de Hotellook o de Wikimedia, no un jpg local que no existe.
 // Photo IDs audited & fixed (jun-2026): 20 dead IDs and 7 wrong-city photos
 // replaced with verified landmark shots (checked visually via Unsplash).
 
+import { HOTELLOOK_CODES, WIKI_PHOTOS } from "./cityPhotoFallbacks.js";
+
 const UNSPLASH_BASE = "https://images.unsplash.com";
+const HOTELLOOK_BASE = "https://photo.hotellook.com/static/cities";
+// Tamaños que Hotellook sirve. Otro (p. ej. 1000×600) responde vacío.
+const HOTELLOOK_SIZES = [[192, 128], [400, 300], [800, 400], [960, 480], [1200, 500], [1200, 640]];
+const HOTELLOOK = new Set(HOTELLOOK_CODES.split(" ").filter(Boolean));
 
 const CITY_PHOTO_IDS = {
   // ── Original 21 ──
@@ -80,13 +87,58 @@ export function getCityImageUrl(code, { w = 800, h = 400 } = {}) {
   return `${UNSPLASH_BASE}/photo-${id}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
 }
 
+function codeOf(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+function withBase(baseUrl, path) {
+  const base = String(baseUrl || "/");
+  return `${base.endsWith("/") ? base : `${base}/`}${path}`;
+}
+
+// El tamaño pedido se ajusta al más cercano que Hotellook realmente tiene.
+export function hotellookSize(w, h) {
+  const W = Number(w) || 800;
+  const H = Number(h) || 400;
+  let best = HOTELLOOK_SIZES[2];
+  let score = Infinity;
+  for (const size of HOTELLOOK_SIZES) {
+    const next = Math.abs(size[0] - W) + Math.abs(size[1] - H);
+    if (next < score) { best = size; score = next; }
+  }
+  return `${best[0]}x${best[1]}`;
+}
+
+export function hotellookUrl(code, { w = 800, h = 400 } = {}) {
+  const c = codeOf(code);
+  if (!HOTELLOOK.has(c)) return null;
+  return `${HOTELLOOK_BASE}/${hotellookSize(w, h)}/${c}.jpg`;
+}
+
 /**
- * Get image URL with local fallback.
- * Tries Unsplash first, falls back to local /destinations/{code}.jpg
+ * Fotos del destino, de la más específica a la de respaldo.
+ * Unsplash (ficha comprobada) → Hotellook de ese código → miniatura de
+ * Wikipedia de esa ciudad → el recuadro local. Quien pinte la imagen avanza
+ * a la siguiente si una falla: el resultado no se queda en el código a secas.
  */
-export function getCityImage(code, baseUrl = "/", { w = 800, h = 400 } = {}) {
-  const unsplash = getCityImageUrl(code, { w, h });
-  return unsplash || `${baseUrl}destinations/${code}.jpg`;
+export function cityImageSources(code, baseUrl = "/", opts = {}) {
+  const c = codeOf(code);
+  const sources = [];
+  const unsplash = getCityImageUrl(c, opts);
+  if (unsplash) sources.push(unsplash);
+  const hotel = hotellookUrl(c, opts);
+  if (hotel) sources.push(hotel);
+  if (WIKI_PHOTOS[c]) sources.push(WIKI_PHOTOS[c]);
+  sources.push(withBase(baseUrl, "destinations/placeholder.jpg"));
+  return sources;
+}
+
+/**
+ * Primera foto que hay que pedir. Si no hay ficha de esa ciudad, es Hotellook
+ * o Wikipedia, nunca un jpg local con el código (esos archivos no existen).
+ */
+export function getCityImage(code, baseUrl = "/", opts = {}) {
+  return cityImageSources(code, baseUrl, opts)[0];
 }
 
 // Cuántas fotos de destino precargar al pintar resultados (para que cambiar de
