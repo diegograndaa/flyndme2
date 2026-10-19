@@ -18,7 +18,7 @@ const C = {
   card: "#FBF9F5",
   stub: "#F7F4EE",
   ink: "#1A1A1A",
-  muted: "#6B6860",
+  muted: "#524F49",
   line: "#E5E0D8",
   dash: "#D6D0C4",
   track: "#ECE7DD",

@@ -39,8 +39,8 @@
   --navy:          #1A1A1A;
   --slate-900:     #2B2B2B;
   --slate-700:     #45433E;
-  --slate-500:     #6B6860;
-  --slate-400:     #6B6860;   /* AA 4.5:1 sobre crema y pie (antes #9C988E, 2.6:1) */
+  --slate-500:     #524F49;   /* secundaria que se lee: 7.8:1 sobre papel (antes #6B6860, 5.3:1) */
+  --slate-400:     #524F49;
   --slate-300:     #D6D0C4;
   --slate-200:     #E5E0D8;
   --slate-100:     #EEEAE2;
@@ -84,7 +84,7 @@
   --panel-bg:      #FBF9F5;
   --panel-stub:    #F7F4EE;
   --panel-ink:     #1A1A1A;
-  --panel-muted:   #5F5C55;
+  --panel-muted:   #524F49;
   --panel-faint:   #6F6B64;
   --panel-line:    #E5E0D8;
   --panel-hover:   rgba(26,26,26,.04);
