@@ -704,6 +704,31 @@
 }
 .fm-results-page { padding-top: 12px; padding-bottom: 24px; }
 
+/* Ruta + días + fechas más baratas en una sola línea. El sobrante se
+   desplaza dentro de la franja, no empuja el resto de la página. */
+.fm-results-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fm-results-bar::-webkit-scrollbar { display: none; }
+.fm-results-bar .fm-flight-head {
+  flex: 0 0 auto;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+.fm-results-bar .fm-date-row {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
 /* Tira de días bajo la cabecera, y al lado las fechas que abaratan el grupo.
    El día buscado es cartel de posición («estás aquí»); los vecinos relanzan
    la misma búsqueda, sin precio. Las recomendadas sí llevan el total real. */
@@ -711,7 +736,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   margin: 0 0 8px;
 }
 .fm-date-strip {
@@ -742,7 +767,7 @@
 }
 .fm-date-strip-days {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex: 1 1 auto;
   min-width: 0;
   overflow-x: auto;
@@ -757,7 +782,7 @@
   justify-content: center;
   min-width: 40px;
   min-height: 40px;
-  padding: 2px 6px;
+  padding: 2px 4px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -772,12 +797,12 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-date-strip-n { font-size: 13px; font-weight: 700; }
 .fm-date-recs {
   position: relative;
-  flex: 1 1 220px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   padding: 0;
   background: transparent;
@@ -798,9 +823,9 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 4px;
   min-height: 40px;
-  padding: 4px 8px;
+  padding: 4px 4px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -851,7 +876,8 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
     white-space: nowrap;
     border: 0;
   }
-  .fm-date-row { flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+  .fm-results-bar,
+  .fm-date-row { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0; }
   .fm-date-strip {
     flex: 0 1 auto;
     flex-direction: row;

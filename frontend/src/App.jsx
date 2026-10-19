@@ -2119,6 +2119,9 @@ export default function App() {
           </h1>
           {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
               orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
+          {/* Ruta, días vecinos y fechas más baratas en una sola línea.
+              Si no caben, la franja se desplaza; no baja a otra fila. */}
+          <div className="fm-results-bar">
           <FlightHeader
             origins={cleanOrigins}
             departureDate={departureDate}
@@ -2134,9 +2137,6 @@ export default function App() {
             onChange={() => setView("search")}
           />
 
-          {/* Tira de días, justo bajo la cabecera (como Skyscanner): el día
-              buscado en el centro y los vecinos a un toque. Sin precios.
-              Al lado, solo si el calendario trae fechas que abaratan el grupo. */}
           <div className="fm-date-row">
           <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
             <span className="fm-date-strip-label sr-only">{t("results.tryNearbyDates")}</span>
@@ -2181,6 +2181,7 @@ export default function App() {
               ))}
             </aside>
           )}
+          </div>
           </div>
 
           <div className="fm-results-layout">
