@@ -158,9 +158,11 @@ function fallbackMatches(offer, leg) {
 }
 
 // El mismo vuelo si Duffel lo tiene. Si no, la tarifa emitible más barata de
-// ese trayecto y ese día. El precio que se cobra es el de esa oferta.
+// ese trayecto y ese día. Ryanair y Wizz no se cambian por otra aerolínea:
+// se reservan en su web y no entran en el cobro.
 function chooseOffer(offers, leg) {
-  if (leg.airline && leg.flightNumber && !airlineSite(leg.airline)) {
+  if (airlineSite(leg.airline)) return null;
+  if (leg.airline && leg.flightNumber) {
     const exact = pickOffer(offers, leg);
     if (exact) return { offer: exact, sameFlight: true };
   }
@@ -324,6 +326,8 @@ async function quoteLegs(rawLegs, today) {
   const priced = [];
   const external = [];
   const searched = await Promise.all(checked.legs.map(async (leg) => {
+    // Ryanair y Wizz no están en Duffel. No se pide otra aerolínea para ese trayecto.
+    if (airlineSite(leg.airline)) return { leg, offers: [] };
     try {
       return { leg, offers: await searchLeg(leg) };
     } catch {
@@ -332,8 +336,7 @@ async function quoteLegs(rawLegs, today) {
   }));
   for (const { leg, offers } of searched) {
     const chosen = chooseOffer(offers, leg);
-    // Sin oferta emitible no se inventa un billete. Ryanair y Wizz, si Duffel
-    // no trae otro vuelo de ese trayecto, se reservan en su web.
+    // Sin oferta emitible no se inventa un billete.
     if (!chosen) {
       external.push(publicExternal(leg, airlineSite(leg.airline) ? "AIRLINE_SITE" : "FLIGHT_NOT_FOR_SALE"));
       continue;

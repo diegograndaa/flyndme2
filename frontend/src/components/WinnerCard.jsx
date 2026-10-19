@@ -198,6 +198,18 @@ const WinnerCard = React.memo(function WinnerCard({
       passengers: Number(finfo.passengers) || Number(offer?.passengers) || 1,
     };
   });
+  // Con el cobro delante, las fichas de la búsqueda repetían otro vuelo y otro
+  // precio. Esas ciudades ya están en el total o se reservan en su web.
+  const coveredOrigins = new Set();
+  if (payable) {
+    const airports = new Set([
+      ...(payable.legs || []).map((leg) => leg.origin),
+      ...(payable.external || []).map((leg) => leg.origin),
+    ]);
+    saleLegs.forEach((sent, i) => {
+      if (airports.has(sent.origin)) coveredOrigins.add(cleanOrigins[i]);
+    });
+  }
   return (
     <div className={`wc-card${entered ? " wc-card--entered" : ""}`}>
       {/* Foto del destino a todo el ancho. El mapa va debajo de las salidas. */}
@@ -240,13 +252,13 @@ const WinnerCard = React.memo(function WinnerCard({
               <div className="wc-total-price"><Odometer value={payable ? payMoney(payable.charge) : money(dest.totalCostEUR)} /></div>
             </div>
           </div>
-          {payable ? (
+          {payable && payable.legs.length > 1 ? (
             <div className="wc-total-sum" aria-hidden="true">
               {payable.legs.map((leg, i) => (
                 <span key={`${leg.origin}-${i}`}>{i > 0 && <b> + </b>}{payMoney(leg.charge)}</span>
               ))}
             </div>
-          ) : sumParts && (
+          ) : (!payable && sumParts) && (
             <div className="wc-total-sum" aria-hidden="true">
               {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
             </div>
@@ -295,9 +307,10 @@ const WinnerCard = React.memo(function WinnerCard({
           )}
         </div>
 
-        {cleanOrigins.length > 0 && dep && (
+        {cleanOrigins.some((origin) => !coveredOrigins.has(origin)) && dep && (
           <div className="wc-booking-cards">
               {cleanOrigins.map((origin, cardIdx) => {
+                if (coveredOrigins.has(origin)) return null;
                 const price = priceMap[origin];
                 const offer = offerMap[origin];
                 const finfo = flightInfoMap[origin] || {};
