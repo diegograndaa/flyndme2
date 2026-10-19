@@ -169,9 +169,8 @@ export default function CheckoutPage({ quoteId }) {
 
   const side = ready ? (
     <aside className="caja-side">
-      <p className="caja-amount-label">{t("results.saleTotal")}</p>
+      <p className="caja-amount-label">{t("results.saleFinal")}</p>
       <p className="caja-amount">{money(quote.charge)}</p>
-      <SaleBreakdown quote={quote} t={t} part="fees" />
       {onStep === "trip" && (
         <button type="button" className="wc-sale-btn" onClick={() => setStep("people")}>
           {t("results.saleNext")}

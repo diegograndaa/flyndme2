@@ -11,6 +11,8 @@ import {
 import { buildAirlineBookingUrl } from "../utils/airlineBooking";
 import { airlineName, legSchedule } from "../utils/flightTime";
 import GroupSalePanel from "./GroupSalePanel";
+import { saleMoney } from "./SaleBreakdown";
+import { quoteAddsUp } from "../utils/saleCheckout";
 import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
@@ -163,6 +165,10 @@ const WinnerCard = React.memo(function WinnerCard({
   });
 
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
+  // Con un cobro que cuadra, la cifra grande es lo que se paga. La estimación
+  // de la búsqueda deja de ser el titular: no es el importe del botón.
+  const payable = sale?.quote && quoteAddsUp(sale.quote) ? sale.quote : null;
+  const payMoney = (amount) => saleMoney(amount, payable?.currency || "EUR");
   const travelers = dest.totalPassengers
     || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
     || cleanOrigins.length;
@@ -231,16 +237,24 @@ const WinnerCard = React.memo(function WinnerCard({
           <div className="wc-total-main">
             <span className="wc-total-label sr-only">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
             <div className="wc-total-figure">
-              <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
+              <div className="wc-total-price"><Odometer value={payable ? payMoney(payable.charge) : money(dest.totalCostEUR)} /></div>
             </div>
           </div>
-          {sumParts && (
+          {payable ? (
+            <div className="wc-total-sum" aria-hidden="true">
+              {payable.legs.map((leg, i) => (
+                <span key={`${leg.origin}-${i}`}>{i > 0 && <b> + </b>}{payMoney(leg.charge)}</span>
+              ))}
+            </div>
+          ) : sumParts && (
             <div className="wc-total-sum" aria-hidden="true">
               {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
             </div>
           )}
           <div className="wc-total-foot" aria-live="polite">
-            {verifyPhase === "loading" ? (
+            {payable ? (
+              <span className="wc-verify-caption">{t("results.saleFinal")}</span>
+            ) : verifyPhase === "loading" ? (
               <span className="wc-verify-status">
                 <span className="spinner-border spinner-border-sm" aria-hidden="true" /> {t("results.verifyChecking")}
               </span>
@@ -260,7 +274,6 @@ const WinnerCard = React.memo(function WinnerCard({
             <GroupSalePanel
               legs={saleLegs}
               sale={sale}
-              estimateLabel={money(dest.totalCostEUR)}
               onRequest={onRequestSale}
             />
           )}

@@ -325,6 +325,7 @@
     "saleFee": "Comisión {{pct}}%",
     "saleCardFee": "Tarjeta",
     "saleTotal": "A pagar",
+    "saleFinal": "Precio final, gastos incluidos",
     "salePersonPay": "Su pago",
     "saleTogether": "Se pagan juntos, en un solo cobro.",
     "saleEstimateApart": "Estimación {{amount}}",

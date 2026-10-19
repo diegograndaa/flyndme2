@@ -325,6 +325,7 @@
     "saleFee": "Fee {{pct}}%",
     "saleCardFee": "Card",
     "saleTotal": "To pay",
+    "saleFinal": "Final price, fees included",
     "salePersonPay": "Their payment",
     "saleTogether": "They pay together, in one charge.",
     "saleEstimateApart": "Estimate {{amount}}",
