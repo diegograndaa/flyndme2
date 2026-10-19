@@ -34,7 +34,7 @@ const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
-import { FlightHeader, ZoneHead, Notice, DeparturesBoard } from "./components/BoardPanels";
+import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useFocusTrap } from "./hooks/useFocusTrap";
@@ -42,6 +42,7 @@ import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
 import { getCityImage, imagePreloadCount } from "./utils/cityImages";
 import { resolveApiBase } from "./utils/apiBase";
+import { SALE_CHANNEL } from "./utils/saleCheckout";
 import { downloadText } from "./utils/download";
 import { readStoredList, isRecentSearchEntry } from "./utils/storage";
 import { normalizeSharedFlights } from "./utils/sharedResults";
@@ -1209,80 +1210,31 @@ export default function App() {
     }
   };
 
-  const submitSalePassengers = async (people, email, phone) => {
-    const quoteId = groupSale?.quote?.quoteId;
-    if (!quoteId) return;
-    const seq = saleSeq.current;
-    setGroupSale((s) => (s ? { ...s, phase: "paying", code: null } : s));
-    try {
-      const res = await fetch(`${API_BASE}/api/flights/group-sale/pay`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId, passengers: people, email, phone }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (seq !== saleSeq.current) return;
-      const keepForm = ["INVALID_NAME", "INVALID_BIRTH_DATE", "ADULT_REQUIRED", "INVALID_GENDER", "INVALID_TITLE", "INVALID_EMAIL", "INVALID_PHONE", "INVALID_PASSENGERS"].includes(data?.code);
-      if (!data?.ok || !data.clientToken) {
-        setGroupSale((s) => (s ? { ...s, phase: keepForm ? "quote" : "error", code: data?.code || "SALE_FAILED" } : s));
+  // La pestaña de pago avisa aquí cuando el cobro termina. El importe no viaja
+  // en el mensaje: la cifra ya está en el presupuesto de esta pantalla.
+  const saleQuoteId = groupSale?.quote?.quoteId || "";
+  useEffect(() => {
+    if (!saleQuoteId) return undefined;
+    let channel;
+    try { channel = new BroadcastChannel(SALE_CHANNEL); } catch { return undefined; }
+    channel.onmessage = (event) => {
+      const msg = event.data;
+      if (!msg || msg.quoteId !== saleQuoteId) return;
+      if (msg.phase === "issued") {
+        setGroupSale((s) => (s ? { ...s, phase: "issued", orders: msg.orders || [], code: null } : s));
         return;
       }
-      setGroupSale((s) => (s ? { ...s, phase: "card", clientToken: data.clientToken, code: null } : s));
-    } catch {
-      if (seq !== saleSeq.current) return;
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
-    }
-  };
-
-  const finishGroupSale = async () => {
-    const quoteId = groupSale?.quote?.quoteId;
-    if (!quoteId) return;
-    const seq = saleSeq.current;
-    setGroupSale((s) => (s ? { ...s, phase: "completing" } : s));
-    try {
-      const res = await fetch(`${API_BASE}/api/flights/group-sale/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (seq !== saleSeq.current) return;
-      if (data?.ok && data.status === "issued") {
-        setGroupSale((s) => (s ? { ...s, phase: "issued", orders: data.orders || [], code: null } : s));
-        return;
-      }
-      if (data?.code === "SALE_REFUNDED" || data?.code === "REFUND_FAILED") {
-        setGroupSale((s) => (s ? {
-          ...s,
-          phase: "error",
-          code: data.code,
-          orders: data.orders || [],
-          failedOrigin: data.failedOrigin || null,
-          refund: data.refund || null,
-        } : s));
-        return;
-      }
-      if (data?.code === "TICKET_PARTIAL" || data?.status === "partial") {
-        setGroupSale((s) => (s ? {
-          ...s,
-          phase: "partial",
-          code: "TICKET_PARTIAL",
-          orders: data.orders || [],
-          failedOrigin: data.failedOrigin || null,
-          refund: data.refund || null,
-        } : s));
-        return;
-      }
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: data?.code || "SALE_FAILED" } : s));
-    } catch {
-      if (seq !== saleSeq.current) return;
-      setGroupSale((s) => (s ? { ...s, phase: "error", code: "SALE_FAILED" } : s));
-    }
-  };
-
-  const failGroupSale = () => {
-    setGroupSale((s) => (s ? { ...s, phase: "error", code: "PAYMENT_NOT_CONFIRMED", clientToken: null } : s));
-  };
+      setGroupSale((s) => (s ? {
+        ...s,
+        phase: msg.code === "TICKET_PARTIAL" ? "partial" : "error",
+        code: msg.code || "SALE_FAILED",
+        orders: msg.orders || [],
+        failedOrigin: msg.failedOrigin || null,
+        refund: msg.refund || null,
+      } : s));
+    };
+    return () => channel.close();
+  }, [saleQuoteId]);
 
   // POST /api/flights/cheaper-date — en 2º plano tras pintar resultados: ¿hay una
   // fecha cercana donde el GRUPO pague menos? En ida y vuelta el backend mueve
@@ -1963,7 +1915,6 @@ export default function App() {
             <img src={`${getBaseUrl()}logo-flyndme.svg?v=6`} alt="" height={28}
               onError={(e) => { e.currentTarget.style.display = "none"; }} />
             <span className="app-logo-name">FlyndMe</span>
-            <span className="app-logo-sub">{t("header.tagline")}</span>
             <span className={`fm-backend-dot fm-backend-dot--${backendStatus}`} title={backendStatus === "online" ? t("header.serverOnline") : backendStatus === "offline" ? t("header.serverWaking") : ""} />
           </div>
           <div className="d-flex align-items-center gap-2">
@@ -1976,12 +1927,6 @@ export default function App() {
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
-            {view === "results" && (
-              <button type="button" className="btn btn-sm btn-outline-secondary fm-header-newsearch"
-                onClick={() => { setView("search"); setShowAlt(false); }}>
-                {t("header.newSearch")}
-              </button>
-            )}
           </div>
         </div>
         {!pwa.online && <OfflineStrip />}
@@ -2023,7 +1968,6 @@ export default function App() {
                       onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
-                <p className="fm-fav-panel-note">{t("favorites.priceNote")}</p>
               </div>
             )}
           </div>
@@ -2066,7 +2010,7 @@ export default function App() {
         <div className="view-enter" key="home">
           {groupLoading && (
             <div className="container fm-price-alerts" style={{ maxWidth: 1080 }}>
-              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} detail={t("group.loadingDetail")} />
+              <Notice variant="partial" tag={t("group.eyebrow")} text={t("group.loading")} />
             </div>
           )}
           {priceAlerts.length > 0 && (
@@ -2080,7 +2024,6 @@ export default function App() {
                     now: money(a.currentTotalEUR),
                     saving: money(a.savingEUR),
                   })}
-                  detail={t("watch.dropDetail")}
                   actionLabel={t("watch.view")}
                   onAction={() => openWatch(a.watch)} />
               ))}
@@ -2112,7 +2055,6 @@ export default function App() {
                   count: tripHint.destinationsCount,
                   total: money(tripHint.cheapest.totalCostEUR),
                 }),
-                detail: t("tripHint.detail"),
                 actionLabel: t("tripHint.use"),
                 onAction: () => useTripHint(tripHint),
               } : null}
@@ -2177,6 +2119,9 @@ export default function App() {
           </h1>
           {/* Cabecera del vuelo del grupo (sustituye migas + resumen de búsqueda):
               orígenes reales → fecha · viajeros · extras, y "Cambiar búsqueda". */}
+          {/* Ruta, días vecinos y fechas más baratas en una sola línea.
+              Si no caben, la franja se desplaza; no baja a otra fila. */}
+          <div className="fm-results-bar">
           <FlightHeader
             origins={cleanOrigins}
             departureDate={departureDate}
@@ -2192,12 +2137,9 @@ export default function App() {
             onChange={() => setView("search")}
           />
 
-          {/* Tira de días, justo bajo la cabecera (como Skyscanner): el día
-              buscado en el centro y los vecinos a un toque. Sin precios.
-              Al lado, solo si el calendario trae fechas que abaratan el grupo. */}
           <div className="fm-date-row">
           <nav className="fm-date-strip" aria-label={t("results.tryNearbyDates")}>
-            <span className="fm-date-strip-label">{t("results.tryNearbyDates")}</span>
+            <span className="fm-date-strip-label sr-only">{t("results.tryNearbyDates")}</span>
             <div className="fm-date-strip-days">
               {[-2, -1, 0, 1, 2].map((offset) => {
                 const iso = addDaysISO(departureDate || todayISO(), offset);
@@ -2225,7 +2167,7 @@ export default function App() {
           {dateRecs.length > 0 && (
             <aside className="fm-date-recs" aria-live="polite"
               aria-label={t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}>
-              <span className="fm-date-recs-label">
+              <span className="fm-date-recs-label sr-only">
                 {t(dateRecs.length === 1 ? "cheaperDate.aside" : "cheaperDate.asideMany")}
               </span>
               {dateRecs.map((d) => (
@@ -2239,6 +2181,7 @@ export default function App() {
               ))}
             </aside>
           )}
+          </div>
           </div>
 
           <div className="fm-results-layout">
@@ -2286,18 +2229,12 @@ export default function App() {
               la exploración: tarjeta de embarque + aviso de fecha (afecta a esta
               decisión) + reparto del grupo + siguiente paso. */}
           <section className="fm-decision" aria-labelledby="fm-decision-title" tabIndex={-1}>
-          <ZoneHead id="fm-decision-title" variant="decision" num="01"
-            title={t("results.decisionTitle")} />
-          {resultBasis === "cheaper" && (
-            <Notice variant="partial" tag={t("board.tagNotice")}
-              text={t("results.destBasisCheaper")} />
-          )}
+          <h2 id="fm-decision-title" className="sr-only">{t("results.decisionTitle")}</h2>
           {sharedAt && (
             <Notice variant="partial" tag={t("board.tagNotice")}
               text={t("results.sharedNotice", {
                 when: new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(sharedAt)),
               })}
-              detail={t("results.sharedDetail")}
               actionLabel={t("results.sharedRefresh")}
               onAction={refreshShared} disabled={loading} />
           )}
@@ -2332,9 +2269,6 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
-            onSubmitPassengers={submitSalePassengers}
-            onSalePaid={finishGroupSale}
-            onSaleFailed={failGroupSale}
             mapSlot={listedFlights.length > 0 ? (
               <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
                 <Suspense fallback={<div className="dm-inline-loading" aria-hidden="true" />}>
@@ -2357,15 +2291,6 @@ export default function App() {
                 reparto queda a un toque con un resumen de una línea. */}
             <summary className="fm-split-summary">
               <span className="fm-split-summary-tag">{t("results.splitSummaryTag")}</span>
-              <span className="fm-split-summary-text">
-                {(displayDest.flights || []).map((f) => `${String(f.origin).toUpperCase()} ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`).join(" · ")}
-                <span className="fm-split-summary-sep"> — </span>
-                {t("results.splitSummaryEqual", { amount: currency === "EUR" ? formatEur(displayDest.averageCostPerTraveler, 0) : convertPrice(displayDest.averageCostPerTraveler, currency) })}
-              </span>
-              <span className="fm-split-summary-more">
-                <span className="fm-split-summary-open">{t("results.splitSummaryMore")}</span>
-                <span className="fm-split-summary-close">{t("results.splitSummaryLess")}</span>
-              </span>
             </summary>
             <div className="fm-split-body">
             <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
@@ -2409,9 +2334,6 @@ export default function App() {
                 <span className="fm-arrival-spread-icon" aria-hidden="true"><Icon size={18} /></span>
                 <div className="fm-arrival-spread-body">
                   <span className="fm-arrival-spread-text">{msg}</span>
-                  {sp.partial && (
-                    <span className="fm-arrival-spread-note">{t("arrivalCoord.partialNote")}</span>
-                  )}
                 </div>
               </div>
             );
@@ -2426,27 +2348,11 @@ export default function App() {
               actionLabel={t("filters.reset")} onAction={resetFilters} />
           )}
 
-          {/* Plan de grupo: una línea y el botón. El párrafo explicaba el producto. */}
-          <Notice variant="next"
-            text={t("results.groupNudge.title")}
-            actionLabel={groupBusy ? t("group.creating") : t("results.groupNudge.cta")}
-            onAction={createGroup}
-            disabled={groupBusy} />
           </section>
-
-          {/* Troquel: aquí termina la decisión y empieza la exploración */}
-          <div className="fm-zone-perf" aria-hidden="true" />
 
           {/* Salidas: el panel ya se nombra solo. Con un único destino, una línea
               dice por qué no hay alternativas. */}
-          <section className="fm-explore" aria-labelledby={listedFlights.length > 1 ? "fm-board-title" : "fm-explore-note"}>
-          {listedFlights.length < 2 && (
-            <p id="fm-explore-note" className="fm-explore-note">
-              {flights.length <= 1
-                ? t("results.exploreSubOne")
-                : (listedFlights.length === 0 ? t("filters.empty") : t("filters.onlyOne"))}
-            </p>
-          )}
+          <section className="fm-explore" aria-label={t("results.exploreTitle")}>
           {partialResults && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.partialNotice")} />
           )}
@@ -2585,11 +2491,7 @@ export default function App() {
               </svg>
               {t("footerBrand")}
             </span>
-            <span className="app-footer-tagline">{t("footerTagline")}</span>
             <nav className="app-footer-links">
-              {/* Botones, no <a> sin href: los anchors sin href no reciben foco de teclado */}
-              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); window.scrollTo(0, 0); }}>{t("footerHow")}</button>
-              <button type="button" className="app-footer-link" onClick={() => { setView("landing"); setTimeout(() => { const el = document.querySelector(".lp-faq"); if (el) el.scrollIntoView({ behavior: scrollBehavior() }); }, 100); }}>{t("footerFaq")}</button>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
               <button type="button" className="app-footer-link" onClick={() => setShowShortcuts(true)}>{t("shortcuts.title")}</button>
             </nav>

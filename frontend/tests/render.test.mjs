@@ -229,8 +229,8 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.ok(html.includes("Destinations to compare"), "el nombre accesible dice que son destinos");
   assert.match(html, /sf-summary-dest[\s\S]*ROM/);
   assert.ok(html.includes("×2"), "la fila de Madrid enseña sus 2 viajeros");
-  assert.ok(html.includes("Same arrival window"), "con dos ciudades se pide la franja de llegada");
-  assert.ok(html.includes("cheapest direct flight"), "la franja avisa de que solo hay hora en directos");
+  assert.ok(html.includes("Any time"), "con dos ciudades se pide la franja de llegada");
+  assert.ok(!html.includes("cheapest direct flight"), "la franja no explica la hora");
   const ordered = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD", "LON"], setOrigins: noop,
     tripType: "roundtrip", setTripType: noop,
@@ -252,7 +252,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(ordered.includes("≤2 h"), "el resumen enseña la franja pedida");
-  assert.ok(ordered.includes("low recent fares"), "la búsqueda personalizada es la única");
+  assert.ok(!ordered.includes("low recent fares"), "no hay párrafo sobre las tarifas recientes");
   assert.ok(!ordered.includes("Usual cities"), "ya no se elige la lista habitual");
   assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
   assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
@@ -276,7 +276,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(many.includes("4 destinations selected"));
-  assert.ok(!many.includes("Same arrival window"), "con una ciudad no hay franja entre llegadas");
+  assert.ok(!many.includes("Any time"), "con una ciudad no hay franja entre llegadas");
   assert.ok(!many.includes("sf-summary-dest\">ROM"), "con más de tres no se listan los códigos");
   const all = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD"], setOrigins: noop,
@@ -402,11 +402,11 @@ test("render: la app comprueba el precio sola; no hay botón para el usuario", a
   };
   const loading = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: "loading" }));
   assert.ok(loading.includes("aria-busy=\"true\""));
-  assert.ok(/Checking live price|Comprobando precio en vivo/.test(loading));
+  assert.ok(/Checking…|Comprobando…/.test(loading));
   assert.ok(!loading.includes("wc-verify-btn"));
   const failed = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: "unavailable" }));
   assert.ok(!failed.includes("wc-verify-btn"), "si falla, no se le pide al usuario que lo repita");
-  assert.ok(/No se pudo comprobar|check live prices right now/i.test(failed));
+  assert.ok(/Sin comprobar|Not checked/.test(failed));
   const waiting = renderWithI18n(React.createElement(WinnerCard, { ...base, verifyPhase: null }));
   assert.ok(!waiting.includes("wc-verify-btn"));
   assert.ok(!/Comprobar precio en vivo|Check live price/.test(waiting));
@@ -520,6 +520,38 @@ test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redon
     },
   }));
   assert.ok(!gbp.includes("wc-total-sum"), "£9 + £9 = £17 no se pinta");
+});
+
+test("render: el cobro del grupo desglosa los dos y abre el pago con esa cifra", async () => {
+  const { default: GroupSalePanel } = await import("../src/components/GroupSalePanel.jsx");
+  const quote = {
+    quoteId: "abcdefghijklmnop",
+    currency: "EUR",
+    markupPercent: 5,
+    passengerCount: 2,
+    fare: "59.74",
+    commission: "2.99",
+    cardFee: "1.87",
+    charge: "64.60",
+    legs: [
+      { origin: "BCN", destination: "ALC", airline: "VY", airlineName: "Vueling", flightNumber: "1300", departsAt: "08:30", passengers: 1, fare: "30.00", commission: "1.50", cardFee: "0.94", charge: "32.44" },
+      { origin: "ORY", destination: "ALC", airline: "TO", airlineName: "Transavia France", flightNumber: "4704", departsAt: "06:35", passengers: 1, fare: "29.74", commission: "1.49", cardFee: "0.93", charge: "32.16" },
+    ],
+  };
+  const html = renderWithI18n(React.createElement(GroupSalePanel, {
+    sale: { phase: "quote", quote },
+    estimateLabel: "€240",
+  }));
+  assert.ok(html.includes("32.44") && html.includes("32.16") && html.includes("64.60"));
+  assert.ok(html.includes("Pay 64.60") || html.includes("Pagar 64,60") || html.includes("64.60"));
+  assert.ok(html.includes("/?caja=abcdefghijklmnop"));
+  assert.ok(html.includes("€240"));
+  assert.ok(!html.includes('type="date"'), "el formulario de pago no está en la ficha");
+  const broken = renderWithI18n(React.createElement(GroupSalePanel, {
+    sale: { phase: "quote", quote: { ...quote, charge: "64.61" } },
+  }));
+  assert.ok(broken.includes("do not add up") || broken.includes("no cuadran"));
+  assert.ok(!broken.includes("/?caja="));
 });
 
 test("hooks: useFavorites evalúa isFav con favoritos guardados (regresión import roto)", async () => {

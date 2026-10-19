@@ -62,7 +62,7 @@ function ArrivalStrip({ dest, origins, requestedMin, hideScale = false }) {
 }
 
 export function ResultFilters({
-  flights = [], listedCount = 0, filters, onChange, onReset, multiOrigin = false, status = null,
+  flights = [], listedCount = 0, filters, onChange, onReset, multiOrigin = false,
   domesticCountry = null, domesticName = "", domesticChoices = 0,
   displayDest = null, origins = [],
 }) {
@@ -85,27 +85,6 @@ export function ResultFilters({
     + (filters.maxDurationMin != null ? 1 : 0)
     + (Array.isArray(filters.airlines) ? 1 : 0)
     + (filters.domestic ? 1 : 0);
-
-  let statusText = "";
-  if (showArrival && status) {
-    if (status.kind === "unknown") statusText = t("filters.arrivalUnknown");
-    else if (status.kind === "partial") statusText = t("filters.arrivalPartial");
-    else {
-      const time = status.totalHours === 0
-        ? t("arrivalCoord.timeUnder1h")
-        : status.days > 0
-          ? (status.hours
-            ? t("arrivalCoord.daysAndHours", {
-              days: status.days === 1 ? t("arrivalCoord.dayOne") : t("arrivalCoord.dayMany", { d: status.days }),
-              h: status.hours,
-            })
-            : (status.days === 1 ? t("arrivalCoord.dayOne") : t("arrivalCoord.dayMany", { d: status.days })))
-          : t("arrivalCoord.timeHours", { h: status.hours });
-      statusText = status.kind === "days"
-        ? t("filters.arrivalDays", { time })
-        : t("filters.arrivalGap", { time });
-    }
-  }
 
   const toggleAirline = (code) => {
     set({ airlines: nextAirlines(filters.airlines, code, airlines) });
@@ -130,13 +109,6 @@ export function ResultFilters({
   const sliderPct = slider && slider.max > slider.min
     ? Math.round(((sliderValue - slider.min) / (slider.max - slider.min)) * 1000) / 10
     : 100;
-  const caption = hasBars
-    ? (status?.kind === "partial"
-      ? t("filters.arrivalPartial")
-      : (requestedMin
-        ? t("filters.arrivalRequested", { time: formatDurationMin(requestedMin) })
-        : statusText))
-    : "";
   const moveSlider = (raw) => {
     const value = Number(raw);
     if (!slider || !Number.isFinite(value)) return;
@@ -149,17 +121,6 @@ export function ResultFilters({
       arrival: filters.arrival === "closest" ? "closest" : "gap",
     });
   };
-  const gapActive = sliderCapped;
-  const looseArrival = filters.arrival === "gap" || filters.arrival === "within4h" ? "any" : filters.arrival;
-  const cappedCount = gapActive
-    ? count({
-      arrival: filters.arrival === "within4h" ? "within4h" : (filters.arrival === "closest" ? "closest" : "gap"),
-      maxArrivalMin: filters.arrival === "within4h" ? null : capNow,
-    })
-    : 0;
-  const gapAlready = gapActive
-    && cappedCount > 0
-    && cappedCount === count({ arrival: looseArrival, maxArrivalMin: null });
 
   return (
     <aside className={`fm-filters${open ? " fm-filters--open" : ""}`} aria-label={t("filters.title")}>
@@ -218,13 +179,10 @@ export function ResultFilters({
             {hasBars && (
               <ArrivalStrip dest={displayDest} origins={origins} requestedMin={requestedMin} hideScale={!!slider} />
             )}
-            {caption && <p className="fm-filter-hint">{caption}</p>}
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-arrival">
               <CheckRow checked={filters.arrival === "closest"} label={t("filters.arrivalClosest")} count={count({ arrival: "closest" })} onClick={() => set({ arrival: filters.arrival === "closest" ? "any" : "closest" })}>{t("filters.arrivalClosest")}</CheckRow>
               <CheckRow checked={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay", maxArrivalMin: null })} onClick={() => set(filters.arrival === "sameDay" ? { arrival: "any", maxArrivalMin: null } : { arrival: "sameDay", maxArrivalMin: null })}>{t("filters.arrivalSameDay")}</CheckRow>
             </div>
-            {!hasBars && <p className="fm-filter-hint">{statusText || t("filters.arrivalHint")}</p>}
-            {gapAlready && <p className="fm-filter-hint">{t("filters.gapAlready")}</p>}
           </div>
         )}
 
@@ -235,9 +193,6 @@ export function ResultFilters({
               <CheckRow checked={filters.stops === "direct"} label={directLabel} count={directCount} onClick={() => set({ stops: filters.stops === "direct" ? "any" : "direct" })}>{directLabel}</CheckRow>
               <CheckRow checked={filters.stops === "max1"} label={t("filters.stopsMax1")} count={count({ stops: "max1" })} onClick={() => set({ stops: filters.stops === "max1" ? "any" : "max1" })}>{t("filters.stopsMax1")}</CheckRow>
             </div>
-            {filters.stops === "direct" && directCount === count({ stops: "any" }) && directCount > 0 && (
-              <p className="fm-filter-hint">{t("filters.stopsAlready")}</p>
-            )}
           </div>
         )}
 

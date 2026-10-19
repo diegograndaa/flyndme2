@@ -68,7 +68,6 @@ export function KeyboardShortcutsOverlay({ show, onClose, t, charKeys = true, on
               <button type="button" className="fm-shortcuts-toggle" aria-pressed={charKeys} onClick={onToggleCharKeys}>
                 {t("shortcuts.charKeys")}: {charKeys ? t("shortcuts.on") : t("shortcuts.off")}
               </button>
-              <span className="fm-shortcuts-hint">{t("shortcuts.charKeysHint")}</span>
             </div>
           )}
         </div>

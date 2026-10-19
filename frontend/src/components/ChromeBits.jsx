@@ -204,13 +204,9 @@ export const SearchSkeleton = React.memo(function SearchSkeleton({ origins = [] 
           <div className="sk-timer-fill" style={{ width: `${progressPct}%` }} />
         </div>
         <div className="sk-timer-text">
-          <span>{t("loading.skeletonHint", { n: numCombinations })}</span>
           <span className="sk-timer-clock">{elapsed}s</span>
         </div>
       </div>
-
-      {/* Travel tips carousel */}
-      <LoadingTips />
 
       {/* Skeleton winner card */}
       <div className="sk-card">

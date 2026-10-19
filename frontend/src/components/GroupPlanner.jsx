@@ -7,7 +7,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
-import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
+import { Plus, X, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
 import { AIRPORT_MAP, cityOf, countryOf, countryFlag, searchAirports, todayISO, resolveOriginCode } from "../utils/helpers";
 import { formatDateLong } from "./DateField";
 import { FriendlyError } from "./UiBits";
@@ -78,9 +78,7 @@ function GroupPlanner({
 
   return (
     <section className="gp" aria-labelledby="gp-title">
-      <div className="gp-eyebrow"><Users size={15} className="lucide" /> {t("group.eyebrow")}</div>
       <h1 id="gp-title" className="gp-title">{t("group.title")}</h1>
-      <p className="gp-sub">{t("group.subtitle")}</p>
 
       <div className="gp-facts">
         <span className="gp-fact"><Calendar size={15} className="lucide" /> {formatDateLong(group?.departureDate, lang)}
@@ -109,7 +107,6 @@ function GroupPlanner({
             </button>
           )}
         </div>
-        <p className="gp-invite-hint">{t("group.inviteHint")}</p>
       </div>
 
       {/* Roster */}
@@ -212,7 +209,6 @@ function GroupPlanner({
       <button type="button" className="btn-fm-primary gp-search" onClick={onSearch} disabled={!canSearch}>
         <Search size={18} className="lucide" /> {loading ? t("search.searching") : t("group.findDestination")}
       </button>
-      <p className="gp-search-hint">{t("group.searchHint")}</p>
 
       <button type="button" className="gp-exit" onClick={onExit}>{t("group.exit")}</button>
     </section>

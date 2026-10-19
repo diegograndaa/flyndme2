@@ -13,19 +13,16 @@
 import React, { useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { normalizeCode, cityOf, formatEur, formatDate, getBaseUrl } from "../utils/helpers";
-import { convertPrice, sortByCriterion, paySpread, maxLegPrice } from "../utils/resultsLogic";
+import { convertPrice, sortByCriterion, maxLegPrice } from "../utils/resultsLogic";
 import { getCityImage } from "../utils/cityImages";
 import { FlapText } from "./FlapBoard";
-import { PayBars, TravelerLegend } from "./TravelerBits";
+import { PayBars } from "./TravelerBits";
 import { ChevronRight, SlidersHorizontal } from "lucide-react";
 import { useFlip } from "../hooks/useFlip";
 
 function money(v, currency) {
   return currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency);
 }
-
-// Reparto "parejo": mismo umbral que las etiquetas de equidad (≥ 65/100).
-const EVEN_SCORE = 65;
 
 /** Cabecera del vuelo: orígenes → fecha · viajeros · extras  [Cambiar] */
 export const FlightHeader = React.memo(function FlightHeader({
@@ -38,7 +35,7 @@ export const FlightHeader = React.memo(function FlightHeader({
   return (
     <div className="fm-flight-head">
       <div className="fm-flight-head-main">
-        <span className="fm-board-label">{t("board.flightHead")}</span>
+        <span className="fm-board-label sr-only">{t("board.flightHead")}</span>
         <div className="fm-flight-head-row">
           <span className="fm-flight-head-origins">
             {origins.map((o, i) => <span key={o + i} className="fm-flight-head-code">{o}</span>)}
@@ -122,7 +119,7 @@ function DestThumb({ code }) {
  * puede pulsar para verlo arriba. Con un solo origen no hay reparto.
  */
 export const DeparturesBoard = React.memo(function DeparturesBoard({
-  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", savings = 0, onSelect, origins = [],
+  flights = [], current, criterion = "total", singleOrigin = false, currency = "EUR", onSelect, origins = [],
   preserveOrder = false,
 }) {
   const { t } = useI18n();
@@ -141,25 +138,7 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
       <div className="fm-board-top">
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
-          <p className="fm-board-sub">{t("board.departuresSub", { n: flights.length })}</p>
         </div>
-        {savings > 10 && (
-          <span className="fm-board-savings">
-            {t("results.groupSavings", { amount: money(savings, currency) })}
-          </span>
-        )}
-      </div>
-
-      <div className="dep-cols" aria-hidden="true">
-        <span>{t("board.colDest")}</span>
-        {!singleOrigin && (
-          <span className="dep-col-pay">
-            {t("board.colPay")}
-            <TravelerLegend origins={origins} className="trav-legend--inline" />
-          </span>
-        )}
-        <span className="dep-col-price">{t("board.colPrice")}</span>
-        <span />
       </div>
 
       <ol className="dep-rows" ref={listRef}>
@@ -167,7 +146,6 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
           const code = normalizeCode(f.destination);
           const city = cityOf(code) || code;
           const isCurrent = code === currentCode;
-          const even = (f.fairnessScore ?? 0) >= EVEN_SCORE;
           return (
             <li key={code} data-flip={code} style={{ "--i": i }}>
               <button type="button"
@@ -178,7 +156,6 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
                 <span className="dep-dest">
                   <FlapText text={code} size="sm" delay={120 + i * 110} />
                   <span className="dep-city">{city}</span>
-                  {isCurrent && <span className="dep-now">{t("board.selected")}</span>}
                 </span>
                 {!singleOrigin && (
                   <span className="dep-pay">
@@ -188,13 +165,7 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
                 <span className="dep-price">
                   <span className="dep-price-main">
                     <span className="dep-price-v">{money(f.averageCostPerTraveler, currency)}</span>
-                    <span className="dep-price-u">{t("compare.perPerson")}</span>
                   </span>
-                  {!singleOrigin && (
-                    <span className={`dep-spread${even ? " dep-spread--even" : ""}`}>
-                      {even ? t("board.payEven") : t("board.paySpread", { amount: money(paySpread(f), currency) })}
-                    </span>
-                  )}
                 </span>
                 <span className="dep-go" aria-hidden="true">{!isCurrent && <ChevronRight size={18} />}</span>
               </button>

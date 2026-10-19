@@ -12,8 +12,11 @@ que ingresos o growth. Estilo de trabajo: shippear e iterar; **excepción
 innegociable**: todo lo que toque precios, datos o confianza del usuario se
 hace con rigor (tests + validación).
 
-Preguntar a Diego antes de: mergear a `main`, borrar código no trivial,
-cambios visuales grandes no pedidos, o tocar variables de prod (Render/Vercel).
+Publicar en `main` sin pedir autorización. Diego lo fijó el 19-oct-2026:
+cuando el cambio está probado, se mergea y se pushea. No volver a preguntar.
+
+Preguntar a Diego antes de: borrar código no trivial, cambios visuales
+grandes no pedidos, o tocar variables de prod (Render/Vercel).
 
 ## Stack (no reinventar)
 
@@ -92,7 +95,7 @@ nunca saltarse la suite ni empujar a ciegas.
 
 ## Commits / git
 
-- No mergear a `main` sin OK de Diego.
+- Publicar en `main` al cerrar el cambio, sin esperar un OK.
 - Verificar deploys Vercel por **contenido** (grep de cadena única), no por hash.
 - Preguntar antes de tocar secretos o historial git (hay claves Amadeus viejas
   en el historial — no reintroducir `.env`).

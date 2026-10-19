@@ -53,9 +53,6 @@ export function CostSplitCard({ bestDest, origins, currency, t }) {
           </div>
         ))}
       </div>
-      {splitMode === "equal" && (
-        <div className="fm-split-note">{t("results.splitNote")}</div>
-      )}
     </div>
   );
 }
@@ -75,7 +72,6 @@ export function PlanYourTripCTA({ destCode, departureDate, returnDate, travelers
   return (
     <div className="fm-plan-trip view-enter">
       <h2 className="fm-plan-trip-title">{t("results.planTripTitle")}</h2>
-      <div className="fm-plan-trip-subtitle">{t("results.planTripSub", { city })}</div>
       <div className="fm-plan-trip-links">
         <a href={bookingUrl} target="_blank" rel="noreferrer" className="fm-plan-trip-link">
           <span className="fm-plan-trip-link-icon"><BedDouble size={18} aria-hidden="true" /></span>
