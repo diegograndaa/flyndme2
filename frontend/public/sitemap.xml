@@ -2,277 +2,277 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://flyndme2.vercel.app/</loc>
+    <loc>https://flyndme.com/</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/madrid-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-barcelona/"/>
+    <loc>https://flyndme.com/quedar/madrid-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/madrid-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-barcelona/"/>
+    <loc>https://flyndme.com/meet/madrid-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/madrid-londres/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-londres/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-londres/"/>
+    <loc>https://flyndme.com/quedar/madrid-londres/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-londres/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-londres/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/madrid-londres/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-londres/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-londres/"/>
+    <loc>https://flyndme.com/meet/madrid-londres/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-londres/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-londres/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/madrid-berlin-lisboa/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-berlin-lisboa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-berlin-lisbon/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-berlin-lisbon/"/>
+    <loc>https://flyndme.com/quedar/madrid-berlin-lisboa/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-berlin-lisboa/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-berlin-lisbon/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-berlin-lisbon/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/madrid-berlin-lisbon/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-berlin-lisboa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-berlin-lisbon/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-berlin-lisbon/"/>
+    <loc>https://flyndme.com/meet/madrid-berlin-lisbon/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-berlin-lisboa/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-berlin-lisbon/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-berlin-lisbon/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/barcelona-berlin/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/barcelona-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/barcelona-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/barcelona-berlin/"/>
+    <loc>https://flyndme.com/quedar/barcelona-berlin/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/barcelona-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/barcelona-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/barcelona-berlin/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/barcelona-berlin/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/barcelona-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/barcelona-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/barcelona-berlin/"/>
+    <loc>https://flyndme.com/meet/barcelona-berlin/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/barcelona-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/barcelona-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/barcelona-berlin/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/dublin-madrid/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/dublin-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/dublin-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/dublin-madrid/"/>
+    <loc>https://flyndme.com/quedar/dublin-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/dublin-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/dublin-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/dublin-madrid/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/dublin-madrid/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/dublin-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/dublin-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/dublin-madrid/"/>
+    <loc>https://flyndme.com/meet/dublin-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/dublin-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/dublin-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/dublin-madrid/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/amsterdam-lisboa/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/amsterdam-lisboa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/amsterdam-lisbon/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/amsterdam-lisbon/"/>
+    <loc>https://flyndme.com/quedar/amsterdam-lisboa/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/amsterdam-lisboa/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/amsterdam-lisbon/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/amsterdam-lisbon/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/amsterdam-lisbon/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/amsterdam-lisboa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/amsterdam-lisbon/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/amsterdam-lisbon/"/>
+    <loc>https://flyndme.com/meet/amsterdam-lisbon/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/amsterdam-lisboa/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/amsterdam-lisbon/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/amsterdam-lisbon/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/londres-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/londres-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/london-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/london-barcelona/"/>
+    <loc>https://flyndme.com/quedar/londres-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/londres-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/london-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/london-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/london-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/londres-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/london-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/london-barcelona/"/>
+    <loc>https://flyndme.com/meet/london-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/londres-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/london-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/london-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/milan-londres/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/milan-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/milan-london/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/milan-london/"/>
+    <loc>https://flyndme.com/quedar/milan-londres/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/milan-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/milan-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/milan-london/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/milan-london/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/milan-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/milan-london/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/milan-london/"/>
+    <loc>https://flyndme.com/meet/milan-london/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/milan-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/milan-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/milan-london/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/munich-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/munich-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/munich-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/munich-barcelona/"/>
+    <loc>https://flyndme.com/quedar/munich-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/munich-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/munich-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/munich-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/munich-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/munich-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/munich-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/munich-barcelona/"/>
+    <loc>https://flyndme.com/meet/munich-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/munich-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/munich-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/munich-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/madrid-londres-berlin/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-londres-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-london-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-london-berlin/"/>
+    <loc>https://flyndme.com/quedar/madrid-londres-berlin/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-londres-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-london-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-london-berlin/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/madrid-london-berlin/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/madrid-londres-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/madrid-london-berlin/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/madrid-london-berlin/"/>
+    <loc>https://flyndme.com/meet/madrid-london-berlin/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/madrid-londres-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/madrid-london-berlin/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/madrid-london-berlin/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/paris-madrid/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/paris-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <loc>https://flyndme.com/quedar/paris-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/paris-madrid/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/paris-madrid/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/paris-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/paris-madrid/"/>
+    <loc>https://flyndme.com/meet/paris-madrid/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/paris-madrid/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/paris-madrid/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/valencia-londres/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/valencia-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <loc>https://flyndme.com/quedar/valencia-londres/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/valencia-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/valencia-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/valencia-london/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/valencia-london/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/valencia-londres/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/valencia-london/"/>
+    <loc>https://flyndme.com/meet/valencia-london/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/valencia-londres/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/valencia-london/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/valencia-london/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/sevilla-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/sevilla-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <loc>https://flyndme.com/quedar/sevilla-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/sevilla-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/seville-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/seville-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/seville-barcelona/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/sevilla-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/seville-barcelona/"/>
+    <loc>https://flyndme.com/meet/seville-barcelona/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/sevilla-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/seville-barcelona/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/seville-barcelona/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/despedida-soltero/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/despedida-soltero/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/stag-hen-do/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/stag-hen-do/"/>
+    <loc>https://flyndme.com/quedar/despedida-soltero/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/despedida-soltero/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/stag-hen-do/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/stag-hen-do/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/stag-hen-do/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/despedida-soltero/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/stag-hen-do/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/stag-hen-do/"/>
+    <loc>https://flyndme.com/meet/stag-hen-do/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/despedida-soltero/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/stag-hen-do/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/stag-hen-do/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/quedar/punto-medio/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/punto-medio/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/meet-halfway/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/meet-halfway/"/>
+    <loc>https://flyndme.com/quedar/punto-medio/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/punto-medio/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/meet-halfway/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/meet-halfway/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://flyndme2.vercel.app/meet/meet-halfway/</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme2.vercel.app/quedar/punto-medio/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme2.vercel.app/meet/meet-halfway/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme2.vercel.app/meet/meet-halfway/"/>
+    <loc>https://flyndme.com/meet/meet-halfway/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://flyndme.com/quedar/punto-medio/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://flyndme.com/meet/meet-halfway/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://flyndme.com/meet/meet-halfway/"/>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

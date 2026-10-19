@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "site": "https://flyndme2.vercel.app",
+  "site": "https://flyndme.com",
   "note": "Seed para el generador de páginas SEO (frontend/scripts/build-seo-pages.mjs). La prosa es contenido MANUAL y único por página (no se debe autogenerar: Google penaliza el contenido a escala). Los precios NO van en la prosa; los inyecta el generador en la tabla, etiquetados como estimación en caché. type=pair consulta el backend /multi-origin con `origins`; type=usecase es explicativo (sin tabla de precios). El generador calcula la fecha de viaje (~60 días desde la ejecución), así que aquí no hay fechas fijas.",
   "pages": [
     {

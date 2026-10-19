@@ -37,6 +37,18 @@ test("CORS en producción: lista blanca, previews *.vercel.app y peticiones sin 
   assert.equal((await at(null)).status, 200, "sin Origin (curl, pingers) pasa");
 });
 
+test("CORS en producción sin ALLOWED_ORIGINS: el respaldo admite flyndme.com, www y el dominio viejo", async () => {
+  const env = { NODE_ENV: "production", FRONTEND_URL: "https://flyndme.com", ALLOWED_ORIGINS: "" };
+  const base = await boot(5086, env);
+  const at = (origin) => fetch(`${base}/api/ping`, { headers: { Origin: origin } });
+  for (const good of ["https://flyndme.com", "https://www.flyndme.com", "https://flyndme2.vercel.app"]) {
+    const r = await at(good);
+    assert.equal(r.status, 200, good);
+    assert.equal(r.headers.get("access-control-allow-origin"), good);
+  }
+  assert.equal((await at("https://flyndme.com.evil.com")).status, 403);
+});
+
 test("límites de creación: grupos y enlaces compartidos responden 429 RATE_LIMITED", async () => {
   const base = await boot(5084, { NODE_ENV: "test", GROUP_CREATE_LIMIT: "2", SHARE_CREATE_LIMIT: "2" });
   const post = (p, body) => fetch(`${base}${p}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

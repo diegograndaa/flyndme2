@@ -78,10 +78,10 @@ function validateConfig() {
       warnings.push("USE_MOCK=true en producción: el backend NO llamará al proveedor real de vuelos.");
     }
     if (!process.env.ALLOWED_ORIGINS) {
-      warnings.push("ALLOWED_ORIGINS no está definida — usando fallback hardcoded (flyndme.vercel.app + flyndme2.vercel.app). Define la variable para tu dominio real.");
+      warnings.push("ALLOWED_ORIGINS no está definida — usando fallback hardcoded (flyndme.com + www.flyndme.com + flyndme2.vercel.app). Define la variable para tu dominio real.");
     }
     if (!process.env.FRONTEND_URL) {
-      warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme2.vercel.app.");
+      warnings.push("FRONTEND_URL no está definida — los meta tags OG de /api/share/:id/og usarán el default https://flyndme.com.");
     }
   }
 
@@ -160,7 +160,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       "http://localhost:5173",
       "http://localhost:4173",
-      "https://flyndme.vercel.app",
+      "https://flyndme.com",
+      "https://www.flyndme.com",
       "https://flyndme2.vercel.app",
     ];
 

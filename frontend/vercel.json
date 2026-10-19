@@ -13,5 +13,13 @@
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "flyndme2.vercel.app" }],
+      "destination": "https://flyndme.com/:path*",
+      "permanent": true
+    }
   ]
 }
