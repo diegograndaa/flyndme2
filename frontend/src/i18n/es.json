@@ -46,32 +46,30 @@
     "statOrigins": "orígenes máx.",
     "statRoutes": "rutas analizadas",
     "faqTitle": "Preguntas frecuentes",
-    "startsTitle": "Empieza a preparar el encuentro",
-    "startsLead": "Un toque rellena las ciudades y el criterio. Tú eliges la fecha; el precio sale al buscar.",
-    "starts": [
-      { "id": "friends", "title": "Amigos" },
-      { "id": "couple", "title": "Pareja" },
-      { "id": "sendoff", "title": "Despedida" },
-      { "id": "fair", "title": "A medias" },
-      { "id": "erasmus", "title": "Erasmus" },
-      { "id": "weekend", "title": "Fin de semana" }
-    ],
     "faqs": [
       {
-        "q": "¿FlyndMe vende billetes?",
-        "a": "Cada Reservar abre la web de esa aerolínea con la misma ruta, la misma fecha y los mismos viajeros. Si no tenemos la página de esa aerolínea, abre Skyscanner con la misma búsqueda. El precio allí es el de ese momento, no la estimación de esta tarjeta. En el total del grupo puedes comprar los vuelos aquí: pagas la tarifa que se puede emitir ahora, más la comisión de FlyndMe y el coste del cobro, y el billete se emite a nombre del viajero. Si esa venta no está conectada, no se cobra nada."
+        "q": "¿Cómo encuentro el destino?",
+        "a": "Escribe la ciudad de cada viajero y una fecha. FlyndMe compara destinos a los que podéis volar todos y pone primero el de precio más bajo para el grupo. Con «Precio más justo» pone primero el reparto más parejo, aunque la suma suba un poco. Si desde alguna ciudad no hay vuelo, ese destino no sale."
       },
       {
-        "q": "¿Cómo sabéis si un destino es justo para todos?",
-        "a": "Comparamos lo que paga cada viajero: verás una barra por ciudad y la diferencia entre quien más y quien menos paga. Con «Más equitativo» ordenamos por el reparto más parejo, aunque el total salga algo más caro."
+        "q": "¿Estos son los precios que voy a pagar?",
+        "a": "No. Salen de búsquedas recientes y pueden haber cambiado. La app comprueba en vivo el destino que estás viendo. Si no puede, lo dice y la cifra sigue siendo una estimación. En libras o dólares es una conversión aproximada desde euros. Al reservar, el precio es el de ese momento."
       },
       {
-        "q": "¿Cuántos viajeros puedo añadir?",
-        "a": "Hasta 8 ciudades de salida y 16 viajeros en total (hasta 9 desde una misma ciudad)."
+        "q": "¿Dónde se compran los billetes?",
+        "a": "Reservar abre la web de esa aerolínea con la misma ruta, la misma fecha y los mismos viajeros. Si no tenemos esa página, abre Skyscanner. En el total del grupo puedes pagar aquí los vuelos que se pueden emitir ahora: la tarifa, la comisión de FlyndMe y el coste de la tarjeta. El billete sale a nombre del viajero. Si esa venta no está conectada, no se cobra nada. Ryanair y Wizz se reservan en su web y su precio no entra en ese pago."
       },
       {
-        "q": "¿Los precios son exactos?",
-        "a": "No. Son estimaciones basadas en búsquedas recientes y pueden haber cambiado. La app comprueba en vivo el precio del destino que estás viendo; si no puede, lo dice y el número sigue siendo una estimación. El precio final es el de la web donde reserves."
+        "q": "¿Qué significa que un destino sea justo?",
+        "a": "Que nadie paga mucho más que el resto. Verás una barra por ciudad y la diferencia entre quien más y quien menos paga. Sirve para elegir, no para puntuar el viaje."
+      },
+      {
+        "q": "¿Cuántos podemos ser?",
+        "a": "Hasta 8 ciudades de salida y 16 viajeros en total, con un máximo de 9 desde la misma ciudad. No hace falta cuenta. Si cada uno quiere añadir la suya, pulsa «Invitar al grupo» y comparte el enlace."
+      },
+      {
+        "q": "¿Puedo buscar ida y vuelta o mover el día?",
+        "a": "Sí. En ida y vuelta el precio incluye la vuelta. Si puedes salir unos días antes o después, activa «Fechas flexibles»: el resultado enseña la fecha real de ese precio."
       }
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",

@@ -7,9 +7,6 @@ import React, { Suspense, useMemo, useState } from "react";
 import { ChevronDown, MapPin, Search, Share2 } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { CITY_COORDS } from "../utils/geo";
-import { cityOf } from "../utils/helpers";
-import { GROUP_STARTS } from "../utils/groupStarts";
-import { TravelerDot } from "./TravelerBits";
 
 const STEP_ICONS = [MapPin, Search, Share2];
 
@@ -42,7 +39,7 @@ const MapSlot = React.memo(function MapSlot({ origins, compact, idSuffix }) {
   );
 });
 
-const Landing = React.memo(function Landing({ searchForm, origins = [], onUseStart, startsBusy = false }) {
+const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
   const { t } = useI18n();
   // El mapa solo se vuelve a pintar cuando cambia la lista de ciudades YA
   // reconocidas (no en cada tecla): la clave es la lista de códigos válidos.
@@ -52,8 +49,6 @@ const Landing = React.memo(function Landing({ searchForm, origins = [], onUseSta
   const faqs = t("landing.faqs");
   const faqList = Array.isArray(faqs) ? faqs : [];
   const mid = Math.ceil(faqList.length / 2);
-  const startCopy = t("landing.starts");
-  const startById = new Map((Array.isArray(startCopy) ? startCopy : []).map((item) => [item.id, item]));
 
   return (
     <>
@@ -124,37 +119,6 @@ const Landing = React.memo(function Landing({ searchForm, origins = [], onUseSta
               </div>
             ))}
           </div>
-
-          <h2 className="lp-starts-title">{t("landing.startsTitle")}</h2>
-          <p className="lp-starts-lead">{t("landing.startsLead")}</p>
-          <ul className="lp-starts">
-            {GROUP_STARTS.map((start) => {
-              const copy = startById.get(start.id);
-              if (!copy?.title) return null;
-              const note = [
-                start.tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway"),
-                start.optimizeBy === "fairness" ? t("search.optFairness") : t("search.optTotal"),
-              ].join(" · ");
-              return (
-                <li key={start.id}>
-                  <button type="button" className="lp-start" disabled={startsBusy}
-                    onClick={() => onUseStart?.(start)}>
-                    <span className="lp-start-title">{copy.title}</span>
-                    <span className="lp-start-cities">
-                      {start.origins.map((code) => (
-                        <span key={code} className="lp-start-city">
-                          <TravelerDot origins={start.origins} code={code} />
-                          <span className="lp-start-code">{code}</span>
-                          <span className="lp-start-name">{cityOf(code) || code}</span>
-                        </span>
-                      ))}
-                    </span>
-                    <span className="lp-start-note">{note}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
         </div>
       </section>
     </>
