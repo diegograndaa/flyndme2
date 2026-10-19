@@ -450,6 +450,10 @@ test("render: Landing extraída renderiza con CTAs", async () => {
   assert.match(html, /Ciudad de cada viajero|Each traveler/);
   assert.match(html, /destino más barato|cheapest destination/);
   assert.match(html, /reserva su vuelo|books their flight/);
+  assert.match(html, /Preguntas frecuentes|Frequently asked questions/);
+  assert.match(html, /Prepara el encuentro|Plan the meetup/);
+  assert.match(html, /\/quedar\/madrid-barcelona\/|\/meet\/madrid-barcelona\//);
+  assert.ok(!html.includes("app-footer-seo"), "las rutas no van en el pie");
 });
 
 test("render: ChromeBits y ResultsPanels extraídos", async () => {

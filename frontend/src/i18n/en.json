@@ -46,6 +46,8 @@
     "statOrigins": "max origins",
     "statRoutes": "routes analyzed",
     "faqTitle": "Frequently asked questions",
+    "moreTitle": "Plan the meetup",
+    "moreGuides": "Guides",
     "faqs": [
       {
         "q": "Does FlyndMe sell tickets?",
