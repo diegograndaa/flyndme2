@@ -259,10 +259,15 @@ const SearchPage = React.memo(function SearchPage({
               {origins.map((origin, idx) => {
                 const code = resolveOriginCode(origin);
                 const city = cityOf(code);
+                const known = Boolean(city && origin.trim());
                 const isUnknown = origin.trim().length >= 3 && !city;
+                // El color es del viajero, no de la ciudad escrita: la fila vacía
+                // también lo lleva. Si la ciudad ya está reconocida, es el mismo
+                // hueco que en el mapa y en los resultados.
+                const slot = known ? travelerSlot(setCodes, code) : (idx % 8) + 1;
                 return (
                   <div key={idx}
-                    className={`sf-origin-row${city && origin.trim() ? " sf-origin-row--set" : ""}${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
+                    className={`sf-origin-row${known ? " sf-origin-row--set" : ""}${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
                     draggable={origins.length > 1 && !loading}
                     onDragStart={() => setDragIdx(idx)}
                     onDragOver={(e) => { e.preventDefault(); setDragOver(idx); }}
@@ -278,7 +283,7 @@ const SearchPage = React.memo(function SearchPage({
                     }}
                     onDragEnd={() => { setDragIdx(-1); setDragOver(-1); }}>
                     {origins.length > 1 && <span className="sf-drag-handle" title={t("a11y.dragToReorder")} aria-hidden="true"><GripVertical size={14} /></span>}
-                    <span className={`sf-badge${city && origin.trim() ? ` sf-badge--set trav-c${travelerSlot(setCodes, code)}` : ""}`} title={t("search.travelerTooltip", { n: idx + 1 })}>
+                    <span className={`sf-badge trav-c${slot}${known ? " sf-badge--set" : ""}`} title={t("search.travelerTooltip", { n: idx + 1 })}>
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">

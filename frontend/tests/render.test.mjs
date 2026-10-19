@@ -225,6 +225,8 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   }));
   assert.ok(html.length > 2000, `HTML corto: ${html.length}`);
   assert.ok(html.includes("MAD"));
+  assert.ok(html.includes("trav-c1"), "el viajero con ciudad lleva su color");
+  assert.ok(html.includes("trav-c2"), "la fila vacía también lleva el color de su puesto");
   assert.ok(html.includes("±2d"), "la reciente enseña el margen de fechas");
   assert.ok(html.includes("150"), "la reciente enseña el tope");
   assert.ok(html.includes("sf-summary-dest"), "el resumen enseña que hay destinos elegidos");

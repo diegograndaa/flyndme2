@@ -116,13 +116,18 @@
 }
 
 /* Insignia del viajero: ficha de tinta con SU color (el mismo del mapa y de
-   los resultados). Antes se rellenaba de amarillo al reconocer la ciudad. */
-.sf-origin-row--set .sf-badge.sf-badge.sf-badge--set {
+   los resultados). La fila recién añadida, todavía sin ciudad, también lo
+   lleva: si no, el viajero nuevo salía en gris. El destello de «ciudad
+   reconocida» sigue solo en --set. */
+.sf-origin-row .sf-badge.sf-badge[class*="trav-c"] {
   background: var(--board-cell-bot, #18191C); color: #fff;
   box-shadow: inset 4px 0 0 var(--trav, var(--sign)), var(--ficha-canto);
   padding-left: 12px;
 }
 .sf-origin-row--set .sf-badge.sf-badge--set::after { border-color: var(--trav, var(--sign)); }
+@media (max-width: 600px) {
+  .sf-origin-row .sf-badge.sf-badge[class*="trav-c"] { padding-left: 0; }
+}
 
 /* Ejemplo animado de los campos: «p. ej.» fijo delante + ciudad en cursiva,
    para que no parezca un valor ya rellenado */
