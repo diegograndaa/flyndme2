@@ -451,8 +451,13 @@ test("render: Landing extraída renderiza con CTAs", async () => {
   assert.match(html, /destino más barato|cheapest destination/);
   assert.match(html, /reserva su vuelo|books their flight/);
   assert.match(html, /Preguntas frecuentes|Frequently asked questions/);
-  assert.match(html, /Prepara el encuentro|Plan the meetup/);
-  assert.match(html, /\/quedar\/madrid-barcelona\/|\/meet\/madrid-barcelona\//);
+  assert.match(html, /Empieza a preparar el encuentro|Start planning the meetup/);
+  assert.match(html, /Amigos|Friends/);
+  assert.match(html, /lp-start-cities/);
+  assert.match(html, /MAD/);
+  assert.match(html, /Londres|London/);
+  assert.ok(!html.includes("/quedar/"), "la portada ya no es un listado de páginas estáticas");
+  assert.ok(!html.includes("lp-more-links"));
   assert.ok(!html.includes("app-footer-seo"), "las rutas no van en el pie");
 });
 

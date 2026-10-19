@@ -46,8 +46,16 @@
     "statOrigins": "orígenes máx.",
     "statRoutes": "rutas analizadas",
     "faqTitle": "Preguntas frecuentes",
-    "moreTitle": "Prepara el encuentro",
-    "moreGuides": "Guías",
+    "startsTitle": "Empieza a preparar el encuentro",
+    "startsLead": "Un toque rellena las ciudades y el criterio. Tú eliges la fecha; el precio sale al buscar.",
+    "starts": [
+      { "id": "friends", "title": "Amigos" },
+      { "id": "couple", "title": "Pareja" },
+      { "id": "sendoff", "title": "Despedida" },
+      { "id": "fair", "title": "A medias" },
+      { "id": "erasmus", "title": "Erasmus" },
+      { "id": "weekend", "title": "Fin de semana" }
+    ],
     "faqs": [
       {
         "q": "¿FlyndMe vende billetes?",

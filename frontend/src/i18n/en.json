@@ -46,8 +46,16 @@
     "statOrigins": "max origins",
     "statRoutes": "routes analyzed",
     "faqTitle": "Frequently asked questions",
-    "moreTitle": "Plan the meetup",
-    "moreGuides": "Guides",
+    "startsTitle": "Start planning the meetup",
+    "startsLead": "One tap fills in the cities and the criterion. You pick the date; the price appears when you search.",
+    "starts": [
+      { "id": "friends", "title": "Friends" },
+      { "id": "couple", "title": "Couple" },
+      { "id": "sendoff", "title": "Farewell" },
+      { "id": "fair", "title": "Halfway" },
+      { "id": "erasmus", "title": "Erasmus" },
+      { "id": "weekend", "title": "Weekend" }
+    ],
     "faqs": [
       {
         "q": "Does FlyndMe sell tickets?",
