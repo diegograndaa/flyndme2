@@ -1375,7 +1375,7 @@ body {
   letter-spacing: .5px;
 }
 .sf-recent-clear {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--slate-400);
   background: none;
   border: none;
@@ -1411,7 +1411,7 @@ body {
   color: var(--navy);
 }
 .sf-recent-date {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--slate-400);
   margin-top: 2px;
 }
