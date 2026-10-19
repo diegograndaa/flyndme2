@@ -484,8 +484,8 @@
     "sharedDetail": "Prices are from that moment (estimate) and may have changed.",
     "sharedRefresh": "Check today's prices",
     "fxNote": "Amounts converted from euros at a fixed approximate rate ({{rate}}); you'll pay in the currency of the site where you book.",
-    "partialNotice": "Partial results: the search hit its time limit. Showing what was found — try again or narrow the search for full coverage.",
-    "degradedNotice": "Our price provider failed for part of the search, so some destinations may be missing. Search again in a few minutes to see them all.",
+    "partialNotice": "Partial results",
+    "degradedNotice": "Some destinations are missing",
     "dateFallbackBadge": "Nearby dates",
     "dateFallbackChip": "Price for {{date}}",
     "dateFallbackHint": "No cached price for your exact date — showing the closest date with data. The date shown is the real flight date.",
@@ -571,7 +571,7 @@
     }
   },
   "loading": {
-    "boardTitle": "Finding your meeting point",
+    "boardTitle": "Searching",
     "cancel": "Cancel search",
     "cancelled": "Search cancelled",
     "waking": "Starting the server: this can take up to a minute",
@@ -784,7 +784,7 @@
   "group": {
     "cta": "Invite your group",
     "eyebrow": "Group trip",
-    "title": "Group boarding open",
+    "title": "Group",
     "subtitle": "Everyone adds their own departure city — FlyndMe finds the cheapest place to meet.",
     "inviteLabel": "Invite link",
     "inviteHint": "Share this link so each traveler adds where they're flying from.",
@@ -807,7 +807,7 @@
     "add": "Add",
     "findDestination": "Find the best destination",
     "searchHint": "Anyone in the group can run the search.",
-    "exit": "Back to single search",
+    "exit": "Back",
     "needDate": "Pick a departure date first.",
     "createError": "Couldn't create the group link. Try again.",
     "creating": "Preparing boarding…",

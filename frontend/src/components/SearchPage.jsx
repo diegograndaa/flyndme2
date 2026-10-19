@@ -440,7 +440,6 @@ const SearchPage = React.memo(function SearchPage({
                     </button>
                   ))}
                 </div>
-                <p className="sr-only">{t("search.arrivalGapHint")}</p>
               </div>
             )}
 
@@ -682,10 +681,6 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
               </div>
             )}
-            {selectedDests.length === 0 && (
-              <p className="sr-only">{t("search.destBasisCheaperHint")}</p>
-            )}
-
             {origins.some((o) => o.trim()) && (
               <div className="sf-summary-bar">
                 <div className="sf-summary-travelers">

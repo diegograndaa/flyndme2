@@ -48,10 +48,8 @@ export function SearchingBoard({ origins = [], title, className = "", onCancel }
  */
 export function SearchProgress({ loading, origins = [], onCancel, waking = false }) {
   const { t } = useI18n();
-  const messages = t("loading.messages");
   const ariaLabel = t("loading.ariaLabel");
 
-  const [step, setStep]       = useState(0);
   const [width, setWidth]     = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -59,30 +57,24 @@ export function SearchProgress({ loading, origins = [], onCancel, waking = false
     if (!loading) {
       // Finish animation then hide
       setWidth(100);
-      const timer = setTimeout(() => { setVisible(false); setWidth(0); setStep(0); }, 400);
+      const timer = setTimeout(() => { setVisible(false); setWidth(0); }, 400);
       return () => clearTimeout(timer);
     }
 
     setVisible(true);
     setWidth(8);
-    setStep(0);
-
-    // Advance message every 4 s (slower to cover long cold-starts)
-    const msgTimer = setInterval(() => {
-      setStep((p) => (p + 1) % (Array.isArray(messages) ? messages.length : 1));
-    }, 4000);
 
     // Simulate progress (asymptotic — never quite reaches 95 % while loading)
     const progTimer = setInterval(() => {
       setWidth((w) => w + (95 - w) * 0.06);
     }, 800);
 
-    return () => { clearInterval(msgTimer); clearInterval(progTimer); };
-  }, [loading, messages]);
+    return () => clearInterval(progTimer);
+  }, [loading]);
 
   if (!visible) return null;
 
-  const currentMessage = Array.isArray(messages) ? messages[step] : "";
+  const currentMessage = t("loading.boardTitle");
 
   return (
     <>

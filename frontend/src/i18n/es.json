@@ -484,8 +484,8 @@
     "sharedDetail": "Los precios son los de ese momento (estimación) y pueden haber cambiado.",
     "sharedRefresh": "Buscar precios de hoy",
     "fxNote": "Importes convertidos desde euros a un cambio fijo aproximado ({{rate}}); pagarás en la divisa de la web donde reserves.",
-    "partialNotice": "Resultados parciales: la búsqueda alcanzó su límite de tiempo. Mostramos lo encontrado — reintenta o acota la búsqueda para cobertura completa.",
-    "degradedNotice": "Nuestro proveedor de precios ha fallado en parte de la búsqueda: puede faltar algún destino. Repite la búsqueda en unos minutos para verlos todos.",
+    "partialNotice": "Resultados parciales",
+    "degradedNotice": "Faltan destinos",
     "dateFallbackBadge": "Fechas cercanas",
     "dateFallbackChip": "Precio del {{date}}",
     "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo.",
@@ -571,7 +571,7 @@
     }
   },
   "loading": {
-    "boardTitle": "Buscando vuestro punto de encuentro",
+    "boardTitle": "Buscando",
     "cancel": "Cancelar búsqueda",
     "cancelled": "Búsqueda cancelada",
     "waking": "Arrancando el servidor: puede tardar hasta un minuto",
@@ -784,7 +784,7 @@
   "group": {
     "cta": "Invitar al grupo",
     "eyebrow": "Viaje en grupo",
-    "title": "Embarque de grupo abierto",
+    "title": "Grupo",
     "subtitle": "Cada uno añade su ciudad de salida y FlyndMe encuentra el lugar más barato para reuniros.",
     "inviteLabel": "Enlace de invitación",
     "inviteHint": "Comparte este enlace para que cada viajero añada desde dónde vuela.",
@@ -807,7 +807,7 @@
     "add": "Añadir",
     "findDestination": "Buscar el mejor destino",
     "searchHint": "Cualquiera del grupo puede lanzar la búsqueda.",
-    "exit": "Volver a la búsqueda individual",
+    "exit": "Volver",
     "needDate": "Elige primero una fecha de salida.",
     "createError": "No se pudo crear el enlace del grupo. Inténtalo de nuevo.",
     "creating": "Preparando el embarque…",

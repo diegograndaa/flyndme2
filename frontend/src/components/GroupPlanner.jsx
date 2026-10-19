@@ -7,7 +7,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { FlapText } from "./FlapBoard";
-import { Plus, X, Users, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
+import { Plus, X, Link2, Search, RefreshCw, MapPin, Calendar, MessageCircle, Share2, AlertTriangle } from "lucide-react";
 import { AIRPORT_MAP, cityOf, countryOf, countryFlag, searchAirports, todayISO, resolveOriginCode } from "../utils/helpers";
 import { formatDateLong } from "./DateField";
 import { FriendlyError } from "./UiBits";
@@ -78,7 +78,6 @@ function GroupPlanner({
 
   return (
     <section className="gp" aria-labelledby="gp-title">
-      <div className="gp-eyebrow"><Users size={15} className="lucide" /> {t("group.eyebrow")}</div>
       <h1 id="gp-title" className="gp-title">{t("group.title")}</h1>
 
       <div className="gp-facts">

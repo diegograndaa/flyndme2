@@ -15,7 +15,6 @@ export function OfflineStrip() {
     <div className="fm-offline" role="status">
       <WifiOff size={14} aria-hidden="true" />
       <span className="fm-offline-tag">{t("pwa.offline")}</span>
-      <span className="fm-offline-text">{t("pwa.offlineText")}</span>
     </div>
   );
 }
@@ -25,7 +24,6 @@ export function UpdateBanner({ onUpdate, onDismiss }) {
   return (
     <div className="fm-pwa-card fm-pwa-card--update" role="status">
       <span className="fm-pwa-card-tag">{t("pwa.updateTitle")}</span>
-      <span className="fm-pwa-card-text">{t("pwa.updateText")}</span>
       <div className="fm-pwa-card-actions">
         <button type="button" className="fm-pwa-card-cta" onClick={onUpdate}>
           <RefreshCw size={14} aria-hidden="true" /> {t("pwa.updateCta")}
@@ -45,11 +43,11 @@ export function InstallBanner({ mode, onInstall, onDismiss }) {
       <img className="fm-pwa-card-logo" src="/icon-192.png?v=6" alt="" width="36" height="36" />
       <div className="fm-pwa-card-body">
         <span className="fm-pwa-card-tag">{t("pwa.installTitle")}</span>
-        <span className="fm-pwa-card-text">
-          {mode === "ios"
-            ? <>{t("pwa.iosHintBefore")} <Share size={14} className="fm-pwa-ios-share" aria-label={t("pwa.iosShare")} /> {t("pwa.iosHintAfter")}</>
-            : t("pwa.installHint")}
-        </span>
+        {mode === "ios" && (
+          <span className="fm-pwa-card-text">
+            {t("pwa.iosHintBefore")} <Share size={14} className="fm-pwa-ios-share" aria-label={t("pwa.iosShare")} /> {t("pwa.iosHintAfter")}
+          </span>
+        )}
       </div>
       <div className="fm-pwa-card-actions">
         {mode === "prompt" && (

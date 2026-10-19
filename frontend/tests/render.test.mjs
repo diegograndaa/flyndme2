@@ -230,7 +230,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
   assert.match(html, /sf-summary-dest[\s\S]*ROM/);
   assert.ok(html.includes("×2"), "la fila de Madrid enseña sus 2 viajeros");
   assert.ok(html.includes("Any time"), "con dos ciudades se pide la franja de llegada");
-  assert.ok(html.includes("cheapest direct flight"), "la franja avisa de que solo hay hora en directos");
+  assert.ok(!html.includes("cheapest direct flight"), "la franja no explica la hora");
   const ordered = renderWithI18n(React.createElement(SearchPage, {
     origins: ["MAD", "LON"], setOrigins: noop,
     tripType: "roundtrip", setTripType: noop,
@@ -252,7 +252,7 @@ test("render: SearchPage extraída renderiza con props completas", async () => {
     favs: [], onToggleFav: noop, isFav: () => false,
   }));
   assert.ok(ordered.includes("≤2 h"), "el resumen enseña la franja pedida");
-  assert.ok(ordered.includes("low recent fares"), "la búsqueda personalizada es la única");
+  assert.ok(!ordered.includes("low recent fares"), "no hay párrafo sobre las tarifas recientes");
   assert.ok(!ordered.includes("Usual cities"), "ya no se elige la lista habitual");
   assert.ok(ordered.includes("sf-date-warn--error"), "avisa si la vuelta no es posterior");
   assert.ok(ordered.includes("later return") || ordered.includes("vuelta posterior"));
