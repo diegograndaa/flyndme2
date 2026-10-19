@@ -67,10 +67,13 @@ const SearchPage = React.memo(function SearchPage({
   onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
   embedded = false,
+  revealAdvanced = 0,
 }) {
   const { t } = useI18n();
   const headcount = totalPax(origins, passengers);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Un escenario «a medias» abre el criterio, que vive en las opciones avanzadas.
+  useEffect(() => { if (revealAdvanced) setShowAdvanced(true); }, [revealAdvanced]);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [destQuery, setDestQuery] = useState("");
   const [destOpen, setDestOpen] = useState(false);

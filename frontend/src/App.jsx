@@ -32,6 +32,7 @@ const loadWinnerCard = () => import("./components/WinnerCard");
 const WinnerCard = React.lazy(loadWinnerCard);
 const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m.WhoPaysStrip })));
 import Landing from "./components/Landing";
+import { applyGroupStart } from "./utils/groupStarts";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
@@ -311,6 +312,7 @@ export default function App() {
   const [flexEnabled,   setFlexEnabled]   = useState(false);
   const [flexDays,      setFlexDays]      = useState(3);
   const [selectedDests, setSelectedDests] = useState([]); // empty = all defaults
+  const [revealAdvanced, setRevealAdvanced] = useState(0);
   // Sin ciudades a mano se pide la lista según tarifas recientes de esas salidas.
   const [destBasis, setDestBasis] = useState("cheaper");
   const [resultBasis, setResultBasis] = useState("usual");
@@ -1896,6 +1898,27 @@ export default function App() {
     });
   };
 
+  const useGroupStart = useCallback((start) => {
+    if (loading) return;
+    const next = applyGroupStart(start, { departureDate, returnDate });
+    if (!next) return;
+    setOrigins(next.origins);
+    setPassengers(next.passengers);
+    setTripType(next.tripType);
+    setOptimizeBy(next.optimizeBy);
+    setSelectedDests(next.selectedDests);
+    if (next.tripType === "roundtrip") setReturnDate(next.returnDate);
+    if (next.optimizeBy === "fairness") setRevealAdvanced((n) => n + 1);
+    setTimeout(() => {
+      const section = document.querySelector(".lp-search-section");
+      section?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+      const focus = !next.departureDate
+        ? document.getElementById("sf-date-dep")
+        : section?.querySelector("button[type=submit]");
+      focus?.focus();
+    }, 60);
+  }, [departureDate, returnDate, loading]);
+
   const searchForm = (embedded) => (
     <SearchPage
       embedded={embedded}
@@ -1926,6 +1949,7 @@ export default function App() {
         actionLabel: t("tripHint.use"),
         onAction: () => useTripHint(tripHint),
       } : null}
+      revealAdvanced={revealAdvanced}
       onSubmit={submitFromForm}
       onCreateGroup={createGroup}
       groupBusy={groupBusy}
@@ -2063,7 +2087,7 @@ export default function App() {
               ))}
             </div>
           )}
-          <Landing origins={cleanOrigins} searchForm={searchForm(false)} />
+          <Landing origins={cleanOrigins} searchForm={searchForm(false)} onUseStart={useGroupStart} startsBusy={loading} />
         </div>
       )}
 

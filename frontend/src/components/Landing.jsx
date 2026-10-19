@@ -7,30 +7,11 @@ import React, { Suspense, useMemo, useState } from "react";
 import { ChevronDown, MapPin, Search, Share2 } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { CITY_COORDS } from "../utils/geo";
+import { cityOf } from "../utils/helpers";
+import { GROUP_STARTS } from "../utils/groupStarts";
+import { TravelerDot } from "./TravelerBits";
 
 const STEP_ICONS = [MapPin, Search, Share2];
-
-// Páginas estáticas. Van en la portada (enlaces reales para quien busca y
-// para el crawler), no en el pie.
-const HOME_ROUTES = [
-  { labelEs: "Madrid · Barcelona", labelEn: "Madrid · Barcelona", es: "/quedar/madrid-barcelona/", en: "/meet/madrid-barcelona/" },
-  { labelEs: "Madrid · Londres", labelEn: "Madrid · London", es: "/quedar/madrid-londres/", en: "/meet/madrid-londres/" },
-  { labelEs: "Barcelona · Berlín", labelEn: "Barcelona · Berlin", es: "/quedar/barcelona-berlin/", en: "/meet/barcelona-berlin/" },
-  { labelEs: "Dublín · Madrid", labelEn: "Dublin · Madrid", es: "/quedar/dublin-madrid/", en: "/meet/dublin-madrid/" },
-  { labelEs: "Ámsterdam · Lisboa", labelEn: "Amsterdam · Lisbon", es: "/quedar/amsterdam-lisboa/", en: "/meet/amsterdam-lisbon/" },
-  { labelEs: "Londres · Barcelona", labelEn: "London · Barcelona", es: "/quedar/londres-barcelona/", en: "/meet/london-barcelona/" },
-  { labelEs: "Milán · Londres", labelEn: "Milan · London", es: "/quedar/milan-londres/", en: "/meet/milan-london/" },
-  { labelEs: "Múnich · Barcelona", labelEn: "Munich · Barcelona", es: "/quedar/munich-barcelona/", en: "/meet/munich-barcelona/" },
-  { labelEs: "Madrid · Berlín · Lisboa", labelEn: "Madrid · Berlin · Lisbon", es: "/quedar/madrid-berlin-lisboa/", en: "/meet/madrid-berlin-lisbon/" },
-  { labelEs: "Madrid · Londres · Berlín", labelEn: "Madrid · London · Berlin", es: "/quedar/madrid-londres-berlin/", en: "/meet/madrid-london-berlin/" },
-  { labelEs: "París · Madrid", labelEn: "Paris · Madrid", es: "/quedar/paris-madrid/", en: "/meet/paris-madrid/" },
-  { labelEs: "Valencia · Londres", labelEn: "Valencia · London", es: "/quedar/valencia-londres/", en: "/meet/valencia-london/" },
-  { labelEs: "Sevilla · Barcelona", labelEn: "Seville · Barcelona", es: "/quedar/sevilla-barcelona/", en: "/meet/seville-barcelona/" },
-];
-const HOME_GUIDES = [
-  { labelEs: "Despedidas", labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },
-  { labelEs: "Punto medio", labelEn: "Meet halfway", es: "/quedar/punto-medio/", en: "/meet/meet-halfway/" },
-];
 
 const FaqItem = React.memo(function FaqItem({ q, a, id }) {
   const [open, setOpen] = useState(false);
@@ -61,8 +42,8 @@ const MapSlot = React.memo(function MapSlot({ origins, compact, idSuffix }) {
   );
 });
 
-const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
-  const { t, lang } = useI18n();
+const Landing = React.memo(function Landing({ searchForm, origins = [], onUseStart, startsBusy = false }) {
+  const { t } = useI18n();
   // El mapa solo se vuelve a pintar cuando cambia la lista de ciudades YA
   // reconocidas (no en cada tecla): la clave es la lista de códigos válidos.
   const mapKey = origins.filter((o) => CITY_COORDS[o]).join(",");
@@ -71,8 +52,8 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
   const faqs = t("landing.faqs");
   const faqList = Array.isArray(faqs) ? faqs : [];
   const mid = Math.ceil(faqList.length / 2);
-  const linkLabel = (item) => (lang === "es" ? item.labelEs : item.labelEn);
-  const linkHref = (item) => (lang === "es" ? item.es : item.en);
+  const startCopy = t("landing.starts");
+  const startById = new Map((Array.isArray(startCopy) ? startCopy : []).map((item) => [item.id, item]));
 
   return (
     <>
@@ -144,18 +125,36 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
             ))}
           </div>
 
-          <h2 className="lp-more-title">{t("landing.moreTitle")}</h2>
-          <nav className="lp-more-links" aria-label={t("landing.moreTitle")}>
-            {HOME_ROUTES.map((item) => (
-              <a key={item.en} className="lp-more-link" href={linkHref(item)}>{linkLabel(item)}</a>
-            ))}
-          </nav>
-          <h3 className="lp-more-sub">{t("landing.moreGuides")}</h3>
-          <nav className="lp-more-links lp-more-links--guides" aria-label={t("landing.moreGuides")}>
-            {HOME_GUIDES.map((item) => (
-              <a key={item.en} className="lp-more-link" href={linkHref(item)}>{linkLabel(item)}</a>
-            ))}
-          </nav>
+          <h2 className="lp-starts-title">{t("landing.startsTitle")}</h2>
+          <p className="lp-starts-lead">{t("landing.startsLead")}</p>
+          <ul className="lp-starts">
+            {GROUP_STARTS.map((start) => {
+              const copy = startById.get(start.id);
+              if (!copy?.title) return null;
+              const note = [
+                start.tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway"),
+                start.optimizeBy === "fairness" ? t("search.optFairness") : t("search.optTotal"),
+              ].join(" · ");
+              return (
+                <li key={start.id}>
+                  <button type="button" className="lp-start" disabled={startsBusy}
+                    onClick={() => onUseStart?.(start)}>
+                    <span className="lp-start-title">{copy.title}</span>
+                    <span className="lp-start-cities">
+                      {start.origins.map((code) => (
+                        <span key={code} className="lp-start-city">
+                          <TravelerDot origins={start.origins} code={code} />
+                          <span className="lp-start-code">{code}</span>
+                          <span className="lp-start-name">{cityOf(code) || code}</span>
+                        </span>
+                      ))}
+                    </span>
+                    <span className="lp-start-note">{note}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
     </>
