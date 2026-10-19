@@ -18,13 +18,6 @@ import { totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "../utils/passengers
 import { restoreFlexBudget, restoreDirectCabin, restoreDestinations } from "../utils/recentSearch";
 import DateField from "./DateField";
 
-// Placeholder del buscador: cada fila vacía enseña una ciudad distinta, fija
-// ("p. ej. Madrid"). El nombre sigue el idioma de la interfaz.
-const TYPING_CODES = ["MAD", "LON", "BER", "ROM", "PAR", "LIS"];
-const TYPING_RAW = ["MAD", "LON", "BCN"];
-const TYPING_COUNT = TYPING_CODES.length + TYPING_RAW.length;
-const typingExample = (i) => (i < TYPING_CODES.length ? cityOf(TYPING_CODES[i]) : TYPING_RAW[i - TYPING_CODES.length]);
-
 // Resalta en la sugerencia lo que coincide con lo escrito (sin acentos).
 function MatchText({ text, q }) {
   const i = q ? foldText(text).indexOf(q) : -1;
@@ -212,7 +205,7 @@ const SearchPage = React.memo(function SearchPage({
             <div className="sf-section sf-section--when">
               <div className={`sf-when${tripType === "roundtrip" ? " sf-when--two" : ""}`}>
                 <div className="sf-when-type">
-                  <div className="sf-label">{t("search.tripTypeLabel")}</div>
+                  <div className="sf-label sr-only">{t("search.tripTypeLabel")}</div>
                   <div className="sf-pills" role="group" aria-label={t("search.tripTypeLabel")}>
                     {[["oneway", t("search.oneway")], ["roundtrip", t("search.roundtrip")]].map(([v, l]) => (
                       <button key={v} type="button"
@@ -231,13 +224,13 @@ const SearchPage = React.memo(function SearchPage({
                 </div>
                 <div className={`sf-when-dates${tripType === "roundtrip" ? " sf-when-dates--two" : ""}`}>
                   <div className="sf-when-date">
-                    <label className="sf-label" htmlFor="sf-date-dep">{tripType === "roundtrip" ? t("search.departure") : t("search.datesLabel")}</label>
+                    <label className="sf-label sr-only" htmlFor="sf-date-dep">{tripType === "roundtrip" ? t("search.departure") : t("search.datesLabel")}</label>
                     <DateField id="sf-date-dep" label={t("search.departure")} value={departureDate} min={todayISO()} max={horizonISO()}
                       onChange={setDepartureDate} disabled={loading} />
                   </div>
                   {tripType === "roundtrip" && (
                     <div className="sf-when-date sf-ret-col">
-                      <label className="sf-label" htmlFor="sf-date-ret">{t("search.return")}</label>
+                      <label className="sf-label sr-only" htmlFor="sf-date-ret">{t("search.return")}</label>
                       <DateField id="sf-date-ret" label={t("search.return")} value={returnDate} min={departureDate ? addDaysISO(departureDate, 1) : addDaysISO(todayISO(), 1)} max={horizonISO()}
                         onChange={setReturnDate} disabled={loading} />
                     </div>
@@ -261,13 +254,11 @@ const SearchPage = React.memo(function SearchPage({
 
             {/* Origins */}
             <div className="sf-section">
-              <div className="sf-label">{t("search.originLabel")}</div>
+              <div className="sf-label sr-only">{t("search.originLabel")}</div>
               {origins.map((origin, idx) => {
                 const code = resolveOriginCode(origin);
                 const city = cityOf(code);
                 const isUnknown = origin.trim().length >= 3 && !city;
-                const empty = !origin.trim();
-                const exampleCity = empty && !loading ? typingExample(idx % TYPING_COUNT) : "";
                 return (
                   <div key={idx}
                     className={`sf-origin-row${city && origin.trim() ? " sf-origin-row--set" : ""}${dragIdx === idx ? " sf-origin-row--dragging" : ""}${dragOver === idx ? " sf-origin-row--dragover" : ""}`}
@@ -290,18 +281,10 @@ const SearchPage = React.memo(function SearchPage({
                       <span className="sf-badge-icon"><User size={12} aria-hidden="true" /></span>{idx + 1}
                     </span>
                     <div className="sf-input-wrap">
-                      {/* "p. ej." + una ciudad fija por fila: ejemplo, no un valor
-                          rellenado (decorativo: el campo tiene aria-label). */}
-                      {exampleCity && acFocus !== idx && (
-                        <span className="sf-typing-placeholder" aria-hidden="true">
-                          <span className="sf-typing-lead">{t("search.exampleLead")}</span>
-                          <span className="sf-typing-word">{exampleCity}</span>
-                        </span>
-                      )}
                       <input
                         type="text"
                         className={`form-control sf-input text-uppercase${isUnknown ? " sf-input--unknown" : ""}`}
-                        placeholder={exampleCity ? "" : t("search.placeholder")}
+                        placeholder={t("search.placeholder")}
                         aria-label={t("search.originAria", { n: idx + 1 })}
                         role="combobox"
                         aria-autocomplete="list"

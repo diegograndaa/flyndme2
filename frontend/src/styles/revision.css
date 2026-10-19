@@ -99,6 +99,7 @@
 .sf-when--two { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 /* El calendario se despliega POR ENCIMA de la sección siguiente */
 .sf-form .sf-section--when { position: relative; z-index: 6; }
+.sf-input.sf-input::placeholder { text-transform: none; }
 .sf-when .sf-label { margin-bottom: 6px; }
 .sf-when-type .sf-pills { width: fit-content; max-width: 100%; }
 .sf-when-dates { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }

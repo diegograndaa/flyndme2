@@ -2,7 +2,7 @@
 // Extraída de App.jsx (Mejora 21). Tarjeta del destino ganador: precios
 // animados, badge de verificación, desglose por origen, CTAs de reserva y
 // acciones de compartir. Incluye sus helpers privados.
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import {
   normalizeCode, cityOf, formatEur, formatDate, getBaseUrl, copyText,
@@ -137,21 +137,6 @@ const WinnerCard = React.memo(function WinnerCard({
   // (anillo, toggle precio/equidad y barra) para no mostrar métricas triviales.
   const singleOrigin = cleanOrigins.length <= 1;
 
-
-  // Ahorro frente a la media de ESTA búsqueda. Si el destino ya se comprobó en
-  // vivo, su precio mostrado ya no es comparable con la caché de los demás:
-  // el porcentaje usa el orientativo (cached*) para no inflarlo.
-  const savingsPct = useMemo(() => {
-    const estimate = (f) => {
-      if (!f) return 0;
-      return Number.isFinite(f.cachedAveragePerTraveler) ? f.cachedAveragePerTraveler : (f.averageCostPerTraveler || 0);
-    };
-    if (!allFlights || allFlights.length < 2 || !estimate(dest)) return 0;
-    const avgAll = allFlights.reduce((s, f) => s + estimate(f), 0) / allFlights.length;
-    if (avgAll <= 0) return 0;
-    return Math.round(((avgAll - estimate(dest)) / avgAll) * 100);
-  }, [allFlights, dest]);
-
   // Todos los hooks ya se han llamado de forma incondicional → early return seguro.
   if (!dest) return null;
 
@@ -221,7 +206,6 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-image-label">
           {/* Nombre del destino: gira y se asienta en el valor REAL. */}
           <span className="wc-dest-code wc-dest-code--flap"><FlapText text={city || code} size="lg" delay={250} /></span>
-          {city && <span className="wc-dest-city">{code}</span>}
         </div>
         <button type="button" className={`wc-fav-btn${isFav ? " wc-fav-btn--active" : ""}`} onClick={onToggleFav} aria-label={t("results.favorite")} aria-pressed={isFav} title={t("results.favorite")}>
           {isFav ? <Heart size={18} fill="currentColor" aria-hidden="true" /> : <Heart size={18} aria-hidden="true" />}
@@ -246,27 +230,16 @@ const WinnerCard = React.memo(function WinnerCard({
         {/* Primero el cómputo del grupo; debajo, el precio de cada viajero. */}
         <div className="wc-total" aria-busy={verifyPhase === "loading" ? "true" : undefined}>
           <div className="wc-total-main">
-            <span className="wc-total-label">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
+            <span className="wc-total-label sr-only">{travelers === 1 ? t("results.totalOne") : t("results.groupTotal")}</span>
             <div className="wc-total-figure">
-              {savingsPct > 5 && (
-                <span className="wc-total-savings">
-                  {t("results.savingsPct", { pct: savingsPct })}
-                  <span className="sr-only"> ({t("results.savingsPctHint", { n: allFlights.length })})</span>
-                </span>
-              )}
               <div className="wc-total-price"><Odometer value={money(dest.totalCostEUR)} /></div>
             </div>
           </div>
           {sumParts && (
             <div className="wc-total-sum" aria-hidden="true">
               {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
-              <b> = </b><strong>{money(dest.totalCostEUR)}</strong>
             </div>
           )}
-          <div className="wc-total-meta">
-            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
-            {dep && <span>{tripType === "roundtrip" && ret ? `${formatDate(dep)} → ${formatDate(ret)}` : formatDate(dep)}</span>}
-          </div>
           <div className="wc-total-foot" aria-live="polite">
             {verifyPhase === "loading" ? (
               <span className="wc-verify-status">
@@ -410,7 +383,6 @@ const WinnerCard = React.memo(function WinnerCard({
                           {!singleOrigin && <TravelerDot origins={cleanOrigins} code={origin} />}
                           {countryFlag(origin)} {origin}
                         </span>
-                        <span className="wc-flight-city">{originCity}</span>
                       </span>
                       <span className="wc-flight-arrow-wrap" style={{ "--k": cardIdx }}>
                         <span className="wc-flight-line" />
@@ -422,7 +394,6 @@ const WinnerCard = React.memo(function WinnerCard({
                       </span>
                       <span className="wc-flight-endpoint wc-flight-endpoint--right">
                         <span className="wc-flight-code">{code}</span>
-                        <span className="wc-flight-city">{destCity}</span>
                       </span>
                       <span className="wc-flight-price-tag">
                         {typeof price === "number" ? <Odometer value={money(price)} /> : "—"}
@@ -484,17 +455,17 @@ const WinnerCard = React.memo(function WinnerCard({
                         </a>
                       )}
                       {ssUrl && book?.provider !== "skyscanner" && (
-                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta"
+                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon"
+                          aria-label="Skyscanner"
                           onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Search size={16} aria-hidden="true" /></span>
-                          Skyscanner
                         </a>
                       )}
                       {gfUrl && (
-                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--google"
+                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--google"
+                          aria-label="Google Flights"
                           onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
-                          Google Flights
                         </a>
                       )}
                       <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
@@ -523,46 +494,39 @@ const WinnerCard = React.memo(function WinnerCard({
         <div className="wc-actions">
           {/* Baja al panel de salidas (solo si hay más de un destino). "Cambiar
               búsqueda" ya está en la cabecera del vuelo y en la barra fija. */}
-          {flightsCount > 1 && (
-            <button type="button" className="wc-action-btn wc-action-btn--primary" onClick={onViewAlternatives}>
-              {t("results.viewAlternatives")}
-            </button>
-          )}
-          {/* Mobile: one "Share" → native OS sheet (covers WhatsApp/Telegram/Email/…).
-              Desktop (no Web Share API): copy-link + explicit Telegram/Email so those
-              channels stay reachable. */}
           {canNativeShare ? (
-            <button type="button" className="wc-action-btn wc-action-btn--share" onClick={onShareNative}>
-              <Share2 size={14} aria-hidden="true" /> {t("results.share")}
+            <button type="button" className="wc-action-btn wc-action-btn--share" onClick={onShareNative} aria-label={t("results.share")}>
+              <Share2 size={16} aria-hidden="true" />
             </button>
           ) : (
-            <button type="button" className="wc-action-btn" onClick={onShare}>
-              {shareStatus === "ok" ? t("results.copied") : shareStatus === "saving" ? "…" : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}
+            <button type="button" className="wc-action-btn" onClick={onShare}
+              aria-label={shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}>
+              {shareStatus === "ok" ? <Check size={16} aria-hidden="true" /> : <Share2 size={16} aria-hidden="true" />}
             </button>
           )}
-          <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp}>
-            <span className="wc-wa-icon"><MessageCircle size={15} aria-hidden="true" /></span> WhatsApp
+          <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp} aria-label="WhatsApp">
+            <span className="wc-wa-icon"><MessageCircle size={16} aria-hidden="true" /></span>
           </button>
           {!canNativeShare && (
             <>
-              <button type="button" className="wc-action-btn" onClick={onShareTelegram}>
-                <Send size={14} aria-hidden="true" /> Telegram
+              <button type="button" className="wc-action-btn" onClick={onShareTelegram} aria-label="Telegram">
+                <Send size={16} aria-hidden="true" />
               </button>
-              <button type="button" className="wc-action-btn" onClick={onShareEmail}>
-                <Mail size={14} aria-hidden="true" /> Email
+              <button type="button" className="wc-action-btn" onClick={onShareEmail} aria-label="Email">
+                <Mail size={16} aria-hidden="true" />
               </button>
             </>
           )}
           {onCopySearchLink && (
-            <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink}>
-              <Link2 size={14} aria-hidden="true" /> {t("results.copySearchLink")}
+            <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink} aria-label={t("results.copySearchLink")}>
+              <Link2 size={16} aria-hidden="true" />
             </button>
           )}
           {onToggleWatch && (
             <button type="button" className={`wc-action-btn wc-action-btn--watch${watched ? " wc-action-btn--on" : ""}`}
-              onClick={onToggleWatch} aria-pressed={watched}>
-              {watched ? <BellRing size={14} aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}
-              {" "}{watched ? t("watch.on") : t("watch.cta")}
+              onClick={onToggleWatch} aria-pressed={watched}
+              aria-label={watched ? t("watch.on") : t("watch.cta")}>
+              {watched ? <BellRing size={16} aria-hidden="true" /> : <Bell size={16} aria-hidden="true" />}
             </button>
           )}
         </div>

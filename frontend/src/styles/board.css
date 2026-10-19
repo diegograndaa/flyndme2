@@ -1169,13 +1169,27 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   font-size: 12px;
   color: var(--panel-muted);
 }
+.fm-flight-head-btn-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .fm-flight-head-btn {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 0;
+  width: 40px;
+  height: 40px;
   min-height: 40px;
-  padding: 4px 10px;
+  padding: 0;
   background: transparent;
   color: var(--panel-ink);
   border: 1px solid var(--panel-line);
@@ -2465,14 +2479,25 @@ button,
 [data-theme="dark"] .wc-total-foot .wc-verify-caption--ok { color: var(--panel-good); }
 
 /* Botones de cada vuelo: Reservar manda, el resto compacto en una fila */
+.wc-card .wc-actions .wc-action-btn.wc-action-btn {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .wc-buy .wc-flight-ctas { display: flex; flex-wrap: wrap; gap: 8px; }
 .wc-card .wc-buy .wc-cta.wc-cta { flex: 1 1 0; min-width: 0; white-space: nowrap; }
 .wc-card .wc-buy .wc-cta--book.wc-cta--book { flex: 1.5 1 0; }
-.wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 44px; padding: 0; }
+.wc-card .wc-buy .wc-cta--copy.wc-cta--copy,
+.wc-card .wc-buy .wc-cta--icon.wc-cta--icon { flex: 0 0 44px; width: 44px; padding: 0; justify-content: center; }
 @media (max-width: 600px) {
   .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 10px; font-size: 12.5px; }
   .wc-card .wc-buy .wc-cta--book.wc-cta--book { flex: 1 1 100%; padding: 11px 12px; font-size: 14px; }
-  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 40px; }
+  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy,
+  .wc-card .wc-buy .wc-cta--icon.wc-cta--icon { flex: 0 0 40px; width: 40px; padding: 0; }
   .wc-total-meta > span + span::before { content: none; }
   .wc-total-meta { gap: 2px 14px; }
 }
@@ -3156,7 +3181,18 @@ button,
    ocupa sitio en el flujo (alto 0) y su contenido flota. */
 .fm-sticky-bar.fm-sticky-bar { height: 0; margin: 0; padding: 0; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; }
 .fm-sticky-bar .fm-sticky-inner.fm-sticky-inner { position: absolute; top: 8px; left: 0; right: 0; }
-.fm-sticky-btn { display: inline-flex; align-items: center; gap: 6px; }
+.fm-sticky-btn-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.fm-sticky-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; gap: 0; }
 
 @media (max-width: 600px) {
   /* Una sola fila: destino · precio · divisa · ajustar (antes dos filas) */
@@ -3166,11 +3202,9 @@ button,
   .fm-sticky-btn.fm-sticky-btn { width: 40px; height: 40px; padding: 0; justify-content: center; }
   .fm-currency-switcher .fm-currency-btn { min-width: 40px; height: 40px; padding: 0 6px; }
 
-  /* Acciones de la tarjeta: rejilla de 2 columnas en vez de botones a
-     distinta anchura que caían donde cupieran */
-  .wc-card .wc-actions.wc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .wc-card .wc-actions .wc-action-btn.wc-action-btn { width: 100%; min-height: 44px; margin: 0; justify-content: center; text-align: center; }
-  .wc-card .wc-actions .wc-action-btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* Acciones: iconos en una fila, como el compartir de un resultado de vuelos */
+  .wc-card .wc-actions.wc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wc-card .wc-actions .wc-action-btn.wc-action-btn { width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; justify-content: center; }
 
   /* Más barato | Más equitativo: dos mitades iguales, como el tipo de billete */
   .wc-buy .wc-criterion-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -3289,5 +3323,6 @@ button,
 @media (max-width: 340px) {
   .wc-buy .wc-flight-ctas { gap: 6px; }
   .wc-card .wc-buy .wc-cta.wc-cta { padding: 9px 2px; font-size: 12px; letter-spacing: -.01em; }
-  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy { flex: 0 0 40px; }
+  .wc-card .wc-buy .wc-cta--copy.wc-cta--copy,
+  .wc-card .wc-buy .wc-cta--icon.wc-cta--icon { flex: 0 0 40px; width: 40px; padding: 0; }
 }

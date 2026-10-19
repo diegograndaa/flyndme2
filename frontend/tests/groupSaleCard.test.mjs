@@ -57,7 +57,7 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el gru
   assert.ok(html.includes("origin=BCN"), html);
   assert.ok(html.includes("departureDate=2026-10-15"), html);
   assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
-  assert.match(html, /Comprar los vuelos del grupo|Buy the group(?:'|&#x27;)s flights/);
+  assert.match(html, />Comprar<|>Buy</);
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
@@ -85,7 +85,7 @@ test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () =>
   const anchors = [...html.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]);
   const bookToSky = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("skyscanner.es/transport/flights/mad/ltn/261015/"));
   const bookToEasy = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("easyjet.com"));
-  const compareSky = anchors.filter((a) => a.includes('class="wc-cta"') && a.includes("skyscanner.es"));
+  const compareSky = anchors.filter((a) => a.includes("wc-cta--icon") && a.includes("skyscanner.es"));
   assert.equal(bookToSky.length, 1);
   assert.equal(bookToEasy.length, 1);
   assert.equal(compareSky.length, 1, "Skyscanner aparte solo en el vuelo que ya abre su aerolínea");

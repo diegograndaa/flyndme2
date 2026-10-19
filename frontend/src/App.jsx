@@ -2290,15 +2290,6 @@ export default function App() {
                 reparto queda a un toque con un resumen de una línea. */}
             <summary className="fm-split-summary">
               <span className="fm-split-summary-tag">{t("results.splitSummaryTag")}</span>
-              <span className="fm-split-summary-text">
-                {(displayDest.flights || []).map((f) => `${String(f.origin).toUpperCase()} ${currency === "EUR" ? formatEur(f.price, 0) : convertPrice(f.price, currency)}`).join(" · ")}
-                <span className="fm-split-summary-sep"> — </span>
-                {t("results.splitSummaryEqual", { amount: currency === "EUR" ? formatEur(displayDest.averageCostPerTraveler, 0) : convertPrice(displayDest.averageCostPerTraveler, currency) })}
-              </span>
-              <span className="fm-split-summary-more">
-                <span className="fm-split-summary-open">{t("results.splitSummaryMore")}</span>
-                <span className="fm-split-summary-close">{t("results.splitSummaryLess")}</span>
-              </span>
             </summary>
             <div className="fm-split-body">
             <ErrorBoundary renderingLabel={t("errors.rendering")} retryLabel={t("errors.retry")}>
