@@ -3,12 +3,52 @@
 // fusionados, con "cómo funciona" debajo. La antigua vista intermedia
 // de búsqueda desaparece: el formulario (SearchPage) se recibe como prop
 // `searchForm` y se renderiza directamente bajo el hero.
-import React, { Suspense, useMemo } from "react";
-import { MapPin, Search, Share2 } from "lucide-react";
+import React, { Suspense, useMemo, useState } from "react";
+import { ChevronDown, MapPin, Search, Share2 } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { CITY_COORDS } from "../utils/geo";
 
 const STEP_ICONS = [MapPin, Search, Share2];
+
+// Páginas estáticas. Van en la portada (enlaces reales para quien busca y
+// para el crawler), no en el pie.
+const HOME_ROUTES = [
+  { labelEs: "Madrid · Barcelona", labelEn: "Madrid · Barcelona", es: "/quedar/madrid-barcelona/", en: "/meet/madrid-barcelona/" },
+  { labelEs: "Madrid · Londres", labelEn: "Madrid · London", es: "/quedar/madrid-londres/", en: "/meet/madrid-londres/" },
+  { labelEs: "Barcelona · Berlín", labelEn: "Barcelona · Berlin", es: "/quedar/barcelona-berlin/", en: "/meet/barcelona-berlin/" },
+  { labelEs: "Dublín · Madrid", labelEn: "Dublin · Madrid", es: "/quedar/dublin-madrid/", en: "/meet/dublin-madrid/" },
+  { labelEs: "Ámsterdam · Lisboa", labelEn: "Amsterdam · Lisbon", es: "/quedar/amsterdam-lisboa/", en: "/meet/amsterdam-lisbon/" },
+  { labelEs: "Londres · Barcelona", labelEn: "London · Barcelona", es: "/quedar/londres-barcelona/", en: "/meet/london-barcelona/" },
+  { labelEs: "Milán · Londres", labelEn: "Milan · London", es: "/quedar/milan-londres/", en: "/meet/milan-london/" },
+  { labelEs: "Múnich · Barcelona", labelEn: "Munich · Barcelona", es: "/quedar/munich-barcelona/", en: "/meet/munich-barcelona/" },
+  { labelEs: "Madrid · Berlín · Lisboa", labelEn: "Madrid · Berlin · Lisbon", es: "/quedar/madrid-berlin-lisboa/", en: "/meet/madrid-berlin-lisbon/" },
+  { labelEs: "Madrid · Londres · Berlín", labelEn: "Madrid · London · Berlin", es: "/quedar/madrid-londres-berlin/", en: "/meet/madrid-london-berlin/" },
+  { labelEs: "París · Madrid", labelEn: "Paris · Madrid", es: "/quedar/paris-madrid/", en: "/meet/paris-madrid/" },
+  { labelEs: "Valencia · Londres", labelEn: "Valencia · London", es: "/quedar/valencia-londres/", en: "/meet/valencia-london/" },
+  { labelEs: "Sevilla · Barcelona", labelEn: "Seville · Barcelona", es: "/quedar/sevilla-barcelona/", en: "/meet/seville-barcelona/" },
+];
+const HOME_GUIDES = [
+  { labelEs: "Despedidas", labelEn: "Stag & hen dos", es: "/quedar/despedida-soltero/", en: "/meet/stag-hen-do/" },
+  { labelEs: "Punto medio", labelEn: "Meet halfway", es: "/quedar/punto-medio/", en: "/meet/meet-halfway/" },
+];
+
+const FaqItem = React.memo(function FaqItem({ q, a, id }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`lp-faq-item${open ? " lp-faq-item--open" : ""}`}>
+      <h3 className="lp-faq-h">
+        <button type="button" className="lp-faq-q" onClick={() => setOpen(!open)}
+          aria-expanded={open} aria-controls={id}>
+          <span>{q}</span>
+          <span className="lp-faq-chevron" aria-hidden="true"><ChevronDown size={16} /></span>
+        </button>
+      </h3>
+      <div className="lp-faq-a-wrap" id={id} role="region" aria-hidden={!open}>
+        <div className="lp-faq-a">{a}</div>
+      </div>
+    </div>
+  );
+});
 
 // El mapa trae los geodatos de Europa: se carga aparte para no pesar en el
 // arranque. Mientras llega, un hueco con sus mismas proporciones (sin saltos).
@@ -22,12 +62,17 @@ const MapSlot = React.memo(function MapSlot({ origins, compact, idSuffix }) {
 });
 
 const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   // El mapa solo se vuelve a pintar cuando cambia la lista de ciudades YA
   // reconocidas (no en cada tecla): la clave es la lista de códigos válidos.
   const mapKey = origins.filter((o) => CITY_COORDS[o]).join(",");
   const mapOrigins = useMemo(() => (mapKey ? mapKey.split(",") : []), [mapKey]);
   const steps = t("landing.steps");
+  const faqs = t("landing.faqs");
+  const faqList = Array.isArray(faqs) ? faqs : [];
+  const mid = Math.ceil(faqList.length / 2);
+  const linkLabel = (item) => (lang === "es" ? item.labelEs : item.labelEn);
+  const linkHref = (item) => (lang === "es" ? item.es : item.en);
 
   return (
     <>
@@ -82,6 +127,35 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
               })}
             </ol>
           </div>
+        </div>
+      </section>
+
+      <section className="lp-lower">
+        <div className="container" style={{ maxWidth: 1080 }}>
+          <h2 className="lp-faq-title">{t("landing.faqTitle")}</h2>
+          <div className="lp-faq-cols">
+            {[faqList.slice(0, mid), faqList.slice(mid)].map((col, colIdx) => (
+              <div key={colIdx} className="lp-faq-list">
+                {col.map((item, i) => {
+                  const n = colIdx === 0 ? i : mid + i;
+                  return <FaqItem key={n} q={item.q} a={item.a} id={`lp-faq-a-${n}`} />;
+                })}
+              </div>
+            ))}
+          </div>
+
+          <h2 className="lp-more-title">{t("landing.moreTitle")}</h2>
+          <nav className="lp-more-links" aria-label={t("landing.moreTitle")}>
+            {HOME_ROUTES.map((item) => (
+              <a key={item.en} className="lp-more-link" href={linkHref(item)}>{linkLabel(item)}</a>
+            ))}
+          </nav>
+          <h3 className="lp-more-sub">{t("landing.moreGuides")}</h3>
+          <nav className="lp-more-links lp-more-links--guides" aria-label={t("landing.moreGuides")}>
+            {HOME_GUIDES.map((item) => (
+              <a key={item.en} className="lp-more-link" href={linkHref(item)}>{linkLabel(item)}</a>
+            ))}
+          </nav>
         </div>
       </section>
     </>
