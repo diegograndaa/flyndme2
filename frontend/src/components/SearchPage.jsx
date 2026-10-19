@@ -66,6 +66,7 @@ const SearchPage = React.memo(function SearchPage({
   loading, error, errorHint = null, // { tag, text, detail, actionLabel, onAction }: alternativa real a un 0 resultados
   onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
+  embedded = false,
 }) {
   const { t } = useI18n();
   const headcount = totalPax(origins, passengers);
@@ -160,7 +161,7 @@ const SearchPage = React.memo(function SearchPage({
   };
 
   return (
-    <div className="container py-4 sf-wrap" style={{ maxWidth: 720 }}>
+    <div className={embedded ? "sf-wrap sf-wrap--embedded" : "container py-4 sf-wrap"} style={embedded ? undefined : { maxWidth: 720 }}>
       {/* Una sola columna: el selector lateral de aeropuertos se retiró (las
           sugerencias del propio campo ya cubren la búsqueda y la exploración). */}
       <div className="sf-grid">

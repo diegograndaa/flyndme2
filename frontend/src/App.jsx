@@ -196,14 +196,18 @@ export default function App() {
 
   // View: 'landing' | 'search' | 'results'
   const [view, setViewRaw] = useState("landing");
+  // El lápiz edita la búsqueda encima de los resultados. No vuelve a la portada.
+  const [editingSearch, setEditingSearch] = useState(false);
 
   // Ref con la vista actual: la usan setView (prev sin updater) y el manejador
   // de teclado (closure registrado una sola vez).
   const viewRef = useRef(view);
+  const editingSearchRef = useRef(false);
   // Parámetros de la búsqueda que produjo los resultados actuales (el formulario
   // se puede editar después; «vigilar precio» debe guardar lo que se buscó).
   const lastSearchRef = useRef(null);
   useEffect(() => { viewRef.current = view; }, [view]);
+  useEffect(() => { editingSearchRef.current = editingSearch; }, [editingSearch]);
 
   // ── Browser history support (back/forward buttons) ──────────────────────
   const skipHistoryPush = useRef(false);
@@ -285,6 +289,7 @@ export default function App() {
       if (e.key === "Escape") {
         if (showShortcutsRef.current) { setShowShortcuts(false); return; }
         if (showFavPanelRef.current) { setShowFavPanel(false); return; }
+        if (editingSearchRef.current) { setEditingSearch(false); return; }
         const cur = viewRef.current;
         if (cur === "results") setView("search");
         else if (cur === "search") setView("landing");
@@ -1604,6 +1609,7 @@ export default function App() {
             img.src = getCityImage(normalizeCode(d.destination), getBaseUrl(), { w: 1200, h: 500 });
           });
 
+          setEditingSearch(false);
           setView("results");
           // Foco al principio de los resultados (el botón de buscar desaparece y
           // el foco caía en <body>): teclado y lector de pantalla siguen desde aquí.
@@ -1901,6 +1907,59 @@ export default function App() {
     }
   };
 
+  // El lápiz abre el formulario encima de los resultados. La portada sigue
+  // siendo solo el logo.
+  const toggleSearchEditor = () => {
+    setEditingSearch((open) => {
+      if (!open) {
+        setTimeout(() => {
+          document.querySelector(".fm-edit-search")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+          document.querySelector(".fm-edit-search .sf-input")?.focus();
+        }, 40);
+      }
+      return !open;
+    });
+  };
+
+  const searchForm = (embedded) => (
+    <SearchPage
+      embedded={embedded}
+      origins={origins}           setOrigins={setOrigins}
+      tripType={tripType}         setTripType={setTripType}
+      departureDate={departureDate} setDepartureDate={setDepartureDate}
+      returnDate={returnDate}     setReturnDate={setReturnDate}
+      optimizeBy={optimizeBy}     setOptimizeBy={setOptimizeBy}
+      budgetEnabled={budgetEnabled} setBudgetEnabled={setBudgetEnabled}
+      maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
+      flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
+      flexDays={flexDays}         setFlexDays={setFlexDays}
+      selectedDests={selectedDests} setSelectedDests={setSelectedDests}
+      passengers={passengers}     setPassengers={setPassengers}
+      directOnly={directOnly}     setDirectOnly={setDirectOnly}
+      arrivalGapMin={arrivalGapMin} setArrivalGapMin={setArrivalGapMin}
+      cabinClass={cabinClass}     setCabinClass={setCabinClass}
+      currency={currency}         setCurrency={setCurrency}
+      loading={loading}           error={error}
+      errorHint={tripHint ? {
+        tag: t("tripHint.tag"),
+        text: t(tripHint.nights === 1 ? "tripHint.textOne" : "tripHint.text", {
+          nights: tripHint.nights,
+          date: formatDate(tripHint.returnDate),
+          count: tripHint.destinationsCount,
+          total: money(tripHint.cheapest.totalCostEUR),
+        }),
+        actionLabel: t("tripHint.use"),
+        onAction: () => useTripHint(tripHint),
+      } : null}
+      onSubmit={submitFromForm}
+      onCreateGroup={createGroup}
+      groupBusy={groupBusy}
+      recentSearches={recentSearches}
+      onLoadRecent={loadRecentSearch}
+      onClearRecent={clearRecentSearches}
+    />
+  );
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -2029,43 +2088,7 @@ export default function App() {
               ))}
             </div>
           )}
-          <Landing origins={cleanOrigins} searchForm={
-            <SearchPage
-              origins={origins}           setOrigins={setOrigins}
-              tripType={tripType}         setTripType={setTripType}
-              departureDate={departureDate} setDepartureDate={setDepartureDate}
-              returnDate={returnDate}     setReturnDate={setReturnDate}
-              optimizeBy={optimizeBy}     setOptimizeBy={setOptimizeBy}
-              budgetEnabled={budgetEnabled} setBudgetEnabled={setBudgetEnabled}
-              maxBudget={maxBudget}       setMaxBudget={setMaxBudget}
-              flexEnabled={flexEnabled}   setFlexEnabled={setFlexEnabled}
-              flexDays={flexDays}         setFlexDays={setFlexDays}
-              selectedDests={selectedDests} setSelectedDests={setSelectedDests}
-              passengers={passengers}     setPassengers={setPassengers}
-              directOnly={directOnly}     setDirectOnly={setDirectOnly}
-              arrivalGapMin={arrivalGapMin} setArrivalGapMin={setArrivalGapMin}
-              cabinClass={cabinClass}     setCabinClass={setCabinClass}
-              currency={currency}         setCurrency={setCurrency}
-              loading={loading}           error={error}
-              errorHint={tripHint ? {
-                tag: t("tripHint.tag"),
-                text: t(tripHint.nights === 1 ? "tripHint.textOne" : "tripHint.text", {
-                  nights: tripHint.nights,
-                  date: formatDate(tripHint.returnDate),
-                  count: tripHint.destinationsCount,
-                  total: money(tripHint.cheapest.totalCostEUR),
-                }),
-                actionLabel: t("tripHint.use"),
-                onAction: () => useTripHint(tripHint),
-              } : null}
-              onSubmit={submitFromForm}
-              onCreateGroup={createGroup}
-              groupBusy={groupBusy}
-              recentSearches={recentSearches}
-              onLoadRecent={loadRecentSearch}
-              onClearRecent={clearRecentSearches}
-            />
-          } />
+          <Landing origins={cleanOrigins} searchForm={searchForm(false)} />
         </div>
       )}
 
@@ -2133,6 +2156,17 @@ export default function App() {
             domesticChoices={homeCodes.length}
           />
           <div className="fm-results-main">
+          {editingSearch && (
+            <div className="fm-edit-search">
+              <div className="fm-edit-search-bar">
+                <span className="fm-edit-search-title">{t("results.changeSearch")}</span>
+                <button type="button" className="fm-edit-search-close" aria-label={t("a11y.close")} onClick={() => setEditingSearch(false)}>
+                  <X size={16} aria-hidden="true" />
+                </button>
+              </div>
+              {searchForm(true)}
+            </div>
+          )}
           {/* La búsqueda a un lado y la fecha al otro, como un buscador.
               Las fechas más baratas van en su propia línea, solo si las hay. */}
           <div className="fm-searchline">
@@ -2148,7 +2182,8 @@ export default function App() {
               directOnly && t("search.directOnly"),
               budgetEnabled && t("search.budgetHintOn", { amount: formatEur(maxBudget) }),
             ].filter(Boolean)}
-            onChange={() => setView("search")}
+            onChange={toggleSearchEditor}
+            editing={editingSearch}
           />
           {(() => {
             const short = (iso) => formatDate(iso).replace(/\s+\d{4}$/, "");
@@ -2217,7 +2252,7 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button type="button" className="fm-sticky-btn" aria-label={t("results.changeSearch")} onClick={() => setView("search")}>
+              <button type="button" className="fm-sticky-btn" aria-label={t("results.changeSearch")} aria-expanded={editingSearch} onClick={toggleSearchEditor}>
                 <SlidersHorizontal size={14} aria-hidden="true" /><span className="fm-sticky-btn-text">{t("results.changeSearch")}</span>
               </button>
             </div>
@@ -2257,7 +2292,7 @@ export default function App() {
             onCopySearchLink={handleCopySearchLink}
             shareStatus={shareStatus}
             onViewAlternatives={() => document.getElementById("fm-board")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })}
-            onChangeSearch={() => setView("search")}
+            onChangeSearch={toggleSearchEditor}
             verifyPhase={liveCheck.code === normalizeCode(displayDest.destination) ? liveCheck.phase : null}
             currency={currency}
             isFav={isFav(displayDest.destination)}

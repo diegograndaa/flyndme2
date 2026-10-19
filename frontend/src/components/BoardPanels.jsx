@@ -26,7 +26,7 @@ function money(v, currency) {
 
 /** Cabecera del vuelo: orígenes → fecha · viajeros · extras  [Cambiar] */
 export const FlightHeader = React.memo(function FlightHeader({
-  origins = [], departureDate, returnDate, tripType, travelers = 0, badges = [], onChange,
+  origins = [], departureDate, returnDate, tripType, travelers = 0, badges = [], onChange, editing = false,
 }) {
   const { t } = useI18n();
   const dates = tripType === "roundtrip" && returnDate
@@ -48,7 +48,7 @@ export const FlightHeader = React.memo(function FlightHeader({
         </div>
       </div>
       {onChange && (
-        <button type="button" className="fm-flight-head-btn" aria-label={t("results.changeSearch")} onClick={onChange}>
+        <button type="button" className="fm-flight-head-btn" aria-label={t("results.changeSearch")} aria-expanded={editing} onClick={onChange}>
           <Pencil size={14} aria-hidden="true" />
           <span className="fm-flight-head-btn-text">{t("results.changeSearch")}</span>
         </button>
