@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Check, SlidersHorizontal } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Check, SlidersHorizontal, X } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { travelerSlot } from "../utils/resultsLogic";
 import {
@@ -68,6 +69,32 @@ export function ResultFilters({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [wide, setWide] = useState(false);
+  const closeRef = useRef(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 900px)");
+    const apply = () => setWide(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  useEffect(() => {
+    if (!open || wide) return undefined;
+    closeRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, wide]);
   const airlines = airlinesIn(flights);
   const steps = durationSteps(flights);
   const showArrival = multiOrigin;
@@ -122,17 +149,15 @@ export function ResultFilters({
     });
   };
 
-  return (
-    <aside className={`fm-filters${open ? " fm-filters--open" : ""}`} aria-label={t("filters.title")}>
-      <button type="button" className="fm-filters-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <SlidersHorizontal size={16} aria-hidden="true" />
-        <span>{t("filters.title")}</span>
-        {active > 0 && <span className="fm-filter-badge">{active}</span>}
-      </button>
+  const drawer = open && !wide;
+  const groups = (
       <div className="fm-filters-body">
         <div className="fm-filters-head">
           <span className="fm-filter-label">{t("filters.title")}</span>
           <span className="fm-filter-count">{t("filters.count", { n: listedCount, total: flights.length })}</span>
+          <button type="button" ref={closeRef} className="fm-filters-close" aria-label={t("a11y.close")} onClick={() => setOpen(false)}>
+            <X size={16} aria-hidden="true" />
+          </button>
         </div>
         {showDomestic && (
           <div className="fm-filter-block">
@@ -233,6 +258,25 @@ export function ResultFilters({
           <button type="button" className="fm-filter-reset" onClick={onReset}>{t("filters.reset")}</button>
         )}
       </div>
+  );
+
+  return (
+    <aside className="fm-filters" aria-label={t("filters.title")}>
+      <button type="button" className="fm-filters-toggle" aria-expanded={open} onClick={() => setOpen(true)}>
+        <SlidersHorizontal size={16} aria-hidden="true" />
+        <span>{t("filters.title")}</span>
+        {active > 0 && <span className="fm-filter-badge">{active}</span>}
+      </button>
+      {!drawer && groups}
+      {drawer && typeof document !== "undefined" && createPortal(
+        <div className="fm-filters-layer">
+          <button type="button" className="fm-filters-backdrop" aria-label={t("a11y.close")} onClick={() => setOpen(false)} />
+          <aside className="fm-filters fm-filters--drawer" role="dialog" aria-modal="true" aria-label={t("filters.title")}>
+            {groups}
+          </aside>
+        </div>,
+        document.body
+      )}
     </aside>
   );
 }

@@ -900,28 +900,19 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   .fm-date-rec { flex: 0 0 auto; }
 }
 
-/* Filtros a la izquierda de la decisión. En el móvil se pliegan: la decisión
-   sigue siendo lo primero. El activo es cartel de posición, no un CTA. */
+/* Filtros en barra izquierda, como un buscador de vuelos. En escritorio
+   están siempre a la vista. En el móvil el botón abre esa misma barra. */
 .fm-results-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
-@media (min-width: 861px) {
-  .fm-results-layout:has(.fm-filters) { grid-template-columns: minmax(0, 1fr); }
-}
 .fm-filters {
   background: transparent;
   border: 0;
   border-radius: 0;
   padding: 0;
-}
-.fm-filters--open {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-line);
-  border-radius: var(--radius-md);
-  padding: 10px;
 }
 .fm-filters-toggle {
   display: inline-flex;
@@ -937,9 +928,58 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   font-weight: 700;
   font-size: 14px;
 }
+.fm-filters-toggle:focus-visible,
+.fm-filters-close:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-filters-body { display: none; flex-direction: column; gap: 14px; }
-.fm-filters--open .fm-filters-body { display: flex; margin-top: 10px; }
-.fm-filters-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.fm-filters-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+}
+.fm-filters-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--navy) 42%, transparent);
+  cursor: pointer;
+}
+.fm-filters-close {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  cursor: pointer;
+}
+.fm-filters--drawer {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(300px, 88vw);
+  padding: calc(8px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-line);
+  overflow: auto;
+}
+.fm-filters--drawer .fm-filters-close { display: inline-flex; }
+.fm-filters--drawer .fm-filters-body { display: flex; }
+.fm-filters-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fm-filter-block > .fm-filter-label {
+  font-family: var(--font);
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--navy);
+}
 .fm-filter-label {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -951,6 +991,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-filter-count { font-family: var(--font-mono); font-size: 12px; color: var(--panel-muted); }
 .fm-filter-hint { margin: 0; font-size: 12px; line-height: 1.35; color: var(--slate-500); }
 .fm-filter-block { display: flex; flex-direction: column; gap: 6px; }
+.fm-filter-block + .fm-filter-block { padding-top: 12px; border-top: 1px solid var(--line); }
 .fm-filter-opts, .fm-filter-airlines { display: flex; flex-direction: column; gap: 6px; }
 .fm-filter-airlines { flex-direction: row; flex-wrap: wrap; }
 .fm-filter-gaps { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -1139,14 +1180,22 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 }
 .fm-filter-reset:hover { border-color: var(--primary); }
 .fm-filter-reset:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
-@media (min-width: 861px) {
-  .fm-filters--open .fm-filters-body { display: flex; gap: 10px; }
-  .fm-filters--open {
-    position: sticky;
-    top: 72px;
-    max-height: calc(100dvh - 88px);
-    overflow: auto;
+@media (min-width: 900px) {
+  .fm-results-layout:has(.fm-filters) {
+    grid-template-columns: 232px minmax(0, 1fr);
+    column-gap: 28px;
   }
+  .fm-filters {
+    position: sticky;
+    top: 64px;
+    max-height: calc(100dvh - 80px);
+    overflow: auto;
+    padding: 2px 0 16px;
+  }
+  .fm-filters-toggle,
+  .fm-filters-close,
+  .fm-filters-layer { display: none; }
+  .fm-filters-body { display: flex; gap: 16px; }
   .fm-filter-block { gap: 4px; }
   .fm-filter-opts { gap: 4px; }
   .fm-filter-opt {
@@ -1156,16 +1205,13 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
     font-size: 12px;
     line-height: 1.2;
   }
-  .fm-check { font-size: 12px; gap: 6px; padding: 2px 0; }
+  .fm-check { font-size: 13px; gap: 8px; padding: 2px 0; }
   .fm-filter-opt > span:first-child { min-width: 0; }
   .fm-filter-opt-n { font-size: 12px; }
   .fm-filter-reset { font-size: 12px; padding: 6px 8px; }
   .fm-results-main > .fm-sticky-bar { margin-left: 0; margin-right: 0; }
 }
 .fm-results-main { min-width: 0; }
-@media (max-width: 860px) {
-  .fm-filters--open { position: relative; z-index: 91; }
-}
 .fm-flight-head-main { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
 .fm-flight-head .fm-board-label { color: var(--panel-faint); font-size: 12px; letter-spacing: .08em; }
 .fm-flight-head-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
