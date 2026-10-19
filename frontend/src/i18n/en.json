@@ -49,27 +49,19 @@
     "faqs": [
       {
         "q": "How do I find the destination?",
-        "a": "Add each traveler's city and a date. FlyndMe compares destinations everyone can fly to and puts the lowest group price first. With \"Fairest price\" it puts the most even split first, even if the total is a bit higher. If one city has no flight, that destination is left out."
-      },
-      {
-        "q": "Are these the prices I will pay?",
-        "a": "No. They come from recent searches and may have changed. The app checks the destination you are looking at live. If it cannot, it says so and the figure stays an estimate. In pounds or dollars it is an approximate conversion from euros. When you book, the price is the one at that moment."
-      },
-      {
-        "q": "Where do we buy the tickets?",
-        "a": "Reserve opens that airline's site for the same route, date and travelers. If we do not have that page, it opens Skyscanner. At the group total you can pay here for the flights that can be issued now: the fare, the FlyndMe commission and the card fee. The ticket is issued in the traveler's name. If that sale is not connected, nothing is charged. Ryanair and Wizz are booked on their own sites and their price is not part of that payment."
+        "a": "Each traveler's city and a date. The cheapest group destination comes first. With \"Fairest price\", the most even split."
       },
       {
         "q": "What does a fair destination mean?",
-        "a": "That nobody pays much more than the rest. You will see one bar per city and the gap between who pays most and who pays least. It is there to help you choose, not to score the trip."
+        "a": "Nobody pays much more than the rest. One bar per city shows the gap."
       },
       {
         "q": "How many of us can search?",
-        "a": "Up to 8 departure cities and 16 travelers in total, with a maximum of 9 from the same city. No account is needed. If each person wants to add their own city, tap \"Invite your group\" and share the link."
+        "a": "Up to 8 cities and 16 travelers. No account. With \"Invite your group\", each person adds their own city."
       },
       {
         "q": "Can I search a return trip or shift the day?",
-        "a": "Yes. On a return trip the price includes the way back. If you can leave a few days earlier or later, turn on \"Flexible dates\": the result shows the real date of that price."
+        "a": "Yes. The return is included. With \"Flexible dates\" you see the real date of that price."
       }
     ],
     "testimonialsTitle": "What travelers say",

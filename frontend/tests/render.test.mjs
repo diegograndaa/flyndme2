@@ -452,9 +452,10 @@ test("render: Landing extraída renderiza con CTAs", async () => {
   assert.match(html, /reserva su vuelo|books their flight/);
   assert.match(html, /Preguntas frecuentes|Frequently asked questions/);
   assert.match(html, /Cómo encuentro el destino|How do I find the destination/);
-  assert.match(html, /Dónde se compran los billetes|Where do we buy the tickets/);
   assert.match(html, /Fechas flexibles|Flexible dates/);
-  assert.equal((html.match(/lp-faq-q/g) || []).length, 6);
+  assert.equal((html.match(/lp-faq-q/g) || []).length, 4);
+  assert.ok(!/Dónde se compran los billetes|Where do we buy the tickets/.test(html));
+  assert.ok(!/Estos son los precios|Are these the prices/.test(html));
   assert.ok(!html.includes("lp-start"), "los grupos de ejemplo ya no están en la portada");
   assert.ok(!html.includes("/quedar/"), "la portada ya no es un listado de páginas estáticas");
   assert.ok(!html.includes("app-footer-seo"), "las rutas no van en el pie");

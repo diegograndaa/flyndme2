@@ -49,27 +49,19 @@
     "faqs": [
       {
         "q": "¿Cómo encuentro el destino?",
-        "a": "Escribe la ciudad de cada viajero y una fecha. FlyndMe compara destinos a los que podéis volar todos y pone primero el de precio más bajo para el grupo. Con «Precio más justo» pone primero el reparto más parejo, aunque la suma suba un poco. Si desde alguna ciudad no hay vuelo, ese destino no sale."
-      },
-      {
-        "q": "¿Estos son los precios que voy a pagar?",
-        "a": "No. Salen de búsquedas recientes y pueden haber cambiado. La app comprueba en vivo el destino que estás viendo. Si no puede, lo dice y la cifra sigue siendo una estimación. En libras o dólares es una conversión aproximada desde euros. Al reservar, el precio es el de ese momento."
-      },
-      {
-        "q": "¿Dónde se compran los billetes?",
-        "a": "Reservar abre la web de esa aerolínea con la misma ruta, la misma fecha y los mismos viajeros. Si no tenemos esa página, abre Skyscanner. En el total del grupo puedes pagar aquí los vuelos que se pueden emitir ahora: la tarifa, la comisión de FlyndMe y el coste de la tarjeta. El billete sale a nombre del viajero. Si esa venta no está conectada, no se cobra nada. Ryanair y Wizz se reservan en su web y su precio no entra en ese pago."
+        "a": "Ciudad de cada viajero y una fecha. Primero, el destino más barato del grupo. Con «Precio más justo», el reparto más parejo."
       },
       {
         "q": "¿Qué significa que un destino sea justo?",
-        "a": "Que nadie paga mucho más que el resto. Verás una barra por ciudad y la diferencia entre quien más y quien menos paga. Sirve para elegir, no para puntuar el viaje."
+        "a": "Que nadie paga mucho más que el resto. Una barra por ciudad enseña la diferencia."
       },
       {
         "q": "¿Cuántos podemos ser?",
-        "a": "Hasta 8 ciudades de salida y 16 viajeros en total, con un máximo de 9 desde la misma ciudad. No hace falta cuenta. Si cada uno quiere añadir la suya, pulsa «Invitar al grupo» y comparte el enlace."
+        "a": "Hasta 8 ciudades y 16 viajeros. Sin cuenta. Con «Invitar al grupo», cada uno añade la suya."
       },
       {
         "q": "¿Puedo buscar ida y vuelta o mover el día?",
-        "a": "Sí. En ida y vuelta el precio incluye la vuelta. Si puedes salir unos días antes o después, activa «Fechas flexibles»: el resultado enseña la fecha real de ese precio."
+        "a": "Sí. La vuelta va incluida. Con «Fechas flexibles» ves la fecha real del precio."
       }
     ],
     "testimonialsTitle": "Lo que dicen los viajeros",
