@@ -66,6 +66,13 @@ function mockTransfers(origin, dest, nonStop) {
   return 0;
 }
 
+// Salidas repartidas. Si todas fueran las 08:30 el filtro de hora no
+// separaría ningún destino en local. Los precios no dependen de esto.
+const DEPART_CLOCKS = ["06:20", "07:45", "09:10", "11:30", "13:15", "15:40", "17:55", "20:10"];
+function mockDepartClock(origin, dest) {
+  return DEPART_CLOCKS[hash(`${origin}|${dest}|dep`) % DEPART_CLOCKS.length];
+}
+
 function mockOffer(origin, dest, date, returnDate, price, options = {}) {
   const seed         = `${origin}-${dest}-${date}`;
   const carrierCode  = AIRLINES[hash(seed) % AIRLINES.length];
@@ -76,8 +83,9 @@ function mockOffer(origin, dest, date, returnDate, price, options = {}) {
   const h = Math.floor(totalMinutes / 60);
   const mm = totalMinutes % 60;
   const durationISO = `PT${h}H${mm > 0 ? mm + "M" : ""}`;
+  const departClock  = mockDepartClock(origin, dest);
 
-  const outbound = mockSegment(origin, dest, `${date}T08:30:00`, carrierCode, flightNumber, durationISO, "1", "2");
+  const outbound = mockSegment(origin, dest, `${date}T${departClock}:00`, carrierCode, flightNumber, durationISO, "1", "2");
   const itineraries = [{ duration: durationISO, segments: [outbound] }];
 
   if (returnDate) {
@@ -103,6 +111,7 @@ function mockOffer(origin, dest, date, returnDate, price, options = {}) {
       grandTotal: priceStr,
     },
     validatingAirlineCodes: [carrierCode],
+    departureAt: `${date}T${departClock}:00`,
     // El filtro de escalas lee este campo (como Travelpayouts). Los segmentos
     // se mantienen: el mock no inventa aeropuertos de escala.
     transfers,

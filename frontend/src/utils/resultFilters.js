@@ -4,6 +4,12 @@
 // Hora de llegada: únicamente en vuelos directos (con escalas el proveedor no
 // da la hora y no se inventa). La diferencia es entre instantes reales, la
 // misma regla que arrivalSpread.js.
+//
+// Hora de salida: los dígitos de la ida del billete más barato (hora local
+// del aeropuerto, aunque el ISO lleve desfase). En un directo están en el
+// segmento; con escalas el segmento no existe (no hay aeropuerto intermedio)
+// pero la salida sí, en offer.departureAt. Sin esos dígitos el destino no
+// pasa el filtro: no se rellena una hora.
 
 import { computeArrivalSpread, splitSpread } from "./arrivalSpread";
 import { AIRPORTS, AIRPORT_MAP, normalizeCode } from "./helpers";
@@ -14,6 +20,7 @@ export const DEFAULT_FILTERS = Object.freeze({
   maxArrivalMin: null,  // tope de la franja entre la primera y la última llegada
   stops: "any",         // any | direct | max1
   maxDurationMin: null, // tope de la ida, en minutos; null = sin tope
+  minDepartMin: null,   // nadie sale antes de estos minutos desde medianoche; null = sin tope
   airlines: null,       // null = todas; si no, códigos permitidos
   domestic: false,      // solo destinos del país común de los orígenes
 });
@@ -114,7 +121,52 @@ function knownStops(leg) {
 /** "HH:MM" escrito en el billete. null si el proveedor no trae hora. */
 export function ticketClock(iso) {
   const m = typeof iso === "string" ? /T(\d{2}:\d{2})/.exec(iso) : null;
-  return m ? m[1] : null;
+  if (!m) return null;
+  const [h, min] = m[1].split(":").map(Number);
+  if (h > 23 || min > 59) return null;
+  return m[1];
+}
+
+/** Minutos desde medianoche de "HH:MM". null si no es una hora. */
+export function clockMinutes(clock) {
+  const m = typeof clock === "string" ? /^(\d{2}):(\d{2})$/.exec(clock) : null;
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+/**
+ * Minutos de la salida de ida. Primero el segmento (directo); si no hay,
+ * offer.departureAt (escala: la hora existe, el aeropuerto intermedio no).
+ * null si el proveedor no escribió una hora.
+ */
+export function legDepartMin(leg) {
+  const fromSeg = leg?.offer?.itineraries?.[0]?.segments?.[0]?.departure?.at;
+  const fromOffer = leg?.offer?.departureAt;
+  return clockMinutes(ticketClock(fromSeg) || ticketClock(fromOffer));
+}
+
+export function formatClockMin(min) {
+  const n = Number(min);
+  if (!Number.isFinite(n) || n < 0 || n >= 24 * 60) return "";
+  const h = Math.floor(n / 60);
+  const m = n % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** La salida más temprana del destino. null si a algún tramo le falta la hora. */
+function earliestDepartMin(dest) {
+  const legs = dest?.flights || [];
+  if (!legs.length) return null;
+  let earliest = null;
+  for (const leg of legs) {
+    const m = legDepartMin(leg);
+    if (m == null) return null;
+    earliest = earliest == null ? m : Math.min(earliest, m);
+  }
+  return earliest;
 }
 
 /**
@@ -246,6 +298,18 @@ function matchesDuration(dest, maxMin) {
   return true;
 }
 
+function matchesDepart(dest, minDepartMin) {
+  const floor = Number(minDepartMin);
+  if (!Number.isFinite(floor)) return true;
+  const legs = dest?.flights || [];
+  if (!legs.length) return false;
+  for (const leg of legs) {
+    const m = legDepartMin(leg);
+    if (m == null || m < floor) return false;
+  }
+  return true;
+}
+
 function matchesAirlines(dest, allowed) {
   const legs = dest?.flights || [];
   if (!legs.length) return false;
@@ -265,6 +329,7 @@ export function applyResultFilters(flights, filters, ctx) {
     if (!matchesArrival(dest, f.arrival, f.maxArrivalMin)) return false;
     if (!matchesStops(dest, f.stops)) return false;
     if (f.maxDurationMin != null && !matchesDuration(dest, f.maxDurationMin)) return false;
+    if (f.minDepartMin != null && !matchesDepart(dest, f.minDepartMin)) return false;
     if (allowed && !matchesAirlines(dest, allowed)) return false;
     return true;
   });
@@ -303,6 +368,7 @@ export function filtersHoldResults(filters) {
     || f.maxArrivalMin != null
     || (f.stops && f.stops !== "any")
     || f.maxDurationMin != null
+    || f.minDepartMin != null
     || Array.isArray(f.airlines)
     || !!f.domestic;
 }
@@ -342,6 +408,43 @@ export function airlinesIn(flights) {
     }
   }
   return [...set].sort();
+}
+
+/**
+ * Horas en punto que de verdad separan destinos, como mucho tres.
+ * El corte es la salida más temprana de cada destino: «a partir de las 09:00»
+ * deja fuera a quien sale a las 06:40. Vacío si no hay al menos una hora
+ * de diferencia, o si falta el reloj de algún tramo en todos menos uno.
+ */
+export function departFloors(flights) {
+  const earliest = [];
+  for (const dest of flights || []) {
+    const m = earliestDepartMin(dest);
+    if (m != null) earliest.push(m);
+  }
+  if (earliest.length < 2) return [];
+  const lo = Math.min(...earliest);
+  const hi = Math.max(...earliest);
+  if (hi - lo < 60) return [];
+  const candidates = [];
+  for (let h = Math.floor(lo / 60) + 1; h * 60 <= hi; h++) {
+    const floor = h * 60;
+    const kept = earliest.filter((m) => m >= floor).length;
+    if (kept > 0 && kept < earliest.length) candidates.push(floor);
+  }
+  if (candidates.length <= 3) return candidates;
+  const picks = [];
+  for (const frac of [0.25, 0.5, 0.75]) {
+    const target = lo + (hi - lo) * frac;
+    let best = candidates[0];
+    let bestDist = Infinity;
+    for (const c of candidates) {
+      const d = Math.abs(c - target);
+      if (d < bestDist) { best = c; bestDist = d; }
+    }
+    if (!picks.includes(best)) picks.push(best);
+  }
+  return picks.sort((a, b) => a - b);
 }
 
 /** Topes de duración (minutos) que de verdad separan destinos. Vacío si no hay rango. */

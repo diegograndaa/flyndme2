@@ -4,7 +4,7 @@ import {
   applyResultFilters, listResults, arrivalSpreadMs, matchesArrival,
   airlinesIn, durationSteps, DEFAULT_FILTERS, sharedCountry, domesticCodes,
   nextAirlines, countryKey, arrivalBars, arrivalGapChoices, arrivalSliderRange, ticketClock, validArrivalGap,
-  nextShownDestination, filtersHoldResults,
+  nextShownDestination, filtersHoldResults, legDepartMin, departFloors, formatClockMin,
 } from "../src/utils/resultFilters.js";
 
 function leg({ date = "2026-11-15", at = "08:30", dur = "PT2H", transfers = 0, airline = "IB", flightDate = null } = {}) {
@@ -192,6 +192,33 @@ test("las franjas ofrecidas salen de los huecos reales del mismo día", () => {
   assert.deepEqual(arrivalGapChoices([tight]), [120, 240]);
   assert.deepEqual(arrivalGapChoices([tight, wide]), [120, 240, 480]);
   assert.deepEqual(arrivalGapChoices([days]), []);
+});
+
+test("la hora de salida exige reloj en todos y deja fuera a quien sale antes", () => {
+  const early = dest("ROM", [leg({ at: "06:10" }), leg({ at: "09:00" })]);
+  const late = dest("PAR", [leg({ at: "18:20" }), leg({ at: "19:00" })]);
+  const unknown = dest("LIS", [
+    { offer: { itineraries: [{ segments: [] }] } },
+    leg({ at: "12:00" }),
+  ]);
+  const viaField = dest("BCN", [
+    { offer: { departureAt: "2026-11-15T10:05:00+01:00", transfers: 1, itineraries: [{ segments: [] }] } },
+    leg({ at: "12:40" }),
+  ]);
+  assert.equal(legDepartMin(leg({ at: "06:10" })), 6 * 60 + 10);
+  assert.equal(legDepartMin(viaField.flights[0]), 10 * 60 + 5);
+  assert.equal(legDepartMin(unknown.flights[0]), null);
+  assert.equal(ticketClock("2026-11-15T99:99:00"), null);
+  assert.equal(formatClockMin(9 * 60), "09:00");
+  assert.deepEqual(departFloors([early, late]), [9 * 60, 12 * 60, 15 * 60]);
+  assert.deepEqual(departFloors([early, { ...early, destination: "MIL" }]), []);
+  const out = applyResultFilters(
+    [early, late, unknown, viaField],
+    { ...DEFAULT_FILTERS, minDepartMin: 10 * 60 },
+  );
+  assert.deepEqual(out.map((d) => d.destination), ["PAR", "BCN"]);
+  assert.equal(filtersHoldResults({ ...DEFAULT_FILTERS, minDepartMin: 10 * 60 }), true);
+  assert.equal(applyResultFilters([late], { ...DEFAULT_FILTERS, minDepartMin: null }).length, 1);
 });
 
 test("el primer toque de aerolínea la oculta, no vacía el resto", () => {
