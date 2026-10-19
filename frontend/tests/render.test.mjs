@@ -522,6 +522,8 @@ test("render: la suma de la tarjeta no enseña una cuenta que no cuadra al redon
   assert.ok(!hidden.includes("wc-total-sum"), "€11 + €11 = €21 no se pinta");
   const shown = renderWithI18n(React.createElement(WinnerCard, { ...base, dest: FIXTURE_DEST, currency: "EUR" }));
   assert.ok(shown.includes("wc-total-sum"), "130 + 170 = 300 sí se pinta");
+  assert.match(shown, /wc-total-code">MAD/);
+  assert.match(shown, /wc-total-code">LON/);
   assert.ok(!shown.includes("wc-buy-sub") && !shown.includes("wc-disclaimer") && !shown.includes("wc-perf-barcode"), "la tarjeta no repite párrafos ni el código de barras");
   const gbp = renderWithI18n(React.createElement(WinnerCard, {
     ...base,

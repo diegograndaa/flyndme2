@@ -175,11 +175,16 @@ const WinnerCard = React.memo(function WinnerCard({
   // Suma de lo que paga cada origen (precio × pasajeros) → total del grupo.
   // Solo si cuadra con el total del backend Y con los enteros que se pintan
   // (si no, «€11 + €11 = €21»). Con un solo origen no hay suma que enseñar.
-  const sumParts = singleOrigin ? null : visibleSumParts(
-    breakdown.map((f) => Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1)),
-    dest.totalCostEUR,
-    currency,
-  );
+  // Cada parte conserva su ciudad: «MAD €25 + LON €29», no una cuenta suelta.
+  const sumRows = (() => {
+    if (singleOrigin || payable) return null;
+    const rows = breakdown.map((f) => ({
+      origin: String(f.origin || "").toUpperCase(),
+      amount: Number(f.totalForOrigin) || (Number(f.price) || 0) * (Number(f.passengers) || 1),
+    }));
+    if (!visibleSumParts(rows.map((r) => r.amount), dest.totalCostEUR, currency)) return null;
+    return rows;
+  })();
   const saleLegs = cleanOrigins.map((origin) => {
     const offer = offerMap[origin];
     const finfo = flightInfoMap[origin] || {};
@@ -198,6 +203,22 @@ const WinnerCard = React.memo(function WinnerCard({
       passengers: Number(finfo.passengers) || Number(offer?.passengers) || 1,
     };
   });
+  // El cobro puede traer el aeropuerto (LHR) y el formulario la ciudad (LON).
+  // El color y el código que se leen son los de la búsqueda.
+  const colorOf = (airport) => {
+    const code = String(airport || "").toUpperCase();
+    if (cleanOrigins.includes(code)) return code;
+    const i = saleLegs.findIndex((s) => String(s.origin).toUpperCase() === code);
+    return i >= 0 ? cleanOrigins[i] : code;
+  };
+  const sumPart = (key, code, amountText, i) => (
+    <span className="wc-total-part" key={key}>
+      {i > 0 && <b aria-hidden="true">+</b>}
+      {code && <TravelerDot origins={cleanOrigins} code={code} />}
+      {code && <span className="wc-total-code">{code}</span>}
+      <span className="wc-total-amt">{amountText}</span>
+    </span>
+  );
   // Con el cobro delante, las fichas de la búsqueda repetían otro vuelo y otro
   // precio. Esas ciudades ya están en el total o se reservan en su web.
   const coveredOrigins = new Set();
@@ -251,19 +272,18 @@ const WinnerCard = React.memo(function WinnerCard({
             <div className="wc-total-figure">
               <div className="wc-total-price"><Odometer value={payable ? payMoney(payable.charge) : money(dest.totalCostEUR)} /></div>
             </div>
+            {payable && payable.legs.length > 1 ? (
+              <div className="wc-total-sum">
+                {payable.legs.map((leg, i) => sumPart(`${leg.origin}-${i}`, colorOf(leg.origin), payMoney(leg.charge), i))}
+              </div>
+            ) : sumRows && (
+              <div className="wc-total-sum">
+                {sumRows.map((row, i) => sumPart(row.origin || i, row.origin, money(row.amount), i))}
+              </div>
+            )}
           </div>
-          {payable && payable.legs.length > 1 ? (
-            <div className="wc-total-sum" aria-hidden="true">
-              {payable.legs.map((leg, i) => (
-                <span key={`${leg.origin}-${i}`}>{i > 0 && <b> + </b>}{payMoney(leg.charge)}</span>
-              ))}
-            </div>
-          ) : (!payable && sumParts) && (
-            <div className="wc-total-sum" aria-hidden="true">
-              {sumParts.map((v, i) => <span key={i}>{i > 0 && <b> + </b>}{money(v)}</span>)}
-            </div>
-          )}
-          <div className="wc-total-foot" aria-live="polite">
+          <div className="wc-total-foot">
+            <div aria-live="polite">
             {payable ? (
               <span className="wc-verify-caption">{t("results.saleFinal")}</span>
             ) : verifyPhase === "loading" ? (
@@ -281,16 +301,17 @@ const WinnerCard = React.memo(function WinnerCard({
             ) : (
               <span className="wc-verify-caption">{t("board.estimateNote")}</span>
             )}
-          </div>
-          <div className="wc-total-meta">
-            {(dep || depDate) && (
-              <span>
-                {formatDate(dep || depDate)}
-                {tripType === "roundtrip" && ret ? ` → ${formatDate(ret)}` : ""}
-              </span>
-            )}
-            <span>{tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway")}</span>
-            <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
+            </div>
+            <div className="wc-total-meta">
+              {(dep || depDate) && (
+                <span>
+                  {formatDate(dep || depDate)}
+                  {tripType === "roundtrip" && ret ? ` → ${formatDate(ret)}` : ""}
+                </span>
+              )}
+              <span>{tripType === "roundtrip" ? t("search.roundtrip") : t("search.oneway")}</span>
+              <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
+            </div>
           </div>
           {!singleOrigin && (
             <GroupSalePanel
