@@ -1,5 +1,6 @@
-// Reservar abre la web de la aerolínea. El total del grupo ofrece comprar aquí.
-// Sin tarifa emitible no se pinta un importe de cobro.
+// Reservar abre Aviasales (afiliado) y la aerolínea queda como acceso
+// secundario. La compra del grupo dentro de FlyndMe solo se enseña con
+// saleEnabled (VITE_GROUP_SALE=on). Sin tarifa emitible no se pinta un cobro.
 import "./_domStubs.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -49,18 +50,42 @@ const base = {
   currency: "EUR",
   uiCriterion: "total",
 };
+// La compra del grupo va apagada por defecto; estos tests la encienden.
+const saleBase = { ...base, saleEnabled: true };
 
-test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el grupo", () => {
+test("Reservar abre Aviasales (afiliado) y la web de la aerolínea queda como acceso secundario", () => {
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
-  assert.ok(html.includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), html);
-  assert.ok(html.includes("https://www.easyjet.com/en/buy/flights?"), html);
-  assert.ok(html.includes("origin=BCN"), html);
-  assert.ok(html.includes("departureDate=2026-10-15"), html);
-  assert.ok(!html.includes("aviasales.com"), "Reservar no manda a Aviasales");
-  assert.match(html, />Comprar<|>Buy</);
+  const anchors = [...html.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]);
+  const book = anchors.filter((a) => a.includes("wc-cta--book"));
+  assert.equal(book.length, 2);
+  assert.ok(book[0].includes("https://www.aviasales.com/search/MAD1510LTN1"), book[0]);
+  assert.ok(book[1].includes("https://www.aviasales.com/search/BCN1510LTN1"), book[1]);
+  const airline = anchors.filter((a) => a.includes("wc-cta--airline"));
+  assert.equal(airline.length, 2, "cada vuelo enlaza también a su aerolínea");
+  assert.ok(airline[0].includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), airline[0]);
+  assert.ok(airline[1].includes("https://www.easyjet.com/en/buy/flights?") && airline[1].includes("origin=BCN"), airline[1]);
   assert.match(html, /wc-total-meta/);
   assert.match(html, /Solo ida|One way/);
   assert.match(html, /2 viajeros|2 travelers/);
+});
+
+test("sin VITE_GROUP_SALE no se ofrece comprar el grupo dentro de FlyndMe", () => {
+  const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
+  assert.ok(!html.includes('class="wc-sale"'), "la compra del grupo está apagada por defecto");
+  assert.ok(!/>Comprar<|>Buy</.test(html));
+  // Aunque llegue un presupuesto, con la venta apagada no se pinta un cobro.
+  const withQuote = render(React.createElement(WinnerCard, {
+    ...base,
+    dest: LONDON,
+    sale: { phase: "quote", quote: { quoteId: "q9", currency: "EUR", passengerCount: 1, fare: "20.00", commission: "1.00", cardFee: "0.63", charge: "21.63", legs: [{ origin: "BCN", destination: "LTN", passengers: 1, fare: "20.00", commission: "1.00", cardFee: "0.63", charge: "21.63" }] } },
+  }));
+  assert.ok(!withQuote.includes("/?caja="), withQuote);
+  assert.ok(!withQuote.includes("21.63"), "sin venta no hay importe de cobro");
+});
+
+test("con la venta encendida, el total ofrece pagar el grupo antes de la lista de vuelos", () => {
+  const html = render(React.createElement(WinnerCard, { ...saleBase, dest: LONDON }));
+  assert.match(html, />Comprar<|>Buy</);
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const saleAt = html.indexOf('class="wc-sale"');
   const titleAt = html.indexOf("wc-buy-title");
@@ -69,7 +94,22 @@ test("Reservar abre Wizz y easyJet, no Aviasales, y el total ofrece pagar el gru
   assert.ok(!sale.includes("wizzair.com") && !sale.includes("easyjet.com"), sale);
 });
 
-test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () => {
+test("Reservar en Aviasales busca para todos los viajeros de esa ciudad", () => {
+  const three = {
+    ...LONDON,
+    totalPassengers: 4,
+    flights: [
+      { ...LONDON.flights[0], passengers: 3, totalForOrigin: 123 },
+      LONDON.flights[1],
+    ],
+  };
+  const html = render(React.createElement(WinnerCard, { ...base, dest: three }));
+  const book = [...html.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]).filter((a) => a.includes("wc-cta--book"));
+  assert.ok(book[0].includes("aviasales.com/search/MAD1510LTN3"), book[0]);
+  assert.ok(book[1].includes("aviasales.com/search/BCN1510LTN1"), book[1]);
+});
+
+test("sin enlace de Aviasales ni web de la aerolínea, Reservar abre Skyscanner y no se duplica", () => {
   const iberia = {
     ...LONDON,
     flights: [
@@ -77,11 +117,12 @@ test("sin web de la aerolínea, Reservar abre Skyscanner y no se duplica", () =>
         ...LONDON.flights[0],
         offer: {
           ...LONDON.flights[0].offer,
+          link: undefined,
           validatingAirlineCodes: ["IB"],
           itineraries: [{ segments: [{ carrierCode: "IB", number: "3001", departure: { iataCode: "MAD", at: "2026-10-15T08:00:00" }, arrival: { iataCode: "LTN" } }] }],
         },
       },
-      LONDON.flights[1],
+      { ...LONDON.flights[1], offer: { ...LONDON.flights[1].offer, link: undefined } },
     ],
   };
   const html = render(React.createElement(WinnerCard, { ...base, dest: iberia }));
@@ -124,7 +165,7 @@ test("con tarifa emitible el titular es el precio final, gastos incluidos", () =
       ],
     },
   };
-  const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON, sale }));
+  const html = render(React.createElement(WinnerCard, { ...saleBase, dest: LONDON, sale }));
   assert.ok(html.includes("65.96") || html.includes("€65.96"), html);
   assert.ok(html.includes("44.33") && html.includes("21.63"), "cada viajero tiene su pago");
   assert.match(html, /wc-sale-codes">MAD[^<]*LTN/);
@@ -140,7 +181,7 @@ test("con tarifa emitible el titular es el precio final, gastos incluidos", () =
 
 test("sin venta conectada el total no inventa un cobro ni manda a la aerolínea", () => {
   const html = render(React.createElement(WinnerCard, {
-    ...base, dest: LONDON, sale: { phase: "error", code: "BOOKING_NOT_CONFIGURED" },
+    ...saleBase, dest: LONDON, sale: { phase: "error", code: "BOOKING_NOT_CONFIGURED" },
   }));
   assert.match(html, /El pago dentro de FlyndMe aún no está conectado|Payment inside FlyndMe is not connected yet/);
   assert.ok(!/Cada billete se reserva|Each ticket is booked|Comprar MAD en|Buy MAD on/.test(html));
@@ -152,7 +193,7 @@ test("sin venta conectada el total no inventa un cobro ni manda a la aerolínea"
 
 test("si no se emite el billete se dice si el cobro volvió", () => {
   const refunded = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     dest: LONDON,
     sale: {
       phase: "error",
@@ -165,7 +206,7 @@ test("si no se emite el billete se dice si el cobro volvió", () => {
   assert.ok(!/no se ha podido devolver|could not be refunded/i.test(refunded));
 
   const failed = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     dest: LONDON,
     sale: {
       phase: "error",
@@ -179,7 +220,7 @@ test("si no se emite el billete se dice si el cobro volvió", () => {
 
 test("un tramo emitido enseña su localizador y la devolución del otro", () => {
   const html = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     dest: LONDON,
     sale: {
       phase: "partial",
@@ -219,7 +260,7 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
     ],
   };
   const html = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     origins: ["OVD", "MAD"],
     departureDate: "2026-10-18",
     dest: paris,
@@ -261,7 +302,7 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
 
 test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => {
   const html = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     dest: LONDON,
     sale: {
       phase: "quote",
@@ -294,7 +335,7 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
 
 test("sin página de pago, Ryanair sigue en la ficha", () => {
   const html = render(React.createElement(WinnerCard, {
-    ...base,
+    ...saleBase,
     dest: LONDON,
     sale: {
       phase: "error",

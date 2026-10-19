@@ -31,6 +31,14 @@ function token() {
   return String(process.env.DUFFEL_ACCESS_TOKEN || "").trim();
 }
 
+// Las ventas NUEVAS (presupuesto y cobro) solo se abren con el token Y
+// GROUP_SALE_ENABLED=true. Apagado por defecto: el cobro con Duffel aún no
+// confirma el pago en servidor ni es idempotente, y falta la base legal.
+// Terminar o devolver una venta ya cobrada sigue funcionando con el token.
+function saleOpen() {
+  return Boolean(token()) && String(process.env.GROUP_SALE_ENABLED || "").trim().toLowerCase() === "true";
+}
+
 function markupRate() {
   const n = Number(process.env.BOOKING_MARKUP_PERCENT);
   const pct = Number.isFinite(n) ? n : 5;
@@ -318,7 +326,7 @@ function sumParts(parts) {
 }
 
 async function quoteLegs(rawLegs, today) {
-  if (!token()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
+  if (!saleOpen()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
   const checked = validateLegs(rawLegs, today);
   if (checked.code) return { available: false, code: checked.code };
   const rate = markupRate();
@@ -464,7 +472,7 @@ function normalizeTraveler(raw, email, phone) {
 }
 
 async function startPayment(quoteId, people, email, phone) {
-  if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
+  if (!saleOpen()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
   const done = resultFrom(quote);
@@ -551,6 +559,7 @@ module.exports = {
   pickOffer,
   chooseOffer,
   validateLegs,
+  saleOpen,
   __test: {
     setTransport(fn) { transport = fn; },
     reset() {

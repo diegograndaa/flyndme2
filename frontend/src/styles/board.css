@@ -2662,7 +2662,9 @@ button,
   .wc-total-meta { gap: 2px 14px; }
 }
 @media (max-width: 400px) {
-  .wc-card .wc-buy .wc-cta:not(.wc-cta--book):not(.wc-cta--copy) .wc-cta-icon { display: none; }
+  /* Solo en botones con texto: los de solo icono (aerolínea, Skyscanner,
+     Google) se quedaban como cajas vacías en móviles de 390 px. */
+  .wc-card .wc-buy .wc-cta:not(.wc-cta--book):not(.wc-cta--copy):not(.wc-cta--icon) .wc-cta-icon { display: none; }
 }
 
 /* ══ 24. Instrumentos lúdicos (HUD de cabina) ════════════════════════════
