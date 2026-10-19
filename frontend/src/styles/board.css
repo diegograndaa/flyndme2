@@ -2350,12 +2350,16 @@ button,
   letter-spacing: -.03em; color: var(--navy); font-variant-numeric: tabular-nums;
 }
 .wc-total-sum {
-  margin-top: 6px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 6px 0; margin: 0 0 2px auto; max-width: 100%;
   font-family: var(--font-mono); font-size: 14px; color: var(--slate-700);
   font-variant-numeric: tabular-nums;
 }
-.wc-total-sum b { font-weight: 500; color: var(--slate-400); }
+.wc-total-part { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--navy); }
+.wc-total-code { font-weight: 700; letter-spacing: .04em; }
+.wc-total-sum b { margin: 0 12px; font-weight: 500; color: var(--slate-400); }
 .wc-total-sum strong { color: var(--navy); }
+.wc-total-foot .wc-total-meta { margin: 0 0 0 auto; }
 .wc-total-meta {
   display: flex; flex-wrap: wrap; gap: 4px 0;
   margin-top: 8px;
@@ -2574,6 +2578,8 @@ button,
   .wc-total-figure { align-items: flex-start; }
   .wc-total-savings { order: 2; text-align: left; }
   .wc-card .wc-total-price.wc-total-price { order: 1; font-size: 32px; }
+  .wc-total-sum { order: 2; margin-left: 0; justify-content: flex-start; }
+  .wc-total-foot .wc-total-meta { margin-left: 0; }
   .wc-total-hint-btn { width: 100%; }
 }
 
