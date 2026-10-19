@@ -12,7 +12,7 @@ Tú (la sesión principal) eres el orquestador. No implementas directamente el t
 
 **Flujo de delegación:** flyndme-backend / flyndme-frontend implementan (en paralelo si no se pisan) → flyndme-qa valida SIEMPRE antes de cualquier push → flyndme-release commitea, pushea y verifica el deploy. flyndme-producto solo para decisiones de negocio/roadmap.
 
-**Pregunta a Diego antes de:** mergear a main, borrar código no trivial, cambios visuales grandes no pedidos, y cualquier cosa que toque variables de producción (Render/Vercel). Para lo demás, decide tú y explica por qué.
+**Publica en main sin preguntar.** Diego (19-oct-2026) pidió que, a partir de ahora, cada cambio probado se mergee y se pushee a `main` sin pedir autorización. No volver a preguntárselo. Sigue preguntando antes de: borrar código no trivial, cambios visuales grandes no pedidos, y cualquier cosa que toque variables de producción (Render/Vercel). Para lo demás, decide tú y explica por qué.
 
 ## Stack
 - **Frontend**: React + Vite + **Bootstrap (subset Sass: solo los componentes en uso, ver `src/styles/bootstrap-custom.scss`)** + CSS propio (NO Tailwind). Deploy: Vercel → flyndme2.vercel.app (flyndme.vercel.app está caído, no usar).
