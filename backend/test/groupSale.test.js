@@ -163,7 +163,7 @@ test("sin número de vuelo también se emite la tarifa del trayecto", async () =
   assert.equal(quote.legs[1].flightNumber, "1234");
 });
 
-test("Ryanair se cambia por el vuelo que sí se puede emitir en ese trayecto", async () => {
+test("Ryanair no se cambia por otro vuelo: se reserva en su web", async () => {
   const origins = [];
   sale.__test.setTransport(async (url, options) => {
     if (!url.includes("offer_requests")) throw new Error("no debería cobrar");
@@ -174,14 +174,17 @@ test("Ryanair se cambia por el vuelo que sí se puede emitir en ese trayecto", a
     leg(),
     leg({ origin: "BCN", airline: "FR", flightNumber: "202" }),
   ], TODAY);
-  assert.deepEqual(origins, ["MAD", "BCN"]);
+  assert.deepEqual(origins, ["MAD"]);
   assert.equal(quote.available, true);
-  assert.equal(quote.legs.length, 2);
-  assert.equal(quote.passengerCount, 2);
-  assert.equal(quote.legs[1].airline, "VY");
-  assert.equal(quote.legs[1].sameFlight, false);
-  assert.equal(quote.external.length, 0);
-  const tooFew = await sale.startPayment(quote.quoteId, [{}], "ana@example.com", "+34600111222");
+  assert.equal(quote.legs.length, 1);
+  assert.equal(quote.legs[0].origin, "MAD");
+  assert.equal(quote.passengerCount, 1);
+  assert.equal(quote.external.length, 1);
+  assert.equal(quote.external[0].origin, "BCN");
+  assert.equal(quote.external[0].airline, "FR");
+  assert.equal(quote.external[0].reason, "AIRLINE_SITE");
+  assert.equal(quote.legs.some((row) => row.airline === "FR"), false);
+  const tooFew = await sale.startPayment(quote.quoteId, [], "ana@example.com", "+34600111222");
   assert.equal(tooFew.code, "INVALID_PASSENGERS");
 });
 

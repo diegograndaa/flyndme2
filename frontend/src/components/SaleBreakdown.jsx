@@ -67,6 +67,9 @@ export default function SaleBreakdown({ quote, t, part = "all", variant = "compa
                 {bits.time && <span className="wc-sale-time">{bits.time}</span>}
               </p>
             )}
+            {leg.sameFlight === false && (
+              <p className="wc-sale-flight">{t("results.saleOtherFlight")}</p>
+            )}
           </section>
         );
       })}

@@ -132,6 +132,7 @@ test("con tarifa emitible el titular es el precio final, gastos incluidos", () =
   assert.ok(html.includes('href="/?caja=q1"') && html.includes('target="_blank"'), "el pago abre en otra pestaña");
   assert.ok(!html.includes("sale-MAD-0-given") && !html.includes('type="date"'), "el formulario no está en la ficha");
   assert.ok(!html.includes("aviasales.com"));
+  assert.ok(!html.includes("wizzair.com") && !html.includes("easyjet.com"), "el vuelo que se paga no se repite con el precio de la búsqueda");
 });
 
 test("sin venta conectada el total no inventa un cobro ni manda a la aerolínea", () => {
@@ -247,6 +248,7 @@ test("si Duffel no tiene un vuelo, el otro se paga aquí y ese se reserva en su 
   assert.match(html, /wc-sale-codes">OVD[^<]*ORY/);
   assert.ok(html.includes("Volotea 1201"));
   assert.ok(html.includes("11:25"));
+  assert.ok(/Otro vuelo de este día|A different flight that day/.test(html), "un vuelo distinto al de la búsqueda se dice");
   assert.ok(!/No se puede identificar el vuelo exacto|The exact flight cannot be identified/.test(html));
   const sale = html.slice(saleAt, html.indexOf("wc-buy-title"));
   assert.ok(!sale.includes("tickets.vueling.com"), "en la ficha, Vueling no tiene otro botón: está en la página de pago");
@@ -275,7 +277,11 @@ test("Ryanair en el presupuesto se reserva en su web y no suma al cobro", () => 
     },
   }));
   assert.ok(/Pagar aquí|Pay here/.test(html));
+  assert.ok(/se reserva en la web de Ryanair|booked on Ryanair/.test(html));
+  assert.ok(/no entra en este pago|not part of this payment/.test(html));
   assert.ok(!html.includes("ryanair.com"), "Ryanair se reserva en la página de pago");
+  assert.ok(!html.includes("wizzair.com"), "la ficha de la búsqueda no repite otro precio");
+  assert.ok(!html.includes("€41"), "la estimación no se suma debajo del cobro");
   assert.ok(html.includes('href="/?caja=q3"'));
   assert.ok(!html.includes("sale-BCN-") && !html.includes("sale-MAD-"));
   assert.ok(!html.includes('type="date"'));

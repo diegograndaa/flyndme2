@@ -7,6 +7,7 @@ import { Ticket } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { formatEur } from "../utils/helpers";
 import { checkoutPath, quoteAddsUp } from "../utils/saleCheckout";
+import { airlineName } from "../utils/flightTime";
 import SaleBreakdown from "./SaleBreakdown";
 import SaleElsewhere from "./SaleElsewhere";
 
@@ -100,6 +101,19 @@ export default function GroupSalePanel({ legs = [], sale = null, onRequest }) {
         <p className="wc-sale-kicker">{t("results.saleHere")}</p>
       )}
       {balanced && <SaleBreakdown quote={quote} t={t} part="flights" />}
+      {balanced && external.length > 0 && (
+        <div className="wc-sale-out">
+          {external.map((leg) => (
+            <p key={`${leg.origin}-${leg.flightNumber || ""}`} className="wc-sale-note">
+              {t("results.saleOnAirline", {
+                origin: leg.origin,
+                airline: airlineName(leg.airline) || leg.airline || leg.origin,
+              })}
+            </p>
+          ))}
+          <p className="wc-sale-note">{t("results.saleElsewhereHint")}</p>
+        </div>
+      )}
       {quoted && !balanced && <p className="wc-sale-note" role="alert">{t("results.saleMismatch")}</p>}
       {balanced && (
         <a className="wc-sale-btn" href={checkoutPath(quote.quoteId)} target="_blank" rel="noopener noreferrer">
