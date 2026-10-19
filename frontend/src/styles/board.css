@@ -2365,6 +2365,20 @@ button,
   margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--slate-500);
 }
 .wc-sale-kicker { font-weight: 700; color: var(--navy); }
+.wc-sale-out {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 14px; padding: 12px 14px;
+  background: var(--sign); color: var(--on-sign);
+  border: 2px solid var(--navy); border-radius: 4px;
+}
+.wc-sale-out svg { flex: 0 0 auto; margin-top: 2px; }
+.wc-sale-out-line, .wc-sale-out-why {
+  margin: 0; color: var(--on-sign); line-height: 1.35;
+}
+.wc-sale-out-line { font-size: 16px; font-weight: 700; }
+.wc-sale-out-line + .wc-sale-out-line { margin-top: 4px; }
+.wc-sale-out-why { margin-top: 4px; font-size: 14px; font-weight: 700; }
+.wc-sale-out + .wc-sale-btn { margin-top: 10px; }
 .wc-sale-lines { margin: 10px 0 0; display: grid; gap: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--slate-700); }
 .wc-sale-lines div { display: flex; justify-content: space-between; gap: 12px; }
 .wc-sale-lines strong { color: var(--navy); }
