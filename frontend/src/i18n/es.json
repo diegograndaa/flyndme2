@@ -442,6 +442,8 @@
     "searchTime": "Encontrado en {{s}}s",
     "groupSavings": "Tu grupo ahorra {{amount}} respecto a la opción más cara",
     "tryNearbyDates": "Probar fechas cercanas",
+    "dayPrev": "Día anterior",
+    "dayNext": "Día siguiente",
     "priceTrend": "Tendencia de precios",
     "countdownToday": "¡Sale hoy!",
     "countdownTomorrow": "Sale mañana",
