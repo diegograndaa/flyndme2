@@ -4,8 +4,8 @@ import { Check, SlidersHorizontal, X } from "lucide-react";
 import { useI18n } from "../i18n/useI18n";
 import { travelerSlot } from "../utils/resultsLogic";
 import {
-  airlinesIn, applyResultFilters, arrivalBars, arrivalSliderRange, durationSteps,
-  formatDurationMin, legAirline, nextAirlines,
+  airlinesIn, applyResultFilters, arrivalBars, arrivalSliderRange, departFloors,
+  durationSteps, formatClockMin, formatDurationMin, legAirline, nextAirlines,
 } from "../utils/resultFilters";
 
 function CheckRow({ checked, onClick, children, count, label }) {
@@ -97,12 +97,14 @@ export function ResultFilters({
   }, [open, wide]);
   const airlines = airlinesIn(flights);
   const steps = durationSteps(flights);
+  const departs = departFloors(flights);
   const showArrival = multiOrigin;
   const showStops = (flights || []).some((d) => (d.flights || []).length > 0);
   const showDuration = steps.length > 0;
+  const showDepart = departs.length > 0;
   const showAirlines = airlines.length >= 2;
   const showDomestic = Boolean(domesticCountry) && domesticChoices > 0;
-  if (!showArrival && !showDuration && !showAirlines && !showDomestic && (flights || []).length < 2) return null;
+  if (!showArrival && !showDuration && !showDepart && !showAirlines && !showDomestic && (flights || []).length < 2) return null;
 
   const set = (patch) => onChange({ ...filters, ...patch });
   const count = (patch) => applyResultFilters(flights, { ...filters, ...patch }, { country: domesticCountry }).length;
@@ -110,6 +112,7 @@ export function ResultFilters({
   const active = (arrivalOn ? 1 : 0)
     + (filters.stops && filters.stops !== "any" ? 1 : 0)
     + (filters.maxDurationMin != null ? 1 : 0)
+    + (filters.minDepartMin != null ? 1 : 0)
     + (Array.isArray(filters.airlines) ? 1 : 0)
     + (filters.domestic ? 1 : 0);
 
@@ -207,6 +210,22 @@ export function ResultFilters({
             <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-arrival">
               <CheckRow checked={filters.arrival === "closest"} label={t("filters.arrivalClosest")} count={count({ arrival: "closest" })} onClick={() => set({ arrival: filters.arrival === "closest" ? "any" : "closest" })}>{t("filters.arrivalClosest")}</CheckRow>
               <CheckRow checked={filters.arrival === "sameDay"} label={t("filters.arrivalSameDay")} count={count({ arrival: "sameDay", maxArrivalMin: null })} onClick={() => set(filters.arrival === "sameDay" ? { arrival: "any", maxArrivalMin: null } : { arrival: "sameDay", maxArrivalMin: null })}>{t("filters.arrivalSameDay")}</CheckRow>
+            </div>
+          </div>
+        )}
+
+        {showDepart && (
+          <div className="fm-filter-block">
+            <span className="fm-filter-label" id="fm-filter-depart">{t("filters.depart")}</span>
+            <div className="fm-filter-opts" role="group" aria-labelledby="fm-filter-depart">
+              {departs.map((min) => {
+                const label = t("filters.departFrom", { time: formatClockMin(min) });
+                return (
+                  <CheckRow key={min} checked={filters.minDepartMin === min} label={label} count={count({ minDepartMin: min })} onClick={() => set({ minDepartMin: filters.minDepartMin === min ? null : min })}>
+                    {label}
+                  </CheckRow>
+                );
+              })}
             </div>
           </div>
         )}

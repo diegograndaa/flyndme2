@@ -114,7 +114,7 @@ test("render: la cabecera del vuelo enseña los códigos quietos", async () => {
 
 test("render: los filtros son checks y la franja de llegada es una barra", async () => {
   const { ResultFilters } = await import("../src/components/ResultFilters.jsx");
-  const leg = (origin, at, airline) => ({
+  const leg = (origin, at, airline, dep = "08:00") => ({
     origin,
     price: 80,
     passengers: 1,
@@ -125,7 +125,7 @@ test("render: los filtros son checks y la franja de llegada es una barra", async
       itineraries: [{
         duration: "PT3H",
         segments: [{
-          departure: { iataCode: origin, at: "2026-11-15T08:00:00" },
+          departure: { iataCode: origin, at: `2026-11-15T${dep}:00` },
           arrival: { iataCode: "FCO", at: `2026-11-15T${at}:00` },
         }],
       }],
@@ -133,16 +133,16 @@ test("render: los filtros son checks y la franja de llegada es una barra", async
   });
   const rome = {
     destination: "ROM", totalCostEUR: 200, fairnessScore: 80,
-    flights: [leg("BCN", "10:00", "IB"), leg("MAD", "12:00", "VY")],
+    flights: [leg("BCN", "10:00", "IB", "06:10"), leg("MAD", "12:00", "VY", "06:40")],
   };
   const paris = {
     destination: "PAR", totalCostEUR: 280, fairnessScore: 70,
-    flights: [leg("BCN", "10:00", "IB"), leg("MAD", "18:00", "VY")],
+    flights: [leg("BCN", "10:00", "IB", "18:20"), leg("MAD", "18:00", "VY", "19:00")],
   };
   const html = renderWithI18n(React.createElement(ResultFilters, {
     flights: [rome, paris],
     listedCount: 2,
-    filters: { arrival: "any", maxArrivalMin: null, stops: "any", maxDurationMin: null, airlines: null, domestic: false },
+    filters: { arrival: "any", maxArrivalMin: null, stops: "any", maxDurationMin: null, minDepartMin: null, airlines: null, domestic: false },
     onChange: () => {},
     onReset: () => {},
     multiOrigin: true,
@@ -153,6 +153,8 @@ test("render: los filtros son checks y la franja de llegada es una barra", async
   assert.ok(html.includes('type="range"'));
   assert.ok(html.includes("fm-check") && html.includes('role="checkbox"'));
   assert.ok(html.includes(">IB<") && html.includes(">VY<"));
+  assert.ok(html.includes("fm-filter-depart"), "hay hora de salida cuando los relojes se separan");
+  assert.ok(html.includes("09:00") && html.includes("12:00") && html.includes("15:00"));
 });
 
 test("render: DeparturesBoard con un solo destino no pinta nada", async () => {

@@ -216,6 +216,10 @@ function matchesDates(ticket, departureDate, returnDate) {
   return true;
 }
 
+function outboundDepartureAt(value) {
+  return typeof value === "string" && /T([01]\d|2[0-3]):[0-5]\d/.test(value) ? value : null;
+}
+
 function isoDuration(minutes) {
   const m = Number(minutes);
   if (!Number.isFinite(m) || m <= 0) return null;
@@ -291,6 +295,9 @@ function mapTicketToOffer(ticket, { departureDate, returnDate, nonStop, currency
     itineraries,
     price: { currency: cur, total: priceStr, grandTotal: priceStr },
     validatingAirlineCodes: ticket.airline ? [ticket.airline] : [],
+    // Hora de salida de la ida aunque haya escalas. Los segmentos siguen
+    // vacíos en ese caso: no se inventan aeropuertos intermedios.
+    departureAt:     outboundDepartureAt(ticket.departure_at),
     transfers:       ticket.transfers ?? null,
     returnTransfers: ticket.return_transfers ?? null,
     // Deep link de Aviasales con marker de afiliado (TRAVELPAYOUTS_MARKER).

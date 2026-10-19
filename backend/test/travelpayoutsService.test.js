@@ -108,6 +108,7 @@ test("mapTicketToOffer: vuelo directo de ida", () => {
   assert.equal(offer.tp.origin, "MAD");
   assert.equal(offer.tp.departureDate, "2026-08-10");
   assert.equal(offer.tp.returnDate, null);
+  assert.equal(offer.departureAt, "2026-08-10T08:30:00+02:00");
 });
 
 test("mapTicketToOffer: con escalas no inventa segmentos", () => {
@@ -115,6 +116,15 @@ test("mapTicketToOffer: con escalas no inventa segmentos", () => {
   // No conocemos los aeropuertos intermedios → sin segmentos (el frontend degrada)
   assert.equal(offer.itineraries[0].segments.length, 0);
   assert.equal(offer.transfers, 1);
+  // La hora de salida sí es del billete: se guarda sin inventar la ruta
+  assert.equal(offer.departureAt, "2026-08-10T08:30:00+02:00");
+});
+
+test("mapTicketToOffer: sin hora de salida no guarda un reloj", () => {
+  const bare = mapTicketToOffer(ticket({ departure_at: "2026-08-10" }), { departureDate: "2026-08-10" });
+  assert.equal(bare.departureAt, null);
+  const junk = mapTicketToOffer(ticket({ departure_at: "2026-08-10T99:99:00Z" }), { departureDate: "2026-08-10" });
+  assert.equal(junk.departureAt, null);
 });
 
 test("mapTicketToOffer: ida y vuelta → 2 itinerarios", () => {

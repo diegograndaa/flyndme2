@@ -756,6 +756,8 @@
     "arrivalBarLabel": "{{origin}}, {{clock}}",
     "arrivalNoClock": "{{origin}}, sin hora",
     "gapAlready": "Con estos vuelos ya llegáis dentro de la franja.",
+    "depart": "Hora de salida",
+    "departFrom": "A partir de las {{time}}",
     "stops": "Escalas",
     "stopsAny": "Cualquiera",
     "stopsDirect": "Todos directos",

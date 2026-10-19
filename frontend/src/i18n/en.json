@@ -756,6 +756,8 @@
     "arrivalBarLabel": "{{origin}}, {{clock}}",
     "arrivalNoClock": "{{origin}}, no time",
     "gapAlready": "These flights already land inside this window.",
+    "depart": "Departure time",
+    "departFrom": "From {{time}}",
     "stops": "Stops",
     "stopsAny": "Any",
     "stopsDirect": "All direct",
