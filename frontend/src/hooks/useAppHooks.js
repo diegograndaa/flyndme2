@@ -47,24 +47,38 @@ export function useTheme() {
 export function useFavorites() {
   const KEY = "flyndme_favorites";
   const [favs, setFavs] = useState(() => readStoredList(KEY, isFavoriteEntry));
+  const favsRef = useRef(favs);
+  favsRef.current = favs;
+
+  const write = useCallback((list) => {
+    const updated = list.slice(0, 20);
+    try { localStorage.setItem(KEY, JSON.stringify(updated)); } catch { /* */ }
+    favsRef.current = updated;
+    return updated;
+  }, []);
 
   const toggle = useCallback((dest) => {
-    setFavs((prev) => {
-      const code = normalizeCode(dest.destination);
-      const exists = prev.find((f) => f.code === code);
-      const updated = exists
-        ? prev.filter((f) => f.code !== code)
-        : [{ code, city: cityOf(code) || code, price: dest.averageCostPerTraveler, ts: Date.now() }, ...prev].slice(0, 20);
-      try { localStorage.setItem(KEY, JSON.stringify(updated)); } catch { /* */ }
-      return updated;
-    });
-  }, []);
+    const code = normalizeCode(dest.destination);
+    const prev = favsRef.current;
+    const exists = prev.find((f) => f.code === code);
+    const next = write(exists
+      ? prev.filter((f) => f.code !== code)
+      : [{ code, city: cityOf(code) || code, price: dest.averageCostPerTraveler, ts: Date.now() }, ...prev]);
+    setFavs(next);
+    return next;
+  }, [write]);
+
+  const replace = useCallback((list) => {
+    const next = write((Array.isArray(list) ? list : []).filter(isFavoriteEntry));
+    setFavs(next);
+    return next;
+  }, [write]);
 
   const isFav = useCallback((destCode) => {
     return favs.some((f) => f.code === normalizeCode(destCode));
   }, [favs]);
 
-  return { favs, toggle, isFav };
+  return { favs, toggle, isFav, replace };
 }
 
 export function useA11yPrefs() {

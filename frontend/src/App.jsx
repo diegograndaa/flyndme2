@@ -37,6 +37,8 @@ import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
+import { useAccount } from "./hooks/useAccount";
+import { AccountButton, AuthDialog } from "./components/AuthDialog";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { OfflineStrip, UpdateBanner, InstallBanner } from "./components/PwaBits";
@@ -159,7 +161,14 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const { t, lang } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
-  const { favs, toggle: toggleFav, isFav } = useFavorites();
+  const { favs, toggle: toggleFav, isFav, replace: replaceFavs } = useFavorites();
+  const account = useAccount(API_BASE, { getFavs: () => favs, replaceFavs });
+  const [authOpen, setAuthOpen] = useState(false);
+  const toggleFavSynced = useCallback((dest) => {
+    const next = toggleFav(dest);
+    if (account.user) account.saveFavorites(next);
+    return next;
+  }, [toggleFav, account.user, account.saveFavorites]);
   const backendStatus = useBackendStatus(API_BASE);
   const { reducedMotion, highContrast } = useA11yPrefs();
 
@@ -1961,6 +1970,12 @@ export default function App() {
             )}
             <ThemeToggle resolved={themeResolved} toggle={toggleTheme} />
             <LangSelector />
+            <AccountButton
+              user={account.user}
+              restoring={account.restoring}
+              onSignIn={() => { account.clearError(); setAuthOpen(true); }}
+              onLogout={account.logout}
+            />
           </div>
         </div>
         {!pwa.online && <OfflineStrip />}
@@ -1999,7 +2014,7 @@ export default function App() {
                       <ChevronRight size={16} className="fm-fav-panel-chevron lucide" aria-hidden="true" />
                     </button>
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: cityOf(f.code) || f.city || f.code })}
-                      onClick={() => toggleFav({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
+                      onClick={() => toggleFavSynced({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
                 ))}
               </div>
@@ -2013,6 +2028,17 @@ export default function App() {
 
       {/* Toast */}
       {toast && <Toast key={toast.id} message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+
+      <AuthDialog
+        open={authOpen}
+        busy={account.busy}
+        error={account.error}
+        onClose={() => { setAuthOpen(false); account.clearError(); }}
+        onSubmit={async (fields) => {
+          const ok = await account.submit(fields);
+          if (ok) setAuthOpen(false);
+        }}
+      />
 
       {/* Keyboard shortcuts overlay */}
       <KeyboardShortcutsOverlay show={showShortcuts} onClose={() => setShowShortcuts(false)} t={t}
@@ -2271,7 +2297,7 @@ export default function App() {
             verifyPhase={liveCheck.code === normalizeCode(displayDest.destination) ? liveCheck.phase : null}
             currency={currency}
             isFav={isFav(displayDest.destination)}
-            onToggleFav={() => toggleFav(displayDest)}
+            onToggleFav={() => toggleFavSynced(displayDest)}
             watched={isWatched(displayDest)}
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
