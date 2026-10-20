@@ -10,6 +10,7 @@ const compression = require("compression");
 const flightsRoutes = require("./routes/flights");
 const shareRoutes   = require("./routes/share");
 const groupsRoutes  = require("./routes/groups");
+const authRoutes    = require("./routes/auth");
 const { storeBackends } = require("./utils/kvStore");
 const { counters, METRIC_NAMES } = require("./utils/metrics");
 
@@ -181,7 +182,9 @@ app.use(
     // Sin él, el preflight del navegador lo bloqueaba en prod (Node no hace
     // preflight, por eso el smoke test no lo veía).
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    // Authorization: la sesión de la cuenta viaja en Bearer. Sin esta cabecera
+    // el preflight del navegador bloquea /api/auth en producción.
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -266,6 +269,7 @@ app.get("/api/health", async (_req, res) => {
 app.use("/api/flights", searchLimiter, flightsRoutes);
 app.use("/api/share", shareRoutes);
 app.use("/api/groups", groupsRoutes);
+app.use("/api/auth", authRoutes);
 
 // 404
 app.use((_req, res) => {
