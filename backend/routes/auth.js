@@ -2,15 +2,16 @@ const express = require("express");
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const { createStore } = require("../utils/kvStore");
+const { verifySocial, publicProviderIds } = require("../services/socialAuth");
 
 const router = express.Router();
 
 const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// Cuentas de correo + contraseña. Sin proveedores sociales: no hay secretos
-// de Google/Apple/Facebook y no se finge un botón que no entra.
-// La contraseña sale de aquí solo como hash scrypt. La sesión es un token
-// opaco en el store (Upstash si está configurado, memoria si no).
+// Cuentas: correo + contraseña, y Google / Apple / Facebook si están
+// configurados. El botón social solo existe cuando el servidor puede
+// comprobar el token. La contraseña sale de aquí solo como hash scrypt.
+// La sesión es un token opaco (Upstash si está configurado, memoria si no).
 
 const ACCOUNT_TTL_MS = 400 * 24 * 60 * 60 * 1000;
 const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -27,6 +28,14 @@ const accounts = createStore({
 const sessions = createStore({
   namespace: "session",
   ttlMs: REMEMBER_TTL_MS,
+  maxSize: 20000,
+  sweepEveryMs: 60 * 60 * 1000,
+});
+// google:sub → { email }. Así el mismo botón vuelve a la misma cuenta
+// aunque el proveedor cambie el correo que enseña.
+const identities = createStore({
+  namespace: "identity",
+  ttlMs: ACCOUNT_TTL_MS,
   maxSize: 20000,
   sweepEveryMs: 60 * 60 * 1000,
 });
@@ -122,6 +131,19 @@ function publicUser(user) {
   return { email: user.email, name: user.name || "" };
 }
 
+function cleanProviders(raw) {
+  const out = {};
+  for (const name of ["google", "apple", "facebook"]) {
+    const sub = raw && raw[name] ? String(raw[name]).slice(0, 128) : "";
+    if (sub) out[name] = sub;
+  }
+  return out;
+}
+
+function linkedProvider(user) {
+  return ["google", "apple", "facebook"].find((name) => user && user.providers && user.providers[name]) || "";
+}
+
 function tokenFrom(req) {
   const m = /^Bearer\s+([A-Za-z0-9_-]{20,})$/.exec(String(req.headers.authorization || ""));
   return m ? m[1] : "";
@@ -149,8 +171,9 @@ async function saveAccount(user) {
   const stored = {
     email: user.email,
     name: user.name || "",
-    salt: user.salt,
-    hash: user.hash,
+    salt: user.salt || "",
+    hash: user.hash || "",
+    providers: cleanProviders(user.providers),
     favorites: sanitizeFavorites(user.favorites),
     createdAt: user.createdAt,
   };
@@ -163,7 +186,11 @@ router.post("/register", attemptLimiter, asyncH(async (req, res) => {
   const password = req.body && req.body.password;
   if (!email) return res.status(400).json({ code: "AUTH_BAD_EMAIL" });
   if (!passwordOk(password)) return res.status(400).json({ code: "AUTH_WEAK_PASSWORD" });
-  if (await accounts.get(email)) return res.status(409).json({ code: "AUTH_EXISTS" });
+  const existing = await accounts.get(email);
+  if (existing) {
+    if (!existing.hash) return res.status(409).json({ code: "AUTH_USE_PROVIDER", provider: linkedProvider(existing) });
+    return res.status(409).json({ code: "AUTH_EXISTS" });
+  }
 
   const salt = crypto.randomBytes(16).toString("hex");
   const user = await saveAccount({
@@ -188,8 +215,13 @@ router.post("/login", attemptLimiter, asyncH(async (req, res) => {
     return invalid();
   }
   const user = await accounts.get(email);
-  // Misma cantidad de scrypt si el correo no existe: la respuesta no adelanta
-  // si hay cuenta o no (el 401 es el mismo).
+  // Misma cantidad de scrypt si el correo no existe o entra solo con un
+  // proveedor: la respuesta no adelanta si hay cuenta o no, salvo cuando
+  // esa cuenta no tiene contraseña (hay que decir con qué botón entra).
+  if (user && !user.hash) {
+    await hashPassword("invalid-pw", DUMMY_SALT);
+    return res.status(401).json({ code: "AUTH_USE_PROVIDER", provider: linkedProvider(user) });
+  }
   const ok = user
     ? await verifyPassword(password, user.salt, user.hash)
     : (await hashPassword(password, DUMMY_SALT), false);
@@ -199,6 +231,78 @@ router.post("/login", attemptLimiter, asyncH(async (req, res) => {
   await saveAccount(user);
   const token = await issueSession(email, req.body && req.body.remember === true);
   return res.json({ user: publicUser(user), token, favorites: user.favorites });
+}));
+
+router.get("/providers", (_req, res) => {
+  res.json(publicProviderIds());
+});
+
+async function establishSocialSession({ profile, name, remember, favorites }) {
+  const provider = profile.provider;
+  const sub = String(profile.sub || "");
+  const emailFromToken = normalizeEmail(profile.email);
+  if (!sub || !emailFromToken) {
+    const err = new Error("profile");
+    err.code = "AUTH_PROVIDER_FAILED";
+    throw err;
+  }
+  const idKey = `${provider}:${sub}`;
+  const linked = await identities.get(idKey);
+  let email = linked && linked.email ? normalizeEmail(linked.email) : "";
+  let user = email ? await accounts.get(email) : null;
+  if (!user) {
+    email = emailFromToken;
+    user = await accounts.get(email);
+    const already = user && user.providers && user.providers[provider];
+    if (already && already !== sub) {
+      const err = new Error("taken");
+      err.code = "AUTH_PROVIDER_TAKEN";
+      throw err;
+    }
+  }
+  const created = !user;
+  const providers = { ...(user && user.providers), [provider]: sub };
+  const stored = await saveAccount({
+    email,
+    name: (user && user.name) || cleanName(name) || cleanName(profile.name),
+    salt: user && user.salt,
+    hash: user && user.hash,
+    providers,
+    favorites: mergeFavorites(user && user.favorites, favorites),
+    createdAt: (user && user.createdAt) || Date.now(),
+  });
+  await identities.set(idKey, { email }, { ttlMs: ACCOUNT_TTL_MS });
+  const token = await issueSession(email, remember === true);
+  return { status: created ? 201 : 200, user: publicUser(stored), token, favorites: stored.favorites };
+}
+
+router.post("/social", attemptLimiter, asyncH(async (req, res) => {
+  try {
+    const profile = await verifySocial({
+      provider: req.body && req.body.provider,
+      credential: req.body && req.body.credential,
+      nonce: req.body && req.body.nonce,
+    });
+    const result = await establishSocialSession({
+      profile,
+      name: req.body && req.body.name,
+      remember: req.body && req.body.remember === true,
+      favorites: req.body && req.body.favorites,
+    });
+    return res.status(result.status).json({
+      user: result.user,
+      token: result.token,
+      favorites: result.favorites,
+    });
+  } catch (err) {
+    const code = err && err.code;
+    if (code === "AUTH_PROVIDER_OFF") return res.status(404).json({ code });
+    if (code === "AUTH_PROVIDER" || code === "AUTH_NO_EMAIL" || code === "AUTH_PROVIDER_TAKEN") {
+      return res.status(400).json({ code });
+    }
+    if (code === "AUTH_PROVIDER_FAILED") return res.status(401).json({ code });
+    throw err;
+  }
 }));
 
 router.get("/me", asyncH(async (req, res) => {
@@ -231,3 +335,4 @@ module.exports.passwordOk = passwordOk;
 module.exports.mergeFavorites = mergeFavorites;
 module.exports.hashPassword = hashPassword;
 module.exports.verifyPassword = verifyPassword;
+module.exports.establishSocialSession = establishSocialSession;

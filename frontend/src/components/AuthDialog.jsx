@@ -62,7 +62,7 @@ export function AccountButton({ user, restoring, onSignIn, onLogout }) {
   );
 }
 
-export function AuthDialog({ open, busy, error, onClose, onSubmit }) {
+export function AuthDialog({ open, busy, error, providers, onClose, onSubmit, onSocial }) {
   const { t } = useI18n();
   const [mode, setMode] = useState("in");
   const [email, setEmail] = useState("");
@@ -100,6 +100,29 @@ export function AuthDialog({ open, busy, error, onClose, onSubmit }) {
       >
         <h2 id="fm-auth-title" className="fm-auth-title">{mode === "up" ? t("auth.createTitle") : t("auth.title")}</h2>
         <p className="fm-auth-lead">{t("auth.lead")}</p>
+        {(providers && (providers.google || providers.apple || providers.facebook)) ? (
+          <div className="fm-auth-social">
+            {providers.google ? (
+              <button type="button" className="fm-auth-provider" disabled={busy} onClick={() => onSocial?.("google", { remember })}>
+                <span className="fm-auth-provider-mark" aria-hidden="true">G</span>
+                {t("auth.withGoogle")}
+              </button>
+            ) : null}
+            {providers.apple ? (
+              <button type="button" className="fm-auth-provider" disabled={busy} onClick={() => onSocial?.("apple", { remember })}>
+                <span className="fm-auth-provider-mark" aria-hidden="true">A</span>
+                {t("auth.withApple")}
+              </button>
+            ) : null}
+            {providers.facebook ? (
+              <button type="button" className="fm-auth-provider" disabled={busy} onClick={() => onSocial?.("facebook", { remember })}>
+                <span className="fm-auth-provider-mark" aria-hidden="true">f</span>
+                {t("auth.withFacebook")}
+              </button>
+            ) : null}
+            <p className="fm-auth-or">{t("auth.or")}</p>
+          </div>
+        ) : null}
         <form onSubmit={submit}>
           <label className="fm-auth-field">
             <span>{t("auth.email")}</span>

@@ -36,7 +36,18 @@
     "badEmail": "Ese correo no parece válido.",
     "offline": "Sin conexión. La cuenta espera a que vuelva el servidor.",
     "failed": "No se ha podido hablar con el servidor. Prueba en un momento.",
-    "rate": "Demasiados intentos. Espera unos minutos."
+    "rate": "Demasiados intentos. Espera unos minutos.",
+    "withGoogle": "Continuar con Google",
+    "withApple": "Continuar con Apple",
+    "withFacebook": "Continuar con Facebook",
+    "or": "o",
+    "useGoogle": "Esta cuenta entra con Google.",
+    "useApple": "Esta cuenta entra con Apple.",
+    "useFacebook": "Esta cuenta entra con Facebook.",
+    "useProvider": "Esta cuenta entra con el servicio con el que se creó.",
+    "providerFailed": "No se ha podido comprobar el acceso.",
+    "noEmail": "Ese servicio no ha dado el correo. Hace falta para la cuenta.",
+    "providerTaken": "Ese servicio ya está en otra cuenta."
   },
   "landing": {
     "eyebrow": "Varias salidas. Un solo destino.",
