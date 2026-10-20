@@ -11,7 +11,7 @@ const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 test("privacidad: es una página pública con contacto y sin guardar la tarjeta", () => {
   assert.equal((page.match(/<h1[\s>]/g) || []).length, 1);
   assert.ok(page.includes('href="https://flyndme.com/privacidad/"'));
-  assert.ok(page.includes("mailto:hello@flyndme.com"));
+  assert.ok(page.includes("mailto:diego@flyndme.com"));
   assert.ok(page.includes("FlyndMe también los guarda 14 días"));
   assert.ok(page.includes("no pasa por los servidores de FlyndMe"));
   assert.ok(page.includes("No hay un botón para borrar la cuenta"));
