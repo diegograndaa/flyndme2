@@ -59,10 +59,10 @@
       <p>Un plan de grupo guarda el nombre que escribe cada persona, su ciudad, cuántos viajan y las fechas, durante 14 días. Un resultado compartido guarda esa búsqueda durante 48 horas.</p>
 
       <h2>Si compras el billete aquí</h2>
-      <p>Para emitir el billete hacen falta nombre, apellidos, fecha de nacimiento, sexo, tratamiento, correo y teléfono. Esos datos van a Duffel, que emite el billete. El número de tarjeta se escribe en el formulario de pago de Duffel (Stripe) y no pasa por los servidores de FlyndMe. El registro de la venta —ruta, importe y estado— se guarda 14 días para completar el billete o pedir la devolución si no se emite.</p>
+      <p>Para emitir el billete hacen falta nombre, apellidos, fecha de nacimiento, sexo, tratamiento, correo y teléfono. Esos datos van a Duffel, que emite el billete, y FlyndMe también los guarda 14 días junto con la ruta, el importe y el estado, para completar el billete o pedir la devolución si no se emite. El número de tarjeta se escribe en el formulario de pago de Duffel (Stripe) y no pasa por los servidores de FlyndMe.</p>
 
       <h2>Visitas</h2>
-      <p>Vercel Web Analytics cuenta visitas y acciones: que hubo una búsqueda, cuántos orígenes tenía y si se pulsó un enlace de reserva, con el código del destino. No le enviamos tu correo ni tu nombre.</p>
+      <p>Vercel Web Analytics cuenta visitas y acciones: que hubo una búsqueda, cuántos orígenes tenía, el código del destino y, si se pulsa un enlace de reserva, la aerolínea y el código de la ciudad de salida. No le enviamos tu correo ni tu nombre.</p>
 
       <h2>Quién más los recibe</h2>
       <p>No vendemos tus datos. Los recibe el servicio que hace falta para lo que pides:</p>
@@ -76,7 +76,7 @@
       </ul>
 
       <h2>Borrar la cuenta</h2>
-      <p>Escribe a <a href="mailto:hello@flyndme.com">hello@flyndme.com</a> y borramos la cuenta y lo que esté guardado a tu nombre. FlyndMe no está pensado para menores.</p>
+      <p>No hay un botón para borrar la cuenta. Si escribes a <a href="mailto:hello@flyndme.com">hello@flyndme.com</a>, se borra del servidor la cuenta y lo que esté guardado a tu nombre. FlyndMe no está pensado para menores.</p>
 
       <section class="en" lang="en">
         <h2>Privacy policy</h2>
@@ -85,8 +85,8 @@
         <p>A search sends departure cities, dates, traveller counts, ticket type and filters to our server. Prices come from the Travelpayouts (Aviasales) cache. The winning destination may then be checked with Google Flights through SerpAPI. Those prices are estimates, not a booking.</p>
         <p>An account stores your email, a name if you type one, and the password only as a hash. Google, Apple or Facebook sign-in stores the identifier that service gives us and the email it confirms. Saved destinations store the code, city, estimated price and the time you saved them. The account is kept for up to 400 days after the last save. “Remember me” lasts 30 days; otherwise the session lasts 12 hours.</p>
         <p>The browser on your device keeps language, theme, recent searches, favourites, price watches and, if you ask, the session. A price watch does not create an account. A group plan keeps each person’s name, city, traveller count and dates for 14 days. A shared result keeps that search for 48 hours.</p>
-        <p>Buying a ticket here needs given name, family name, date of birth, sex, title, email and phone. Those go to Duffel, which issues the ticket. The card number is entered in Duffel’s payment form (Stripe) and does not pass through FlyndMe’s servers. The sale record — route, amount and status — is kept for 14 days so the ticket can be finished or the charge undone if it is not issued.</p>
-        <p>Vercel Web Analytics counts visits and actions such as a search or a booking click, including a destination code. It does not receive your email or your name. We do not sell your data. Other services receive it only for the step you asked for: Travelpayouts, SerpAPI, Google, Apple, Facebook, Duffel, Stripe, an airline or hotel site you open, plus Vercel, Render and Upstash, which host the site, the server and the stored records. Email hello@flyndme.com to delete the account. FlyndMe is not meant for children.</p>
+        <p>Buying a ticket here needs given name, family name, date of birth, sex, title, email and phone. Those go to Duffel, which issues the ticket, and FlyndMe also keeps them for 14 days with the route, amount and status, so the ticket can be finished or the charge undone if it is not issued. The card number is entered in Duffel’s payment form (Stripe) and does not pass through FlyndMe’s servers.</p>
+        <p>Vercel Web Analytics counts visits and actions such as a search or a booking click, including a destination code, and on a booking click the airline and the departure city code. It does not receive your email or your name. We do not sell your data. Other services receive it only for the step you asked for: Travelpayouts, SerpAPI, Google, Apple, Facebook, Duffel, Stripe, an airline or hotel site you open, plus Vercel, Render and Upstash, which host the site, the server and the stored records. There is no button to delete an account. Email hello@flyndme.com and it is removed from the server. FlyndMe is not meant for children.</p>
       </section>
     </article>
   </div>
