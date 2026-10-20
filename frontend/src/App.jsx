@@ -2518,6 +2518,7 @@ export default function App() {
               {t("footerBrand")}
             </span>
             <nav className="app-footer-links">
+              <a className="app-footer-link" href="/privacidad/">{t("footerPrivacy")}</a>
               <a className="app-footer-link" href="mailto:hello@flyndme.com">{t("footerContact")}</a>
               <button type="button" className="app-footer-link" onClick={() => setShowShortcuts(true)}>{t("shortcuts.title")}</button>
             </nav>

@@ -6,15 +6,16 @@
 //   · API (/api/*, precios, OG)        → SIEMPRE red, nunca se cachea (datos vivos)
 //   · Fuentes (IBM Plex vía Google)    → Cache-First (fonts.googleapis/gstatic)
 //   · Estáticos propios (js/css/img…)  → Cache-First (los de Vite llevan hash)
-//   · Páginas SEO (/quedar/, /meet/)   → Network-First con respaldo en caché
+//   · Páginas SEO (/quedar/, /meet/) y /privacidad/ → Network-First con respaldo en caché
 //   · Navegación de la SPA             → Network-First con respaldo a index.html
 //   · Otros orígenes (fotos, analítica)→ sin tocar
 //
 // v5 (sep-2026): paleta terminal v2 + logo con punto naranja + iconos
 // maskable. v6: acento amarillo de señalética + logo amarillo. v7: iconos
 // y logo con ?v=6 (fuerza el logo nuevo) + aviso de versión nueva en la app.
+// v8: /privacidad/ se cachea como página propia y no pisa el shell.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v7";
+const VERSION = "v8";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;
@@ -36,7 +37,7 @@ const APP_SHELL = [
 
 const STATIC_RE = /\.(?:js|css|svg|png|jpg|jpeg|webp|ico|woff2?|json|webmanifest)$/i;
 const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
-const SEO_RE = /^\/(?:quedar|meet)\//;
+const SEO_RE = /^\/(?:quedar|meet|privacidad)\//;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

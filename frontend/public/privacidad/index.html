@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F5F3EF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
+  <title>Política de privacidad | FlyndMe</title>
+  <meta name="description" content="Qué datos usa FlyndMe para buscar un destino de grupo, guardar una cuenta y, si lo pides, emitir un billete. Contacto: hello@flyndme.com.">
+  <link rel="canonical" href="https://flyndme.com/privacidad/">
+  <link rel="icon" href="/favicon.ico?v=6">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#F5F3EF; --card:#FBF9F5; --ink:#1A1A1A; --muted:#524F49; --line:#E5E0D8; --sign:#FFC20E; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#121316; --card:#17191D; --ink:#E6E8EC; --muted:#9AA0AA; --line:#25282F; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.6 "IBM Plex Sans", system-ui, sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+    a { color: inherit; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+    .brand { font-weight: 700; text-decoration: none; font-size: 20px; }
+    .back { font-size: 14px; font-weight: 600; min-height: 40px; display: inline-flex; align-items: center; }
+    h1 { font-size: 32px; line-height: 1.2; margin: 0 0 8px; }
+    h2 { font-size: 20px; line-height: 1.3; margin: 28px 0 8px; }
+    p, li { font-size: 16px; }
+    .date { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); padding: 8px 18px 18px; }
+    ul { padding-left: 1.2em; }
+    .en { margin-top: 36px; padding-top: 8px; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="/">FlyndMe</a>
+      <a class="back" href="/">Volver</a>
+    </header>
+    <article class="card">
+      <h1>Política de privacidad</h1>
+      <p class="date">20 de octubre de 2026</p>
+      <p>FlyndMe, en <a href="https://flyndme.com">flyndme.com</a>, ayuda a un grupo a encontrar un destino común. Puedes buscar sin crear una cuenta. Para privacidad escribe a <a href="mailto:hello@flyndme.com">hello@flyndme.com</a>.</p>
+
+      <h2>La búsqueda</h2>
+      <p>Al buscar enviamos al servidor las ciudades de salida, las fechas, cuántas personas viajan, el tipo de billete y los filtros. Con eso se piden precios en caché a Travelpayouts (Aviasales). El destino que queda primero puede comprobarse después con Google Flights, a través de SerpAPI. Esos precios son una estimación, no una reserva.</p>
+
+      <h2>La cuenta</h2>
+      <p>Si creas una cuenta guardamos el correo, el nombre si lo escribes y la contraseña solo como un hash, nunca en claro. Si entras con Google, Apple o Facebook guardamos el identificador que nos da ese servicio y el correo que confirma. También guardamos los destinos que marques: código, ciudad, precio estimado y cuándo lo guardaste.</p>
+      <p>La cuenta se conserva hasta 400 días desde la última vez que se guarda. Si marcas «Recordarme», la sesión dura 30 días. Si no, dura 12 horas.</p>
+
+      <h2>En tu navegador</h2>
+      <p>En el propio dispositivo se quedan el idioma, el tema, las búsquedas recientes, los favoritos, las vigilancias de precio y, si lo pides, la sesión. Vigilar un precio no crea una cuenta ni envía tu correo. Se borra al limpiar los datos del sitio.</p>
+
+      <h2>Plan de grupo y enlace compartido</h2>
+      <p>Un plan de grupo guarda el nombre que escribe cada persona, su ciudad, cuántos viajan y las fechas, durante 14 días. Un resultado compartido guarda esa búsqueda durante 48 horas.</p>
+
+      <h2>Si compras el billete aquí</h2>
+      <p>Para emitir el billete hacen falta nombre, apellidos, fecha de nacimiento, sexo, tratamiento, correo y teléfono. Esos datos van a Duffel, que emite el billete. El número de tarjeta se escribe en el formulario de pago de Duffel (Stripe) y no pasa por los servidores de FlyndMe. El registro de la venta —ruta, importe y estado— se guarda 14 días para completar el billete o pedir la devolución si no se emite.</p>
+
+      <h2>Visitas</h2>
+      <p>Vercel Web Analytics cuenta visitas y acciones: que hubo una búsqueda, cuántos orígenes tenía y si se pulsó un enlace de reserva, con el código del destino. No le enviamos tu correo ni tu nombre.</p>
+
+      <h2>Quién más los recibe</h2>
+      <p>No vendemos tus datos. Los recibe el servicio que hace falta para lo que pides:</p>
+      <ul>
+        <li>Travelpayouts / Aviasales, para los precios en caché.</li>
+        <li>SerpAPI / Google Flights, para comprobar el destino ganador.</li>
+        <li>Google, Apple o Facebook, solo si pulsas ese botón para entrar.</li>
+        <li>Duffel y Stripe, solo si pagas el billete aquí.</li>
+        <li>La web de la aerolínea, Skyscanner, Google Flights o Booking, si sales a reservar o a ver hoteles.</li>
+        <li>Vercel aloja la web. Render aloja el servidor. Upstash guarda cuentas, sesiones, grupos y ventas cuando está configurado.</li>
+      </ul>
+
+      <h2>Borrar la cuenta</h2>
+      <p>Escribe a <a href="mailto:hello@flyndme.com">hello@flyndme.com</a> y borramos la cuenta y lo que esté guardado a tu nombre. FlyndMe no está pensado para menores.</p>
+
+      <section class="en" lang="en">
+        <h2>Privacy policy</h2>
+        <p class="date">20 October 2026</p>
+        <p>FlyndMe at flyndme.com helps a group find one place to meet. You can search without an account. Privacy requests: <a href="mailto:hello@flyndme.com">hello@flyndme.com</a>.</p>
+        <p>A search sends departure cities, dates, traveller counts, ticket type and filters to our server. Prices come from the Travelpayouts (Aviasales) cache. The winning destination may then be checked with Google Flights through SerpAPI. Those prices are estimates, not a booking.</p>
+        <p>An account stores your email, a name if you type one, and the password only as a hash. Google, Apple or Facebook sign-in stores the identifier that service gives us and the email it confirms. Saved destinations store the code, city, estimated price and the time you saved them. The account is kept for up to 400 days after the last save. “Remember me” lasts 30 days; otherwise the session lasts 12 hours.</p>
+        <p>The browser on your device keeps language, theme, recent searches, favourites, price watches and, if you ask, the session. A price watch does not create an account. A group plan keeps each person’s name, city, traveller count and dates for 14 days. A shared result keeps that search for 48 hours.</p>
+        <p>Buying a ticket here needs given name, family name, date of birth, sex, title, email and phone. Those go to Duffel, which issues the ticket. The card number is entered in Duffel’s payment form (Stripe) and does not pass through FlyndMe’s servers. The sale record — route, amount and status — is kept for 14 days so the ticket can be finished or the charge undone if it is not issued.</p>
+        <p>Vercel Web Analytics counts visits and actions such as a search or a booking click, including a destination code. It does not receive your email or your name. We do not sell your data. Other services receive it only for the step you asked for: Travelpayouts, SerpAPI, Google, Apple, Facebook, Duffel, Stripe, an airline or hotel site you open, plus Vercel, Render and Upstash, which host the site, the server and the stored records. Email hello@flyndme.com to delete the account. FlyndMe is not meant for children.</p>
+      </section>
+    </article>
+  </div>
+</body>
+</html>
