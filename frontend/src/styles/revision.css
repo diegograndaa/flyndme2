@@ -588,6 +588,7 @@
 .fm-auth-btn:focus-visible,
 .fm-auth-close:focus-visible,
 .fm-auth-continue:focus-visible,
+.fm-auth-provider:focus-visible,
 .fm-auth-signout:focus-visible,
 .fm-auth-switch:focus-visible,
 .fm-auth-remember:focus-visible,
@@ -672,6 +673,44 @@
   margin: 0 0 16px;
   font-size: 14px;
   line-height: 1.45;
+  color: var(--slate-500);
+}
+.fm-auth-social { display: flex; flex-direction: column; gap: 8px; }
+.fm-auth-provider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--white);
+  color: var(--navy);
+  font: 600 15px/1 var(--font);
+  cursor: pointer;
+}
+.fm-auth-provider:disabled { cursor: default; opacity: .7; }
+.fm-auth-provider-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--navy);
+  font: 700 13px/1 var(--font-mono);
+}
+.fm-auth-or {
+  margin: 4px 0 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   color: var(--slate-500);
 }
 .fm-auth-field { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }

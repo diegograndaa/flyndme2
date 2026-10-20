@@ -63,5 +63,25 @@ test("la cabecera tiene el botón de entrar y el diálogo pide el correo", async
   assert.ok(dialog.includes('type="email"'));
   assert.ok(dialog.includes('type="password"'));
   assert.ok(dialog.includes("Remember me") || dialog.includes("Recordarme"));
-  assert.ok(!dialog.includes("google"), "sin botón social que no entra");
+  assert.ok(!dialog.includes("fm-auth-provider"), "sin botón social que no entra");
+  assert.ok(!dialog.includes("google"));
+  const social = render(React.createElement(AuthDialog, {
+    open: true,
+    busy: false,
+    error: "",
+    providers: { google: "cliente.apps.googleusercontent.com", apple: "com.flyndme.web", facebook: "111" },
+    onClose: () => {},
+    onSubmit: () => {},
+    onSocial: () => {},
+  }));
+  assert.equal((social.match(/class="fm-auth-provider"/g) || []).length, 3);
+  assert.ok(social.includes("Google") && social.includes("Apple") && social.includes("Facebook"));
+  assert.ok(!social.includes("cliente.apps.googleusercontent.com"), "el id del cliente no se pinta");
+});
+
+test("cerrar la ventana del proveedor no es un fallo", async () => {
+  const { providerCancelled } = await import("../src/utils/socialSignIn.js");
+  assert.equal(providerCancelled("google", "popup_closed"), true);
+  assert.equal(providerCancelled("apple", "popup_closed_by_user"), true);
+  assert.equal(providerCancelled("google", "invalid_token"), false);
 });

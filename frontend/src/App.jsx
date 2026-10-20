@@ -1973,7 +1973,7 @@ export default function App() {
             <AccountButton
               user={account.user}
               restoring={account.restoring}
-              onSignIn={() => { account.clearError(); setAuthOpen(true); }}
+              onSignIn={() => { account.clearError(); account.loadProviders(); setAuthOpen(true); }}
               onLogout={account.logout}
             />
           </div>
@@ -2033,9 +2033,14 @@ export default function App() {
         open={authOpen}
         busy={account.busy}
         error={account.error}
+        providers={account.providers}
         onClose={() => { setAuthOpen(false); account.clearError(); }}
         onSubmit={async (fields) => {
           const ok = await account.submit(fields);
+          if (ok) setAuthOpen(false);
+        }}
+        onSocial={async (provider, fields) => {
+          const ok = await account.signInSocial(provider, fields);
           if (ok) setAuthOpen(false);
         }}
       />

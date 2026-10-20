@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isOffline } from "../utils/network";
 import { clearToken, mergeFavoriteLists, readToken, sameFavorites, writeToken } from "../utils/account";
+import { requestProviderCredential } from "../utils/socialSignIn";
 
 const ERROR_KEYS = {
   AUTH_INVALID: "auth.invalid",
@@ -10,7 +11,23 @@ const ERROR_KEYS = {
   AUTH_WEAK_PASSWORD: "auth.weak",
   AUTH_BAD_EMAIL: "auth.badEmail",
   RATE_LIMITED: "auth.rate",
+  AUTH_NO_EMAIL: "auth.noEmail",
+  AUTH_PROVIDER_FAILED: "auth.providerFailed",
+  AUTH_PROVIDER_OFF: "auth.providerFailed",
+  AUTH_PROVIDER_TAKEN: "auth.providerTaken",
 };
+
+const EMPTY_PROVIDERS = { google: "", apple: "", facebook: "" };
+
+function errorKey(data) {
+  if (data && data.code === "AUTH_USE_PROVIDER") {
+    if (data.provider === "google") return "auth.useGoogle";
+    if (data.provider === "apple") return "auth.useApple";
+    if (data.provider === "facebook") return "auth.useFacebook";
+    return "auth.useProvider";
+  }
+  return ERROR_KEYS[(data && data.code) || ""] || "auth.failed";
+}
 
 async function wake(apiBase) {
   for (let i = 0; i < 6; i++) {
@@ -54,6 +71,7 @@ export function useAccount(apiBase, favBridge) {
   const [restoring, setRestoring] = useState(() => Boolean(readToken()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [providers, setProviders] = useState(EMPTY_PROVIDERS);
 
   const applyFavorites = useCallback((serverList) => {
     const local = bridge.current?.getFavs?.() || [];
@@ -105,7 +123,7 @@ export function useAccount(apiBase, favBridge) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(ERROR_KEYS[data.code] || "auth.failed");
+        setError(errorKey(data));
         return false;
       }
       writeToken(data.token, remember);
@@ -120,6 +138,55 @@ export function useAccount(apiBase, favBridge) {
     }
   }, [apiBase]);
 
+  const loadProviders = useCallback(async () => {
+    try {
+      const res = await authRequest(apiBase, "/providers");
+      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      setProviders({
+        google: typeof data.google === "string" ? data.google : "",
+        apple: typeof data.apple === "string" ? data.apple : "",
+        facebook: typeof data.facebook === "string" ? data.facebook : "",
+      });
+    } catch { /* sin proveedores, el diálogo sigue con correo y contraseña */ }
+  }, [apiBase]);
+
+  const signInSocial = useCallback(async (provider, { remember } = {}) => {
+    setBusy(true);
+    setError("");
+    try {
+      const clientId = providers[provider];
+      const lang = typeof document !== "undefined" ? document.documentElement.lang : "";
+      const asked = await requestProviderCredential(provider, clientId, { lang });
+      if (!asked || asked.cancelled) return false;
+      const res = await authRequest(apiBase, "/social", {
+        method: "POST",
+        body: {
+          provider,
+          credential: asked.credential,
+          nonce: asked.nonce,
+          name: asked.name,
+          remember: Boolean(remember),
+          favorites: bridge.current?.getFavs?.() || [],
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(errorKey(data));
+        return false;
+      }
+      writeToken(data.token, remember);
+      setUser(data.user || null);
+      if (Array.isArray(data.favorites)) bridge.current?.replaceFavs?.(data.favorites);
+      return true;
+    } catch (err) {
+      setError(err && err.message === "offline" ? "auth.offline" : "auth.providerFailed");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [apiBase, providers]);
+
   const logout = useCallback(async () => {
     const token = readToken();
     clearToken();
@@ -131,5 +198,5 @@ export function useAccount(apiBase, favBridge) {
 
   const clearError = useCallback(() => setError(""), []);
 
-  return { user, restoring, busy, error, submit, logout, saveFavorites, clearError };
+  return { user, restoring, busy, error, providers, loadProviders, submit, signInSocial, logout, saveFavorites, clearError };
 }
