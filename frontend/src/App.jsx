@@ -38,6 +38,7 @@ import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels"
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useAccount } from "./hooks/useAccount";
+import { warmProvider } from "./utils/socialSignIn";
 import { AccountButton, AuthDialog } from "./components/AuthDialog";
 import { useFocusTrap } from "./hooks/useFocusTrap";
 import { usePwaStatus } from "./hooks/usePwaStatus";
@@ -164,6 +165,9 @@ export default function App() {
   const { favs, toggle: toggleFav, isFav, replace: replaceFavs } = useFavorites();
   const account = useAccount(API_BASE, { getFavs: () => favs, replaceFavs });
   const [authOpen, setAuthOpen] = useState(false);
+  useEffect(() => {
+    if (account.user) setAuthOpen(false);
+  }, [account.user]);
   const toggleFavSynced = useCallback((dest) => {
     const next = toggleFav(dest);
     if (account.user) account.saveFavorites(next);
@@ -1973,7 +1977,7 @@ export default function App() {
             <AccountButton
               user={account.user}
               restoring={account.restoring}
-              onSignIn={() => { account.clearError(); account.loadProviders(); setAuthOpen(true); }}
+              onSignIn={() => { account.clearError(); warmProvider("google"); account.loadProviders(); setAuthOpen(true); }}
               onLogout={account.logout}
             />
           </div>

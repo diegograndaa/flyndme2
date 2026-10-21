@@ -66,8 +66,9 @@ test("un JWT de Apple con otra audiencia, caducado o mal firmado no entra", asyn
 
 test("Google solo entra si el token es de este cliente y el correo está verificado", async () => {
   const env = { GOOGLE_CLIENT_ID: "cliente.apps.googleusercontent.com" };
-  const fetchImpl = async (url) => {
+  const fetchImpl = async (url, opts) => {
     assert.ok(String(url).startsWith("https://oauth2.googleapis.com/tokeninfo"));
+    assert.ok(opts && opts.signal, "la comprobación de Google tiene un tope de tiempo");
     return jsonRes({
       aud: "cliente.apps.googleusercontent.com",
       sub: "google-sub-1",
@@ -88,6 +89,15 @@ test("Google solo entra si el token es de este cliente y el correo está verific
   await assert.rejects(
     () => verifySocial({ provider: "google", credential: "t", env: {}, fetchImpl }),
     (err) => err.code === "AUTH_PROVIDER_OFF",
+  );
+  await assert.rejects(
+    () => verifySocial({
+      provider: "google",
+      credential: "t",
+      env,
+      fetchImpl: async () => { throw new Error("timeout"); },
+    }),
+    (err) => err.code === "AUTH_PROVIDER_FAILED",
   );
 });
 

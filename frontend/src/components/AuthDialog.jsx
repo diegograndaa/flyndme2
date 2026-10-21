@@ -54,7 +54,6 @@ export function AccountButton({ user, restoring, onSignIn, onLogout }) {
       className="fm-auth-btn"
       onClick={onSignIn}
       aria-busy={restoring || undefined}
-      disabled={restoring}
     >
       <User size={16} aria-hidden="true" />
       <span className="fm-auth-btn-label">{t("auth.signIn")}</span>

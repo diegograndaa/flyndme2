@@ -53,6 +53,8 @@ test("la cabecera tiene el botón de entrar y el diálogo pide el correo", async
   const button = render(React.createElement(AccountButton, { user: null, restoring: false, onSignIn: () => {}, onLogout: () => {} }));
   assert.ok(button.includes("fm-auth-btn"));
   assert.ok(button.includes("Sign in") || button.includes("Iniciar sesión"));
+  const restoring = render(React.createElement(AccountButton, { user: null, restoring: true, onSignIn: () => {}, onLogout: () => {} }));
+  assert.ok(!restoring.includes("disabled"), "restaurar la sesión no bloquea Iniciar sesión");
   const signed = render(React.createElement(AccountButton, {
     user: { email: "ana@flynd.me", name: "Ana" }, onSignIn: () => {}, onLogout: () => {},
   }));
@@ -80,8 +82,11 @@ test("la cabecera tiene el botón de entrar y el diálogo pide el correo", async
 });
 
 test("cerrar la ventana del proveedor no es un fallo", async () => {
-  const { providerCancelled } = await import("../src/utils/socialSignIn.js");
+  const { providerCancelled, providerBlocked } = await import("../src/utils/socialSignIn.js");
   assert.equal(providerCancelled("google", "popup_closed"), true);
   assert.equal(providerCancelled("apple", "popup_closed_by_user"), true);
   assert.equal(providerCancelled("google", "invalid_token"), false);
+  assert.equal(providerCancelled("google", "popup_failed_to_open"), false);
+  assert.equal(providerBlocked("google", "popup_failed_to_open"), true);
+  assert.equal(providerBlocked("google", "popup_closed"), false);
 });
