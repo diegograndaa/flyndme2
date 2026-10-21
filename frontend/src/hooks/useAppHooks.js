@@ -6,6 +6,7 @@ import { readStoredList, isFavoriteEntry } from "../utils/storage";
 // useFavorites los usaba sin importar: el toggle de favoritos lanzaba
 // "normalizeCode is not defined" en runtime (los tests SSR no lo cazaban).
 import { normalizeCode, cityOf } from "../utils/helpers";
+import { fetchSignal } from "../utils/authFetch";
 
 export function useTheme() {
   const [theme, setThemeState] = useState(() => {
@@ -111,14 +112,19 @@ export function useBackendStatus(apiBase) {
   const [status, setStatus] = useState("unknown"); // unknown | online | offline
   useEffect(() => {
     let cancelled = false;
+    let stop = () => {};
     const check = () => {
-      fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: AbortSignal.timeout?.(5000) })
+      stop();
+      const timer = fetchSignal();
+      stop = () => timer.abort();
+      fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: timer.signal })
         .then(res => { if (!cancelled) setStatus(res.ok ? "online" : "offline"); })
-        .catch(() => { if (!cancelled) setStatus("offline"); });
+        .catch(() => { if (!cancelled) setStatus("offline"); })
+        .finally(() => timer.done());
     };
     check();
     const id = setInterval(check, 60000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => { cancelled = true; stop(); clearInterval(id); };
   }, [apiBase]);
   return status;
 }
