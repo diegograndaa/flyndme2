@@ -2,7 +2,7 @@
 // (SSR); en el navegador despierta el backend igual que el plan de grupo.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isOffline } from "../utils/network";
-import { clearToken, mergeFavoriteLists, readToken, sameFavorites, writeToken } from "../utils/account";
+import { clearToken, readToken, writeToken } from "../utils/account";
 import { requestProviderCredential, warmProvider } from "../utils/socialSignIn";
 import { COLD_START_MS, fetchSignal } from "../utils/authFetch";
 
@@ -79,49 +79,62 @@ async function authRequest(apiBase, path, {
   throw last || new Error("network");
 }
 
-export function useAccount(apiBase, favBridge) {
-  const bridge = useRef(favBridge);
-  bridge.current = favBridge;
+function personalFrom(data, seq) {
+  return {
+    seq,
+    favorites: Array.isArray(data?.favorites) ? data.favorites : [],
+    recent: Array.isArray(data?.recent) ? data.recent : [],
+    watches: Array.isArray(data?.watches) ? data.watches : [],
+  };
+}
+
+export function useAccount(apiBase) {
   const [user, setUser] = useState(null);
+  const [personal, setPersonal] = useState(null);
   const [restoring, setRestoring] = useState(() => Boolean(readToken()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [providers, setProviders] = useState(EMPTY_PROVIDERS);
   const socialLock = useRef(false);
+  const epoch = useRef(0);
+  const personalSeq = useRef(0);
 
-  const applyFavorites = useCallback((serverList) => {
-    const local = bridge.current?.getFavs?.() || [];
-    const merged = mergeFavoriteLists(local, serverList || []);
-    if (!sameFavorites(local, merged)) bridge.current?.replaceFavs?.(merged);
-    return merged;
+  const acceptSession = useCallback((data) => {
+    personalSeq.current += 1;
+    setUser(data?.user || null);
+    setPersonal(personalFrom(data, personalSeq.current));
   }, []);
 
-  const saveFavorites = useCallback(async (list) => {
+  const savePersonal = useCallback(async (body) => {
     const token = readToken();
-    if (!token) return;
+    if (!token) return null;
     try {
-      const res = await authRequest(apiBase, "/favorites", { method: "POST", token, body: { favorites: list } });
-      if (res.status === 401) { clearToken(); setUser(null); }
-    } catch { /* el navegador ya los tiene; al entrar se vuelven a unir */ }
+      const res = await authRequest(apiBase, "/personal", { method: "POST", token, body });
+      if (res.status === 401) {
+        epoch.current += 1;
+        clearToken();
+        setUser(null);
+        setPersonal(null);
+      }
+      return res.ok ? await res.json().catch(() => null) : null;
+    } catch { return null; }
   }, [apiBase]);
 
   useEffect(() => {
     const token = readToken();
     if (!token) { setRestoring(false); return undefined; }
+    const gen = epoch.current;
     let cancel = false;
     authRequest(apiBase, "/me", { token })
       .then(async (res) => {
-        if (cancel) return;
-        if (!res.ok) { clearToken(); setUser(null); return; }
-        const data = await res.json().catch(() => ({}));
-        setUser(data.user || null);
-        const merged = applyFavorites(data.favorites);
-        if (!sameFavorites(merged, data.favorites || [])) saveFavorites(merged);
+        if (cancel || gen !== epoch.current) return;
+        if (!res.ok) { clearToken(); setUser(null); setPersonal(null); return; }
+        acceptSession(await res.json().catch(() => ({})));
       })
       .catch(() => { /* sin red: se queda el token y se reintenta al recargar */ })
       .finally(() => { if (!cancel) setRestoring(false); });
     return () => { cancel = true; };
-  }, [apiBase, applyFavorites, saveFavorites]);
+  }, [apiBase, acceptSession]);
 
   const submit = useCallback(async ({ email, password, name, remember, mode }) => {
     setBusy(true);
@@ -134,7 +147,6 @@ export function useAccount(apiBase, favBridge) {
           password,
           name,
           remember: Boolean(remember),
-          favorites: bridge.current?.getFavs?.() || [],
         },
       });
       const data = await res.json().catch(() => ({}));
@@ -142,9 +154,9 @@ export function useAccount(apiBase, favBridge) {
         setError(errorKey(data));
         return false;
       }
+      epoch.current += 1;
       writeToken(data.token, remember);
-      setUser(data.user || null);
-      if (Array.isArray(data.favorites)) bridge.current?.replaceFavs?.(data.favorites);
+      acceptSession(data);
       return true;
     } catch (err) {
       setError(err && err.message === "offline" ? "auth.offline" : "auth.failed");
@@ -152,7 +164,7 @@ export function useAccount(apiBase, favBridge) {
     } finally {
       setBusy(false);
     }
-  }, [apiBase]);
+  }, [apiBase, acceptSession]);
 
   const loadProviders = useCallback(async () => {
     try {
@@ -195,7 +207,6 @@ export function useAccount(apiBase, favBridge) {
         nonce: asked.nonce,
         name: asked.name,
         remember: Boolean(remember),
-        favorites: bridge.current?.getFavs?.() || [],
       };
       // No esperar al ping: la propia petición es la que Render mantiene
       // abierta hasta arrancar. Si contesta 502 al momento, el ping que
@@ -221,9 +232,9 @@ export function useAccount(apiBase, favBridge) {
         setError(errorKey(data));
         return false;
       }
+      epoch.current += 1;
       writeToken(data.token, remember);
-      setUser(data.user || null);
-      if (Array.isArray(data.favorites)) bridge.current?.replaceFavs?.(data.favorites);
+      acceptSession(data);
       return true;
     } catch (err) {
       setError(err && err.message === "offline" ? "auth.offline" : "auth.providerFailed");
@@ -232,12 +243,14 @@ export function useAccount(apiBase, favBridge) {
       socialLock.current = false;
       setBusy(false);
     }
-  }, [apiBase, providers]);
+  }, [apiBase, providers, acceptSession]);
 
   const logout = useCallback(async () => {
     const token = readToken();
+    epoch.current += 1;
     clearToken();
     setUser(null);
+    setPersonal(null);
     setError("");
     if (!token) return;
     try { await authRequest(apiBase, "/logout", { method: "POST", token }); } catch { /* la sesión local ya se cerró */ }
@@ -245,5 +258,8 @@ export function useAccount(apiBase, favBridge) {
 
   const clearError = useCallback(() => setError(""), []);
 
-  return { user, restoring, busy, error, providers, loadProviders, submit, signInSocial, logout, saveFavorites, clearError };
+  return {
+    user, personal, restoring, busy, error, providers,
+    loadProviders, submit, signInSocial, logout, savePersonal, clearError,
+  };
 }

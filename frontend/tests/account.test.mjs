@@ -56,10 +56,17 @@ test("la cabecera tiene el botón de entrar y el diálogo pide el correo", async
   const restoring = render(React.createElement(AccountButton, { user: null, restoring: true, onSignIn: () => {}, onLogout: () => {} }));
   assert.ok(!restoring.includes("disabled"), "restaurar la sesión no bloquea Iniciar sesión");
   const signed = render(React.createElement(AccountButton, {
-    user: { email: "ana@flynd.me", name: "Ana" }, onSignIn: () => {}, onLogout: () => {},
+    user: { email: "ana@flynd.me", name: "Ana" },
+    savedCount: 2,
+    initialMenu: true,
+    onSignIn: () => {},
+    onLogout: () => {},
+    onOpenSaved: () => {},
   }));
   assert.ok(signed.includes("fm-auth-mark"));
   assert.ok(signed.includes("Ana"));
+  assert.ok(signed.includes("fm-auth-saved"));
+  assert.ok(signed.includes("2 saved destinations") || signed.includes("2 destinos guardados"));
   const dialog = render(React.createElement(AuthDialog, { open: true, busy: false, error: "", onClose: () => {}, onSubmit: () => {} }));
   assert.ok(dialog.includes("fm-auth-dialog"));
   assert.ok(dialog.includes('type="email"'));

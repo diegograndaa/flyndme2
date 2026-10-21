@@ -118,7 +118,53 @@ test("registrar, entrar, favoritos y salir", async () => {
   assert.equal(login.status, 200);
   assert.deepEqual(login.json.favorites.map((f) => f.code), ["MAD", "LON"]);
   assert.equal(login.json.favorites.find((f) => f.code === "LON").price, 80);
+  assert.ok(Array.isArray(login.json.recent) && Array.isArray(login.json.watches));
   const token = login.json.token;
+
+  const anonPersonal = await post(base, "/api/auth/personal", { favorites: [fav("par", 1, 1)] });
+  assert.equal(anonPersonal.status, 401);
+
+  const personal = await post(base, "/api/auth/personal", {
+    favorites: [fav("mad", 12, 40)],
+    recent: [
+      {
+        origins: ["mad", "lon"],
+        passengers: [1, 2],
+        tripType: "oneway",
+        departureDate: "2026-11-15",
+        flexDays: 2,
+        maxBudget: 200,
+        directOnly: true,
+        cabinClass: "ECONOMY",
+        destinations: ["par"],
+        destBasis: "usual",
+        ts: 50,
+      },
+      { origins: ["NO"], departureDate: "ayer" },
+    ],
+    watches: [
+      {
+        id: "PAR|MADx1|2026-11-15",
+        origins: ["MAD"],
+        passengers: [1],
+        departureDate: "2026-11-15",
+        tripType: "oneway",
+        destination: "PAR",
+        nonStop: false,
+        savedTotalEUR: 120.4,
+        createdAt: 60,
+      },
+      { id: "mala", destination: "PAR", origins: ["MAD"], departureDate: "2026-11-15", savedTotalEUR: -1, createdAt: 1 },
+    ],
+  }, token);
+  assert.equal(personal.status, 200);
+  assert.deepEqual(personal.json.favorites.map((f) => f.code), ["MAD"]);
+  assert.equal(personal.json.recent.length, 1);
+  assert.deepEqual(personal.json.recent[0].origins, ["MAD", "LON"]);
+  assert.equal(personal.json.recent[0].passengers[1], 2);
+  assert.equal(personal.json.watches.length, 1);
+  assert.equal(personal.json.watches[0].savedTotalEUR, 120);
+  assert.equal(personal.json.watches[0].destination, "PAR");
 
   const me = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(me.status, 200);
@@ -132,12 +178,21 @@ test("registrar, entrar, favoritos y salir", async () => {
   const replaced = await post(base, "/api/auth/favorites", { favorites: [fav("bcn", 3, 15)] }, token);
   assert.equal(replaced.status, 200);
   assert.deepEqual(replaced.json.favorites.map((f) => f.code), ["BCN"]);
+  const kept = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+  const keptBody = await kept.json();
+  assert.equal(keptBody.recent.length, 1, "guardar favoritos no borra las búsquedas");
+  assert.equal(keptBody.watches[0].destination, "PAR");
 
   const other = await post(base, "/api/auth/register", {
     email: "otro@flynd.me", password: "correct-horse", favorites: [fav("par", 1, 9)],
   });
   assert.equal(other.status, 201);
   assert.deepEqual(other.json.favorites.map((f) => f.code), ["PAR"]);
+  assert.deepEqual(other.json.recent, []);
+  const otherMe = await fetch(`${base}/api/auth/me`, { headers: { Authorization: `Bearer ${other.json.token}` } });
+  const otherBody = await otherMe.json();
+  assert.deepEqual(otherBody.favorites.map((f) => f.code), ["PAR"]);
+  assert.equal(otherBody.watches.length, 0);
 
   const out = await fetch(`${base}/api/auth/logout`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
   assert.equal(out.status, 204);
