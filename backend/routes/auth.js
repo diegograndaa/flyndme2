@@ -91,6 +91,143 @@ function sanitizeFavorites(list) {
   return out;
 }
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const CABINS = new Set(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]);
+
+function iata(raw) {
+  const code = String(raw || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : "";
+}
+
+function dateOnly(raw) {
+  const s = String(raw || "");
+  return DATE_RE.test(s) ? s : "";
+}
+
+function cleanRecent(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const origins = [];
+  for (const item of (Array.isArray(raw.origins) ? raw.origins : []).slice(0, 8)) {
+    const code = iata(item);
+    if (code && !origins.includes(code)) origins.push(code);
+  }
+  const departureDate = dateOnly(raw.departureDate);
+  if (!origins.length || !departureDate) return null;
+  const tripType = raw.tripType === "roundtrip" ? "roundtrip" : "oneway";
+  const passengers = origins.map((_, i) => {
+    const n = Math.floor(Number(Array.isArray(raw.passengers) ? raw.passengers[i] : 1));
+    return Number.isFinite(n) ? Math.min(9, Math.max(1, n)) : 1;
+  });
+  const cabin = String(raw.cabinClass || "").toUpperCase();
+  const flex = Math.floor(Number(raw.flexDays));
+  const budget = Number(raw.maxBudget);
+  const destinations = [];
+  for (const item of (Array.isArray(raw.destinations) ? raw.destinations : []).slice(0, 12)) {
+    const code = iata(item);
+    if (code && !destinations.includes(code)) destinations.push(code);
+  }
+  const ts = Number(raw.ts);
+  return {
+    origins,
+    passengers,
+    tripType,
+    departureDate,
+    returnDate: tripType === "roundtrip" ? dateOnly(raw.returnDate) : "",
+    flexDays: Number.isFinite(flex) && flex >= 0 && flex <= 7 ? flex : 0,
+    maxBudget: Number.isFinite(budget) && budget >= 0 && budget <= 100000 ? Math.round(budget) : 0,
+    directOnly: raw.directOnly === true,
+    cabinClass: CABINS.has(cabin) ? cabin : "ECONOMY",
+    destinations,
+    destBasis: raw.destBasis === "cheaper" ? "cheaper" : "usual",
+    ts: Number.isFinite(ts) && ts > 0 ? Math.floor(ts) : 0,
+  };
+}
+
+function recentKey(item) {
+  return [
+    item.origins.join(","),
+    item.passengers.join(","),
+    item.departureDate,
+    item.tripType,
+    item.returnDate,
+    item.flexDays,
+    item.maxBudget,
+    item.directOnly ? 1 : 0,
+    item.cabinClass,
+    item.destinations.slice().sort().join(","),
+    item.destBasis,
+  ].join("|");
+}
+
+function sanitizeRecent(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  const seen = new Set();
+  for (const raw of list.slice(0, 20)) {
+    const item = cleanRecent(raw);
+    if (!item) continue;
+    const key = recentKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
+function cleanWatch(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const destination = iata(raw.destination);
+  const departureDate = dateOnly(raw.departureDate);
+  const origins = [];
+  for (const item of (Array.isArray(raw.origins) ? raw.origins : []).slice(0, 8)) {
+    const code = iata(item);
+    if (code) origins.push(code);
+  }
+  const id = String(raw.id || "").slice(0, 180);
+  const total = Number(raw.savedTotalEUR);
+  if (!destination || !departureDate || !origins.length || !id || !Number.isFinite(total) || total < 0) return null;
+  const tripType = raw.tripType === "roundtrip" ? "roundtrip" : "oneway";
+  const createdAt = Number(raw.createdAt);
+  return {
+    id,
+    origins,
+    passengers: origins.map((_, i) => {
+      const n = Math.floor(Number(Array.isArray(raw.passengers) ? raw.passengers[i] : 1));
+      return Number.isFinite(n) ? Math.min(9, Math.max(1, n)) : 1;
+    }),
+    departureDate,
+    returnDate: tripType === "roundtrip" ? dateOnly(raw.returnDate) : "",
+    tripType,
+    destination,
+    nonStop: raw.nonStop === true,
+    savedTotalEUR: Math.round(total),
+    createdAt: Number.isFinite(createdAt) && createdAt > 0 ? Math.floor(createdAt) : 0,
+  };
+}
+
+function sanitizeWatches(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  const seen = new Set();
+  for (const raw of list.slice(0, 10)) {
+    const item = cleanWatch(raw);
+    if (!item || seen.has(item.id)) continue;
+    seen.add(item.id);
+    out.push(item);
+    if (out.length >= 3) break;
+  }
+  return out;
+}
+
+function personalOf(user) {
+  return {
+    favorites: sanitizeFavorites(user && user.favorites),
+    recent: sanitizeRecent(user && user.recent),
+    watches: sanitizeWatches(user && user.watches),
+  };
+}
+
 // Unión por código: se queda el más reciente. Un precio ausente no borra el
 // que ya había. Tope 20, igual que el navegador.
 function mergeFavorites(stored, incoming) {
@@ -175,6 +312,8 @@ async function saveAccount(user) {
     hash: user.hash || "",
     providers: cleanProviders(user.providers),
     favorites: sanitizeFavorites(user.favorites),
+    recent: sanitizeRecent(user.recent),
+    watches: sanitizeWatches(user.watches),
     createdAt: user.createdAt,
   };
   await accounts.set(user.email, stored, { ttlMs: ACCOUNT_TTL_MS });
@@ -203,7 +342,7 @@ router.post("/register", attemptLimiter, asyncH(async (req, res) => {
   });
 
   const token = await issueSession(email, req.body && req.body.remember === true);
-  return res.status(201).json({ user: publicUser(user), token, favorites: user.favorites });
+  return res.status(201).json({ user: publicUser(user), token, ...personalOf(user) });
 }));
 
 router.post("/login", attemptLimiter, asyncH(async (req, res) => {
@@ -228,9 +367,9 @@ router.post("/login", attemptLimiter, asyncH(async (req, res) => {
   if (!user || !ok) return invalid();
 
   user.favorites = mergeFavorites(user.favorites, req.body && req.body.favorites);
-  await saveAccount(user);
+  const stored = await saveAccount(user);
   const token = await issueSession(email, req.body && req.body.remember === true);
-  return res.json({ user: publicUser(user), token, favorites: user.favorites });
+  return res.json({ user: publicUser(stored), token, ...personalOf(stored) });
 }));
 
 router.get("/providers", (_req, res) => {
@@ -269,11 +408,13 @@ async function establishSocialSession({ profile, name, remember, favorites }) {
     hash: user && user.hash,
     providers,
     favorites: mergeFavorites(user && user.favorites, favorites),
+    recent: user && user.recent,
+    watches: user && user.watches,
     createdAt: (user && user.createdAt) || Date.now(),
   });
   await identities.set(idKey, { email }, { ttlMs: ACCOUNT_TTL_MS });
   const token = await issueSession(email, remember === true);
-  return { status: created ? 201 : 200, user: publicUser(stored), token, favorites: stored.favorites };
+  return { status: created ? 201 : 200, user: publicUser(stored), token, ...personalOf(stored) };
 }
 
 router.post("/social", attemptLimiter, asyncH(async (req, res) => {
@@ -293,6 +434,8 @@ router.post("/social", attemptLimiter, asyncH(async (req, res) => {
       user: result.user,
       token: result.token,
       favorites: result.favorites,
+      recent: result.recent,
+      watches: result.watches,
     });
   } catch (err) {
     const code = err && err.code;
@@ -310,7 +453,7 @@ router.get("/me", asyncH(async (req, res) => {
   if (!session) return res.status(401).json({ code: "AUTH_REQUIRED" });
   const user = await accounts.get(session.email);
   if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
-  return res.json({ user: publicUser(user), favorites: sanitizeFavorites(user.favorites) });
+  return res.json({ user: publicUser(user), ...personalOf(user) });
 }));
 
 router.post("/logout", asyncH(async (req, res) => {
@@ -325,8 +468,23 @@ router.post("/favorites", asyncH(async (req, res) => {
   const user = await accounts.get(session.email);
   if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
   user.favorites = sanitizeFavorites(req.body && req.body.favorites);
-  await saveAccount(user);
-  return res.json({ favorites: user.favorites });
+  const stored = await saveAccount(user);
+  return res.json({ favorites: stored.favorites });
+}));
+
+// Solo toca las listas que vienen en el cuerpo. Así guardar favoritos no
+// borra las búsquedas, ni al revés.
+router.post("/personal", asyncH(async (req, res) => {
+  const session = await readSession(req);
+  if (!session) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const user = await accounts.get(session.email);
+  if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  if (Object.prototype.hasOwnProperty.call(body, "favorites")) user.favorites = body.favorites;
+  if (Object.prototype.hasOwnProperty.call(body, "recent")) user.recent = body.recent;
+  if (Object.prototype.hasOwnProperty.call(body, "watches")) user.watches = body.watches;
+  const stored = await saveAccount(user);
+  return res.json(personalOf(stored));
 }));
 
 module.exports = router;

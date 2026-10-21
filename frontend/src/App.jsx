@@ -38,6 +38,7 @@ import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels"
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { useAccount } from "./hooks/useAccount";
+import { usePersonalCabinet } from "./hooks/usePersonal";
 import { warmProvider } from "./utils/socialSignIn";
 import { AccountButton, AuthDialog } from "./components/AuthDialog";
 import { useFocusTrap } from "./hooks/useFocusTrap";
@@ -163,16 +164,12 @@ export default function App() {
   const { t, lang } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
   const { favs, toggle: toggleFav, isFav, replace: replaceFavs } = useFavorites();
-  const account = useAccount(API_BASE, { getFavs: () => favs, replaceFavs });
+  const account = useAccount(API_BASE);
   const [authOpen, setAuthOpen] = useState(false);
   useEffect(() => {
     if (account.user) setAuthOpen(false);
   }, [account.user]);
-  const toggleFavSynced = useCallback((dest) => {
-    const next = toggleFav(dest);
-    if (account.user) account.saveFavorites(next);
-    return next;
-  }, [toggleFav, account.user, account.saveFavorites]);
+  const toggleFavSynced = useCallback((dest) => toggleFav(dest), [toggleFav]);
   const backendStatus = useBackendStatus(API_BASE);
   const { reducedMotion, highContrast } = useA11yPrefs();
 
@@ -430,6 +427,18 @@ export default function App() {
     setRecentSearches([]);
     try { localStorage.removeItem(RECENT_KEY); } catch { /* */ }
   }, []);
+
+  usePersonalCabinet({
+    user: account.user,
+    personal: account.personal,
+    savePersonal: account.savePersonal,
+    replaceFavs,
+    favs,
+    recent: recentSearches,
+    setRecent: setRecentSearches,
+    watches,
+    setWatches,
+  });
 
   const loadRecentSearch = useCallback((entry) => {
     setOrigins(entry.origins);
@@ -1977,7 +1986,9 @@ export default function App() {
             <AccountButton
               user={account.user}
               restoring={account.restoring}
+              savedCount={favs.length}
               onSignIn={() => { account.clearError(); warmProvider("google"); account.loadProviders(); setAuthOpen(true); }}
+              onOpenSaved={() => setShowFavPanel(true)}
               onLogout={account.logout}
             />
           </div>

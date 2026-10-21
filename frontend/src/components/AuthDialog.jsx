@@ -6,9 +6,9 @@ import { useI18n } from "../i18n/useI18n";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { accountInitial, accountLabel } from "../utils/account";
 
-export function AccountButton({ user, restoring, onSignIn, onLogout }) {
+export function AccountButton({ user, restoring, savedCount = 0, onSignIn, onLogout, onOpenSaved, initialMenu = false }) {
   const { t } = useI18n();
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(initialMenu);
   const menuRef = useFocusTrap(menu, () => setMenu(false));
 
   useEffect(() => {
@@ -39,6 +39,9 @@ export function AccountButton({ user, restoring, onSignIn, onLogout }) {
           <div className="fm-auth-menu" role="dialog" aria-label={t("auth.menuLabel")}>
             <p className="fm-auth-menu-email">{user.email}</p>
             <p className="fm-auth-menu-state">{t("auth.signedInAs")}</p>
+            <button type="button" className="fm-auth-saved" onClick={() => { setMenu(false); onOpenSaved?.(); }}>
+              {savedCount === 1 ? t("auth.savedOne") : t("auth.savedMany", { count: savedCount })}
+            </button>
             <button type="button" className="fm-auth-signout" onClick={() => { setMenu(false); onLogout(); }}>
               {t("auth.signOut")}
             </button>
