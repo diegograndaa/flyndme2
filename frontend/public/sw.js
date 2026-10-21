@@ -14,8 +14,10 @@
 // maskable. v6: acento amarillo de señalética + logo amarillo. v7: iconos
 // y logo con ?v=6 (fuerza el logo nuevo) + aviso de versión nueva en la app.
 // v8: /privacidad/ se cachea como página propia y no pisa el shell.
+// v9: obliga a soltar el shell anterior (el registro con Google ya no
+// espera una cola de pings cortados).
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v8";
+const VERSION = "v9";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

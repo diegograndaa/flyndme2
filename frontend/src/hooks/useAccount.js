@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { isOffline } from "../utils/network";
 import { clearToken, mergeFavoriteLists, readToken, sameFavorites, writeToken } from "../utils/account";
 import { requestProviderCredential, warmProvider } from "../utils/socialSignIn";
+import { COLD_START_MS, fetchSignal } from "../utils/authFetch";
 
 const ERROR_KEYS = {
   AUTH_INVALID: "auth.invalid",
@@ -36,41 +37,43 @@ let wakeTask = null;
 function wake(apiBase) {
   if (wakeTask) return wakeTask;
   wakeTask = (async () => {
+    const timer = fetchSignal(COLD_START_MS);
     try {
-      for (let i = 0; i < 6; i++) {
-        try {
-          const res = await fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: AbortSignal.timeout?.(5000) });
-          if (res.ok) return;
-        } catch { /* el servidor puede estar arrancando */ }
-        await new Promise((r) => setTimeout(r, 1500));
-      }
-    } finally {
+      const res = await fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: timer.signal });
+      if (res.ok) return;
+    } catch { /* el servidor puede estar arrancando */ }
+    finally {
+      timer.done();
       wakeTask = null;
     }
   })();
   return wakeTask;
 }
 
-async function authRequest(apiBase, path, { method = "GET", token, body, awake = false } = {}) {
+async function authRequest(apiBase, path, {
+  method = "GET", token, body, awake = false, timeoutMs = COLD_START_MS, attempts = 2,
+} = {}) {
   if (isOffline()) throw new Error("offline");
   if (!awake) await wake(apiBase);
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
   let last = null;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < attempts; i++) {
+    const timer = fetchSignal(timeoutMs);
     try {
       const res = await fetch(`${apiBase}/api/auth${path}`, {
         method,
         headers,
         cache: "no-store",
         body: body !== undefined ? JSON.stringify(body) : undefined,
-        signal: AbortSignal.timeout?.(20000),
+        signal: timer.signal,
       });
       if (![502, 503, 504].includes(res.status)) return res;
       last = res;
     } catch (err) { last = err; }
-    await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    finally { timer.done(); }
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 800));
   }
   if (last instanceof Response) return last;
   throw last || new Error("network");
@@ -186,19 +189,33 @@ export function useAccount(apiBase, favBridge) {
         return false;
       }
       setBusy(true);
-      await waking;
-      const res = await authRequest(apiBase, "/social", {
+      const socialBody = {
+        provider,
+        credential: asked.credential,
+        nonce: asked.nonce,
+        name: asked.name,
+        remember: Boolean(remember),
+        favorites: bridge.current?.getFavs?.() || [],
+      };
+      // No esperar al ping: la propia petición es la que Render mantiene
+      // abierta hasta arrancar. Si contesta 502 al momento, el ping que
+      // salió al abrir Google ya está despertando el proceso.
+      let res = await authRequest(apiBase, "/social", {
         method: "POST",
         awake: true,
-        body: {
-          provider,
-          credential: asked.credential,
-          nonce: asked.nonce,
-          name: asked.name,
-          remember: Boolean(remember),
-          favorites: bridge.current?.getFavs?.() || [],
-        },
+        attempts: 1,
+        body: socialBody,
       });
+      if ([502, 503, 504].includes(res.status)) {
+        await waking;
+        res = await authRequest(apiBase, "/social", {
+          method: "POST",
+          awake: true,
+          attempts: 1,
+          timeoutMs: 20000,
+          body: socialBody,
+        });
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(errorKey(data));

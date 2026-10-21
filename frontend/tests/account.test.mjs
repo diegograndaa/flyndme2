@@ -81,6 +81,18 @@ test("la cabecera tiene el botón de entrar y el diálogo pide el correo", async
   assert.ok(!social.includes("cliente.apps.googleusercontent.com"), "el id del cliente no se pinta");
 });
 
+test("el arranque en frío no se corta a los pocos segundos", async () => {
+  const { COLD_START_MS, fetchSignal } = await import("../src/utils/authFetch.js");
+  assert.ok(COLD_START_MS >= 40000);
+  const pending = fetchSignal(40);
+  assert.equal(pending.signal.aborted, false);
+  pending.done();
+  const cut = fetchSignal(20);
+  await new Promise((r) => setTimeout(r, 40));
+  assert.equal(cut.signal.aborted, true);
+  cut.done();
+});
+
 test("cerrar la ventana del proveedor no es un fallo", async () => {
   const { providerCancelled, providerBlocked } = await import("../src/utils/socialSignIn.js");
   assert.equal(providerCancelled("google", "popup_closed"), true);
