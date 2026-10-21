@@ -5,23 +5,51 @@
 const GOOGLE_SRC = "https://accounts.google.com/gsi/client";
 const APPLE_SRC = "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
 
+export function providerBlocked(provider, detail) {
+  return provider === "google" && String(detail || "").includes("popup_failed_to_open");
+}
+
 export function providerCancelled(provider, detail) {
   const code = String(detail || "");
-  if (provider === "google") return /popup_closed|popup_failed_to_open|access_denied/.test(code);
+  if (providerBlocked(provider, code)) return false;
+  if (provider === "google") return /popup_closed|access_denied/.test(code);
   if (provider === "apple") return code === "popup_closed_by_user" || code === "user_cancelled_authorize";
   return false;
 }
 
+// El script tiene que estar listo antes del clic: si se pide después, el
+// navegador bloquea la ventana porque el gesto del usuario ya caducó.
+export function warmProvider(provider, lang) {
+  if (typeof document === "undefined" || !document.head) return;
+  let src = "";
+  if (provider === "google") src = GOOGLE_SRC;
+  else if (provider === "apple") src = APPLE_SRC;
+  else if (provider === "facebook") {
+    const locale = lang === "es" ? "es_ES" : "en_US";
+    src = `https://connect.facebook.net/${locale}/sdk.js`;
+  }
+  if (!src) return;
+  loadScript(src).catch(() => {});
+}
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing && existing.dataset.ready === "1") { resolve(); return; }
-    const el = existing || document.createElement("script");
-    const done = () => { el.dataset.ready = "1"; resolve(); };
-    const fail = () => reject(new Error("provider"));
-    el.addEventListener("load", done, { once: true });
-    el.addEventListener("error", fail, { once: true });
-    if (!existing) {
+    const previous = document.querySelector(`script[src="${src}"]`);
+    if (previous && previous.dataset.ready === "1") { resolve(); return; }
+    if (previous && previous.dataset.failed === "1") previous.remove();
+    const el = document.querySelector(`script[src="${src}"]`) || document.createElement("script");
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (ok) resolve();
+      else reject(new Error("provider"));
+    };
+    const timer = setTimeout(() => { el.dataset.failed = "1"; finish(false); }, 12000);
+    el.addEventListener("load", () => { el.dataset.ready = "1"; finish(true); }, { once: true });
+    el.addEventListener("error", () => { el.dataset.failed = "1"; finish(false); }, { once: true });
+    if (!el.src) {
       el.src = src;
       el.async = true;
       document.head.appendChild(el);
@@ -47,11 +75,13 @@ function requestGoogle(clientId) {
       callback: (resp) => {
         if (resp && resp.access_token) { finish(resolve, { credential: resp.access_token }); return; }
         const code = resp && resp.error;
+        if (providerBlocked("google", code)) { finish(resolve, { blocked: true }); return; }
         if (providerCancelled("google", code)) { finish(resolve, { cancelled: true }); return; }
         finish(reject, new Error("provider"));
       },
       error_callback: (err) => {
         const code = err && (err.type || err.message || err);
+        if (providerBlocked("google", code)) { finish(resolve, { blocked: true }); return; }
         if (providerCancelled("google", code)) { finish(resolve, { cancelled: true }); return; }
         finish(reject, new Error("provider"));
       },

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isOffline } from "../utils/network";
 import { clearToken, mergeFavoriteLists, readToken, sameFavorites, writeToken } from "../utils/account";
-import { requestProviderCredential } from "../utils/socialSignIn";
+import { requestProviderCredential, warmProvider } from "../utils/socialSignIn";
 
 const ERROR_KEYS = {
   AUTH_INVALID: "auth.invalid",
@@ -29,19 +29,31 @@ function errorKey(data) {
   return ERROR_KEYS[(data && data.code) || ""] || "auth.failed";
 }
 
-async function wake(apiBase) {
-  for (let i = 0; i < 6; i++) {
+// Un solo despertar a la vez: abrir la cuenta y el botón de Google no deben
+// encadenar dos esperas de arranque en frío.
+let wakeTask = null;
+
+function wake(apiBase) {
+  if (wakeTask) return wakeTask;
+  wakeTask = (async () => {
     try {
-      const res = await fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: AbortSignal.timeout?.(5000) });
-      if (res.ok) return;
-    } catch { /* el servidor puede estar arrancando */ }
-    await new Promise((r) => setTimeout(r, 1500));
-  }
+      for (let i = 0; i < 6; i++) {
+        try {
+          const res = await fetch(`${apiBase}/api/ping`, { cache: "no-store", signal: AbortSignal.timeout?.(5000) });
+          if (res.ok) return;
+        } catch { /* el servidor puede estar arrancando */ }
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    } finally {
+      wakeTask = null;
+    }
+  })();
+  return wakeTask;
 }
 
-async function authRequest(apiBase, path, { method = "GET", token, body } = {}) {
+async function authRequest(apiBase, path, { method = "GET", token, body, awake = false } = {}) {
   if (isOffline()) throw new Error("offline");
-  await wake(apiBase);
+  if (!awake) await wake(apiBase);
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -72,6 +84,7 @@ export function useAccount(apiBase, favBridge) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [providers, setProviders] = useState(EMPTY_PROVIDERS);
+  const socialLock = useRef(false);
 
   const applyFavorites = useCallback((serverList) => {
     const local = bridge.current?.getFavs?.() || [];
@@ -143,24 +156,40 @@ export function useAccount(apiBase, favBridge) {
       const res = await authRequest(apiBase, "/providers");
       if (!res.ok) return;
       const data = await res.json().catch(() => ({}));
-      setProviders({
+      const next = {
         google: typeof data.google === "string" ? data.google : "",
         apple: typeof data.apple === "string" ? data.apple : "",
         facebook: typeof data.facebook === "string" ? data.facebook : "",
-      });
+      };
+      setProviders(next);
+      const lang = typeof document !== "undefined" ? document.documentElement.lang : "";
+      if (next.google) warmProvider("google");
+      if (next.apple) warmProvider("apple");
+      if (next.facebook) warmProvider("facebook", lang);
     } catch { /* sin proveedores, el diálogo sigue con correo y contraseña */ }
   }, [apiBase]);
 
   const signInSocial = useCallback(async (provider, { remember } = {}) => {
-    setBusy(true);
+    if (socialLock.current) return false;
+    socialLock.current = true;
     setError("");
+    // El servidor despierta mientras la persona elige la cuenta de Google.
+    // «Un momento…» solo cubre la comprobación, no la ventana del proveedor.
+    const waking = wake(apiBase);
     try {
       const clientId = providers[provider];
       const lang = typeof document !== "undefined" ? document.documentElement.lang : "";
       const asked = await requestProviderCredential(provider, clientId, { lang });
       if (!asked || asked.cancelled) return false;
+      if (asked.blocked) {
+        setError("auth.popupBlocked");
+        return false;
+      }
+      setBusy(true);
+      await waking;
       const res = await authRequest(apiBase, "/social", {
         method: "POST",
+        awake: true,
         body: {
           provider,
           credential: asked.credential,
@@ -183,6 +212,7 @@ export function useAccount(apiBase, favBridge) {
       setError(err && err.message === "offline" ? "auth.offline" : "auth.providerFailed");
       return false;
     } finally {
+      socialLock.current = false;
       setBusy(false);
     }
   }, [apiBase, providers]);

@@ -36,6 +36,24 @@ function emailVerified(value) {
   return value === true || value === "true";
 }
 
+// Google, Apple y Facebook a veces no contestan. Sin tope, el registro se
+// queda colgado hasta que el proxy corta. 8 s bastan para un token válido.
+const PROVIDER_TIMEOUT_MS = 8000;
+
+async function providerFetch(fetchImpl, url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), PROVIDER_TIMEOUT_MS);
+  if (typeof timer.unref === "function") timer.unref();
+  try {
+    return await fetchImpl(url, { signal: ctrl.signal });
+  } catch (err) {
+    if (err && err.name === "AssertionError") throw err;
+    throw coded("AUTH_PROVIDER_FAILED");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Firma RS256 contra una JWK del proveedor. Devuelve las claims o null.
 function verifyRs256Jwt(token, keys) {
   const parts = String(token || "").split(".");
@@ -70,7 +88,7 @@ function publicProviderIds(env = process.env) {
 async function verifyGoogle(credential, { clientId, fetchImpl }) {
   if (!clientId) throw coded("AUTH_PROVIDER_OFF");
   if (!credential || String(credential).length > 4096) throw coded("AUTH_PROVIDER_FAILED");
-  const res = await fetchImpl(`${GOOGLE_TOKENINFO}?access_token=${encodeURIComponent(credential)}`);
+  const res = await providerFetch(fetchImpl, `${GOOGLE_TOKENINFO}?access_token=${encodeURIComponent(credential)}`);
   if (!res.ok) throw coded("AUTH_PROVIDER_FAILED");
   const data = await res.json();
   if (!data || data.aud !== clientId || !data.sub) throw coded("AUTH_PROVIDER_FAILED");
@@ -82,7 +100,7 @@ async function verifyApple(credential, { clientId, nonce, fetchImpl, keys, now }
   if (!clientId) throw coded("AUTH_PROVIDER_OFF");
   if (!credential || String(credential).length > 8192 || !nonce) throw coded("AUTH_PROVIDER_FAILED");
   const jwks = keys || await (async () => {
-    const res = await fetchImpl(APPLE_KEYS);
+    const res = await providerFetch(fetchImpl, APPLE_KEYS);
     if (!res.ok) throw coded("AUTH_PROVIDER_FAILED");
     const body = await res.json();
     return body.keys || [];
@@ -102,7 +120,8 @@ async function verifyFacebook(credential, { appId, appSecret, fetchImpl, now }) 
   if (!appId || !appSecret) throw coded("AUTH_PROVIDER_OFF");
   if (!credential || String(credential).length > 4096) throw coded("AUTH_PROVIDER_FAILED");
   const appToken = `${appId}|${appSecret}`;
-  const debugRes = await fetchImpl(
+  const debugRes = await providerFetch(
+    fetchImpl,
     `${FACEBOOK_GRAPH}/debug_token?input_token=${encodeURIComponent(credential)}&access_token=${encodeURIComponent(appToken)}`
   );
   if (!debugRes.ok) throw coded("AUTH_PROVIDER_FAILED");
@@ -112,7 +131,8 @@ async function verifyFacebook(credential, { appId, appSecret, fetchImpl, now }) 
     throw coded("AUTH_PROVIDER_FAILED");
   }
   if (data.expires_at && Number(data.expires_at) * 1000 < now) throw coded("AUTH_PROVIDER_FAILED");
-  const meRes = await fetchImpl(
+  const meRes = await providerFetch(
+    fetchImpl,
     `${FACEBOOK_GRAPH}/me?fields=id,name,email&access_token=${encodeURIComponent(credential)}`
   );
   if (!meRes.ok) throw coded("AUTH_PROVIDER_FAILED");

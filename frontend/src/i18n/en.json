@@ -46,6 +46,7 @@
     "useFacebook": "This account signs in with Facebook.",
     "useProvider": "This account signs in with the service it was created with.",
     "providerFailed": "The sign-in could not be checked.",
+    "popupBlocked": "The browser blocked the window. Allow pop-ups and press the button again.",
     "noEmail": "That service did not share an email. The account needs one.",
     "providerTaken": "That service is already on another account."
   },

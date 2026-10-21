@@ -46,6 +46,7 @@
     "useFacebook": "Esta cuenta entra con Facebook.",
     "useProvider": "Esta cuenta entra con el servicio con el que se creó.",
     "providerFailed": "No se ha podido comprobar el acceso.",
+    "popupBlocked": "El navegador ha bloqueado la ventana. Permite las emergentes y vuelve a pulsar.",
     "noEmail": "Ese servicio no ha dado el correo. Hace falta para la cuenta.",
     "providerTaken": "Ese servicio ya está en otra cuenta."
   },
