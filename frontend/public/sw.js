@@ -17,8 +17,9 @@
 // v9: obliga a soltar el shell anterior (el registro con Google ya no
 // espera una cola de pings cortados).
 // v10: favoritos, búsquedas y vigilancias van con la cuenta, no con el navegador.
+// v11: un destino guardado vuelve a pedir sus vuelos al pulsarlo.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v10";
+const VERSION = "v11";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

@@ -1,5 +1,6 @@
 // Sesión de la cuenta en este navegador y unión de destinos guardados.
 // El token no es una contraseña: es la sesión que devuelve /api/auth.
+import { normalizeFavoriteSearch, sameFavoriteSearch } from "./favoriteOpen.js";
 
 const TOKEN_KEY = "flyndme_session";
 
@@ -45,17 +46,19 @@ function cleanFavorite(raw) {
     if (Number.isFinite(n) && n >= 0) price = n;
   }
   const ts = Number(raw.ts);
+  const search = normalizeFavoriteSearch(raw.search);
   return {
     code,
     city: String(raw.city || "").slice(0, 48),
     price,
     ts: Number.isFinite(ts) && ts > 0 ? Math.floor(ts) : 0,
+    ...(search ? { search } : {}),
   };
 }
 
 export function sameFavorites(a, b) {
   if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
-  return a.every((f, i) => f.code === b[i].code && f.ts === b[i].ts && f.price === b[i].price);
+  return a.every((f, i) => f.code === b[i].code && f.ts === b[i].ts && f.price === b[i].price && sameFavoriteSearch(f.search, b[i].search));
 }
 
 // Misma regla que el servidor: por código gana el más reciente, y un precio
@@ -74,6 +77,7 @@ export function mergeFavoriteLists(stored, incoming) {
     const newer = { ...(favNewer ? fav : prev) };
     const older = favNewer ? prev : fav;
     if (newer.price == null && older.price != null) newer.price = older.price;
+    if (!newer.search && older.search) newer.search = older.search;
     map.set(fav.code, newer);
   }
   return [...map.values()].sort((a, b) => b.ts - a.ts || a.code.localeCompare(b.code)).slice(0, 20);

@@ -37,6 +37,7 @@ import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
+import { favoriteOpenPlan, normalizeFavoriteSearch } from "./utils/favoriteOpen";
 import { useAccount } from "./hooks/useAccount";
 import { usePersonalCabinet } from "./hooks/usePersonal";
 import { warmProvider } from "./utils/socialSignIn";
@@ -169,7 +170,8 @@ export default function App() {
   useEffect(() => {
     if (account.user) setAuthOpen(false);
   }, [account.user]);
-  const toggleFavSynced = useCallback((dest) => toggleFav(dest), [toggleFav]);
+  const favSearchRef = useRef(null);
+  const toggleFavSynced = useCallback((dest) => toggleFav({ ...dest, search: favSearchRef.current }), [toggleFav]);
   const backendStatus = useBackendStatus(API_BASE);
   const { reducedMotion, highContrast } = useA11yPrefs();
 
@@ -646,6 +648,17 @@ export default function App() {
   const originPax = useMemo(() => paxByOrigin(origins, passengers, toOriginCode), [origins, passengers]);
   const cleanOrigins = useMemo(() => originPax.map((x) => x.origin), [originPax]);
   const cleanPax = useMemo(() => originPax.map((x) => Math.min(MAX_PAX_PER_ORIGIN, x.passengers)), [originPax]);
+  favSearchRef.current = normalizeFavoriteSearch(lastSearchRef.current) || normalizeFavoriteSearch({
+    origins: cleanOrigins,
+    passengers: cleanPax,
+    tripType,
+    departureDate,
+    returnDate,
+    flexDays: flexEnabled ? flexDays : 0,
+    maxBudget: budgetEnabled ? maxBudget : 0,
+    directOnly,
+    cabinClass,
+  });
   // Viajeros totales (suma de pasajeros de los orígenes rellenos) para la
   // cabecera de vuelo de resultados.
   const totalTravelers = useMemo(
@@ -1886,22 +1899,49 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Abre un favorito guardado: si ese destino está en los resultados actuales,
-  // lo selecciona como ganador (mismo patrón que el podio) y lleva a la vista de
-  // resultados; si no está (favorito de otra búsqueda/sesión, solo guardamos un
-  // snapshot code/ciudad/precio), avisa con un toast en vez de inventar datos.
+  // Abre un destino guardado. Si sigue en los resultados de esta búsqueda, lo
+  // pone en la tarjeta. Si no, pide de nuevo solo ese destino con las ciudades
+  // y las fechas guardadas. Sin ciudades ni fecha, no hay detalles reales.
   const openFavorite = (f) => {
     setShowFavPanel(false);
-    const code = normalizeCode(f.code);
-    const match = (flights || []).find((x) => normalizeCode(x.destination) === code);
-    if (match) {
-      chooseDestination(match);
-      setShowAlt(false);
-      setView("results");
-      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
-    } else {
-      setToast({ message: t("favorites.notInResults", { city: cityOf(f.code) || f.city || f.code }), type: "info" });
+    const plan = favoriteOpenPlan({
+      code: f.code,
+      search: f.search,
+      flights,
+      activeSearch: lastSearchRef.current,
+      form: favSearchRef.current,
+    });
+    if (plan.action === "select") {
+      const match = (flights || []).find((x) => normalizeCode(x.destination) === plan.code);
+      if (match) {
+        chooseDestination(match);
+        setShowAlt(false);
+        setView("results");
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
+        return;
+      }
     }
+    if (plan.action === "search") {
+      const s = plan.search;
+      keepDomesticRef.current = false;
+      setOrigins(s.origins);
+      setPassengers(s.passengers);
+      setTripType(s.tripType);
+      setDepartureDate(s.departureDate);
+      setReturnDate(s.tripType === "roundtrip" ? s.returnDate : "");
+      setFlexEnabled(s.flexDays > 0);
+      setFlexDays(s.flexDays || 3);
+      setBudgetEnabled(s.maxBudget > 0);
+      setMaxBudget(s.maxBudget || 200);
+      setDirectOnly(s.directOnly);
+      setCabinClass(s.cabinClass);
+      setSelectedDests([plan.code]);
+      setDestBasis("usual");
+      setEditingSearch(false);
+      setPendingResearch(true);
+      return;
+    }
+    setToast({ message: t("favorites.notInResults", { city: cityOf(f.code) || f.city || f.code }), type: "info" });
   };
 
   // El lápiz abre el formulario encima de los resultados. La portada sigue
