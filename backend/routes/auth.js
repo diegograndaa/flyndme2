@@ -73,11 +73,29 @@ function cleanFavorite(raw) {
     if (Number.isFinite(n) && n >= 0) price = Math.round(n * 100) / 100;
   }
   const ts = Number(raw.ts);
+  const search = cleanFavoriteSearch(raw.search);
   return {
     code,
     city,
     price,
     ts: Number.isFinite(ts) && ts > 0 ? Math.floor(ts) : 0,
+    ...(search ? { search } : {}),
+  };
+}
+
+function cleanFavoriteSearch(raw) {
+  const item = cleanRecent(raw);
+  if (!item) return null;
+  return {
+    origins: item.origins,
+    passengers: item.passengers,
+    tripType: item.tripType,
+    departureDate: item.departureDate,
+    returnDate: item.returnDate,
+    flexDays: item.flexDays,
+    maxBudget: item.maxBudget,
+    directOnly: item.directOnly,
+    cabinClass: item.cabinClass,
   };
 }
 
@@ -242,6 +260,7 @@ function mergeFavorites(stored, incoming) {
     const newer = favNewer ? { ...fav } : { ...prev };
     const older = favNewer ? prev : fav;
     if (newer.price == null && older.price != null) newer.price = older.price;
+    if (!newer.search && older.search) newer.search = older.search;
     map.set(fav.code, newer);
   }
   return [...map.values()].sort((a, b) => b.ts - a.ts || a.code.localeCompare(b.code)).slice(0, 20);

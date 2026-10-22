@@ -17,6 +17,30 @@ test("correo y contraseña: se normalizan y la corta se rechaza", () => {
   assert.equal(passwordOk(12345678), false);
 });
 
+test("un destino guardado conserva la búsqueda y un precio ausente no la borra", () => {
+  const search = {
+    origins: ["mad", "lon"],
+    passengers: [1, 2],
+    tripType: "oneway",
+    departureDate: "2026-12-01",
+    flexDays: 2,
+    directOnly: true,
+    cabinClass: "ECONOMY",
+  };
+  const kept = mergeFavorites(
+    [{ code: "BCN", city: "Barcelona", price: 40, ts: 10, search }],
+    [{ code: "BCN", city: "Barcelona", price: null, ts: 20 }],
+  );
+  assert.equal(kept[0].price, 40);
+  assert.deepEqual(kept[0].search.origins, ["MAD", "LON"]);
+  assert.equal(kept[0].search.passengers[1], 2);
+  const dropped = mergeFavorites(
+    [],
+    [{ code: "PAR", city: "Paris", price: 9, ts: 1, search: { origins: ["NO"], departureDate: "ayer" } }],
+  );
+  assert.equal(dropped[0].search, undefined);
+});
+
 test("favoritos: gana el más reciente y un precio ausente no borra el anterior", () => {
   const merged = mergeFavorites(
     [{ code: "mad", city: "Madrid", price: 40, ts: 10 }, { code: "lon", city: "London", price: 80, ts: 5 }],
