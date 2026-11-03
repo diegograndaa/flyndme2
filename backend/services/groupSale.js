@@ -7,6 +7,7 @@
 
 const crypto = require("crypto");
 const { createStore } = require("../utils/kvStore");
+const saleMail = require("./saleMail");
 
 const DUFFEL_URL = "https://api.duffel.com";
 const QUOTE_TTL_MS = 15 * 60 * 1000;
@@ -29,6 +30,12 @@ let transport = null;
 
 function token() {
   return String(process.env.DUFFEL_ACCESS_TOKEN || "").trim();
+}
+
+function paymentsMode() {
+  const value = token();
+  if (!value) return "off";
+  return value.startsWith("duffel_test_") ? "test" : "live";
 }
 
 function markupRate() {
@@ -281,15 +288,41 @@ async function refundUnissued(quote, issuedCount) {
   return quote.refund;
 }
 
+function publicOrder(order) {
+  return {
+    origin: order.origin,
+    bookingReference: order.bookingReference || null,
+    tickets: Array.isArray(order.tickets) ? order.tickets : [],
+  };
+}
+
 function resultFrom(quote) {
   const refund = quote.refund || null;
-  const orders = quote.orders || [];
+  const orders = (quote.orders || []).map(publicOrder);
   const failedOrigin = quote.failedOrigin || null;
-  if (quote.status === "issued") return { ok: true, status: "issued", orders, refund };
-  if (quote.status === "refunded") return { ok: false, code: "SALE_REFUNDED", orders, failedOrigin, refund };
-  if (quote.status === "refund_failed") return { ok: false, code: "REFUND_FAILED", orders, failedOrigin, refund };
-  if (quote.status === "partial") return { ok: false, code: "TICKET_PARTIAL", orders, failedOrigin, refund };
+  const mail = {
+    testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
+    emailSent: quote.emailSent === true,
+    emailCode: quote.emailCode || null,
+  };
+  if (quote.status === "issued") return { ok: true, status: "issued", orders, refund, ...mail };
+  if (quote.status === "refunded") return { ok: false, code: "SALE_REFUNDED", orders, failedOrigin, refund, ...mail };
+  if (quote.status === "refund_failed") return { ok: false, code: "REFUND_FAILED", orders, failedOrigin, refund, ...mail };
+  if (quote.status === "partial") return { ok: false, code: "TICKET_PARTIAL", orders, failedOrigin, refund, ...mail };
   return null;
+}
+
+async function notifyBuyer(quote) {
+  if (!quote.orders?.length) return;
+  const message = saleMail.buildConfirmation({
+    quote,
+    orders: quote.orders,
+    testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
+    lang: quote.lang === "en" ? "en" : "es",
+  });
+  const sent = await saleMail.sendConfirmation(message, quote.travelers?.[0]?.email);
+  quote.emailSent = sent.sent === true;
+  quote.emailCode = sent.code;
 }
 
 async function searchLeg(leg) {
@@ -409,10 +442,10 @@ function publicView(quote, extra = {}) {
       cardFee: euros(leg.cardFee),
       charge: euros(leg.charge),
     })),
-    orders: (quote.orders || []).map((order) => ({
-      origin: order.origin,
-      bookingReference: order.bookingReference || null,
-    })),
+    orders: (quote.orders || []).map(publicOrder),
+    testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
+    emailSent: quote.emailSent === true,
+    emailCode: quote.emailCode || null,
     fare: euros(quote.totals.fare),
     commission: euros(quote.totals.commission),
     cardFee: euros(quote.totals.cardFee),
@@ -463,14 +496,20 @@ function normalizeTraveler(raw, email, phone) {
   return { traveler: { given_name, family_name, born_on, gender, title, email, phone_number: phone } };
 }
 
-async function startPayment(quoteId, people, email, phone) {
+async function startPayment(quoteId, people, email, phone, lang) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
   const done = resultFrom(quote);
   if (done) return done;
   if (quote.intentId && quote.clientToken) {
-    return { ok: true, clientToken: quote.clientToken, charge: euros(quote.totals.charge), currency: quote.currency };
+    return {
+      ok: true,
+      clientToken: quote.clientToken,
+      charge: euros(quote.totals.charge),
+      currency: quote.currency,
+      testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
+    };
   }
   const expected = quote.legs.reduce((s, leg) => s + leg.passengers, 0);
   if (!Array.isArray(people) || people.length !== expected) return { ok: false, code: "INVALID_PASSENGERS" };
@@ -486,12 +525,20 @@ async function startPayment(quoteId, people, email, phone) {
   });
   if (!intent?.id || !intent?.client_token) return { ok: false, code: "SALE_FAILED" };
   quote.travelers = travelers;
+  quote.lang = lang === "en" ? "en" : "es";
+  quote.testMode = intent.live_mode === false || (intent.live_mode == null && paymentsMode() === "test");
   quote.intentId = intent.id;
   quote.clientToken = intent.client_token;
   quote.status = "paying";
   quote.expires = Date.now() + SALE_KEEP_MS;
   await saveQuote(quote, SALE_KEEP_MS);
-  return { ok: true, clientToken: intent.client_token, charge: euros(quote.totals.charge), currency: quote.currency };
+  return {
+    ok: true,
+    clientToken: intent.client_token,
+    charge: euros(quote.totals.charge),
+    currency: quote.currency,
+    testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
+  };
 }
 
 // La tarjeta ya pasó por Stripe. Este paso ingresa ese importe en el saldo
@@ -553,7 +600,12 @@ async function completeSale(quoteId) {
         passengers,
       });
       if (!order?.id) throw new Error("no order");
-      orders.push({ origin: leg.origin, orderId: order.id, bookingReference: order.booking_reference || null });
+      orders.push({
+        origin: leg.origin,
+        orderId: order.id,
+        bookingReference: order.booking_reference || null,
+        tickets: saleMail.ticketNumbers(order),
+      });
     } catch {
       quote.orders = orders;
       quote.failedOrigin = leg.origin;
@@ -562,6 +614,7 @@ async function completeSale(quoteId) {
         ? (quote.refund?.status === "refunded" ? "refunded" : "refund_failed")
         : "partial";
       quote.expires = Date.now() + SALE_KEEP_MS;
+      await notifyBuyer(quote);
       await saveQuote(quote, SALE_KEEP_MS);
       return resultFrom(quote);
     }
@@ -569,6 +622,7 @@ async function completeSale(quoteId) {
   quote.orders = orders;
   quote.status = "issued";
   quote.expires = Date.now() + SALE_KEEP_MS;
+  await notifyBuyer(quote);
   await saveQuote(quote, SALE_KEEP_MS);
   return resultFrom(quote);
 }
@@ -578,6 +632,7 @@ module.exports = {
   publicQuote,
   startPayment,
   completeSale,
+  paymentsMode,
   priceLeg,
   offerMatches,
   pickOffer,
@@ -589,6 +644,7 @@ module.exports = {
       transport = null;
       quotes.clear();
       if (saleStore._map) saleStore._map.clear();
+      saleMail.__test.reset();
     },
     forgetMemory() { quotes.clear(); },
   },

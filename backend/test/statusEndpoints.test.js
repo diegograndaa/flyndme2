@@ -80,6 +80,8 @@ test("GET /api/health → stores en memoria sin Upstash y métricas del loop", a
   });
   assert.equal(typeof r.body.metrics, "object");
   assert.equal(typeof r.body.memory.rss, "number");
+  assert.ok(["off", "test", "live"].includes(r.body.payments));
+  assert.equal(typeof r.body.mail, "boolean");
   assertNoSecrets(r.text, "/api/health");
 });
 

@@ -501,4 +501,59 @@ test("si la tasa se come la tarifa se devuelve el cobro y no se emite", async ()
   assert.equal(calls.filter((c) => c.includes("/air/orders")).length, 0);
 });
 
+test("al emitir, el correo de prueba lleva el localizador de cada vuelo", async () => {
+  const saleMail = require("../services/saleMail");
+  process.env.BREVO_API_KEY = "brevo-test-key";
+  const seen = [];
+  saleMail.__test.setTransport(async (payload) => {
+    seen.push(payload);
+    return { status: 201 };
+  });
+  try {
+    sale.__test.setTransport(async (url, options) => {
+      if (url.includes("offer_requests")) {
+        const origin = JSON.parse(options.body).data.slices[0].origin;
+        const row = origin === "MAD" ? offer({ id: "off_mad" }) : offer({ id: "off_bcn", airline: "U2", number: "808", amount: "20.00" });
+        return { status: 200, data: { data: { offers: [row] } } };
+      }
+      if (options.method === "POST" && url.endsWith("/payments/payment_intents")) {
+        const amount = JSON.parse(options.body).data.amount;
+        return { status: 201, data: { data: { id: "pit_1", client_token: "client_tok", amount, currency: "EUR", live_mode: false } } };
+      }
+      if (options.method === "POST" && url.endsWith("/actions/confirm")) {
+        return { status: 200, data: { data: { id: "pit_1", status: "succeeded", amount: seen.amount, currency: "EUR", net_amount: seen.amount, net_currency: "EUR" } } };
+      }
+      if (url.endsWith("/air/orders")) {
+        const offerId = JSON.parse(options.body).data.selected_offers[0];
+        const ref = offerId === "off_mad" ? "ABC123" : "DEF456";
+        const documents = offerId === "off_mad"
+          ? [{ type: "electronic_ticket", unique_identifier: "1255900000001" }]
+          : [];
+        return { status: 201, data: { data: { id: `ord_${offerId}`, booking_reference: ref, documents } } };
+      }
+      throw new Error(`url no prevista ${url}`);
+    });
+    const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+    seen.amount = quote.charge;
+    const pay = await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222", "es");
+    assert.equal(pay.testMode, true);
+    const done = await sale.completeSale(quote.quoteId);
+    assert.equal(done.status, "issued");
+    assert.equal(done.emailSent, true);
+    assert.equal(done.testMode, true);
+    assert.deepEqual(done.orders[0].tickets, ["1255900000001"]);
+    assert.deepEqual(done.orders[1].tickets, []);
+    assert.equal(seen[0].to, "ana@example.com");
+    assert.match(seen[0].text, /Localizador: ABC123/);
+    assert.match(seen[0].text, /Localizador: DEF456/);
+    assert.match(seen[0].text, /Ana Ruiz/);
+    assert.match(seen[0].text, /1255900000001/);
+    assert.match(seen[0].text, /no es un billete de aerolínea/);
+    assert.match(seen[0].text, /no ha devuelto un número de billete/);
+  } finally {
+    delete process.env.BREVO_API_KEY;
+    saleMail.__test.reset();
+  }
+});
+
 });
