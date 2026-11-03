@@ -16,9 +16,11 @@ import { quoteAddsUp } from "../utils/saleCheckout";
 import { convertPrice, travelerSlot, paySpread } from "../utils/resultsLogic";
 import { visibleSumParts, legEquation } from "../utils/sumEquation";
 import { track } from "../utils/analytics";
+import { GROUP_SALE_ON } from "../utils/features";
+import { affiliateLinkForAdults } from "../utils/affiliateLink";
 import "../styles/results-simple.css";
 import { cityPhotos } from "../utils/cityImages";
-import { Heart, Calendar, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing } from "lucide-react";
+import { Heart, Calendar, Plane, Ticket, Search, Copy, Check, MessageCircle, Link2, Share2, Send, Mail, ShieldCheck, Info, ChevronDown, Bell, BellRing, Building2 } from "lucide-react";
 import { Odometer } from "./Odometer";
 import { tapHaptic } from "../utils/haptics";
 import { FlapText } from "./FlapBoard";
@@ -111,6 +113,7 @@ const WinnerCard = React.memo(function WinnerCard({
   watched = false, onToggleWatch,
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
   onRequestSale, sale = null,
+  saleEnabled = GROUP_SALE_ON, // compra del grupo dentro de FlyndMe (apagada por defecto)
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
@@ -171,7 +174,7 @@ const WinnerCard = React.memo(function WinnerCard({
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
   // Con un cobro que cuadra, la cifra grande es lo que se paga. La estimación
   // de la búsqueda deja de ser el titular: no es el importe del botón.
-  const payable = sale?.quote && quoteAddsUp(sale.quote) ? sale.quote : null;
+  const payable = saleEnabled && sale?.quote && quoteAddsUp(sale.quote) ? sale.quote : null;
   const payMoney = (amount) => saleMoney(amount, payable?.currency || "EUR");
   const travelers = dest.totalPassengers
     || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
@@ -319,7 +322,7 @@ const WinnerCard = React.memo(function WinnerCard({
               <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
             </div>
           </div>
-          {!singleOrigin && (
+          {!singleOrigin && saleEnabled && (
             <GroupSalePanel
               legs={saleLegs}
               sale={sale}
@@ -405,21 +408,32 @@ const WinnerCard = React.memo(function WinnerCard({
                   adults: pax,
                   flightNumber: segments[0]?.number || "",
                 });
-                // Sin web de la aerolínea, Reservar abre Skyscanner con la
-                // misma ruta, fecha y viajeros. No se inventa otra aerolínea.
-                const book = booking
+                // Reservar abre Aviasales (enlace de afiliado del billete, con
+                // los viajeros de esa ciudad): es la salida que paga comisión.
+                // Sin enlace de Aviasales, la web de la aerolínea; sin ella,
+                // Skyscanner. Con Aviasales delante, la aerolínea queda como
+                // acceso secundario. No se inventa otra aerolínea.
+                const affiliateUrl = affiliateLinkForAdults(offer?.link, pax);
+                const book = affiliateUrl
                   ? {
-                    url: booking.url,
-                    provider: "airline",
-                    airline: booking.airlineName,
+                    url: affiliateUrl,
+                    provider: "aviasales",
+                    airline: "Aviasales",
                   }
-                  : (ssUrl
+                  : booking
                     ? {
-                      url: ssUrl,
-                      provider: "skyscanner",
-                      airline: "Skyscanner",
+                      url: booking.url,
+                      provider: "airline",
+                      airline: booking.airlineName,
                     }
-                    : null);
+                    : (ssUrl
+                      ? {
+                        url: ssUrl,
+                        provider: "skyscanner",
+                        airline: "Skyscanner",
+                      }
+                      : null);
+                const airlineSecondary = book?.provider === "aviasales" && booking ? booking : null;
                 const legEq = typeof price === "number"
                   ? legEquation(price, pax, finfo.totalForOrigin, currency)
                   : null;
@@ -506,14 +520,21 @@ const WinnerCard = React.memo(function WinnerCard({
                     <LegStrip schedule={out} t={t} />
                     {back && <LegStrip kicker={t("results.returnLeg")} schedule={back} t={t} />}
                     <div className="wc-flight-ctas">
-                      {/* Reservar abre la web de esa aerolínea. Si no la
-                          tenemos, el mismo botón abre Skyscanner. */}
+                      {/* Reservar abre Aviasales (afiliado). Sin ese enlace,
+                          la web de la aerolínea o Skyscanner. */}
                       {book && (
                         <a href={book.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
                           aria-label={book.airline ? `${t("results.bookCta")} · ${book.airline}` : t("results.bookCta")}
                           onClick={() => track("book_click", { provider: book.provider, airline: book.airline, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
+                        </a>
+                      )}
+                      {airlineSecondary && (
+                        <a href={airlineSecondary.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--airline"
+                          aria-label={airlineSecondary.airlineName} title={airlineSecondary.airlineName}
+                          onClick={() => track("book_click", { provider: "airline", airline: airlineSecondary.airlineName, dest: code, origin, where: "winner" })}>
+                          <span className="wc-cta-icon"><Building2 size={16} aria-hidden="true" /></span>
                         </a>
                       )}
                       {ssUrl && book?.provider !== "skyscanner" && (

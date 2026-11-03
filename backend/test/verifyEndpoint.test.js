@@ -162,8 +162,8 @@ test("flujo verified: agregados y priceChangePct correctos", async () => {
   assert.equal(b.verifiedAveragePerTraveler, Number((325 / 3).toFixed(2)));
   assert.equal(b.verifiedPriceSpread, 41); // per-persona: 122 - 81
   assert.equal(b.priceChangePct, 1.2);     // (325-321)/321 → 1.246 → 1.2
-  // fairness per-persona: avg (122+81)/2 = 101.5 → 100 - 41/101.5*100
-  assert.equal(b.verifiedFairnessScore, Number((100 - (41 / 101.5) * 100).toFixed(1)));
+  // fairness per-persona: quien menos paga / quien más paga → 81/122
+  assert.equal(b.verifiedFairnessScore, Number(((81 / 122) * 100).toFixed(1)));
 });
 
 test("flujo changed: desviación ≥ 5%", async () => {

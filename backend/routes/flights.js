@@ -76,6 +76,15 @@ const VERIFY_PRICE_DELTA_PCT    = 5; // ≥5% diff → "changed"
 // ~30s: mejor devolver lo encontrado hasta ahora (partial: true) que un 502
 // tras quemar quota. 0 = sin límite.
 const SEARCH_TIME_BUDGET_MS     = Number(process.env.SEARCH_TIME_BUDGET_MS || 25000);
+// El fallback de fechas vecinas (TP_DATE_FLEX_DAYS) busca la fecha más
+// cercana con precio para CADA ciudad por separado. Sin tope, un destino podía
+// ganar con una ciudad volando el día 16 y otra el 19: no es un punto de
+// encuentro. Máximo de días entre la primera y la última salida (y vuelta)
+// del grupo. 1 = mismo día o día siguiente. Negativo = sin tope.
+const MAX_GROUP_DATE_SPREAD_DAYS = (() => {
+  const n = Number(process.env.SEARCH_MAX_DATE_SPREAD_DAYS ?? 1);
+  return Number.isFinite(n) ? Math.floor(n) : 1;
+})();
 // La lista «suelen ser más baratos» consulta la caché del mes antes de buscar.
 // Cabe dentro del presupuesto de 25 s: si tarda más, se usan las 24 habituales.
 const CHEAP_LOOKUP_MS           = Number(process.env.CHEAP_LOOKUP_MS || 7000);
@@ -139,11 +148,18 @@ function diffDays(a, b) {
 
 // ─── Business logic ───────────────────────────────────────────────────────────
 
+// Equidad = lo que paga quien menos paga, como % de lo que paga quien más
+// (100 = todos lo mismo). La fórmula anterior (100 − spread/media·100) se
+// quedaba en 0 en cuanto la diferencia superaba la media, algo habitual con
+// tarifas low-cost (€15 / €19 / €56 → 0), y «más equitativo» empataba a 0 en
+// la mayoría de destinos. min/máx nunca satura y sigue ordenando.
 function computeFairness(prices) {
   const total   = prices.reduce((a, b) => a + b, 0);
   const avg     = total / prices.length;
-  const spread  = Math.max(...prices) - Math.min(...prices);
-  const fairness = avg > 0 ? Math.max(0, Math.min(100, 100 - (spread / avg) * 100)) : 0;
+  const max     = Math.max(...prices);
+  const min     = Math.min(...prices);
+  const spread  = max - min;
+  const fairness = max > 0 ? Math.max(0, Math.min(100, (min / max) * 100)) : 0;
   return { total, avg, spread, fairness };
 }
 
@@ -158,6 +174,24 @@ function computeAggregates(flightsWithPax) {
   const totalPax  = flightsWithPax.reduce((s, f) => s + (f.passengers || 1), 0);
   const avgPerTraveler = totalPax > 0 ? totalCost / totalPax : 0;
   return { totalCost, totalPax, avgPerTraveler, spread, fairness };
+}
+
+// Días entre la fecha más temprana y la más tardía (ISO YYYY-MM-DD).
+function dateSpreadDays(dates) {
+  const times = dates
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || "")))
+    .map((d) => Date.parse(`${d}T00:00:00Z`));
+  if (times.length < 2) return 0;
+  return Math.round((Math.max(...times) - Math.min(...times)) / 86_400_000);
+}
+
+// ¿Salen (o vuelven) las ciudades del grupo en días demasiado separados?
+// Los tramos sin fallback vuelan en la fecha pedida (dep/ret).
+function exceedsGroupDateSpread(flights, dep, ret, maxDays) {
+  if (!Number.isFinite(maxDays) || maxDays < 0) return false;
+  if (dateSpreadDays(flights.map((f) => f.flightDate || dep)) > maxDays) return true;
+  if (ret && dateSpreadDays(flights.map((f) => f.flightReturnDate || ret)) > maxDays) return true;
+  return false;
 }
 
 /**
@@ -204,6 +238,9 @@ async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase,
   }
 
   if (flights.length !== originList.length) return null;
+  if (exceedsGroupDateSpread(flights, dep, ret, MAX_GROUP_DATE_SPREAD_DAYS)) {
+    return null; // el grupo saldría en días demasiado separados → no es un encuentro
+  }
 
   const { totalCost, totalPax, avgPerTraveler, spread, fairness } = computeAggregates(flights);
   const hasDateFallback = flights.some((f) => f.dateFallback === true);
@@ -1287,3 +1324,5 @@ router.post("/group-sale/complete", async (req, res) => {
 
 module.exports = router;
 module.exports._unsupportedTravelClass = unsupportedTravelClass; // solo para tests
+module.exports._computeFairness = computeFairness; // solo para tests
+module.exports._exceedsGroupDateSpread = exceedsGroupDateSpread; // solo para tests

@@ -3,6 +3,7 @@ const { test, beforeEach, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 process.env.DUFFEL_ACCESS_TOKEN = "duffel_test_token";
+process.env.GROUP_SALE_ENABLED = "true";
 process.env.BOOKING_MARKUP_PERCENT = "5";
 process.env.DUFFEL_PAYMENTS_FEE = "0.029";
 
@@ -88,6 +89,29 @@ test("sin token no hay presupuesto ni cobro", async () => {
     assert.equal(pay.code, "BOOKING_NOT_CONFIGURED");
   } finally {
     process.env.DUFFEL_ACCESS_TOKEN = previous;
+  }
+});
+
+test("con token pero sin GROUP_SALE_ENABLED=true no se abre ninguna venta nueva", async () => {
+  const previous = process.env.GROUP_SALE_ENABLED;
+  let calls = 0;
+  sale.__test.setTransport(async () => { calls += 1; return { status: 200, data: { data: { offers: [offer({})] } } }; });
+  try {
+    for (const value of [undefined, "", "false", "1", "yes"]) {
+      if (value === undefined) delete process.env.GROUP_SALE_ENABLED;
+      else process.env.GROUP_SALE_ENABLED = value;
+      assert.equal(sale.saleOpen(), false, `GROUP_SALE_ENABLED=${value}`);
+      const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", flightNumber: "50" })], TODAY);
+      assert.equal(quote.code, "BOOKING_NOT_CONFIGURED");
+      const pay = await sale.startPayment("x", [], "a@b.co", "+34123456789");
+      assert.equal(pay.code, "BOOKING_NOT_CONFIGURED");
+    }
+    // Ni una llamada a Duffel con la venta apagada.
+    assert.equal(calls, 0);
+    process.env.GROUP_SALE_ENABLED = "TRUE";
+    assert.equal(sale.saleOpen(), true);
+  } finally {
+    process.env.GROUP_SALE_ENABLED = previous;
   }
 });
 
