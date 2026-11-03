@@ -1,5 +1,5 @@
 // Reservar abre Aviasales (afiliado). La aerolínea queda como acceso secundario.
-// La compra del grupo solo se enseña con saleEnabled. Sin tarifa no hay cobro.
+// Comprar cobra el grupo dentro de FlyndMe. Sin tarifa no hay importe de cobro.
 import "./_domStubs.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -67,10 +67,10 @@ test("Reservar abre Aviasales y la web de la aerolínea queda como acceso secund
   assert.match(html, /2 viajeros|2 travelers/);
 });
 
-test("sin la venta encendida no se ofrece comprar el grupo dentro de FlyndMe", () => {
+test("Comprar ofrece el pago del grupo dentro de FlyndMe", () => {
   const html = render(React.createElement(WinnerCard, { ...base, dest: LONDON }));
-  assert.ok(!html.includes('class="wc-sale"'));
-  assert.ok(!/>Comprar<|>Buy</.test(html));
+  assert.ok(html.includes('class="wc-sale"'));
+  assert.match(html, />Comprar<|>Buy</);
 });
 
 test("Reservar en Aviasales busca para todos los viajeros de esa ciudad", () => {

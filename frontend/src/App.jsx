@@ -38,7 +38,6 @@ import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels"
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { favoriteOpenPlan, normalizeFavoriteSearch, searchNearSave } from "./utils/favoriteOpen";
-import { GROUP_SALE_ON } from "./utils/features";
 import { useAccount } from "./hooks/useAccount";
 import { usePersonalCabinet } from "./hooks/usePersonal";
 import { warmProvider } from "./utils/socialSignIn";
@@ -2384,7 +2383,6 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
-            saleEnabled={GROUP_SALE_ON}
             revealDetails={revealDetails}
           />
           </Suspense>
