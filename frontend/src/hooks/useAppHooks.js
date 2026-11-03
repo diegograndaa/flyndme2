@@ -3,7 +3,7 @@
 // accesibilidad y estado del backend.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { readStoredList, isFavoriteEntry } from "../utils/storage";
-import { normalizeFavoriteSearch } from "../utils/favoriteOpen";
+import { normalizeFavoriteSearch, sameFavoriteSearch } from "../utils/favoriteOpen";
 // useFavorites los usaba sin importar: el toggle de favoritos lanzaba
 // "normalizeCode is not defined" en runtime (los tests SSR no lo cazaban).
 import { normalizeCode, cityOf } from "../utils/helpers";
@@ -81,7 +81,20 @@ export function useFavorites() {
     return favs.some((f) => f.code === normalizeCode(destCode));
   }, [favs]);
 
-  return { favs, toggle, isFav, replace };
+  // Asocia la búsqueda a un destino ya guardado, sin quitarlo.
+  const remember = useCallback((code, search) => {
+    const dest = normalizeCode(code);
+    const saved = normalizeFavoriteSearch(search);
+    if (!dest || !saved) return favsRef.current;
+    const prev = favsRef.current;
+    const row = prev.find((f) => f.code === dest);
+    if (!row || sameFavoriteSearch(row.search, saved)) return prev;
+    const next = write(prev.map((f) => (f.code === dest ? { ...f, search: saved } : f)));
+    setFavs(next);
+    return next;
+  }, [write]);
+
+  return { favs, toggle, isFav, replace, remember };
 }
 
 export function useA11yPrefs() {

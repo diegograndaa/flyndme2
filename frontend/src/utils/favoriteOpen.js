@@ -42,18 +42,42 @@ export function sameFavoriteSearch(a, b) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+// Un destino guardado antes de recordar la búsqueda puede apoyarse en una
+// búsqueda reciente hecha antes de guardarlo. Una búsqueda posterior no se
+// usa: sería otro viaje. Sin hora de guardado, la más reciente es la única
+// candidata y la fila enseña esas ciudades y esa fecha.
+export function searchNearSave(recent, savedAt) {
+  const rows = [];
+  for (const entry of Array.isArray(recent) ? recent : []) {
+    const search = normalizeFavoriteSearch(entry);
+    if (!search) continue;
+    rows.push({ search, ts: Number(entry?.ts) || 0 });
+  }
+  if (!rows.length) return null;
+  const at = Number(savedAt);
+  if (Number.isFinite(at) && at > 0) {
+    const before = rows.filter((row) => row.ts > 0 && row.ts <= at + 120000);
+    if (!before.length) return null;
+    before.sort((a, b) => b.ts - a.ts);
+    return before[0].search;
+  }
+  rows.sort((a, b) => b.ts - a.ts);
+  return rows[0].search;
+}
+
 /**
  * select: el destino ya está en los resultados de esta búsqueda.
  * search: hay ciudades y fecha para pedir solo ese destino.
  * unavailable: no hay con qué buscar; no se fabrican vuelos.
  */
-export function favoriteOpenPlan({ code, search, flights, activeSearch, form }) {
+export function favoriteOpenPlan({ code, search, flights, activeSearch, form, recent, savedAt }) {
   const dest = String(code || "").trim().toUpperCase();
   const saved = normalizeFavoriteSearch(search);
   const active = normalizeFavoriteSearch(activeSearch);
   const inList = /^[A-Z]{3}$/.test(dest) && (flights || []).some((f) => String(f?.destination || "").trim().toUpperCase() === dest);
   if (inList && (!saved || sameFavoriteSearch(saved, active))) return { action: "select", code: dest };
-  const next = saved || normalizeFavoriteSearch(form);
-  if (next) return { action: "search", code: dest, search: next };
+  const recovered = saved ? null : searchNearSave(recent, savedAt);
+  const next = saved || recovered || normalizeFavoriteSearch(form);
+  if (next) return { action: "search", code: dest, search: next, recovered: Boolean(recovered) };
   return { action: "unavailable", code: dest };
 }

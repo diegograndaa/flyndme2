@@ -801,6 +801,15 @@
   color: var(--navy);
   cursor: pointer;
 }
+.fm-fav-panel-trip {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--slate-500);
+  white-space: normal;
+}
+
 @media (max-width: 600px) {
   .fm-auth-btn { width: 40px; padding: 0; }
   .fm-auth-btn-label {
