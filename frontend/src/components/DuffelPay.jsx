@@ -8,6 +8,7 @@ import { DuffelPayments } from "@duffel/components";
 const PAY_STYLES = {
   accentColor: "255, 194, 14",
   buttonCornerRadius: "4px",
+  fontFamily: "IBM Plex Sans, sans-serif",
 };
 
 export default function DuffelPay({ clientToken, onSuccess, onFail }) {

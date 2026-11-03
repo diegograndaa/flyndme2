@@ -2509,10 +2509,69 @@ button,
 .caja-page .wc-sale-lines--total { margin-top: 0; padding-top: 0; border-top: 0; }
 .caja-amount { margin: 0; font-family: var(--font-mono); font-size: 42px; font-weight: 700; line-height: 1; }
 .caja-lead, .caja-note { margin: 10px 0 0; font-size: 14px; line-height: 1.45; }
-.caja-pay { padding: 28px 24px; background: var(--card); border: 1px solid var(--card-line); border-radius: 8px; }
+.caja-pay { padding: 0; overflow: hidden; background: var(--card); border: 1px solid var(--card-line); border-radius: 8px; }
+.caja-pay-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 18px 20px; border-bottom: 1px solid var(--line);
+}
+.caja-pay-title { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; color: var(--navy); }
+.caja-secure {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--navy);
+}
+.caja-method {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 20px 0; padding: 14px 16px; min-height: 64px;
+  border: 2px solid var(--navy); border-radius: 4px; color: var(--navy);
+}
+.caja-method-kicker {
+  margin: 0; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--slate-500);
+}
+.caja-method-name { margin: 2px 0 0; font-size: 16px; font-weight: 700; }
+.caja-banner {
+  margin: 0; padding: 12px 20px;
+  font-size: 14px; line-height: 1.45;
+  background: var(--panel-stub); border: 0; border-bottom: 1px solid var(--line); color: var(--navy);
+}
+.caja-banner--test { background: var(--sign); color: var(--on-sign); border-bottom-color: var(--sign); }
+.caja-trust {
+  margin: 14px 20px 0; padding: 12px 14px;
+  font-size: 14px; line-height: 1.45; color: var(--navy);
+  background: var(--panel-stub); border-left: 3px solid var(--sign);
+}
+.caja-pay-body { padding: 16px 20px 20px; }
+.caja-field-label { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--slate-700); }
+.caja-pay-status { margin: 16px 20px 20px; }
+.caja-steps button.caja-step--done { color: var(--navy); }
+.caja-side--pay { padding-bottom: 0; }
+.caja-receipt { display: grid; gap: 12px; }
+.caja-receipt ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.caja-receipt li { display: grid; gap: 2px; }
+.caja-receipt-route { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--navy); }
+.caja-receipt-meta { font-size: 13px; line-height: 1.35; color: var(--slate-500); }
+.caja-receipt li strong { font-family: var(--font-mono); font-size: 14px; color: var(--navy); }
+.caja-receipt-pax { margin: 0; font-size: 14px; line-height: 1.4; color: var(--navy); }
+.caja-receipt-pax span {
+  display: block; margin-bottom: 2px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--slate-500);
+}
+.caja-lines { margin: 0; display: grid; gap: 6px; }
+.caja-lines div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.caja-lines dt { color: var(--slate-500); }
+.caja-lines dd { margin: 0; font-family: var(--font-mono); font-weight: 700; color: var(--navy); }
+.caja-amount-plaque {
+  margin: 4px -22px 0; padding: 16px 22px 18px;
+  background: var(--sign); color: var(--on-sign);
+  border-radius: 0 0 6px 6px;
+}
+.caja-amount-plaque .caja-amount,
+.caja-amount-plaque .caja-amount-label { color: var(--on-sign); }
 .caja-pay .card-payment__container { width: 100%; max-width: none; margin: 0; }
-.caja-pay .card-details { min-height: 44px; box-sizing: border-box; }
-.caja-pay .card-payment__pay-button { min-height: 44px; }
+.caja-pay .card-details { min-height: 48px; box-sizing: border-box; }
+.caja-pay .card-payment__pay-button { min-height: 48px; width: 100%; }
 .caja-tickets { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .caja-tickets li { display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--font-mono); font-size: 14px; color: var(--navy); }
 .caja-done {
@@ -2535,7 +2594,10 @@ button,
 @media (max-width: 760px) {
   .caja-page { padding: 20px 16px 48px; }
   .caja-layout { grid-template-columns: 1fr; }
+  .caja-layout--pay { display: flex; flex-direction: column; }
+  .caja-layout--pay .caja-side { order: -1; }
   .caja-side { position: static; }
+  .caja-pay-title { font-size: 20px; }
   .caja-itin { padding: 22px 16px 16px; }
   .caja-itin-code { font-size: 30px; }
   .caja-itin-ends { gap: 8px; }

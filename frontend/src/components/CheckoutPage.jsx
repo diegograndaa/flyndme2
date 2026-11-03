@@ -1,6 +1,7 @@
 // Pestaña de pago. Una sola cifra, la que se carga, con el desglose de cada
 // viajero. La tarjeta es la de Duffel; el número no pasa por FlyndMe.
 import React, { Suspense, useEffect, useState } from "react";
+import { Check, CreditCard, Lock } from "lucide-react";
 import "../styles/bootstrap-custom.scss";
 import "../App.css";
 import "../styles/theme-stitch.css";
@@ -8,9 +9,9 @@ import "../styles/board.css";
 import "../styles/revision.css";
 import { useI18n } from "../i18n/useI18n";
 import { resolveApiBase } from "../utils/apiBase";
-import { getBaseUrl } from "../utils/helpers";
+import { formatDate, getBaseUrl } from "../utils/helpers";
 import { centsOf, quoteAddsUp, SALE_CHANNEL } from "../utils/saleCheckout";
-import SaleBreakdown, { saleMoney } from "./SaleBreakdown";
+import SaleBreakdown, { flightBits, saleMoney } from "./SaleBreakdown";
 import SaleElsewhere from "./SaleElsewhere";
 
 const DuffelPay = React.lazy(() => import("./DuffelPay"));
@@ -24,6 +25,40 @@ function blankPerson() {
 function peopleFor(quote) {
   const n = Number(quote?.passengerCount) || 0;
   return Array.from({ length: n }, () => blankPerson());
+}
+
+export function PaymentDesk({ t, testMode, busy = false, children }) {
+  return (
+    <section className="caja-pay" aria-labelledby="caja-pay-title">
+      <div className="caja-pay-head">
+        <h1 id="caja-pay-title" className="caja-pay-title">{t("results.salePayTitle")}</h1>
+        <p className="caja-secure">
+          <Lock size={16} aria-hidden="true" />
+          <span>{t("results.salePaySecure")}</span>
+        </p>
+      </div>
+      {busy ? (
+        <p className="caja-note caja-pay-status" role="status">{children}</p>
+      ) : (
+        <>
+          {testMode === true && <p className="caja-banner caja-banner--test">{t("results.saleTestCard")}</p>}
+          {testMode === false && <p className="caja-banner">{t("results.saleLiveCard")}</p>}
+          <div className="caja-method">
+            <CreditCard size={22} aria-hidden="true" />
+            <div>
+              <p className="caja-method-kicker">{t("results.salePayHow")}</p>
+              <p className="caja-method-name">{t("results.salePayMethod")}</p>
+            </div>
+          </div>
+          <p className="caja-trust">{t("results.salePayTrust")}</p>
+          <div className="caja-pay-body">
+            <p className="caja-field-label">{t("results.saleCardHint")}</p>
+            {children}
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 function tellOpener(quoteId, payload) {
@@ -184,10 +219,45 @@ export default function CheckoutPage({ quoteId }) {
   ];
   const onStep = phase === "issued" ? "pay" : (showPay ? "pay" : step);
 
+  const paying = onStep === "pay";
+  const travellers = people
+    .map((person) => `${person.givenName || ""} ${person.familyName || ""}`.trim())
+    .filter(Boolean);
   const side = ready ? (
-    <aside className="caja-side">
-      <p className="caja-amount-label">{t("results.saleFinal")}</p>
+    <aside className={paying ? "caja-side caja-side--pay" : "caja-side"}>
+      {paying && (
+        <div className="caja-receipt">
+          <p className="caja-amount-label">{t("results.salePayTrip")}</p>
+          <ul>
+            {quote.legs.map((leg) => {
+              const bits = flightBits(leg);
+              const meta = [formatDate(leg.departureDate), bits.time, bits.line].filter(Boolean).join(" · ");
+              return (
+                <li key={`${leg.origin}-${leg.flightNumber || ""}-${leg.departureDate || ""}`}>
+                  <span className="caja-receipt-route">{`${leg.origin} → ${leg.destination}`}</span>
+                  {meta && <span className="caja-receipt-meta">{meta}</span>}
+                  <strong>{money(leg.charge)}</strong>
+                </li>
+              );
+            })}
+          </ul>
+          {travellers.length > 0 && (
+            <p className="caja-receipt-pax"><span>{t("results.saleStepPeople")}</span>{travellers.join(", ")}</p>
+          )}
+          {email.trim() && (
+            <p className="caja-receipt-pax">{t("results.salePayMail", { email: email.trim() })}</p>
+          )}
+          <dl className="caja-lines">
+            <div><dt>{t("results.saleFare")}</dt><dd>{money(quote.fare)}</dd></div>
+            <div><dt>{t("results.saleFee", { pct: quote.markupPercent })}</dt><dd>{money(quote.commission)}</dd></div>
+            <div><dt>{t("results.salePayCardCost")}</dt><dd>{money(quote.cardFee)}</dd></div>
+          </dl>
+        </div>
+      )}
+      <div className={paying ? "caja-amount-plaque" : undefined}>
+      <p className="caja-amount-label">{paying ? t("results.saleTotal") : t("results.saleFinal")}</p>
       <p className="caja-amount">{money(quote.charge)}</p>
+      </div>
       {onStep === "trip" && (
         <button type="button" className="wc-sale-btn" onClick={() => setStep("people")}>
           {t("results.saleNext")}
@@ -220,11 +290,13 @@ export default function CheckoutPage({ quoteId }) {
           {steps.map(([id, label], i) => {
             const current = onStep === id;
             const locked = id === "pay" || (id === "people" && showPay);
+            const stepIndex = steps.findIndex(([stepId]) => stepId === onStep);
             return (
               <button key={id} type="button" aria-current={current ? "step" : undefined}
+                className={i < stepIndex ? "caja-step--done" : undefined}
                 disabled={locked || showPay}
                 onClick={() => { if (id === "trip" || id === "people") setStep(id); }}>
-                <span className="caja-step-n" aria-hidden="true">{i + 1}</span>
+                <span className="caja-step-n" aria-hidden="true">{i < stepIndex ? <Check size={14} strokeWidth={2.5} /> : i + 1}</span>
                 <span>{label}</span>
               </button>
             );
@@ -324,19 +396,14 @@ export default function CheckoutPage({ quoteId }) {
         </form>
       )}
       {ready && showPay && (
-        <div className="caja-layout">
-          <div className="caja-main caja-pay">
-            {phase === "completing" ? (
-              <p className="caja-note" role="status">{t("results.saleCompleting")}</p>
-            ) : (
+        <div className="caja-layout caja-layout--pay">
+          <PaymentDesk t={t} testMode={testMode} busy={phase === "completing"}>
+            {phase === "completing" ? t("results.saleCompleting") : (
               <Suspense fallback={<p className="caja-note">{t("results.salePaying")}</p>}>
-                {testMode === true && <p className="caja-note">{t("results.saleTestCard")}</p>}
-                {testMode === false && <p className="caja-note">{t("results.saleLiveCard")}</p>}
-                <p className="caja-note">{t("results.saleCardHint")}</p>
                 <DuffelPay clientToken={clientToken} onSuccess={finish} onFail={() => { setPhase("ready"); setStep("people"); setClientToken(""); setCode("PAYMENT_NOT_CONFIRMED"); }} />
               </Suspense>
             )}
-          </div>
+          </PaymentDesk>
           {side}
         </div>
       )}
