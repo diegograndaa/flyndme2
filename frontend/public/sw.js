@@ -20,8 +20,9 @@
 // v11: un destino guardado vuelve a pedir sus vuelos al pulsarlo.
 // v12: la fila del destino guardado enseña su viaje y Reservar abre Aviasales.
 // v13: Comprar vuelve a cobrar el grupo dentro de FlyndMe.
+// v14: el cobro se confirma en Duffel antes de emitir el billete.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v13";
+const VERSION = "v14";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

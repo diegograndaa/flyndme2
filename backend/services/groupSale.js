@@ -494,6 +494,38 @@ async function startPayment(quoteId, people, email, phone) {
   return { ok: true, clientToken: intent.client_token, charge: euros(quote.totals.charge), currency: quote.currency };
 }
 
+// La tarjeta ya pasó por Stripe. Este paso ingresa ese importe en el saldo
+// de Duffel. Sin él, el billete se pediría contra un saldo que no ha crecido.
+async function settleIntent(quote) {
+  try {
+    const confirmed = await duffel("POST", `/payments/payment_intents/${quote.intentId}/actions/confirm`);
+    if (confirmed) return confirmed;
+  } catch { /* la tarjeta aún no está lista, o el cobro ya se confirmó */ }
+  try {
+    return await duffel("GET", `/payments/payment_intents/${quote.intentId}`);
+  } catch {
+    return null;
+  }
+}
+
+function balanceCoversFares(intent, quote) {
+  if (intent.net_amount == null || intent.net_amount === "") return true;
+  const netCurrency = String(intent.net_currency || "").toUpperCase();
+  if (!netCurrency || netCurrency !== quote.currency) return true;
+  const net = cents(intent.net_amount);
+  if (net == null) return true;
+  const fareSum = quote.legs.reduce((sum, leg) => sum + leg.fare, 0);
+  return net >= fareSum;
+}
+
+async function refundAndStop(quote) {
+  await refundUnissued(quote, 0);
+  quote.status = quote.refund?.status === "refunded" ? "refunded" : "refund_failed";
+  quote.expires = Date.now() + SALE_KEEP_MS;
+  await saveQuote(quote, SALE_KEEP_MS);
+  return resultFrom(quote);
+}
+
 async function completeSale(quoteId) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
@@ -501,12 +533,12 @@ async function completeSale(quoteId) {
   const done = resultFrom(quote);
   if (done) return done;
   if (!quote.intentId || !quote.travelers) return { ok: false, code: "PAYMENT_NOT_CONFIRMED" };
-  const intent = await duffel("GET", `/payments/payment_intents/${quote.intentId}`);
+  const intent = await settleIntent(quote);
   const status = String(intent?.status || "").toLowerCase();
-  if (!PAID_STATUSES.has(status)) return { ok: false, code: "PAYMENT_NOT_CONFIRMED" };
-  if (cents(intent.amount) !== quote.totals.charge || String(intent.currency || "").toUpperCase() !== quote.currency) {
-    return { ok: false, code: "PAYMENT_MISMATCH" };
-  }
+  if (!intent || !PAID_STATUSES.has(status)) return { ok: false, code: "PAYMENT_NOT_CONFIRMED" };
+  const amountOk = cents(intent.amount) === quote.totals.charge
+    && String(intent.currency || "").toUpperCase() === quote.currency;
+  if (!amountOk || !balanceCoversFares(intent, quote)) return refundAndStop(quote);
   const orders = [];
   let cursor = 0;
   for (const leg of quote.legs) {

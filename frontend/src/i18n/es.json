@@ -414,6 +414,7 @@
     "salePhoneHint": "Con prefijo internacional, por ejemplo +34600000000",
     "salePay": "Continuar al pago",
     "salePaying": "Preparando el pago…",
+    "saleCardHint": "Número, caducidad y CVC en el mismo campo. Pay se enciende al completarla.",
     "saleCompleting": "Emitiendo los billetes…",
     "saleRetry": "Volver a pedir la tarifa",
     "saleInvalidName": "Revisa el nombre y los apellidos.",
