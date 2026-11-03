@@ -9,6 +9,7 @@ import {
   buildSkyscannerUrl, buildGoogleFlightsUrl, countryFlag,
 } from "../utils/helpers";
 import { buildAirlineBookingUrl } from "../utils/airlineBooking";
+import { affiliateLinkForAdults } from "../utils/affiliateLink";
 import { airlineName, legSchedule } from "../utils/flightTime";
 import GroupSalePanel from "./GroupSalePanel";
 import { saleMoney } from "./SaleBreakdown";
@@ -25,6 +26,14 @@ import { FlapText } from "./FlapBoard";
 import { TravelerDot } from "./TravelerBits";
 
 // "HH:MM" de un instante ISO del proveedor (hora local de ese aeropuerto)
+function firstOriginCode(list) {
+  for (const item of list || []) {
+    const code = String(item || "").trim().toUpperCase();
+    if (code) return code;
+  }
+  return null;
+}
+
 function hhmm(at) {
   const m = typeof at === "string" ? /T(\d{2}:\d{2})/.exec(at) : null;
   return m ? m[1] : "";
@@ -111,10 +120,16 @@ const WinnerCard = React.memo(function WinnerCard({
   watched = false, onToggleWatch,
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
   onRequestSale, sale = null,
+  saleEnabled = false,
+  revealDetails = null,
 }) {
   const { t } = useI18n();
   const [entered, setEntered] = useState(false);
-  const [openRoute, setOpenRoute] = useState(null); // origen con el detalle del vuelo abierto
+  const [openRoute, setOpenRoute] = useState(() => (
+    revealDetails && normalizeCode(revealDetails.code) === normalizeCode(dest?.destination)
+      ? firstOriginCode(origins)
+      : null
+  ));
   const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
   useEffect(() => {
     if (!copied) return undefined;
@@ -128,6 +143,16 @@ const WinnerCard = React.memo(function WinnerCard({
       return () => clearTimeout(timer);
     }
   }, [dest]);
+
+  // Al abrir un destino guardado, el primer vuelo enseña salida, llegada y pasajeros.
+  // No depende de `origins`: la app crea un array nuevo en cada render y, si
+  // estuviera aquí, el detalle se volvería a abrir al cerrarlo.
+  useEffect(() => {
+    if (!revealDetails || normalizeCode(revealDetails.code) !== normalizeCode(dest?.destination)) return;
+    const first = firstOriginCode(origins);
+    if (first) setOpenRoute(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealDetails, dest?.destination]);
 
   // Derivados null-safe que necesitan los hooks de abajo. Van ANTES del early
   // return para que TODOS los hooks se llamen incondicionalmente (si `dest`
@@ -171,7 +196,7 @@ const WinnerCard = React.memo(function WinnerCard({
   const money = (v) => (currency === "EUR" ? formatEur(v, 0) : convertPrice(v, currency));
   // Con un cobro que cuadra, la cifra grande es lo que se paga. La estimación
   // de la búsqueda deja de ser el titular: no es el importe del botón.
-  const payable = sale?.quote && quoteAddsUp(sale.quote) ? sale.quote : null;
+  const payable = saleEnabled && sale?.quote && quoteAddsUp(sale.quote) ? sale.quote : null;
   const payMoney = (amount) => saleMoney(amount, payable?.currency || "EUR");
   const travelers = dest.totalPassengers
     || breakdown.reduce((n, f) => n + (Number(f.passengers) || 1), 0)
@@ -319,7 +344,7 @@ const WinnerCard = React.memo(function WinnerCard({
               <span>{travelers === 1 ? t("results.travelerOne") : t("board.travelers", { n: travelers })}</span>
             </div>
           </div>
-          {!singleOrigin && (
+          {!singleOrigin && saleEnabled && (
             <GroupSalePanel
               legs={saleLegs}
               sale={sale}
@@ -405,21 +430,18 @@ const WinnerCard = React.memo(function WinnerCard({
                   adults: pax,
                   flightNumber: segments[0]?.number || "",
                 });
-                // Sin web de la aerolínea, Reservar abre Skyscanner con la
+                // Reservar abre Aviasales (el enlace que paga comisión). Si no
+                // hay, la web de esa aerolínea. Si tampoco, Skyscanner con la
                 // misma ruta, fecha y viajeros. No se inventa otra aerolínea.
-                const book = booking
-                  ? {
-                    url: booking.url,
-                    provider: "airline",
-                    airline: booking.airlineName,
-                  }
-                  : (ssUrl
-                    ? {
-                      url: ssUrl,
-                      provider: "skyscanner",
-                      airline: "Skyscanner",
-                    }
-                    : null);
+                const affiliateUrl = affiliateLinkForAdults(offer?.link, pax);
+                const book = affiliateUrl
+                  ? { url: affiliateUrl, provider: "aviasales", airline: "Aviasales" }
+                  : booking
+                    ? { url: booking.url, provider: "airline", airline: booking.airlineName }
+                    : (ssUrl
+                      ? { url: ssUrl, provider: "skyscanner", airline: "Skyscanner" }
+                      : null);
+                const airlineSecondary = book?.provider === "aviasales" && booking ? booking : null;
                 const legEq = typeof price === "number"
                   ? legEquation(price, pax, finfo.totalForOrigin, currency)
                   : null;
@@ -506,14 +528,19 @@ const WinnerCard = React.memo(function WinnerCard({
                     <LegStrip schedule={out} t={t} />
                     {back && <LegStrip kicker={t("results.returnLeg")} schedule={back} t={t} />}
                     <div className="wc-flight-ctas">
-                      {/* Reservar abre la web de esa aerolínea. Si no la
-                          tenemos, el mismo botón abre Skyscanner. */}
                       {book && (
                         <a href={book.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
                           aria-label={book.airline ? `${t("results.bookCta")} · ${book.airline}` : t("results.bookCta")}
                           onClick={() => track("book_click", { provider: book.provider, airline: book.airline, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Ticket size={16} aria-hidden="true" /></span>
                           {t("results.bookCta")}
+                        </a>
+                      )}
+                      {airlineSecondary && (
+                        <a href={airlineSecondary.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--airline"
+                          aria-label={airlineSecondary.airlineName}
+                          onClick={() => track("book_click", { provider: "airline", airline: airlineSecondary.airlineName, dest: code, origin, where: "winner" })}>
+                          <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
                         </a>
                       )}
                       {ssUrl && book?.provider !== "skyscanner" && (

@@ -3,6 +3,7 @@ const { test, beforeEach, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 process.env.DUFFEL_ACCESS_TOKEN = "duffel_test_token";
+process.env.GROUP_SALE_ENABLED = "true";
 process.env.BOOKING_MARKUP_PERCENT = "5";
 process.env.DUFFEL_PAYMENTS_FEE = "0.029";
 
@@ -76,6 +77,19 @@ test("solo casa el mismo vuelo, el mismo día y los mismos viajeros", () => {
   assert.equal(sale.offerMatches(offer({ pax: 2 }), leg()), false);
   const picked = sale.pickOffer([offer({ amount: "80.00", id: "off_hi" }), offer({ amount: "41.00", id: "off_lo" })], leg());
   assert.equal(picked.id, "off_lo");
+});
+
+test("con token pero sin el interruptor no se abre una venta nueva", async () => {
+  const previous = process.env.GROUP_SALE_ENABLED;
+  delete process.env.GROUP_SALE_ENABLED;
+  try {
+    const quote = await sale.quoteLegs([leg()], TODAY);
+    assert.equal(quote.code, "BOOKING_NOT_CONFIGURED");
+    const pay = await sale.startPayment("x", [], "a@b.co", "+34123456789");
+    assert.equal(pay.code, "BOOKING_NOT_CONFIGURED");
+  } finally {
+    process.env.GROUP_SALE_ENABLED = previous;
+  }
 });
 
 test("sin token no hay presupuesto ni cobro", async () => {

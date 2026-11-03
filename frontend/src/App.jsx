@@ -37,7 +37,8 @@ import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
 import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
-import { favoriteOpenPlan, normalizeFavoriteSearch } from "./utils/favoriteOpen";
+import { favoriteOpenPlan, normalizeFavoriteSearch, searchNearSave } from "./utils/favoriteOpen";
+import { GROUP_SALE_ON } from "./utils/features";
 import { useAccount } from "./hooks/useAccount";
 import { usePersonalCabinet } from "./hooks/usePersonal";
 import { warmProvider } from "./utils/socialSignIn";
@@ -164,7 +165,7 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const { t, lang } = useI18n();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
-  const { favs, toggle: toggleFav, isFav, replace: replaceFavs } = useFavorites();
+  const { favs, toggle: toggleFav, isFav, replace: replaceFavs, remember: rememberFavoriteSearch } = useFavorites();
   const account = useAccount(API_BASE);
   const [authOpen, setAuthOpen] = useState(false);
   useEffect(() => {
@@ -350,6 +351,7 @@ export default function App() {
   // nuevo en vez de heredar el estado «saliendo» del anterior.
   const setToast = useCallback((next) => setToastRaw(next ? { ...next, id: Date.now() + Math.random() } : null), []);
   const [showFavPanel, setShowFavPanel] = useState(false);
+  const [revealDetails, setRevealDetails] = useState(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   // Collaborative group planning (?group=ID)
   const [group, setGroup] = useState(null);     // { id, departureDate, tripType, members }
@@ -1900,8 +1902,10 @@ export default function App() {
   }, []);
 
   // Abre un destino guardado. Si sigue en los resultados de esta búsqueda, lo
-  // pone en la tarjeta. Si no, pide de nuevo solo ese destino con las ciudades
-  // y las fechas guardadas. Sin ciudades ni fecha, no hay detalles reales.
+  // pone en la tarjeta y abre el detalle del primer vuelo. Si no, pide de
+  // nuevo solo ese destino con las ciudades y las fechas guardadas (o con la
+  // búsqueda reciente de cuando se guardó). Sin ciudades ni fecha, no hay
+  // detalles reales.
   const openFavorite = (f) => {
     setShowFavPanel(false);
     const plan = favoriteOpenPlan({
@@ -1910,8 +1914,17 @@ export default function App() {
       flights,
       activeSearch: lastSearchRef.current,
       form: favSearchRef.current,
+      recent: recentSearches,
+      savedAt: f.ts,
     });
+    if (plan.action === "select" || plan.action === "search") {
+      setRevealDetails({ code: plan.code, n: Date.now() });
+    }
     if (plan.action === "select") {
+      if (!normalizeFavoriteSearch(f.search)) {
+        const active = normalizeFavoriteSearch(lastSearchRef.current) || normalizeFavoriteSearch(favSearchRef.current);
+        if (active) rememberFavoriteSearch(plan.code, active);
+      }
       const match = (flights || []).find((x) => normalizeCode(x.destination) === plan.code);
       if (match) {
         chooseDestination(match);
@@ -1922,6 +1935,7 @@ export default function App() {
       }
     }
     if (plan.action === "search") {
+      if (plan.recovered) rememberFavoriteSearch(plan.code, plan.search);
       const s = plan.search;
       keepDomesticRef.current = false;
       setOrigins(s.origins);
@@ -2049,7 +2063,11 @@ export default function App() {
               <div className="fm-fav-panel-empty">{t("favorites.empty")}</div>
             ) : (
               <div className="fm-fav-panel-list">
-                {favs.map((f) => (
+                {favs.map((f) => {
+                  const trip = normalizeFavoriteSearch(f.search) || searchNearSave(recentSearches, f.ts);
+                  const tripWhen = trip ? formatDate(trip.departureDate) : "";
+                  const tripBack = trip?.tripType === "roundtrip" && trip.returnDate ? ` → ${formatDate(trip.returnDate)}` : "";
+                  return (
                   <div key={f.code} className="fm-fav-panel-item">
                     <button type="button" className="fm-fav-panel-open" onClick={() => openFavorite(f)}>
                       <span className="sr-only">{t("favorites.open", { city: cityOf(f.code) || f.city || f.code })}: </span>
@@ -2057,6 +2075,9 @@ export default function App() {
                       <span className="fm-fav-panel-info">
                         <span className="fm-fav-panel-code">{f.code}</span>
                         <span className="fm-fav-panel-city">{cityOf(f.code) || f.city}</span>
+                        {trip && (
+                          <span className="fm-fav-panel-trip">{trip.origins.join(" · ")} · {tripWhen}{tripBack}</span>
+                        )}
                       </span>
                       <span className="fm-fav-panel-price">
                         {formatEur(f.price, 0)}/pp
@@ -2071,7 +2092,8 @@ export default function App() {
                     <button type="button" className="fm-fav-panel-remove" aria-label={t("favorites.remove", { city: cityOf(f.code) || f.city || f.code })}
                       onClick={() => toggleFavSynced({ destination: f.code, averageCostPerTraveler: f.price })}><X size={14} aria-hidden="true" /></button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2362,6 +2384,8 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
+            saleEnabled={GROUP_SALE_ON}
+            revealDetails={revealDetails}
           />
           </Suspense>
           </ErrorBoundary>

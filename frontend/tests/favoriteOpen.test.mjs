@@ -1,7 +1,7 @@
 // Un destino guardado abre sus vuelos si hay con qué pedirlos.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { favoriteOpenPlan, normalizeFavoriteSearch } from "../src/utils/favoriteOpen.js";
+import { favoriteOpenPlan, normalizeFavoriteSearch, searchNearSave } from "../src/utils/favoriteOpen.js";
 import { mergeFavoriteLists } from "../src/utils/account.js";
 
 const search = {
@@ -49,6 +49,25 @@ test("una búsqueda distinta no reutiliza la tarjeta de otra consulta", () => {
   });
   assert.equal(plan.action, "search");
   assert.equal(plan.search.departureDate, "2026-12-01");
+});
+
+test("un destino viejo, sin búsqueda guardada, usa la búsqueda reciente de entonces", () => {
+  const savedAt = Date.parse("2026-11-01T12:00:00Z");
+  const recent = [
+    { ...search, ts: savedAt - 60_000 },
+    { ...search, departureDate: "2026-12-20", ts: savedAt + 10 * 60_000 },
+  ];
+  const plan = favoriteOpenPlan({
+    code: "BCN",
+    search: null,
+    flights: [],
+    recent,
+    savedAt,
+  });
+  assert.equal(plan.action, "search");
+  assert.equal(plan.recovered, true);
+  assert.equal(plan.search.departureDate, "2026-12-01");
+  assert.equal(searchNearSave(recent, savedAt - 10 * 60_000), null);
 });
 
 test("sin ciudades ni fecha no hay detalles que enseñar", () => {
