@@ -31,13 +31,6 @@ function token() {
   return String(process.env.DUFFEL_ACCESS_TOKEN || "").trim();
 }
 
-// Una venta nueva solo se abre con el token y GROUP_SALE_ENABLED=true.
-// Apagado por defecto: el cobro aún no confirma el pago en el servidor.
-// Terminar o devolver una venta ya cobrada sigue con el token.
-function saleOpen() {
-  return Boolean(token()) && String(process.env.GROUP_SALE_ENABLED || "").trim().toLowerCase() === "true";
-}
-
 function markupRate() {
   const n = Number(process.env.BOOKING_MARKUP_PERCENT);
   const pct = Number.isFinite(n) ? n : 5;
@@ -325,7 +318,7 @@ function sumParts(parts) {
 }
 
 async function quoteLegs(rawLegs, today) {
-  if (!saleOpen()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
+  if (!token()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
   const checked = validateLegs(rawLegs, today);
   if (checked.code) return { available: false, code: checked.code };
   const rate = markupRate();
@@ -471,7 +464,7 @@ function normalizeTraveler(raw, email, phone) {
 }
 
 async function startPayment(quoteId, people, email, phone) {
-  if (!saleOpen()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
+  if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
   const done = resultFrom(quote);

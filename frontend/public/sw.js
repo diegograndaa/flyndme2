@@ -18,10 +18,10 @@
 // espera una cola de pings cortados).
 // v10: favoritos, búsquedas y vigilancias van con la cuenta, no con el navegador.
 // v11: un destino guardado vuelve a pedir sus vuelos al pulsarlo.
-// v12: la fila del destino guardado enseña su viaje, Reservar abre Aviasales
-// y la compra del grupo queda apagada hasta que el cobro esté listo.
+// v12: la fila del destino guardado enseña su viaje y Reservar abre Aviasales.
+// v13: Comprar vuelve a cobrar el grupo dentro de FlyndMe.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v12";
+const VERSION = "v13";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

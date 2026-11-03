@@ -120,7 +120,7 @@ const WinnerCard = React.memo(function WinnerCard({
   watched = false, onToggleWatch,
   mapSlot = null,  // mapa de rutas (nodo) que acompaña a la foto
   onRequestSale, sale = null,
-  saleEnabled = false,
+  saleEnabled = true,
   revealDetails = null,
 }) {
   const { t } = useI18n();
