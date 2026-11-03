@@ -2513,6 +2513,8 @@ button,
 .caja-pay .card-payment__container { width: 100%; max-width: none; margin: 0; }
 .caja-pay .card-details { min-height: 44px; box-sizing: border-box; }
 .caja-pay .card-payment__pay-button { min-height: 44px; }
+.caja-tickets { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.caja-tickets li { display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--font-mono); font-size: 14px; color: var(--navy); }
 .caja-done {
   max-width: 480px; padding: 36px 28px;
   background: var(--card); border: 2px solid var(--navy); border-radius: 8px;

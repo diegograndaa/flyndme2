@@ -35,7 +35,7 @@ function tellOpener(quoteId, payload) {
 }
 
 export default function CheckoutPage({ quoteId }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [quote, setQuote] = useState(null);
   const [missing, setMissing] = useState(false);
   const [people, setPeople] = useState([]);
@@ -46,8 +46,12 @@ export default function CheckoutPage({ quoteId }) {
   const [code, setCode] = useState("");
   const [clientToken, setClientToken] = useState("");
   const [refs, setRefs] = useState([]);
+  const [issued, setIssued] = useState([]);
   const [external, setExternal] = useState([]);
   const [refundText, setRefundText] = useState("");
+  const [testMode, setTestMode] = useState(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailCode, setEmailCode] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -66,7 +70,11 @@ export default function CheckoutPage({ quoteId }) {
         setPeople(peopleFor(data));
         if (data.status === "issued") {
           setPhase("issued");
+          setIssued(Array.isArray(data.orders) ? data.orders : []);
           setRefs((data.orders || []).map((o) => o.bookingReference).filter(Boolean));
+          setTestMode(data.testMode === true ? true : data.testMode === false ? false : null);
+          setEmailSent(data.emailSent === true);
+          setEmailCode(data.emailCode || "");
           return;
         }
         setPhase("ready");
@@ -89,7 +97,7 @@ export default function CheckoutPage({ quoteId }) {
       const res = await fetch(`${API_BASE}/api/flights/group-sale/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId: quote.quoteId, passengers: people, email: email.trim(), phone: phone.trim() }),
+        body: JSON.stringify({ quoteId: quote.quoteId, passengers: people, email: email.trim(), phone: phone.trim(), lang }),
       });
       const data = await res.json().catch(() => ({}));
       if (!data?.ok || !data.clientToken || centsOf(data.charge) !== centsOf(quote.charge)) {
@@ -98,6 +106,7 @@ export default function CheckoutPage({ quoteId }) {
         return;
       }
       setClientToken(data.clientToken);
+      setTestMode(data.testMode === true ? true : data.testMode === false ? false : null);
       setPhase("card");
     } catch {
       setPhase("ready");
@@ -117,6 +126,10 @@ export default function CheckoutPage({ quoteId }) {
       const orders = data?.orders || [];
       const references = orders.map((o) => o.bookingReference).filter(Boolean);
       setRefundText(data?.refund?.amount ? money(data.refund.amount) : "");
+      setIssued(orders);
+      setEmailSent(data?.emailSent === true);
+      setEmailCode(data?.emailCode || "");
+      setTestMode(data?.testMode === true ? true : data?.testMode === false ? false : testMode);
       if (data?.ok && data.status === "issued") {
         setRefs(references);
         setPhase("issued");
@@ -221,7 +234,25 @@ export default function CheckoutPage({ quoteId }) {
       {ready && phase === "issued" && (
         <section className="caja-done">
           <p className="caja-amount">{money(quote.charge)}</p>
-          <p className="caja-note" role="status">{t("results.saleIssued", { ref: refs.join(", ") || "—" })}</p>
+          <p className="caja-note" role="status">{testMode === true
+            ? t("results.saleTestDone")
+            : testMode === false
+              ? t("results.saleIssued", { ref: refs.join(", ") || "—" })
+              : t("results.saleRecorded")}</p>
+          <ul className="caja-tickets">
+            {issued.map((order) => (
+              <li key={`${order.origin}-${order.bookingReference || "x"}`}>
+                <span>{order.origin}</span>
+                <span>{t("results.saleLocator", { ref: order.bookingReference || "—" })}</span>
+                {(order.tickets || []).map((ticket) => (
+                  <span key={ticket}>{t("results.saleTicketLine", { ticket })}</span>
+                ))}
+              </li>
+            ))}
+          </ul>
+          {emailSent && <p className="caja-note" role="status">{t("results.saleEmailSent")}</p>}
+          {emailCode === "MAIL_NOT_CONFIGURED" && <p className="caja-note" role="status">{t("results.saleEmailOff")}</p>}
+          {emailCode === "MAIL_FAILED" && <p className="caja-note" role="alert">{t("results.saleEmailFailed")}</p>}
         </section>
       )}
       {ready && onStep === "trip" && phase !== "issued" && (
@@ -299,6 +330,8 @@ export default function CheckoutPage({ quoteId }) {
               <p className="caja-note" role="status">{t("results.saleCompleting")}</p>
             ) : (
               <Suspense fallback={<p className="caja-note">{t("results.salePaying")}</p>}>
+                {testMode === true && <p className="caja-note">{t("results.saleTestCard")}</p>}
+                {testMode === false && <p className="caja-note">{t("results.saleLiveCard")}</p>}
                 <p className="caja-note">{t("results.saleCardHint")}</p>
                 <DuffelPay clientToken={clientToken} onSuccess={finish} onFail={() => { setPhase("ready"); setStep("people"); setClientToken(""); setCode("PAYMENT_NOT_CONFIRMED"); }} />
               </Suspense>

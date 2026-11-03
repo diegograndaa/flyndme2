@@ -21,8 +21,9 @@
 // v12: la fila del destino guardado enseña su viaje y Reservar abre Aviasales.
 // v13: Comprar vuelve a cobrar el grupo dentro de FlyndMe.
 // v14: el cobro se confirma en Duffel antes de emitir el billete.
+// v15: la confirmación lleva el localizador de cada vuelo y avisa si el correo salió.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v14";
+const VERSION = "v15";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

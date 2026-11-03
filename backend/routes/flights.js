@@ -1293,8 +1293,8 @@ router.post("/group-sale/quote", async (req, res) => {
 
 router.post("/group-sale/pay", async (req, res) => {
   try {
-    const { quoteId, passengers, email, phone } = req.body || {};
-    const result = await groupSale.startPayment(quoteId, passengers, email, phone);
+    const { quoteId, passengers, email, phone, lang } = req.body || {};
+    const result = await groupSale.startPayment(quoteId, passengers, email, phone, lang);
     if (!result.ok) return res.status(groupSaleHttp(result.code)).json(result);
     return res.json(result);
   } catch (err) {

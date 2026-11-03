@@ -263,6 +263,8 @@ app.get("/api/health", async (_req, res) => {
     metrics: await counters.snapshot(METRIC_NAMES),
     commit: VERSION.commitShort,
     timestamp: Date.now(),
+    payments: require("./services/groupSale").paymentsMode(),
+    mail: require("./services/saleMail").configured(),
   });
 });
 
