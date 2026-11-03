@@ -2510,6 +2510,9 @@ button,
 .caja-amount { margin: 0; font-family: var(--font-mono); font-size: 42px; font-weight: 700; line-height: 1; }
 .caja-lead, .caja-note { margin: 10px 0 0; font-size: 14px; line-height: 1.45; }
 .caja-pay { padding: 28px 24px; background: var(--card); border: 1px solid var(--card-line); border-radius: 8px; }
+.caja-pay .card-payment__container { width: 100%; max-width: none; margin: 0; }
+.caja-pay .card-details { min-height: 44px; box-sizing: border-box; }
+.caja-pay .card-payment__pay-button { min-height: 44px; }
 .caja-done {
   max-width: 480px; padding: 36px 28px;
   background: var(--card); border: 2px solid var(--navy); border-radius: 8px;

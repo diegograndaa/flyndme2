@@ -47,6 +47,7 @@ export default function CheckoutPage({ quoteId }) {
   const [clientToken, setClientToken] = useState("");
   const [refs, setRefs] = useState([]);
   const [external, setExternal] = useState([]);
+  const [refundText, setRefundText] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -115,6 +116,7 @@ export default function CheckoutPage({ quoteId }) {
       const data = await res.json().catch(() => ({}));
       const orders = data?.orders || [];
       const references = orders.map((o) => o.bookingReference).filter(Boolean);
+      setRefundText(data?.refund?.amount ? money(data.refund.amount) : "");
       if (data?.ok && data.status === "issued") {
         setRefs(references);
         setPhase("issued");
@@ -154,8 +156,10 @@ export default function CheckoutPage({ quoteId }) {
     INVALID_PHONE: "results.saleInvalidPhone",
     PAYMENT_NOT_CONFIRMED: "results.saleNotPaid",
     PAYMENT_MISMATCH: "results.saleMismatch",
+    SALE_REFUNDED: "results.saleRefunded",
+    REFUND_FAILED: "results.saleRefundFailed",
   };
-  const note = code ? t(known[code] || "results.saleFailed") : "";
+  const note = code ? t(known[code] || "results.saleFailed", { amount: refundText || "—" }) : "";
   const ready = quote && quoteAddsUp(quote);
   const showPeople = phase === "ready" || phase === "paying";
   const showPay = phase === "card" || phase === "completing";
@@ -295,6 +299,7 @@ export default function CheckoutPage({ quoteId }) {
               <p className="caja-note" role="status">{t("results.saleCompleting")}</p>
             ) : (
               <Suspense fallback={<p className="caja-note">{t("results.salePaying")}</p>}>
+                <p className="caja-note">{t("results.saleCardHint")}</p>
                 <DuffelPay clientToken={clientToken} onSuccess={finish} onFail={() => { setPhase("ready"); setStep("people"); setClientToken(""); setCode("PAYMENT_NOT_CONFIRMED"); }} />
               </Suspense>
             )}

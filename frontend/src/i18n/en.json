@@ -414,6 +414,7 @@
     "salePhoneHint": "With the country code, for example +34600000000",
     "salePay": "Continue to payment",
     "salePaying": "Preparing payment…",
+    "saleCardHint": "Number, expiry and CVC in the same field. Pay turns on when it is complete.",
     "saleCompleting": "Issuing the tickets…",
     "saleRetry": "Ask for the fare again",
     "saleInvalidName": "Check the given name and family name.",

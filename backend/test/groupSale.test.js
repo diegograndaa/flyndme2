@@ -420,4 +420,85 @@ test("repetir el pago no abre un segundo cobro", async () => {
   assert.equal(tp.calls.filter((c) => c.endsWith("/payments/payment_intents")).length, 1);
 });
 
+test("confirma el cobro en Duffel antes de emitir el billete", async () => {
+  const calls = [];
+  sale.__test.setTransport(async (url, options) => {
+    calls.push(`${options.method} ${url}`);
+    if (url.includes("offer_requests")) {
+      const origin = JSON.parse(options.body).data.slices[0].origin;
+      const row = origin === "MAD" ? offer({ id: "off_mad" }) : offer({ id: "off_bcn", airline: "U2", number: "808", amount: "20.00" });
+      return { status: 200, data: { data: { offers: [row] } } };
+    }
+    if (options.method === "POST" && url.endsWith("/payments/payment_intents")) {
+      return { status: 201, data: { data: { id: "pit_1", client_token: "client_tok", amount: JSON.parse(options.body).data.amount, currency: "EUR" } } };
+    }
+    if (options.method === "POST" && url.endsWith("/actions/confirm")) {
+      return { status: 200, data: { data: { id: "pit_1", status: "succeeded", amount: calls.amount, currency: "EUR", net_amount: calls.amount, net_currency: "EUR" } } };
+    }
+    if (url.endsWith("/air/orders")) {
+      const offerId = JSON.parse(options.body).data.selected_offers[0];
+      const payment = JSON.parse(options.body).data.payments[0];
+      assert.equal(payment.type, "balance");
+      return { status: 201, data: { data: { id: `ord_${offerId}`, booking_reference: "ABC123" } } };
+    }
+    throw new Error(`url no prevista ${url}`);
+  });
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  calls.amount = quote.charge;
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.status, "issued");
+  const confirmAt = calls.findIndex((c) => c.includes("/actions/confirm"));
+  const orderAt = calls.findIndex((c) => c.includes("/air/orders"));
+  assert.ok(confirmAt >= 0 && confirmAt < orderAt);
+  assert.equal(calls.filter((c) => c.startsWith("GET ") && c.includes("/payments/payment_intents/")).length, 0);
+});
+
+test("si Duffel no da el cobro por pagado no se emite el billete", async () => {
+  const tp = transportWith();
+  const base = tp.send;
+  sale.__test.setTransport(async (url, options) => {
+    if (options.method === "POST" && url.endsWith("/actions/confirm")) {
+      tp.calls.push(`${options.method} ${url}`);
+      return { status: 200, data: { data: { id: "pit_1", status: "requires_payment_method", amount: "1.00", currency: "EUR" } } };
+    }
+    return base(url, options);
+  });
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.code, "PAYMENT_NOT_CONFIRMED");
+  assert.equal(tp.calls.filter((c) => c.includes("/air/orders")).length, 0);
+});
+
+test("si la tasa se come la tarifa se devuelve el cobro y no se emite", async () => {
+  const calls = [];
+  sale.__test.setTransport(async (url, options) => {
+    calls.push(`${options.method} ${url}`);
+    if (url.includes("offer_requests")) {
+      const origin = JSON.parse(options.body).data.slices[0].origin;
+      const row = origin === "MAD" ? offer({ id: "off_mad" }) : offer({ id: "off_bcn", airline: "U2", number: "808", amount: "20.00" });
+      return { status: 200, data: { data: { offers: [row] } } };
+    }
+    if (options.method === "POST" && url.endsWith("/payments/payment_intents")) {
+      return { status: 201, data: { data: { id: "pit_1", client_token: "client_tok", amount: JSON.parse(options.body).data.amount, currency: "EUR" } } };
+    }
+    if (options.method === "POST" && url.endsWith("/actions/confirm")) {
+      return { status: 200, data: { data: { id: "pit_1", status: "succeeded", amount: calls.amount, currency: "EUR", net_amount: "1.00", net_currency: "EUR" } } };
+    }
+    if (options.method === "POST" && url.endsWith("/payments/refunds")) {
+      const body = JSON.parse(options.body).data;
+      return { status: 201, data: { data: { id: "ref_1", amount: body.amount, currency: body.currency } } };
+    }
+    throw new Error(`url no prevista ${url}`);
+  });
+  const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", airline: "U2", flightNumber: "808" })], TODAY);
+  calls.amount = quote.charge;
+  await sale.startPayment(quote.quoteId, peopleNamed(["Ruiz", "Sanz"]), "ana@example.com", "+34600111222");
+  const done = await sale.completeSale(quote.quoteId);
+  assert.equal(done.code, "SALE_REFUNDED");
+  assert.equal(done.refund.amount, quote.charge);
+  assert.equal(calls.filter((c) => c.includes("/air/orders")).length, 0);
+});
+
 });
