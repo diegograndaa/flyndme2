@@ -367,6 +367,28 @@ test("la página de pago lleva el botón de Ryanair y no pide sus datos", async 
   assert.ok(!html.includes('type="date"') && !html.includes("<input"));
 });
 
+test("el mostrador de pago dice quién cobra la tarjeta", async () => {
+  const { PaymentDesk } = await import("../src/components/CheckoutPage.jsx");
+  const { useI18n } = await import("../src/i18n/useI18n.jsx");
+  function Probe({ testMode }) {
+    const { t } = useI18n();
+    return React.createElement(PaymentDesk, { t, testMode }, "CARD");
+  }
+  const practice = render(React.createElement(Probe, { testMode: true }));
+  assert.ok(practice.includes("Card payment"));
+  assert.ok(practice.includes("Credit or debit card"));
+  assert.ok(practice.includes("Duffel processes the card number with Stripe"));
+  assert.ok(practice.includes("4242 4242 4242 4242"));
+  assert.ok(practice.includes("CARD</div>"));
+  assert.ok(!practice.includes("charged for real"));
+  const live = render(React.createElement(Probe, { testMode: false }));
+  assert.ok(live.includes("This card is charged for real."));
+  assert.ok(!live.includes("4242"));
+  const unknown = render(React.createElement(Probe, { testMode: null }));
+  assert.ok(!unknown.includes("4242"));
+  assert.ok(!unknown.includes("charged for real"));
+});
+
 test("la pestaña de pago no pinta un importe antes de leer la caja", async () => {
   const { default: CheckoutPage } = await import("../src/components/CheckoutPage.jsx");
   const html = render(React.createElement(CheckoutPage, { quoteId: "abcdefghijklmnop" }));
