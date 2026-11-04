@@ -78,6 +78,10 @@ function travellersOf(leg, people, cursor) {
   return { people: named, next: cursor + count };
 }
 
+export function SaleHomeLink({ t }) {
+  return <a className="wc-sale-btn caja-home" href={getBaseUrl()}>{t("results.saleHome")}</a>;
+}
+
 function flightCode(airlineName, airline, number) {
   const who = airlineName || airline || "";
   const num = number ? `${who ? " " : ""}${number}` : "";
@@ -213,6 +217,7 @@ export function SaleConfirmation({ quote, orders, people, testMode, emailSent, e
       {emailSent && <p className="caja-note" role="status">{t("results.saleEmailSent")}</p>}
       {emailCode === "MAIL_NOT_CONFIGURED" && <p className="caja-note" role="status">{t("results.saleEmailOff")}</p>}
       {emailCode === "MAIL_FAILED" && <p className="caja-note" role="alert">{t("results.saleEmailFailed")}</p>}
+      <SaleHomeLink t={t} />
     </section>
   );
 }
@@ -437,7 +442,8 @@ export default function CheckoutPage({ quoteId }) {
       <p className="caja-kicker">{t("results.saleDeskTitle")}</p>
       {phase === "loading" && <p className="caja-note" role="status">{t("results.salePaying")}</p>}
       {(missing || note) && phase !== "loading" && <p className="caja-note" role="alert">{note || t("results.saleDeskMissing")}</p>}
-      {ready && phase !== "issued" && (
+      {(phase === "error" || missing) && phase !== "loading" && <SaleHomeLink t={t} />}
+      {ready && phase !== "issued" && phase !== "error" && (
         <nav className="caja-steps" aria-label={t("results.saleDeskTitle")}>
           {steps.map(([id, label], i) => {
             const current = onStep === id;

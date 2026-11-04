@@ -25,8 +25,9 @@
 // v16: el pago es un mostrador, con el viaje y el total al lado de la tarjeta.
 // v17: la confirmación enseña cada vuelo, con hora, localizador y viajeros.
 // v18: la confirmación separa ida y vuelta, con llegada, pasajero y recibo.
+// v19: al terminar, o si el cobro no sale, se puede volver al inicio.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v18";
+const VERSION = "v19";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

@@ -428,6 +428,8 @@ test("la confirmación enseña el vuelo, la hora y el localizador", async () => 
   assert.ok(html.includes("Practice finished"));
   assert.ok(html.includes("ana@example.com"));
   assert.ok(html.includes("not connected"));
+  assert.ok(html.includes("Back to the start"));
+  assert.ok(html.includes('href="/"'));
   assert.ok(!html.includes("1255900000001"));
   const withTicket = render(React.createElement(Probe, { tickets: ["1255900000001"] }));
   assert.ok(withTicket.includes("1255900000001"));

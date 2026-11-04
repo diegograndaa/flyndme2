@@ -24,6 +24,8 @@ function quote() {
 }
 
 test("el correo de prueba no llama billete a un localizador y no cobra de verdad", () => {
+  const previousHome = process.env.FRONTEND_URL;
+  delete process.env.FRONTEND_URL;
   const message = saleMail.buildConfirmation({
     quote: quote(),
     orders: [
@@ -37,6 +39,7 @@ test("el correo de prueba no llama billete a un localizador y no cobra de verdad
   assert.match(message.text, /No se ha cobrado dinero real/);
   assert.match(message.text, /no es un billete de aerolínea/);
   assert.match(message.text, /MAD → OSL/);
+  assert.match(message.text, /Volver a FlyndMe: https:\/\/flyndme.com/);
   assert.match(message.text, /Llegada: 11:40/);
   assert.match(message.text, /Vuelta: 2026-12-20 · 18:40 – 21:05/);
   assert.match(message.text, /Ana Ruiz/);
@@ -46,6 +49,8 @@ test("el correo de prueba no llama billete a un localizador y no cobra de verdad
   assert.match(message.text, /Localizador: DEF456/);
   assert.match(message.text, /no ha devuelto un número de billete/);
   assert.equal(message.text.includes("4242"), false);
+  if (previousHome === undefined) delete process.env.FRONTEND_URL;
+  else process.env.FRONTEND_URL = previousHome;
 });
 
 test("el número de billete solo entra si Duffel lo ha devuelto", () => {

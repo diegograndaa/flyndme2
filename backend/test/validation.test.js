@@ -85,6 +85,93 @@ test("multi-origin: fecha a más de 360 días → DATE_TOO_FAR; vuelta ≤ ida �
   assert.equal(order.body.code, "INVALID_RETURN_DATE_ORDER");
 });
 
+test("las respuestas llevan CSP y no anuncian Express", async () => {
+  const r = await fetch(`${BASE}/api/ping`);
+  assert.equal(r.headers.get("x-powered-by"), null);
+  const csp = r.headers.get("content-security-policy") || "";
+  assert.ok(csp.includes("default-src 'none'"));
+  assert.ok(csp.includes("frame-ancestors 'none'"));
+  assert.ok(csp.includes("base-uri 'none'"));
+  assert.ok(csp.includes("form-action 'none'"));
+});
+
+test("group-sale: un id con HTML no se refleja y no abre la caja", async () => {
+  const r = await fetch(`${BASE}/api/flights/group-sale/desk/${encodeURIComponent("<script>alert(1)</script>")}`);
+  const text = await r.text();
+  assert.equal(r.status, 404);
+  assert.equal(text.includes("<script>"), false);
+  assert.equal(text.includes("alert(1)"), false);
+  const odd = await post("/api/flights/group-sale/complete", { quoteId: "../../etc/passwd", email: "evil@example.com" });
+  const oddText = JSON.stringify(odd.body);
+  assert.equal(oddText.includes("evil@example.com"), false);
+  assert.equal(oddText.includes("passwd"), false);
+});
+
+test("group-sale: la tarjeta y un importe distinto no vuelven en la respuesta", async () => {
+  const r = await post("/api/flights/group-sale/pay", {
+    quoteId: "abcdefghijklmnop",
+    charge: "0.01",
+    card: "4242424242424242",
+    passengers: [{ givenName: "<script>", familyName: "Ruiz", bornOn: "1990-04-02", gender: "f", title: "ms" }],
+    email: "ana@example.com\nBcc: evil@example.com",
+    phone: "+34600111222",
+  });
+  const text = JSON.stringify(r.body);
+  assert.equal(text.includes("4242"), false);
+  assert.equal(text.includes("0.01"), false);
+  assert.equal(text.includes("<script>"), false);
+  assert.equal(text.includes("1990-04-02"), false);
+  assert.equal(text.includes("evil@example.com"), false);
+  assert.equal(text.includes("Bcc"), false);
+});
+
+test("la cuenta no devuelve la contraseña y una sesión no abre otra", async () => {
+  const email = `sec-${Date.now()}@example.com`;
+  const password = "correct-horse";
+  const created = await post("/api/auth/register", { email, password, name: "Ana<script>" });
+  assert.equal(created.status, 201);
+  const raw = JSON.stringify(created.body);
+  assert.equal(raw.includes(password), false);
+  assert.equal(raw.includes("\"salt\""), false);
+  assert.equal(raw.includes("\"hash\""), false);
+  assert.equal(raw.includes("<script>"), false);
+  assert.equal(created.body.user.name, "Anascript");
+  assert.match(created.body.token, /^[A-Za-z0-9_-]{20,}$/);
+
+  const missing = await post("/api/auth/login", { email: "nobody-here@example.com", password });
+  const wrong = await post("/api/auth/login", { email, password: "wrong-password-1" });
+  assert.equal(missing.status, 401);
+  assert.equal(wrong.status, 401);
+  assert.equal(missing.body.code, "AUTH_INVALID");
+  assert.equal(wrong.body.code, "AUTH_INVALID");
+  assert.equal(JSON.stringify(missing.body).includes(password), false);
+
+  const me = await fetch(`${BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${created.body.token}` } });
+  assert.equal(me.status, 200);
+  const short = await fetch(`${BASE}/api/auth/me`, { headers: { Authorization: "Bearer short" } });
+  assert.equal(short.status, 401);
+  const query = await fetch(`${BASE}/api/auth/me?token=${encodeURIComponent(created.body.token)}`);
+  assert.equal(query.status, 401);
+
+  const other = await post("/api/auth/register", {
+    email: `other-${Date.now()}@example.com`,
+    password,
+    favorites: [{ code: "MAD", city: "Madrid", price: 10, ts: 1 }],
+  });
+  assert.equal(other.status, 201);
+  const mine = await (await fetch(`${BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${created.body.token}` } })).json();
+  assert.equal(JSON.stringify(mine).includes("\"MAD\""), false);
+
+  const gone = await fetch(`${BASE}/api/auth/logout`, { method: "POST", headers: { Authorization: `Bearer ${created.body.token}` } });
+  assert.equal(gone.status, 204);
+  const after = await fetch(`${BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${created.body.token}` } });
+  assert.equal(after.status, 401);
+
+  const social = await post("/api/auth/social", { provider: "google", credential: "no-es-un-token" });
+  assert.ok(social.body.code === "AUTH_PROVIDER_OFF" || social.body.code === "AUTH_PROVIDER_FAILED");
+  assert.equal(JSON.stringify(social.body).includes("no-es-un-token"), false);
+});
+
 test("cuerpo > 128 KB → 413 PAYLOAD_TOO_LARGE; JSON roto → 400 INVALID_JSON", async () => {
   const big = await post("/api/flights/multi-origin", null, JSON.stringify({ origins: ["MAD"], pad: "x".repeat(140 * 1024) }));
   assert.equal(big.status, 413);
