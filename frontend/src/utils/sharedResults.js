@@ -9,22 +9,31 @@ const num = (v) => {
   return undefined;
 };
 
+function iata(raw) {
+  const code = String(raw || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : "";
+}
+
 function normalizeLeg(l) {
-  if (!l || typeof l !== "object" || typeof l.origin !== "string") return null;
+  if (!l || typeof l !== "object") return null;
+  const origin = iata(l.origin);
+  if (!origin) return null;
   const price = num(l.price);
   if (price === undefined || price <= 0) return null;
   const passengers = Math.max(1, Math.floor(num(l.passengers) ?? 1));
-  const out = { ...l, origin: l.origin.toUpperCase(), price, passengers };
+  const out = { ...l, origin, price, passengers };
   const tfo = num(l.totalForOrigin);
   out.totalForOrigin = tfo !== undefined ? tfo : Number((price * passengers).toFixed(2));
   return out;
 }
 
 export function normalizeDestination(d) {
-  if (!d || typeof d !== "object" || typeof d.destination !== "string") return null;
+  if (!d || typeof d !== "object") return null;
+  const destination = iata(d.destination);
+  if (!destination) return null;
   const totalCostEUR = num(d.totalCostEUR);
   if (totalCostEUR === undefined || totalCostEUR <= 0) return null;
-  const out = { ...d, totalCostEUR };
+  const out = { ...d, destination, totalCostEUR };
   for (const k of ["averageCostPerTraveler", "fairnessScore", "priceSpread", "totalPassengers"]) {
     const v = num(d[k]);
     if (v === undefined) delete out[k]; else out[k] = v;

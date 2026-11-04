@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   AIRPORTS, AIRPORT_MAP, MULTI_AIRPORT, airportName, getBaseUrl,
-  normalizeCode, cityOf, destLabel, formatEur, formatDate, weekdayOf,
+  normalizeCode, cityOf, destLabel, jsonForScript, formatEur, formatDate, weekdayOf,
   todayISO, buildSkyscannerUrl, buildGoogleFlightsUrl, fairnessColor,
   countryFlag, destQuickInfo, setCityLang, countryOf,
   SEARCH_POOL, nextDestSelection, sameCodeSet,
@@ -195,6 +195,18 @@ test("searchAirports: país, exclusiones y límite", async () => {
   assert.deepEqual(searchAirports("   "), []);
   assert.deepEqual(searchAirports("zzzz"), []);
   for (const c of POPULAR_ORIGINS) assert.ok(AIRPORT_MAP[c], `popular desconocido: ${c}`);
+});
+
+test("jsonForScript: un texto no puede cerrar la etiqueta script", () => {
+  const html = jsonForScript({ name: "</script><script>alert(1)</script>", amp: "a&b" });
+  assert.equal(html.includes("<"), false);
+  assert.equal(html.includes(">"), false);
+  assert.equal(html.includes("&"), false);
+  assert.match(html, /\\u003c/);
+  assert.deepEqual(JSON.parse(html), {
+    name: "</script><script>alert(1)</script>",
+    amp: "a&b",
+  });
 });
 
 test("cityOf / countryOf: nombres en el idioma de la interfaz", () => {

@@ -26,6 +26,18 @@ test("sharedResults: tramos sin precio válido se descartan; pasajeros mínimo 1
   assert.deepEqual(d.flights.map((f) => [f.origin, f.passengers]), [["BER", 1]]);
 });
 
+test("sharedResults: un destino que no es un código IATA se descarta", () => {
+  const hostile = "</script><script>alert(1)</script>";
+  assert.deepEqual(normalizeSharedFlights([
+    { destination: hostile, totalCostEUR: 10, flights: [{ origin: "MAD", price: 10, passengers: 1 }] },
+    { destination: "PAR", totalCostEUR: 20, flights: [{ origin: hostile, price: 20, passengers: 1 }, { origin: "lon", price: 20, passengers: 1 }] },
+  ]), [{
+    destination: "PAR",
+    totalCostEUR: 20,
+    flights: [{ origin: "LON", price: 20, passengers: 1, totalForOrigin: 20 }],
+  }]);
+});
+
 test("sharedResults: datos correctos no cambian", () => {
   const ok = { destination: "PAR", totalCostEUR: 200, averageCostPerTraveler: 100, fairnessScore: 90, flights: [{ origin: "MAD", price: 100, passengers: 1, totalForOrigin: 100, offer: { id: "x" } }] };
   assert.deepEqual(normalizeDestination(ok), ok);

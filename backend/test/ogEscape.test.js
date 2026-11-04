@@ -34,6 +34,9 @@ test("share /og: destino, orígenes y totales guardados por el cliente salen esc
   const html = await (await fetch(`${BASE}/api/share/${id}/og`)).text();
   assert.ok(!/<script>alert/i.test(html), "sin <script> inyectado");
   assert.ok(!/content="[^"]*"><script/i.test(html), "sin romper atributos");
+  const stored = await (await fetch(`${BASE}/api/share/${id}`)).json();
+  assert.equal(JSON.stringify(stored).includes("<"), false);
+  assert.equal(JSON.stringify(stored).includes(">"), false);
 });
 
 test("groups /og: orígenes y nombres de los miembros salen escapados", async () => {
@@ -42,4 +45,8 @@ test("groups /og: orígenes y nombres de los miembros salen escapados", async ()
   const html = await (await fetch(`${BASE}/api/groups/${id}/og`)).text();
   assert.ok(!/<script>alert/i.test(html));
   assert.ok(!/content="[^"]*"><script/i.test(html));
+  const stored = await (await fetch(`${BASE}/api/groups/${id}`)).json();
+  assert.equal(JSON.stringify(stored).includes("<"), false);
+  assert.match(stored.members[0].origin, /script/);
+  assert.match(stored.members[0].name, /script/);
 });

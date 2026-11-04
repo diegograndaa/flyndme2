@@ -28,6 +28,34 @@ function generateId() {
   return crypto.randomBytes(6).toString("base64url"); // ~8 chars, URL-safe
 }
 
+// El cliente es quien guarda el resultado. Un texto con < o un salto de línea
+// no se almacena: luego se pinta en HTML (la tarjeta OG) y en la página.
+function scrubValue(value, depth) {
+  if (depth > 20) return null;
+  if (typeof value === "string") return value.replace(/[<>\u0000-\u001f\u2028\u2029]/g, "");
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "boolean" || value == null) return value;
+  if (Array.isArray(value)) return value.map((item) => scrubValue(item, depth + 1));
+  if (typeof value === "object") {
+    const out = {};
+    for (const key of Object.keys(value)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      out[key] = scrubValue(value[key], depth + 1);
+    }
+    return out;
+  }
+  return null;
+}
+
+function cleanEntry(entry) {
+  if (!entry || typeof entry !== "object") return entry;
+  return {
+    ...entry,
+    results: scrubValue(entry.results, 0),
+    searchParams: scrubValue(entry.searchParams, 0),
+  };
+}
+
 // Limite especifico de creacion de shares: sin el, un bucle trivial podia
 // llenar el store en memoria (MAX_SHARES x MAX_PAYLOAD_KB) y expulsar los
 // links legitimos de otros usuarios. La lectura (GET) no se limita aqui.
@@ -59,9 +87,10 @@ router.post("/", createShareLimiter, asyncH(async (req, res) => {
     }
 
     const id = generateId();
+    const clean = cleanEntry({ results, searchParams });
     await store.set(id, {
-      results,
-      searchParams,
+      results: clean.results,
+      searchParams: clean.searchParams,
       createdAt: Date.now(),
       expiresAt: Date.now() + SHARE_TTL_MS,
     });
@@ -107,7 +136,7 @@ function escapeHtml(s) {
 router.get("/:id/og", asyncH(async (req, res) => {
   const { id } = req.params;
   if (!SHARE_ID_RE.test(id)) return res.redirect(302, FRONTEND_URL);
-  const entry = await store.get(id);
+  const entry = cleanEntry(await store.get(id));
 
   if (!entry || Date.now() > entry.expiresAt) {
     return res.redirect(302, FRONTEND_URL);
@@ -179,16 +208,17 @@ router.get("/:id", asyncH(async (req, res) => {
     return res.status(404).json({ code: "NOT_FOUND", message: "Share link not found or expired." });
   }
 
-  const entry = await store.get(id);
-  if (!entry) {
+  const stored = await store.get(id);
+  if (!stored) {
     return res.status(404).json({ code: "NOT_FOUND", message: "Share link not found or expired." });
   }
 
-  if (Date.now() > entry.expiresAt) {
+  if (Date.now() > stored.expiresAt) {
     await store.delete(id);
     return res.status(410).json({ code: "EXPIRED", message: "Share link has expired." });
   }
 
+  const entry = cleanEntry(stored);
   // Alguien abrió un ?share= y el SPA está cargando los datos = visita real.
   // (Los crawlers piden /og, no /:id, así que esto no los cuenta.)
   counters.incr("share_landing");

@@ -72,14 +72,18 @@ function generateId() {
 
 // Sanitize one member into { origin, passengers, name } or null if invalid.
 // Exported so it can be unit-tested without spinning up the server.
+function plainText(raw, max) {
+  return String(raw == null ? "" : raw).replace(/[<>\u0000-\u001f\u2028\u2029]/g, "").trim().slice(0, max);
+}
+
 function cleanMember(m) {
   if (!m || typeof m !== "object") return null;
-  const origin = String(m.origin == null ? "" : m.origin).trim().slice(0, MAX_ORIGIN_LEN);
+  const origin = plainText(m.origin, MAX_ORIGIN_LEN);
   if (!origin) return null;
   let pax = Math.floor(Number(m.passengers));
   if (!Number.isFinite(pax) || pax < 1) pax = 1;
   if (pax > MAX_MEMBERS) pax = MAX_MEMBERS;
-  const name = String(m.name == null ? "" : m.name).trim().slice(0, MAX_NAME_LEN);
+  const name = plainText(m.name, MAX_NAME_LEN);
   return { origin, passengers: pax, name };
 }
 
