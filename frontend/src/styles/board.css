@@ -2578,6 +2578,29 @@ button,
   max-width: 720px; padding: 0; background: transparent; border: 0;
 }
 .caja-done-title { margin: 0 0 16px; font-size: 26px; font-weight: 700; line-height: 1.2; color: var(--navy); }
+.caja-done-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.caja-res { margin: 0; flex: 0 0 auto; text-align: right; }
+.caja-res span {
+  display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--slate-500); white-space: nowrap;
+}
+.caja-res strong { font-family: var(--font-mono); font-size: 28px; letter-spacing: .08em; color: var(--navy); }
+.caja-res--in { margin-bottom: 12px; text-align: left; }
+.caja-dirs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.caja-dirs--one { grid-template-columns: 1fr; }
+.caja-dir {
+  padding: 16px; border: 1px solid var(--card-line); border-radius: 8px;
+  background: var(--panel-stub); color: var(--navy);
+}
+.caja-dir-title { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.caja-dir-route { margin: 0; font-size: 15px; }
+.caja-dir p { margin: 6px 0 0; font-size: 14px; line-height: 1.4; }
+.caja-dir-codes { font-family: var(--font-mono); font-weight: 700; }
+.caja-pax h2, .caja-receipt-title { margin: 16px 0 8px; font-size: 16px; font-weight: 700; color: var(--navy); }
+.caja-pax ul { margin: 0; padding: 0; list-style: none; }
+.caja-pax li { font-size: 16px; font-weight: 700; color: var(--navy); }
+.caja-pax p, .caja-ticket-line { margin: 4px 0 0; font-family: var(--font-mono); font-size: 14px; color: var(--navy); }
+.caja-receipt-lines { margin-top: 0; }
 .caja-confirm { display: grid; gap: 12px; }
 .caja-confirm-flight {
   padding: 22px 20px 16px;
@@ -2631,6 +2654,10 @@ button,
   .caja-confirm-grid { grid-template-columns: 1fr; }
   .caja-confirm-grid dd.caja-confirm-ref { font-size: 24px; }
   .caja-done-title { font-size: 22px; }
+  .caja-done-top { flex-direction: column; }
+  .caja-res, .caja-res strong { text-align: left; }
+  .caja-res strong { font-size: 24px; }
+  .caja-dirs { grid-template-columns: 1fr; }
 }
 .wc-sale-form { display: grid; gap: 10px; margin-top: 12px; }
 .wc-sale-person {

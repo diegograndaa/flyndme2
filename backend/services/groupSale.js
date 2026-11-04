@@ -183,19 +183,34 @@ function clockOf(value) {
   return text.length >= 16 ? text.slice(11, 16) : "";
 }
 
+function sliceTrip(slice) {
+  const segments = Array.isArray(slice?.segments) ? slice.segments : [];
+  const first = segments[0] || {};
+  const last = segments[segments.length - 1] || {};
+  return {
+    airline: String(first.marketing_carrier?.iata_code || "").toUpperCase(),
+    airlineName: String(first.marketing_carrier?.name || "").trim(),
+    flightNumber: String(first.marketing_carrier_flight_number || "").replace(/\s+/g, ""),
+    departsAt: clockOf(first.departing_at),
+    arrivesAt: clockOf(last.arriving_at),
+  };
+}
+
 function describeOffer(offer) {
   const slices = Array.isArray(offer?.slices) ? offer.slices : [];
-  const seg = slices[0]?.segments?.[0] || {};
-  const back = slices[1]?.segments?.[0] || {};
-  const airline = String(seg.marketing_carrier?.iata_code || "").toUpperCase();
-  const airlineName = String(seg.marketing_carrier?.name || "").trim();
-  const flightNumber = String(seg.marketing_carrier_flight_number || "").replace(/\s+/g, "");
+  const out = sliceTrip(slices[0]);
+  const back = sliceTrip(slices[1]);
   return {
-    airline,
-    airlineName,
-    flightNumber,
-    departsAt: clockOf(seg.departing_at),
-    returnDepartsAt: clockOf(back.departing_at),
+    airline: out.airline,
+    airlineName: out.airlineName,
+    flightNumber: out.flightNumber,
+    departsAt: out.departsAt,
+    arrivesAt: out.arrivesAt,
+    returnDepartsAt: back.departsAt,
+    returnArrivesAt: back.arrivesAt,
+    returnAirline: back.airline,
+    returnAirlineName: back.airlineName,
+    returnFlightNumber: back.flightNumber,
   };
 }
 
@@ -395,7 +410,12 @@ async function quoteLegs(rawLegs, today) {
       airlineName: described.airlineName,
       flightNumber: described.flightNumber || leg.flightNumber,
       departsAt: described.departsAt,
+      arrivesAt: described.arrivesAt,
       returnDepartsAt: described.returnDepartsAt,
+      returnArrivesAt: described.returnArrivesAt,
+      returnAirline: described.returnAirline,
+      returnAirlineName: described.returnAirlineName,
+      returnFlightNumber: described.returnFlightNumber,
       sameFlight: chosen.sameFlight,
       departureDate: leg.departureDate,
       returnDate: leg.returnDate || null,
@@ -447,7 +467,11 @@ function publicView(quote, extra = {}) {
     contactEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) ? contactEmail : "",
     legs: quote.legs.map((leg) => {
       const count = Number(leg.passengers) || 0;
-      const names = travelers.slice(nameCursor, nameCursor + count).map(personName).filter(Boolean);
+      const named = travelers.slice(nameCursor, nameCursor + count).map((person) => {
+        const name = personName(person);
+        const title = String(person?.title || "").toLowerCase();
+        return name ? { name, title: ["mr", "mrs", "ms", "miss", "dr"].includes(title) ? title : "" } : null;
+      }).filter(Boolean);
       nameCursor += count;
       return {
         origin: leg.origin,
@@ -456,12 +480,18 @@ function publicView(quote, extra = {}) {
         airlineName: leg.airlineName || "",
         flightNumber: leg.flightNumber,
         departsAt: leg.departsAt || "",
+        arrivesAt: leg.arrivesAt || "",
         returnDepartsAt: leg.returnDepartsAt || "",
+        returnArrivesAt: leg.returnArrivesAt || "",
+        returnAirline: leg.returnAirline || "",
+        returnAirlineName: leg.returnAirlineName || "",
+        returnFlightNumber: leg.returnFlightNumber || "",
         sameFlight: leg.sameFlight === true,
         departureDate: leg.departureDate,
         returnDate: leg.returnDate || "",
         passengers: leg.passengers,
-        names,
+        names: named.map((person) => person.name),
+        titles: named.map((person) => person.title),
         fare: euros(leg.fare),
         commission: euros(leg.commission),
         cardFee: euros(leg.cardFee),

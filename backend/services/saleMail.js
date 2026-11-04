@@ -45,7 +45,11 @@ function flightLines(quote, orders, lang) {
     const route = `${leg.origin || order.origin || "—"} → ${leg.destination || "—"}`;
     lines.push(route);
     if (when || flight) lines.push([when, flight].filter(Boolean).join(" · "));
-    if (back) lines.push(lang === "en" ? `Return: ${back}` : `Vuelta: ${back}`);
+    if (leg.arrivesAt) lines.push(lang === "en" ? `Arrival: ${leg.arrivesAt}` : `Llegada: ${leg.arrivesAt}`);
+    if (back) {
+      const landed = leg.returnArrivesAt ? ` – ${leg.returnArrivesAt}` : "";
+      lines.push(lang === "en" ? `Return: ${back}${landed}` : `Vuelta: ${back}${landed}`);
+    }
     if (names.length) {
       lines.push(lang === "en" ? `Travellers: ${names.join(", ")}` : `Viajeros: ${names.join(", ")}`);
     }
