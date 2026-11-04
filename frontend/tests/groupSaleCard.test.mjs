@@ -397,10 +397,11 @@ test("la confirmación enseña el vuelo, la hora y el localizador", async () => 
     charge: "46.11",
     contactEmail: "ana@example.com",
     legs: [{
-      origin: "ORY", destination: "LIS", departureDate: "2026-12-15", departsAt: "08:30",
-      returnDate: "2026-12-20", returnDepartsAt: "18:40",
+      origin: "ORY", destination: "LIS", departureDate: "2026-12-15", departsAt: "08:30", arrivesAt: "10:55",
+      returnDate: "2026-12-20", returnDepartsAt: "18:40", returnArrivesAt: "20:10",
+      returnAirline: "TP", returnAirlineName: "TAP", returnFlightNumber: "1011",
       airline: "TP", airlineName: "TAP", flightNumber: "1010", passengers: 1,
-      names: ["Ana Ruiz"], charge: "46.11",
+      names: ["Ana Ruiz"], titles: ["mr"], charge: "46.11",
     }],
   };
   function Probe({ tickets }) {
@@ -414,9 +415,15 @@ test("la confirmación enseña el vuelo, la hora y el localizador", async () => 
   assert.ok(html.includes("ORY"));
   assert.ok(html.includes("LIS"));
   assert.ok(html.includes("08:30"));
+  assert.ok(html.includes("10:55"));
   assert.ok(html.includes("18:40"));
+  assert.ok(html.includes("20:10"));
   assert.ok(html.includes("TAP 1010"));
-  assert.ok(html.includes("Ana Ruiz"));
+  assert.ok(html.includes("TAP 1011"));
+  assert.ok(html.includes("Mr Ana Ruiz"));
+  assert.ok(html.includes("Flight information"));
+  assert.ok(html.includes("Arrival"));
+  assert.ok(html.includes("Receipt"));
   assert.ok(html.includes("F74CHC"));
   assert.ok(html.includes("Practice finished"));
   assert.ok(html.includes("ana@example.com"));

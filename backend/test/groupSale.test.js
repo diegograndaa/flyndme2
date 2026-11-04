@@ -20,6 +20,7 @@ function offer({ id = "off_mad", amount = "41.00", airline = "VY", number = "123
       marketing_carrier: { iata_code: airline },
       marketing_carrier_flight_number: number,
       departing_at: `${date}T08:30:00`,
+      arriving_at: `${date}T10:55:00`,
     }],
   }];
   if (back) {
@@ -552,6 +553,8 @@ test("al emitir, el correo de prueba lleva el localizador de cada vuelo", async 
     assert.match(seen[0].text, /no ha devuelto un número de billete/);
     const desk = await sale.publicQuote(quote.quoteId);
     assert.equal(desk.legs[0].departsAt, "08:30");
+    assert.equal(desk.legs[0].arrivesAt, "10:55");
+    assert.deepEqual(desk.legs[0].titles, ["ms"]);
     assert.equal(desk.legs[0].destination, "LTN");
     assert.deepEqual(desk.legs[0].names, ["Ana Ruiz"]);
     assert.deepEqual(desk.legs[1].names, ["Ana Sanz"]);

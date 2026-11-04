@@ -61,14 +61,40 @@ export function PaymentDesk({ t, testMode, busy = false, children }) {
   );
 }
 
-function namesFor(leg, people, cursor) {
-  const fromQuote = Array.isArray(leg?.names) ? leg.names.filter(Boolean) : [];
-  if (fromQuote.length) return { names: fromQuote, next: cursor + (Number(leg?.passengers) || fromQuote.length) };
+function travellersOf(leg, people, cursor) {
   const count = Number(leg?.passengers) || 0;
-  const names = (people || []).slice(cursor, cursor + count)
-    .map((person) => `${person.givenName || ""} ${person.familyName || ""}`.trim())
-    .filter(Boolean);
-  return { names, next: cursor + count };
+  const quoted = Array.isArray(leg?.names) ? leg.names.filter(Boolean) : [];
+  const titles = Array.isArray(leg?.titles) ? leg.titles : [];
+  if (quoted.length) {
+    return {
+      people: quoted.map((name, i) => ({ name, title: titles[i] || "" })),
+      next: cursor + (count || quoted.length),
+    };
+  }
+  const named = (people || []).slice(cursor, cursor + count).map((person) => ({
+    name: `${person.givenName || ""} ${person.familyName || ""}`.trim(),
+    title: person.title || "",
+  })).filter((person) => person.name);
+  return { people: named, next: cursor + count };
+}
+
+function flightCode(airlineName, airline, number) {
+  const who = airlineName || airline || "";
+  const num = number ? `${who ? " " : ""}${number}` : "";
+  return `${who}${num}`.trim();
+}
+
+function DirectionCard({ city, route, date, departs, arrives, flight, fromCode, toCode, t }) {
+  return (
+    <div className="caja-dir">
+      <p className="caja-dir-title">{`${t("results.saleTo", { city })} ${flight}`.trim()}</p>
+      {route && <p className="caja-dir-route">{route}</p>}
+      {date && <p>{date}</p>}
+      {departs && <p><span>{t("results.saleDepartTime")}</span>{` ${departs}`}</p>}
+      {arrives && <p><span>{t("results.saleArrive")}</span>{` ${arrives}`}</p>}
+      <p className="caja-dir-codes">{`(${fromCode}) – (${toCode})`}</p>
+    </div>
+  );
 }
 
 export function SaleConfirmation({ quote, orders, people, testMode, emailSent, emailCode, t }) {
@@ -76,13 +102,14 @@ export function SaleConfirmation({ quote, orders, people, testMode, emailSent, e
   const list = Array.isArray(orders) ? orders : [];
   let cursor = 0;
   const rows = (quote?.legs || []).map((leg, index) => {
-    const named = namesFor(leg, people, cursor);
+    const named = travellersOf(leg, people, cursor);
     cursor = named.next;
     const order = list[index] && list[index].origin === leg.origin
       ? list[index]
       : list.find((item) => item.origin === leg.origin) || null;
-    return { leg, names: named.names, order };
+    return { leg, people: named.people, order };
   });
+  const refs = rows.map((row) => row.order?.bookingReference).filter(Boolean);
   const amountLabel = testMode === true
     ? t("results.saleTestAmount")
     : testMode === false
@@ -93,68 +120,91 @@ export function SaleConfirmation({ quote, orders, people, testMode, emailSent, e
     : testMode === false
       ? t("results.saleConfirmed")
       : t("results.saleRecorded");
+  const titled = (person) => {
+    const prefix = person.title ? t(`results.saleTitle_${person.title}`) : "";
+    return prefix ? `${prefix} ${person.name}` : person.name;
+  };
   return (
     <section className="caja-done">
-      <p className="caja-kicker">{t("results.saleDoneKicker")}</p>
-      <h1 className="caja-done-title" role="status">{headline}</h1>
+      <header className="caja-done-top">
+        <div>
+          <p className="caja-kicker">{t("results.saleFlightInfo")}</p>
+          <h1 className="caja-done-title" role="status">{headline}</h1>
+        </div>
+        {refs.length === 1 && (
+          <p className="caja-res">
+            <span>{t("results.saleReservation")}</span>
+            <strong>{refs[0]}</strong>
+          </p>
+        )}
+      </header>
       <div className="caja-confirm">
-        {rows.map(({ leg, names, order }) => {
-          const bits = flightBits(leg);
+        {rows.map(({ leg, people: travellers, order }) => {
           const fromCity = cityOf(leg.origin);
           const toCity = cityOf(leg.destination);
+          const outFlight = flightCode(leg.airlineName, leg.airline, leg.flightNumber);
+          const backFlight = flightCode(leg.returnAirlineName || leg.airlineName, leg.returnAirline || leg.airline, leg.returnFlightNumber);
+          const hasReturn = Boolean(leg.returnDate || leg.returnDepartsAt || leg.returnArrivesAt);
           const ref = order?.bookingReference || "";
           const tickets = Array.isArray(order?.tickets) ? order.tickets.filter(Boolean) : [];
-          const back = [formatDate(leg.returnDate), leg.returnDepartsAt].filter(Boolean).join(" · ");
           return (
             <article key={`${leg.origin}-${leg.flightNumber || ""}-${leg.departureDate || ""}`} className="caja-confirm-flight">
-              <div className="caja-itin-ends">
-                <div className="caja-itin-end">
-                  <span className="caja-itin-code">{leg.origin}</span>
-                  {fromCity && <span className="caja-itin-city">{fromCity}</span>}
-                </div>
-                <div className="caja-itin-mid" aria-hidden="true">
-                  <span className="caja-itin-rule" />
-                  {bits.time && <span className="caja-itin-time">{bits.time}</span>}
-                  <span className="caja-itin-rule" />
-                </div>
-                <div className="caja-itin-end caja-itin-end--arr">
-                  <span className="caja-itin-code">{leg.destination}</span>
-                  {toCity && <span className="caja-itin-city">{toCity}</span>}
-                </div>
+              {refs.length !== 1 && (
+                <p className="caja-res caja-res--in">
+                  <span>{t("results.saleReservation")}</span>
+                  <strong>{ref || "—"}</strong>
+                </p>
+              )}
+              <div className={hasReturn ? "caja-dirs" : "caja-dirs caja-dirs--one"}>
+                <DirectionCard
+                  t={t}
+                  city={toCity || leg.destination}
+                  route={[fromCity, toCity].filter(Boolean).join(" – ")}
+                  date={formatDate(leg.departureDate)}
+                  departs={leg.departsAt}
+                  arrives={leg.arrivesAt}
+                  flight={outFlight}
+                  fromCode={leg.origin}
+                  toCode={leg.destination}
+                />
+                {hasReturn && (
+                  <DirectionCard
+                    t={t}
+                    city={fromCity || leg.origin}
+                    route={[toCity, fromCity].filter(Boolean).join(" – ")}
+                    date={formatDate(leg.returnDate)}
+                    departs={leg.returnDepartsAt}
+                    arrives={leg.returnArrivesAt}
+                    flight={leg.returnFlightNumber ? backFlight : ""}
+                    fromCode={leg.destination}
+                    toCode={leg.origin}
+                  />
+                )}
               </div>
-              <dl className="caja-confirm-grid">
-                {leg.departureDate && (
-                  <div><dt>{t("results.saleWhen")}</dt><dd>{formatDate(leg.departureDate)}</dd></div>
-                )}
-                {bits.time && (
-                  <div><dt>{t("results.saleDepart")}</dt><dd>{bits.time}</dd></div>
-                )}
-                {bits.line && (
-                  <div><dt>{t("results.saleFlight")}</dt><dd>{bits.line}</dd></div>
-                )}
-                {back && (
-                  <div><dt>{t("results.saleReturn")}</dt><dd>{back}</dd></div>
-                )}
-                {names.length > 0 && (
-                  <div className="caja-confirm-wide"><dt>{t("results.saleStepPeople")}</dt><dd>{names.join(", ")}</dd></div>
-                )}
-                <div className="caja-confirm-wide">
-                  <dt>{t("results.saleLocatorLabel")}</dt>
-                  <dd className="caja-confirm-ref">{ref || "—"}</dd>
+              {travellers.length > 0 && (
+                <div className="caja-pax">
+                  <h2>{t("results.saleStepPeople")}</h2>
+                  <ul>
+                    {travellers.map((person) => <li key={person.name}>{titled(person)}</li>)}
+                  </ul>
+                  {outFlight && <p>{`${t("results.saleOutbound")} ${outFlight}`}</p>}
+                  {hasReturn && leg.returnFlightNumber && <p>{`${t("results.saleReturn")} ${backFlight}`}</p>}
                 </div>
-                {tickets.map((ticket) => (
-                  <div key={ticket} className="caja-confirm-wide">
-                    <dt>{t("results.saleTicketWord")}</dt>
-                    <dd className="caja-confirm-ref">{ticket}</dd>
-                  </div>
-                ))}
-                <div><dt>{t("results.saleAmount")}</dt><dd>{money(leg.charge)}</dd></div>
-              </dl>
+              )}
+              {tickets.length > 0 && (
+                <p className="caja-ticket-line">{tickets.map((ticket) => t("results.saleTicketLine", { ticket })).join(" · ")}</p>
+              )}
               {leg.sameFlight === false && <p className="caja-note">{t("results.saleOtherFlight")}</p>}
             </article>
           );
         })}
       </div>
+      <h2 className="caja-receipt-title">{t("results.saleReceipt")}</h2>
+      <dl className="caja-lines caja-receipt-lines">
+        {quote.fare != null && <div><dt>{t("results.saleFare")}</dt><dd>{money(quote.fare)}</dd></div>}
+        {quote.commission != null && <div><dt>{t("results.saleFee", { pct: quote.markupPercent })}</dt><dd>{money(quote.commission)}</dd></div>}
+        {quote.cardFee != null && <div><dt>{t("results.salePayCardCost")}</dt><dd>{money(quote.cardFee)}</dd></div>}
+      </dl>
       <div className="caja-paid">
         <p className="caja-amount-label">{amountLabel}</p>
         <p className="caja-amount">{money(quote.charge)}</p>
