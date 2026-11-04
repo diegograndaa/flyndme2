@@ -182,4 +182,52 @@ describe("seguridad de la caja", { concurrency: 1 }, () => {
       else process.env.FRONTEND_URL = previous;
     }
   });
+
+  test("dos cobros a la vez abren un solo pago y emiten una sola vez", async () => {
+    let amount = null;
+    let intentPosts = 0;
+    let orderPosts = 0;
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    sale.__test.setTransport(async (url, options) => {
+      if (url.includes("offer_requests")) {
+        const origin = JSON.parse(options.body).data.slices[0].origin;
+        return { status: 200, data: { data: { offers: [offer(origin)] } } };
+      }
+      if (options.method === "POST" && url.endsWith("/payments/payment_intents")) {
+        intentPosts += 1;
+        amount = JSON.parse(options.body).data.amount;
+        await gate;
+        return { status: 201, data: { data: { id: "pit_lock", client_token: "client_tok", amount, currency: "EUR", live_mode: false } } };
+      }
+      if (url.includes("/payments/payment_intents/pit_lock")) {
+        return { status: 200, data: { data: { id: "pit_lock", status: "succeeded", amount, currency: "EUR" } } };
+      }
+      if (url.endsWith("/air/orders")) {
+        orderPosts += 1;
+        return { status: 201, data: { data: { id: `ord_${orderPosts}`, booking_reference: "ABC123" } } };
+      }
+      throw new Error(`url no prevista ${url}`);
+    });
+    const quote = await sale.quoteLegs(legs(), TODAY);
+    const people = [person(), person({ familyName: "Sanz" })];
+    const first = sale.startPayment(quote.quoteId, people, "ana@example.com", "+34600111222");
+    const second = sale.startPayment(quote.quoteId, people, "ana@example.com", "+34600111222");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    assert.equal(intentPosts, 1);
+    release();
+    const [a, b] = await Promise.all([first, second]);
+    assert.equal(a.ok, true);
+    assert.equal(b.clientToken, a.clientToken);
+    assert.equal(intentPosts, 1);
+    const [doneA, doneB] = await Promise.all([
+      sale.completeSale(quote.quoteId),
+      sale.completeSale(quote.quoteId),
+    ]);
+    assert.equal(doneA.status, "issued");
+    assert.equal(doneB.status, "issued");
+    assert.equal(orderPosts, 2);
+    assert.equal(doneA.orders.length, 2);
+    assert.equal(doneB.orders.length, 2);
+  });
 });

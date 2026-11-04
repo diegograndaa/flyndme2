@@ -566,7 +566,26 @@ function normalizeTraveler(raw, email, phone) {
   return { traveler: { given_name, family_name, born_on, gender, title, email, phone_number: phone } };
 }
 
+// Dos peticiones del mismo presupuesto no pueden crear dos cobros ni emitir
+// dos veces: la segunda espera y relee el presupuesto ya guardado.
+const saleLocks = new Map();
+function withSaleLock(id, fn) {
+  const prev = saleLocks.get(id) || Promise.resolve();
+  const run = prev.then(fn, fn);
+  const tail = run.then(() => {}, () => {});
+  saleLocks.set(id, tail);
+  tail.then(() => { if (saleLocks.get(id) === tail) saleLocks.delete(id); });
+  return run;
+}
+
 async function startPayment(quoteId, people, email, phone, lang) {
+  if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
+  const id = String(quoteId || "");
+  if (!validQuoteId(id)) return { ok: false, code: "QUOTE_EXPIRED" };
+  return withSaleLock(id, () => startPaymentLocked(id, people, email, phone, lang));
+}
+
+async function startPaymentLocked(quoteId, people, email, phone, lang) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
@@ -594,6 +613,7 @@ async function startPayment(quoteId, people, email, phone, lang) {
     currency: quote.currency,
   });
   if (!intent?.id || !intent?.client_token) return { ok: false, code: "SALE_FAILED" };
+  if (!/^pit_[A-Za-z0-9]+$/.test(intent.id)) return { ok: false, code: "SALE_FAILED" };
   quote.travelers = travelers;
   quote.lang = lang === "en" ? "en" : "es";
   quote.testMode = intent.live_mode === false || (intent.live_mode == null && paymentsMode() === "test");
@@ -645,6 +665,13 @@ async function refundAndStop(quote) {
 
 async function completeSale(quoteId) {
   if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
+  const id = String(quoteId || "");
+  if (!validQuoteId(id)) return { ok: false, code: "QUOTE_EXPIRED" };
+  return withSaleLock(id, () => completeSaleLocked(id));
+}
+
+async function completeSaleLocked(quoteId) {
+  if (!token()) return { ok: false, code: "BOOKING_NOT_CONFIGURED" };
   const quote = await readQuote(quoteId);
   if (!quote) return { ok: false, code: "QUOTE_EXPIRED" };
   const done = resultFrom(quote);
@@ -664,6 +691,7 @@ async function completeSale(quoteId) {
     const passengers = slice.map((traveler, i) => ({ ...traveler, id: leg.passengerIds[i] }));
     if (passengers.some((p) => !p.id)) return { ok: false, code: "SALE_FAILED", orders };
     try {
+      if (!/^off_[A-Za-z0-9]+$/.test(String(leg.offerId || ""))) throw new Error("offer");
       const order = await duffel("POST", "/air/orders", {
         selected_offers: [leg.offerId],
         payments: [{ type: "balance", amount: euros(leg.fare), currency: quote.currency }],
@@ -713,6 +741,7 @@ module.exports = {
     reset() {
       transport = null;
       quotes.clear();
+      saleLocks.clear();
       if (saleStore._map) saleStore._map.clear();
       saleMail.__test.reset();
     },

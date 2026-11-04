@@ -411,6 +411,13 @@ async function establishSocialSession({ profile, name, remember, favorites }) {
   if (!user) {
     email = emailFromToken;
     user = await accounts.get(email);
+    // Un proveedor que no ha demostrado el correo no se engancha a una
+    // cuenta que ya existe (otra persona podría declarar ese email).
+    if (user && profile.emailVerified !== true) {
+      const err = new Error("unverified");
+      err.code = "AUTH_PROVIDER_TAKEN";
+      throw err;
+    }
     const already = user && user.providers && user.providers[provider];
     if (already && already !== sub) {
       const err = new Error("taken");

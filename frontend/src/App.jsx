@@ -9,7 +9,7 @@ const DestinationMap = React.lazy(() => import("./components/DestinationMap"));
 const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
-  getBaseUrl, normalizeCode, cityOf, destLabel,
+  getBaseUrl, normalizeCode, cityOf, destLabel, jsonForScript,
   formatEur, formatDate, weekdayOf, todayISO, horizonISO, addDaysISO, copyText,
   countryFlag, countryOf, scrollBehavior, AIRPORT_MAP, resolveOriginCode, sameCodeSet
 } from "./utils/helpers";
@@ -555,13 +555,16 @@ export default function App() {
         const keep = (mode) => shared.find((d) => d.destination === results.bestByCriterion?.[mode]?.destination) || pickBest(shared, mode);
         setBestByCriterion({ total: keep("total"), fairness: keep("fairness") });
         if (searchParams) {
-          if (searchParams.origins?.length) {
-            setOrigins(searchParams.origins);
+          const sharedOrigins = (Array.isArray(searchParams.origins) ? searchParams.origins : [])
+            .map((o) => String(o || "").trim().toUpperCase())
+            .filter((o) => /^[A-Z]{3}$/.test(o));
+          if (sharedOrigins.length) {
+            setOrigins(sharedOrigins);
             // searchParams no guarda los viajeros, pero cada tramo del resultado
             // sí: así «Cambiar búsqueda» parte de los mismos números.
             const legs = results?.flights?.[0]?.flights || [];
-            setPassengers(searchParams.origins.map((o) =>
-              Math.min(9, Math.max(1, Number(legs.find((f) => normalizeCode(f.origin) === normalizeCode(o))?.passengers) || 1))));
+            setPassengers(sharedOrigins.map((o) =>
+              Math.min(9, Math.max(1, Number(legs.find((f) => normalizeCode(f.origin) === o)?.passengers) || 1))));
           }
           if (searchParams.departureDate) setDepartureDate(searchParams.departureDate);
           if (searchParams.returnDate) setReturnDate(searchParams.returnDate);
@@ -2502,15 +2505,16 @@ export default function App() {
             </div>
           )}
 
-          {/* JSON-LD structured data for SEO */}
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          {/* JSON-LD structured data for SEO. Solo códigos de tres letras:
+              el destino de un enlace compartido lo escribe el cliente. */}
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonForScript({
             "@context": "https://schema.org",
             "@type": "TravelAction",
-            "name": `Group flight to ${cityOf(normalizeCode(bestDestination.destination)) || bestDestination.destination}`,
-            "description": `Cheapest group flight destination from ${cleanOrigins.join(", ")}`,
+            "name": `Group flight to ${cityOf(normalizeCode(bestDestination.destination)) || (/^[A-Z]{3}$/.test(normalizeCode(bestDestination.destination)) ? normalizeCode(bestDestination.destination) : "")}`,
+            "description": `Cheapest group flight destination from ${cleanOrigins.filter((o) => /^[A-Z]{3}$/.test(String(o))).join(", ")}`,
             "result": {
               "@type": "Flight",
-              "arrivalAirport": { "@type": "Airport", "iataCode": normalizeCode(bestDestination.destination) },
+              "arrivalAirport": { "@type": "Airport", "iataCode": /^[A-Z]{3}$/.test(normalizeCode(bestDestination.destination)) ? normalizeCode(bestDestination.destination) : "" },
               "offers": { "@type": "Offer", "price": bestDestination.averageCostPerTraveler?.toFixed(2), "priceCurrency": "EUR" }
             }
           }) }} />

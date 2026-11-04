@@ -15,8 +15,23 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// El host de la petición no manda. Un enlace abierto en otro dominio no
+// redirige ni publica ese dominio en la tarjeta.
+function publicOrigin(raw) {
+  const fallback = "https://flyndme.com";
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase();
+    const allowed = host === "flyndme.com" || host === "www.flyndme.com"
+      || host === "localhost" || host === "127.0.0.1" || host.endsWith(".vercel.app");
+    if ((url.protocol === "https:" || url.protocol === "http:") && allowed) return url.origin;
+  } catch { /* el origen no es una URL */ }
+  return fallback;
+}
+
 export default function handler(req) {
-  const { searchParams, origin } = new URL(req.url);
+  const { searchParams } = new URL(req.url);
+  const origin = publicOrigin(new URL(req.url).origin);
   const get = (k, max = 80) => String(searchParams.get(k) || "").slice(0, max);
 
   const mode = get("mode", 8);

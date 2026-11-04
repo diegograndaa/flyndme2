@@ -93,7 +93,7 @@ async function verifyGoogle(credential, { clientId, fetchImpl }) {
   const data = await res.json();
   if (!data || data.aud !== clientId || !data.sub) throw coded("AUTH_PROVIDER_FAILED");
   if (!emailVerified(data.email_verified)) throw coded("AUTH_NO_EMAIL");
-  return { provider: "google", sub: String(data.sub), email: data.email, name: data.name || "" };
+  return { provider: "google", sub: String(data.sub), email: data.email, name: data.name || "", emailVerified: true };
 }
 
 async function verifyApple(credential, { clientId, nonce, fetchImpl, keys, now }) {
@@ -113,7 +113,7 @@ async function verifyApple(credential, { clientId, nonce, fetchImpl, keys, now }
   const hashed = crypto.createHash("sha256").update(String(nonce)).digest("hex");
   if (claims.nonce !== hashed) throw coded("AUTH_PROVIDER_FAILED");
   if (!emailVerified(claims.email_verified)) throw coded("AUTH_NO_EMAIL");
-  return { provider: "apple", sub: String(claims.sub), email: claims.email, name: "" };
+  return { provider: "apple", sub: String(claims.sub), email: claims.email, name: "", emailVerified: true };
 }
 
 async function verifyFacebook(credential, { appId, appSecret, fetchImpl, now }) {
@@ -139,7 +139,9 @@ async function verifyFacebook(credential, { appId, appSecret, fetchImpl, now }) 
   const me = await meRes.json();
   if (!me || String(me.id) !== String(data.user_id)) throw coded("AUTH_PROVIDER_FAILED");
   if (!me.email) throw coded("AUTH_NO_EMAIL");
-  return { provider: "facebook", sub: String(me.id), email: me.email, name: me.name || "" };
+  // Facebook no dice si ese correo está verificado. No se usa para entrar
+  // en una cuenta que ya existe.
+  return { provider: "facebook", sub: String(me.id), email: me.email, name: me.name || "", emailVerified: false };
 }
 
 async function verifySocial({ provider, credential, nonce, env = process.env, fetchImpl = fetch, now = Date.now(), keys } = {}) {

@@ -26,8 +26,9 @@
 // v17: la confirmación enseña cada vuelo, con hora, localizador y viajeros.
 // v18: la confirmación separa ida y vuelta, con llegada, pasajero y recibo.
 // v19: al terminar, o si el cobro no sale, se puede volver al inicio.
+// v20: un enlace compartido ya no puede meter HTML en la página.
 // Subir la versión purga los caches viejos en 'activate'.
-const VERSION = "v19";
+const VERSION = "v20";
 const STATIC_CACHE = `flyndme-static-${VERSION}`;
 const FONT_CACHE = "flyndme-fonts-v1";
 const PAGES_CACHE = `flyndme-pages-${VERSION}`;

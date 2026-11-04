@@ -17,6 +17,15 @@ test("sog: los valores de la query salen escapados en el HTML", async () => {
   assert.ok(html.includes("&lt;script&gt;"), "el texto aparece escapado");
 });
 
+test("sog: un dominio que no es FlyndMe no se usa en la redirección ni en el HTML", async () => {
+  const bad = await handler(new Request("https://evil.example/api/sog?id=@@@"));
+  assert.equal(bad.status, 302);
+  assert.equal(new URL(bad.headers.get("location")).origin, "https://flyndme.com");
+  const html = await (await handler(new Request("https://evil.example/api/sog?id=abc123&dest=PAR"))).text();
+  assert.equal(html.includes("evil.example"), false);
+  assert.match(html, /https:\/\/flyndme\.com\/\?share=abc123/);
+});
+
 test("sog: id malformado → 302 a la portada del MISMO origen", async () => {
   for (const id of ["", "a b", "x".repeat(30), "../../evil", "https://evil.com"]) {
     const res = await call(`id=${encodeURIComponent(id)}&dest=PAR`);

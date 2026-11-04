@@ -150,6 +150,56 @@ test("el mismo Google crea la cuenta, guarda el destino y al volver no la duplic
   assert.deepEqual(again.favorites.map((f) => f.code), ["BCN", "MAD"]);
 });
 
+test("Facebook no entra en una cuenta que ya tiene contraseña; Google verificado sí", async () => {
+  const express = require("express");
+  const app = express();
+  app.use(express.json());
+  app.use("/api/auth", require("../routes/auth"));
+  const server = await new Promise((resolve) => {
+    const listening = app.listen(0, "127.0.0.1", () => resolve(listening));
+  });
+  try {
+    const port = server.address().port;
+    const email = `victim-${Date.now()}@flynd.me`;
+    const password = "correct-horse";
+    const created = await fetch(`http://127.0.0.1:${port}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, name: "Victor" }),
+    });
+    assert.equal(created.status, 201);
+    await assert.rejects(
+      () => establishSocialSession({
+        profile: { provider: "facebook", sub: "fb-attacker", email, emailVerified: false, name: "Attacker" },
+      }),
+      (err) => err.code === "AUTH_PROVIDER_TAKEN",
+    );
+    const login = await fetch(`http://127.0.0.1:${port}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const loginBody = await login.json();
+    assert.equal(login.status, 200);
+    assert.equal(loginBody.user.email, email);
+    assert.equal(JSON.stringify(loginBody).includes(password), false);
+
+    const linked = await establishSocialSession({
+      profile: { provider: "google", sub: "google-victim", email, emailVerified: true, name: "Victor" },
+    });
+    assert.equal(linked.status, 200);
+    assert.equal(linked.user.email, email);
+
+    const fresh = await establishSocialSession({
+      profile: { provider: "facebook", sub: "fb-new-only", email: `nueva-${Date.now()}@flynd.me`, emailVerified: false, name: "Nueva" },
+    });
+    assert.equal(fresh.status, 201);
+    assert.equal(fresh.user.email.startsWith("nueva-"), true);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test("GET /providers no enseña el secreto y un proveedor apagado no entra", async () => {
   const express = require("express");
   const prev = {

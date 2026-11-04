@@ -277,6 +277,18 @@ export function destLabel(code) {
   return c ? `${normalizeCode(code)} · ${c}` : normalizeCode(code);
 }
 
+// JSON dentro de <script>: JSON.stringify no escapa <, así que un texto
+// guardado por el cliente podría cerrar la etiqueta. Los caracteres que
+// rompen el HTML salen como escape unicode.
+export function jsonForScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 // Sin dato → «—». Nunca «€0» por un precio que no tenemos (regla dura #1).
 export const NO_PRICE = "—";
 export function formatEur(n, dec = 0) {
