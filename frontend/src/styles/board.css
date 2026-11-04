@@ -2575,9 +2575,34 @@ button,
 .caja-tickets { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .caja-tickets li { display: flex; flex-wrap: wrap; gap: 8px 14px; font-family: var(--font-mono); font-size: 14px; color: var(--navy); }
 .caja-done {
-  max-width: 480px; padding: 36px 28px;
-  background: var(--card); border: 2px solid var(--navy); border-radius: 8px;
+  max-width: 720px; padding: 0; background: transparent; border: 0;
 }
+.caja-done-title { margin: 0 0 16px; font-size: 26px; font-weight: 700; line-height: 1.2; color: var(--navy); }
+.caja-confirm { display: grid; gap: 12px; }
+.caja-confirm-flight {
+  padding: 22px 20px 16px;
+  background: var(--card); border: 1px solid var(--card-line); border-radius: 8px;
+}
+.caja-confirm-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
+  margin: 18px 0 0;
+}
+.caja-confirm-grid dt {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--slate-500);
+}
+.caja-confirm-grid dd { margin: 2px 0 0; font-size: 16px; font-weight: 700; color: var(--navy); }
+.caja-confirm-wide { grid-column: 1 / -1; }
+.caja-confirm-grid dd.caja-confirm-ref {
+  font-family: var(--font-mono); font-size: 28px; letter-spacing: .08em; line-height: 1.1;
+}
+.caja-paid {
+  margin-top: 12px; padding: 16px 20px;
+  background: var(--sign); color: var(--on-sign); border-radius: 8px;
+}
+.caja-paid .caja-amount,
+.caja-paid .caja-amount-label { color: var(--on-sign); }
+.caja-done .caja-kicker { margin-bottom: 8px; }
 .caja-out { margin-top: 8px; }
 .caja-page .wc-sale-form { gap: 16px; margin-top: 0; }
 .caja-page .wc-sale-person {
@@ -2603,6 +2628,9 @@ button,
   .caja-itin-ends { gap: 8px; }
   .caja-itin-mid { min-width: 72px; gap: 6px; }
   .caja-steps button { font-size: 14px; gap: 8px; padding-right: 8px; }
+  .caja-confirm-grid { grid-template-columns: 1fr; }
+  .caja-confirm-grid dd.caja-confirm-ref { font-size: 24px; }
+  .caja-done-title { font-size: 22px; }
 }
 .wc-sale-form { display: grid; gap: 10px; margin-top: 12px; }
 .wc-sale-person {

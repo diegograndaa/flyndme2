@@ -178,17 +178,24 @@ function chooseOffer(offers, leg) {
   return hits[0] ? { offer: hits[0], sameFlight: false } : null;
 }
 
+function clockOf(value) {
+  const text = String(value || "");
+  return text.length >= 16 ? text.slice(11, 16) : "";
+}
+
 function describeOffer(offer) {
-  const seg = offer?.slices?.[0]?.segments?.[0] || {};
+  const slices = Array.isArray(offer?.slices) ? offer.slices : [];
+  const seg = slices[0]?.segments?.[0] || {};
+  const back = slices[1]?.segments?.[0] || {};
   const airline = String(seg.marketing_carrier?.iata_code || "").toUpperCase();
   const airlineName = String(seg.marketing_carrier?.name || "").trim();
   const flightNumber = String(seg.marketing_carrier_flight_number || "").replace(/\s+/g, "");
-  const departingAt = String(seg.departing_at || "");
   return {
     airline,
     airlineName,
     flightNumber,
-    departsAt: departingAt.length >= 16 ? departingAt.slice(11, 16) : "",
+    departsAt: clockOf(seg.departing_at),
+    returnDepartsAt: clockOf(back.departing_at),
   };
 }
 
@@ -388,6 +395,7 @@ async function quoteLegs(rawLegs, today) {
       airlineName: described.airlineName,
       flightNumber: described.flightNumber || leg.flightNumber,
       departsAt: described.departsAt,
+      returnDepartsAt: described.returnDepartsAt,
       sameFlight: chosen.sameFlight,
       departureDate: leg.departureDate,
       returnDate: leg.returnDate || null,
@@ -418,8 +426,17 @@ async function quoteLegs(rawLegs, today) {
   return publicView(stored, { available: true });
 }
 
-// Lo que ve el cliente. Sin oferta, sin token de la tarjeta y sin datos del viajero.
+function personName(person) {
+  return `${person?.given_name || ""} ${person?.family_name || ""}`.trim();
+}
+
+// Lo que ve el cliente. Sin oferta y sin token de la tarjeta.
+// En la confirmación solo van el nombre y el correo de contacto: ni nacimiento,
+// ni teléfono, ni el id de la oferta.
 function publicView(quote, extra = {}) {
+  const travelers = Array.isArray(quote.travelers) ? quote.travelers : [];
+  const contactEmail = String(travelers[0]?.email || "").trim();
+  let nameCursor = 0;
   return {
     ...extra,
     quoteId: quote.quoteId,
@@ -427,21 +444,30 @@ function publicView(quote, extra = {}) {
     markupPercent: Math.round(Number(quote.rate) * 1000) / 10,
     passengerCount: quote.legs.reduce((sum, leg) => sum + leg.passengers, 0),
     status: quote.status,
-    legs: quote.legs.map((leg) => ({
-      origin: leg.origin,
-      destination: leg.destination,
-      airline: leg.airline,
-      airlineName: leg.airlineName || "",
-      flightNumber: leg.flightNumber,
-      departsAt: leg.departsAt || "",
-      sameFlight: leg.sameFlight === true,
-      departureDate: leg.departureDate,
-      passengers: leg.passengers,
-      fare: euros(leg.fare),
-      commission: euros(leg.commission),
-      cardFee: euros(leg.cardFee),
-      charge: euros(leg.charge),
-    })),
+    contactEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) ? contactEmail : "",
+    legs: quote.legs.map((leg) => {
+      const count = Number(leg.passengers) || 0;
+      const names = travelers.slice(nameCursor, nameCursor + count).map(personName).filter(Boolean);
+      nameCursor += count;
+      return {
+        origin: leg.origin,
+        destination: leg.destination,
+        airline: leg.airline,
+        airlineName: leg.airlineName || "",
+        flightNumber: leg.flightNumber,
+        departsAt: leg.departsAt || "",
+        returnDepartsAt: leg.returnDepartsAt || "",
+        sameFlight: leg.sameFlight === true,
+        departureDate: leg.departureDate,
+        returnDate: leg.returnDate || "",
+        passengers: leg.passengers,
+        names,
+        fare: euros(leg.fare),
+        commission: euros(leg.commission),
+        cardFee: euros(leg.cardFee),
+        charge: euros(leg.charge),
+      };
+    }),
     orders: (quote.orders || []).map(publicOrder),
     testMode: quote.testMode === true ? true : quote.testMode === false ? false : null,
     emailSent: quote.emailSent === true,

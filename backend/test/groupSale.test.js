@@ -550,6 +550,17 @@ test("al emitir, el correo de prueba lleva el localizador de cada vuelo", async 
     assert.match(seen[0].text, /1255900000001/);
     assert.match(seen[0].text, /no es un billete de aerolínea/);
     assert.match(seen[0].text, /no ha devuelto un número de billete/);
+    const desk = await sale.publicQuote(quote.quoteId);
+    assert.equal(desk.legs[0].departsAt, "08:30");
+    assert.equal(desk.legs[0].destination, "LTN");
+    assert.deepEqual(desk.legs[0].names, ["Ana Ruiz"]);
+    assert.deepEqual(desk.legs[1].names, ["Ana Sanz"]);
+    assert.equal(desk.contactEmail, "ana@example.com");
+    assert.equal(desk.orders[0].bookingReference, "ABC123");
+    const raw = JSON.stringify(desk);
+    assert.equal(raw.includes("1990-04-02"), false);
+    assert.equal(raw.includes("+346"), false);
+    assert.equal(raw.includes("offerId"), false);
   } finally {
     delete process.env.BREVO_API_KEY;
     saleMail.__test.reset();

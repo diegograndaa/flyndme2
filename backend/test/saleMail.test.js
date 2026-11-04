@@ -17,7 +17,7 @@ function quote() {
       { given_name: "Luis", family_name: "Sanz", email: "ana@example.com" },
     ],
     legs: [
-      { origin: "MAD", destination: "OSL", departureDate: "2026-12-15", departsAt: "08:30", airline: "VY", flightNumber: "1234", passengers: 1 },
+      { origin: "MAD", destination: "OSL", departureDate: "2026-12-15", departsAt: "08:30", returnDate: "2026-12-20", returnDepartsAt: "18:40", airline: "VY", flightNumber: "1234", passengers: 1 },
       { origin: "BCN", destination: "OSL", departureDate: "2026-12-15", departsAt: "09:10", airline: "U2", flightNumber: "808", passengers: 1 },
     ],
   };
@@ -37,6 +37,7 @@ test("el correo de prueba no llama billete a un localizador y no cobra de verdad
   assert.match(message.text, /No se ha cobrado dinero real/);
   assert.match(message.text, /no es un billete de aerolínea/);
   assert.match(message.text, /MAD → OSL/);
+  assert.match(message.text, /Vuelta: 2026-12-20 · 18:40/);
   assert.match(message.text, /Ana Ruiz/);
   assert.match(message.text, /Localizador: ABC123/);
   assert.match(message.text, /BCN → OSL/);

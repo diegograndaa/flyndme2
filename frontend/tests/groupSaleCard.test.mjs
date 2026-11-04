@@ -389,6 +389,43 @@ test("el mostrador de pago dice quién cobra la tarjeta", async () => {
   assert.ok(!unknown.includes("charged for real"));
 });
 
+test("la confirmación enseña el vuelo, la hora y el localizador", async () => {
+  const { SaleConfirmation } = await import("../src/components/CheckoutPage.jsx");
+  const { useI18n } = await import("../src/i18n/useI18n.jsx");
+  const quote = {
+    currency: "EUR",
+    charge: "46.11",
+    contactEmail: "ana@example.com",
+    legs: [{
+      origin: "ORY", destination: "LIS", departureDate: "2026-12-15", departsAt: "08:30",
+      returnDate: "2026-12-20", returnDepartsAt: "18:40",
+      airline: "TP", airlineName: "TAP", flightNumber: "1010", passengers: 1,
+      names: ["Ana Ruiz"], charge: "46.11",
+    }],
+  };
+  function Probe({ tickets }) {
+    const { t } = useI18n();
+    return React.createElement(SaleConfirmation, {
+      t, quote, testMode: true, emailSent: false, emailCode: "MAIL_NOT_CONFIGURED", people: [],
+      orders: [{ origin: "ORY", bookingReference: "F74CHC", tickets }],
+    });
+  }
+  const html = render(React.createElement(Probe, { tickets: [] }));
+  assert.ok(html.includes("ORY"));
+  assert.ok(html.includes("LIS"));
+  assert.ok(html.includes("08:30"));
+  assert.ok(html.includes("18:40"));
+  assert.ok(html.includes("TAP 1010"));
+  assert.ok(html.includes("Ana Ruiz"));
+  assert.ok(html.includes("F74CHC"));
+  assert.ok(html.includes("Practice finished"));
+  assert.ok(html.includes("ana@example.com"));
+  assert.ok(html.includes("not connected"));
+  assert.ok(!html.includes("1255900000001"));
+  const withTicket = render(React.createElement(Probe, { tickets: ["1255900000001"] }));
+  assert.ok(withTicket.includes("1255900000001"));
+});
+
 test("la pestaña de pago no pinta un importe antes de leer la caja", async () => {
   const { default: CheckoutPage } = await import("../src/components/CheckoutPage.jsx");
   const html = render(React.createElement(CheckoutPage, { quoteId: "abcdefghijklmnop" }));

@@ -9,7 +9,7 @@ import "../styles/board.css";
 import "../styles/revision.css";
 import { useI18n } from "../i18n/useI18n";
 import { resolveApiBase } from "../utils/apiBase";
-import { formatDate, getBaseUrl } from "../utils/helpers";
+import { cityOf, formatDate, getBaseUrl } from "../utils/helpers";
 import { centsOf, quoteAddsUp, SALE_CHANNEL } from "../utils/saleCheckout";
 import SaleBreakdown, { flightBits, saleMoney } from "./SaleBreakdown";
 import SaleElsewhere from "./SaleElsewhere";
@@ -61,6 +61,112 @@ export function PaymentDesk({ t, testMode, busy = false, children }) {
   );
 }
 
+function namesFor(leg, people, cursor) {
+  const fromQuote = Array.isArray(leg?.names) ? leg.names.filter(Boolean) : [];
+  if (fromQuote.length) return { names: fromQuote, next: cursor + (Number(leg?.passengers) || fromQuote.length) };
+  const count = Number(leg?.passengers) || 0;
+  const names = (people || []).slice(cursor, cursor + count)
+    .map((person) => `${person.givenName || ""} ${person.familyName || ""}`.trim())
+    .filter(Boolean);
+  return { names, next: cursor + count };
+}
+
+export function SaleConfirmation({ quote, orders, people, testMode, emailSent, emailCode, t }) {
+  const money = (amount) => saleMoney(amount, quote?.currency || "EUR");
+  const list = Array.isArray(orders) ? orders : [];
+  let cursor = 0;
+  const rows = (quote?.legs || []).map((leg, index) => {
+    const named = namesFor(leg, people, cursor);
+    cursor = named.next;
+    const order = list[index] && list[index].origin === leg.origin
+      ? list[index]
+      : list.find((item) => item.origin === leg.origin) || null;
+    return { leg, names: named.names, order };
+  });
+  const amountLabel = testMode === true
+    ? t("results.saleTestAmount")
+    : testMode === false
+      ? t("results.salePaid")
+      : t("results.saleAmount");
+  const headline = testMode === true
+    ? t("results.saleTestDone")
+    : testMode === false
+      ? t("results.saleConfirmed")
+      : t("results.saleRecorded");
+  return (
+    <section className="caja-done">
+      <p className="caja-kicker">{t("results.saleDoneKicker")}</p>
+      <h1 className="caja-done-title" role="status">{headline}</h1>
+      <div className="caja-confirm">
+        {rows.map(({ leg, names, order }) => {
+          const bits = flightBits(leg);
+          const fromCity = cityOf(leg.origin);
+          const toCity = cityOf(leg.destination);
+          const ref = order?.bookingReference || "";
+          const tickets = Array.isArray(order?.tickets) ? order.tickets.filter(Boolean) : [];
+          const back = [formatDate(leg.returnDate), leg.returnDepartsAt].filter(Boolean).join(" · ");
+          return (
+            <article key={`${leg.origin}-${leg.flightNumber || ""}-${leg.departureDate || ""}`} className="caja-confirm-flight">
+              <div className="caja-itin-ends">
+                <div className="caja-itin-end">
+                  <span className="caja-itin-code">{leg.origin}</span>
+                  {fromCity && <span className="caja-itin-city">{fromCity}</span>}
+                </div>
+                <div className="caja-itin-mid" aria-hidden="true">
+                  <span className="caja-itin-rule" />
+                  {bits.time && <span className="caja-itin-time">{bits.time}</span>}
+                  <span className="caja-itin-rule" />
+                </div>
+                <div className="caja-itin-end caja-itin-end--arr">
+                  <span className="caja-itin-code">{leg.destination}</span>
+                  {toCity && <span className="caja-itin-city">{toCity}</span>}
+                </div>
+              </div>
+              <dl className="caja-confirm-grid">
+                {leg.departureDate && (
+                  <div><dt>{t("results.saleWhen")}</dt><dd>{formatDate(leg.departureDate)}</dd></div>
+                )}
+                {bits.time && (
+                  <div><dt>{t("results.saleDepart")}</dt><dd>{bits.time}</dd></div>
+                )}
+                {bits.line && (
+                  <div><dt>{t("results.saleFlight")}</dt><dd>{bits.line}</dd></div>
+                )}
+                {back && (
+                  <div><dt>{t("results.saleReturn")}</dt><dd>{back}</dd></div>
+                )}
+                {names.length > 0 && (
+                  <div className="caja-confirm-wide"><dt>{t("results.saleStepPeople")}</dt><dd>{names.join(", ")}</dd></div>
+                )}
+                <div className="caja-confirm-wide">
+                  <dt>{t("results.saleLocatorLabel")}</dt>
+                  <dd className="caja-confirm-ref">{ref || "—"}</dd>
+                </div>
+                {tickets.map((ticket) => (
+                  <div key={ticket} className="caja-confirm-wide">
+                    <dt>{t("results.saleTicketWord")}</dt>
+                    <dd className="caja-confirm-ref">{ticket}</dd>
+                  </div>
+                ))}
+                <div><dt>{t("results.saleAmount")}</dt><dd>{money(leg.charge)}</dd></div>
+              </dl>
+              {leg.sameFlight === false && <p className="caja-note">{t("results.saleOtherFlight")}</p>}
+            </article>
+          );
+        })}
+      </div>
+      <div className="caja-paid">
+        <p className="caja-amount-label">{amountLabel}</p>
+        <p className="caja-amount">{money(quote.charge)}</p>
+      </div>
+      {quote.contactEmail && <p className="caja-note">{t("results.salePayMail", { email: quote.contactEmail })}</p>}
+      {emailSent && <p className="caja-note" role="status">{t("results.saleEmailSent")}</p>}
+      {emailCode === "MAIL_NOT_CONFIGURED" && <p className="caja-note" role="status">{t("results.saleEmailOff")}</p>}
+      {emailCode === "MAIL_FAILED" && <p className="caja-note" role="alert">{t("results.saleEmailFailed")}</p>}
+    </section>
+  );
+}
+
 function tellOpener(quoteId, payload) {
   try {
     const channel = new BroadcastChannel(SALE_CHANNEL);
@@ -80,7 +186,6 @@ export default function CheckoutPage({ quoteId }) {
   const [step, setStep] = useState("trip");
   const [code, setCode] = useState("");
   const [clientToken, setClientToken] = useState("");
-  const [refs, setRefs] = useState([]);
   const [issued, setIssued] = useState([]);
   const [external, setExternal] = useState([]);
   const [refundText, setRefundText] = useState("");
@@ -106,7 +211,6 @@ export default function CheckoutPage({ quoteId }) {
         if (data.status === "issued") {
           setPhase("issued");
           setIssued(Array.isArray(data.orders) ? data.orders : []);
-          setRefs((data.orders || []).map((o) => o.bookingReference).filter(Boolean));
           setTestMode(data.testMode === true ? true : data.testMode === false ? false : null);
           setEmailSent(data.emailSent === true);
           setEmailCode(data.emailCode || "");
@@ -159,14 +263,12 @@ export default function CheckoutPage({ quoteId }) {
       });
       const data = await res.json().catch(() => ({}));
       const orders = data?.orders || [];
-      const references = orders.map((o) => o.bookingReference).filter(Boolean);
       setRefundText(data?.refund?.amount ? money(data.refund.amount) : "");
       setIssued(orders);
       setEmailSent(data?.emailSent === true);
       setEmailCode(data?.emailCode || "");
       setTestMode(data?.testMode === true ? true : data?.testMode === false ? false : testMode);
       if (data?.ok && data.status === "issued") {
-        setRefs(references);
         setPhase("issued");
         tellOpener(quote.quoteId, { phase: "issued", orders });
         return;
@@ -304,28 +406,15 @@ export default function CheckoutPage({ quoteId }) {
         </nav>
       )}
       {ready && phase === "issued" && (
-        <section className="caja-done">
-          <p className="caja-amount">{money(quote.charge)}</p>
-          <p className="caja-note" role="status">{testMode === true
-            ? t("results.saleTestDone")
-            : testMode === false
-              ? t("results.saleIssued", { ref: refs.join(", ") || "—" })
-              : t("results.saleRecorded")}</p>
-          <ul className="caja-tickets">
-            {issued.map((order) => (
-              <li key={`${order.origin}-${order.bookingReference || "x"}`}>
-                <span>{order.origin}</span>
-                <span>{t("results.saleLocator", { ref: order.bookingReference || "—" })}</span>
-                {(order.tickets || []).map((ticket) => (
-                  <span key={ticket}>{t("results.saleTicketLine", { ticket })}</span>
-                ))}
-              </li>
-            ))}
-          </ul>
-          {emailSent && <p className="caja-note" role="status">{t("results.saleEmailSent")}</p>}
-          {emailCode === "MAIL_NOT_CONFIGURED" && <p className="caja-note" role="status">{t("results.saleEmailOff")}</p>}
-          {emailCode === "MAIL_FAILED" && <p className="caja-note" role="alert">{t("results.saleEmailFailed")}</p>}
-        </section>
+        <SaleConfirmation
+          quote={quote}
+          orders={issued}
+          people={people}
+          testMode={testMode}
+          emailSent={emailSent}
+          emailCode={emailCode}
+          t={t}
+        />
       )}
       {ready && onStep === "trip" && phase !== "issued" && (
         <div className="caja-layout">
