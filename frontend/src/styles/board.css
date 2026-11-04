@@ -2398,6 +2398,7 @@ button,
   font-size: 15px; font-weight: 700; text-decoration: none;
 }
 .wc-sale-btn:disabled { opacity: .65; }
+.caja-home { margin-top: 16px; max-width: 360px; }
 .wc-sale-btn--ghost { background: transparent; color: var(--navy); border-color: var(--navy); }
 .wc-sale-hint, .wc-sale-note, .wc-sale-kicker {
   margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--slate-500);

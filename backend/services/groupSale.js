@@ -272,9 +272,13 @@ async function saveQuote(quote, ttlMs) {
   return quote;
 }
 
+function validQuoteId(id) {
+  return /^[A-Za-z0-9_-]{16}$/.test(String(id || ""));
+}
+
 async function readQuote(quoteId) {
   const id = String(quoteId || "");
-  if (!id) return null;
+  if (!validQuoteId(id)) return null;
   const now = Date.now();
   const hot = quotes.get(id);
   if (hot) {
@@ -318,8 +322,18 @@ function publicOrder(order) {
   };
 }
 
+function publicRefund(refund) {
+  if (!refund || typeof refund !== "object") return null;
+  const status = refund.status === "refunded" ? "refunded" : "failed";
+  return {
+    status,
+    amount: refund.amount || null,
+    currency: refund.currency || null,
+  };
+}
+
 function resultFrom(quote) {
-  const refund = quote.refund || null;
+  const refund = publicRefund(quote.refund);
   const orders = (quote.orders || []).map(publicOrder);
   const failedOrigin = quote.failedOrigin || null;
   const mail = {

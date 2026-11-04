@@ -9,6 +9,20 @@ function configured() {
   return Boolean(String(process.env.BREVO_API_KEY || "").trim());
 }
 
+function homeUrl() {
+  const fallback = "https://flyndme.com";
+  const raw = String(process.env.FRONTEND_URL || fallback).trim();
+  if (!raw || /[\s\r\n]/.test(raw)) return fallback;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return fallback;
+    if (url.username || url.password) return fallback;
+    return url.origin;
+  } catch {
+    return fallback;
+  }
+}
+
 function fromAddress() {
   const from = String(process.env.SALE_MAIL_FROM || "diego@flyndme.com").trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from) ? from : "diego@flyndme.com";
@@ -89,6 +103,7 @@ function buildConfirmation({ quote, orders, testMode, lang }) {
   }
   lines.push(en ? `Amount: ${amount}` : `Importe: ${amount}`, "");
   lines.push(...flightLines(quote, orders, en ? "en" : "es"));
+  lines.push(en ? `Back to FlyndMe: ${homeUrl()}` : `Volver a FlyndMe: ${homeUrl()}`);
   if (quote?.status === "partial") {
     const origin = quote.failedOrigin || "—";
     lines.push(quote.refund?.status === "refunded"
@@ -144,6 +159,7 @@ module.exports = {
   ticketNumbers,
   buildConfirmation,
   sendConfirmation,
+  homeUrl,
   __test: {
     setTransport(fn) { transport = fn; },
     reset() { transport = null; },

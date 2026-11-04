@@ -59,7 +59,7 @@ function passwordOk(pw) {
 }
 
 function cleanName(raw) {
-  return String(raw == null ? "" : raw).replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40);
+  return String(raw == null ? "" : raw).replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 40);
 }
 
 function cleanFavorite(raw) {
