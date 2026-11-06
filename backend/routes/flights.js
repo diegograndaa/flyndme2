@@ -22,10 +22,11 @@ const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
 const getCheapDestinations = typeof flightService.getCheapDestinations === "function" ? flightService.getCheapDestinations : null;
 const getRoundtripDateOptions = typeof flightService.getRoundtripDateOptions === "function" ? flightService.getRoundtripDateOptions : null;
+const getOnewayDateOptions = typeof flightService.getOnewayDateOptions === "function" ? flightService.getOnewayDateOptions : null;
 const { findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
 const { pickCheaperDestinations } = require("../services/cheaperDestinations");
 const { candidateNights } = require("../services/tripLength");
-const { combineDateOptions, MAX_DATE_OPTIONS } = require("../services/dateOptions");
+const { combineDateOptions, summarizeSearchGap, MAX_DATE_OPTIONS } = require("../services/dateOptions");
 const EUROPE_CODES = require("../data/europeCodes.json");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
@@ -197,43 +198,63 @@ function computeAggregates(flightsWithPax) {
  * Note: searches still use adults=1 at the provider; we scale per-origin in
  * code so the inner cache hits across searches with different pax configurations.
  */
-async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight) {
+async function fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight, coverage = null) {
   const options = { ...optionsBase };
   if (ret) options.returnDate = ret;
 
-  // ← KEY CHANGE: all origin calls fire simultaneously
+  // Cada origen lleva su propio contador: así un fallo no se confunde con
+  // «no hay precio» al resumir la búsqueda vacía.
   const settled = await Promise.allSettled(
-    originList.map((origin) => getCheapestOffer(origin, dest, dep, options))
+    originList.map(async (origin) => {
+      const bag = { calls: 0, errors: 0 };
+      const value = await getCheapestOffer(origin, dest, dep, { ...options, stats: bag });
+      if (optionsBase.stats) {
+        optionsBase.stats.calls += bag.calls;
+        optionsBase.stats.errors += bag.errors;
+      }
+      return { value, errors: bag.errors };
+    })
   );
 
   const flights = [];
+  let blocked = false;
   for (let i = 0; i < settled.length; i++) {
     const r = settled[i];
-    if (r.status !== "fulfilled" || !r.value || typeof r.value.price !== "number") {
-      return null; // any origin without a price → discard destination
+    const origin = originList[i];
+    const bag = r.status === "fulfilled" ? r.value : null;
+    const offer = bag?.value;
+    if (!offer || typeof offer.price !== "number") {
+      blocked = true;
+      if (coverage) {
+        const kind = bag && bag.errors > 0 ? "errors" : "misses";
+        coverage[kind].add(origin);
+      }
+      continue;
     }
-    if (safeMaxFlight !== null && r.value.price > safeMaxFlight) {
-      return null; // any leg exceeds per-flight budget → discard
+    if (coverage) coverage.hits.add(origin);
+    if (safeMaxFlight !== null && offer.price > safeMaxFlight) {
+      blocked = true;
+      continue;
     }
     const pax = originPax[i] || 1;
     const flight = {
       origin:         originList[i],
-      price:          r.value.price,         // per-person fare
+      price:          offer.price,         // per-person fare
       passengers:     pax,
-      totalForOrigin: Number((r.value.price * pax).toFixed(2)),
-      offer:          r.value.offer ?? null,
+      totalForOrigin: Number((offer.price * pax).toFixed(2)),
+      offer:          offer.offer ?? null,
     };
     // Precio de fecha vecina (proveedor de caché sin datos en la fecha
     // exacta): el frontend muestra SIEMPRE la fecha real, nunca la pedida.
-    if (r.value.dateFallback) {
+    if (offer.dateFallback) {
       flight.dateFallback     = true;
-      flight.flightDate       = r.value.dateFallback.departureDate;
-      flight.flightReturnDate = r.value.dateFallback.returnDate;
+      flight.flightDate       = offer.dateFallback.departureDate;
+      flight.flightReturnDate = offer.dateFallback.returnDate;
     }
     flights.push(flight);
   }
 
-  if (flights.length !== originList.length) return null;
+  if (blocked || flights.length !== originList.length) return null;
   if (exceedsGroupDateSpread(flights, dep, ret, MAX_GROUP_DATE_SPREAD_DAYS)) return null;
 
   const { totalCost, totalPax, avgPerTraveler, spread, fairness } = computeAggregates(flights);
@@ -675,6 +696,7 @@ router.post("/multi-origin", async (req, res) => {
     if (travelClass) optionsBase.travelClass = travelClass;
     const enriched    = [];
     const dateOptionBag = [];
+    const coverage = { hits: new Set(), misses: new Set(), errors: new Set() };
     const CHUNK_SIZE  = 3;
     let destsTouched  = 0; // for logging savings vs worst case
 
@@ -710,7 +732,10 @@ router.post("/multi-origin", async (req, res) => {
                 ? toISODate(addDays(parseISODate(dep), tripLenDays))
                 : null;
 
-              const result = await fetchDestDate(originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight);
+              const result = await fetchDestDate(
+                originList, originPax, dest, dep, ret, optionsBase, safeMaxFlight,
+                dep === departureDate ? coverage : null,
+              );
               if (!result) continue;
 
               if (safeMaxAvg !== null && result.averageCostPerTraveler > safeMaxAvg) continue;
@@ -740,6 +765,21 @@ router.post("/multi-origin", async (req, res) => {
                 destination: dest,
                 requestedDeparture: departureDate,
                 requestedReturn: returnDate,
+                perOrigin,
+                maxFlight: safeMaxFlight,
+                maxAvg: safeMaxAvg,
+                limit: MAX_DATE_OPTIONS,
+              });
+            } else if (!bestForDest && getOnewayDateOptions) {
+              const perOrigin = await Promise.all(originList.map((origin) =>
+                getOnewayDateOptions(origin, dest, departureDate, optionsBase).catch(() => [])
+              ));
+              options = combineDateOptions({
+                origins: originList,
+                passengers: originPax,
+                destination: dest,
+                requestedDeparture: departureDate,
+                requestedReturn: "",
                 perOrigin,
                 maxFlight: safeMaxFlight,
                 maxAvg: safeMaxAvg,
@@ -788,9 +828,13 @@ router.post("/multi-origin", async (req, res) => {
           message: "El proveedor de precios no responde. Inténtalo en unos minutos.",
         });
       }
+      const searchGap = (!partial && health === "ok" && safeMaxAvg == null && safeMaxFlight == null)
+        ? summarizeSearchGap(originList, [...coverage.hits], [...coverage.misses], [...coverage.errors])
+        : null;
       const payload = {
         flights: [], bestDestination: null, partial, provider: FLIGHT_PROVIDER,
         ...(dateOptions.length ? { dateOptions } : {}),
+        ...(searchGap ? { searchGap } : {}),
       };
       if (health === "ok") setCached(cacheKey, payload);
       const duration = Date.now() - startTime;

@@ -632,6 +632,38 @@ function rememberChoice(seen, ticket, requestedDeparture, requestedReturn) {
   if (!prev || price < prev.price) seen.set(key, { price, departureDate: dep, returnDate: ret });
 }
 
+// Otras fechas reales alrededor del día pedido. No es el resultado.
+async function getOnewayDateOptions(origin, destination, departureDate, options = {}) {
+  if (options.returnDate || origin === destination || DATE_FLEX_DAYS <= 0) return [];
+  if (options.travelClass && options.travelClass !== "ECONOMY") return [];
+  const today = new Date().toISOString().slice(0, 10);
+  const seen = new Map();
+  const months = monthsInWindow(departureDate, DATE_FLEX_DAYS);
+  for (const month of months) {
+    let tickets = [];
+    try {
+      tickets = await fetchTickets(origin, destination, month, { ...options, limit: 100 });
+    } catch {
+      continue;
+    }
+    for (const ticket of tickets || []) {
+      const dep = String(ticket?.departure_at || "").slice(0, 10);
+      const price = Number(ticket?.price);
+      if (!Number.isFinite(price) || price <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(dep)) continue;
+      if (dep === departureDate || dep < today) continue;
+      if (Math.abs(dayDiff(departureDate, dep)) > DATE_FLEX_DAYS) continue;
+      const prev = seen.get(dep);
+      if (!prev || price < prev.price) seen.set(dep, { price, departureDate: dep, returnDate: null });
+    }
+  }
+  return [...seen.values()].sort((a, b) => {
+    const da = Math.abs(dayDiff(departureDate, a.departureDate));
+    const db = Math.abs(dayDiff(departureDate, b.departureDate));
+    if (da !== db) return da - db;
+    return a.price - b.price;
+  });
+}
+
 // Otras fechas reales alrededor de la ida y la vuelta. No es el resultado:
 // la búsqueda solo las ofrece para que se elijan.
 async function getRoundtripDateOptions(origin, destination, departureDate, returnDate, options = {}) {
@@ -690,18 +722,13 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
       return { price: Number(cheapest.price), offer };
     }
 
-    // Sin precio en la fecha exacta. En un solo trayecto se devuelve la fecha
-    // vecina, etiquetada con su día real. En ida y vuelta el resultado se
-    // ciñe a las dos fechas pedidas: un día distinto no sustituye la búsqueda.
-    if (DATE_FLEX_DAYS <= 0) return null;
-
+    // Sin precio en el día pedido. No se sustituye por otra fecha: las cercanas
+    // salen aparte, para elegirlas.
     if (options.returnDate) {
+      if (DATE_FLEX_DAYS <= 0) return null;
       return exactRoundtripOrNull(origin, destination, departureDate, options);
     }
-
-    const neighbor = await findNeighborTicket(origin, destination, departureDate, options);
-    const built = neighbor && resultFromTicket(neighbor, departureDate, options.returnDate, options);
-    return built || null;
+    return null;
   } catch {
     // Contrato del proveedor: un fallo puntual en una ruta no
     // tumba la búsqueda multi-origen; el destino simplemente se descarta.
@@ -851,6 +878,7 @@ module.exports = {
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
+  getOnewayDateOptions,
   getRoundtripDateOptions,
   getDatedPrices,
   getCheapDestinations,

@@ -276,11 +276,12 @@ test("getCheapestOffer: sin precio en fecha exacta → fallback a fecha vecina e
   });
 
   const r = await tp.getCheapestOffer("MAD", "FAO", D0, {});
-  assert.equal(r.price, 90, "elige la fecha más cercana, no la más barata");
-  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
-  assert.equal(r.offer.dateFallback.requestedDepartureDate, D0);
-  assert.equal(r.offer.dateFallback.offsetDays, 1);
-  assert.equal(r.offer.tp.departureDate, addDays(D0, 1), "tp lleva la fecha real para re-consultas");
+  assert.equal(r, null, "un día distinto no sustituye la fecha pedida");
+  const options = await tp.getOnewayDateOptions("MAD", "FAO", D0, {});
+  assert.equal(options[0].price, 90, "la opción más cercana, no la más barata");
+  assert.equal(options[0].departureDate, addDays(D0, 1));
+  assert.equal(options[0].returnDate, null);
+  assert.equal(options.some((o) => o.departureDate === addDays(D0, -2)), true);
 });
 
 test("getCheapestOffer: fallback respeta la ventana de ±N días", async () => {
@@ -500,14 +501,15 @@ test("stats: caché vacía NO es un fallo", async () => {
   assert.deepEqual(stats, { calls: 1, errors: 0 });
 });
 
-test("stats: fecha exacta vacía y todos los meses vecinos fallan → fallo", async () => {
+test("stats: un día exacto vacío no es un fallo, aunque el mes de otras fechas caiga", async () => {
   setTransport(async (url, config) => {
     if (config.params.departure_at === D0) return okResponse([]);
     const e = new Error("down"); e.response = { status: 400 }; throw e;
   });
   const stats = { calls: 0, errors: 0 };
   assert.equal(await tp.getCheapestOffer("MAD", "ST3", D0, { stats }), null);
-  assert.deepEqual(stats, { calls: 1, errors: 1 });
+  assert.deepEqual(stats, { calls: 1, errors: 0 });
+  assert.deepEqual(await tp.getOnewayDateOptions("MAD", "ST3", D0, {}), []);
 });
 
 test("stats: respuesta válida no cuenta fallo", async () => {

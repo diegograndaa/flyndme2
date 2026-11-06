@@ -20,19 +20,22 @@ function combineDateOptions({
   limit = MAX_DATE_OPTIONS,
 }) {
   const byPair = new Map();
+  const wantsReturn = Boolean(requestedReturn);
   (perOrigin || []).forEach((rows, i) => {
     for (const row of rows || []) {
       const price = Number(row?.price);
       const dep = String(row?.departureDate || "");
       const ret = String(row?.returnDate || "");
       if (!Number.isFinite(price) || price <= 0) continue;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dep) || !/^\d{4}-\d{2}-\d{2}$/.test(ret)) continue;
-      if (dep === requestedDeparture && ret === requestedReturn) continue;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dep)) continue;
+      if (wantsReturn && !/^\d{4}-\d{2}-\d{2}$/.test(ret)) continue;
+      if (!wantsReturn && ret) continue;
+      if (dep === requestedDeparture && (!wantsReturn || ret === requestedReturn)) continue;
       if (maxFlight != null && price > maxFlight) continue;
-      const key = `${dep}|${ret}`;
+      const key = wantsReturn ? `${dep}|${ret}` : dep;
       if (!byPair.has(key)) byPair.set(key, new Array(origins.length).fill(null));
       const slot = byPair.get(key);
-      if (!slot[i] || price < slot[i].price) slot[i] = { price, departureDate: dep, returnDate: ret };
+      if (!slot[i] || price < slot[i].price) slot[i] = { price, departureDate: dep, returnDate: wantsReturn ? ret : null };
     }
   });
 
@@ -60,11 +63,33 @@ function combineDateOptions({
       totalPassengers: totalPax,
       averageCostPerTraveler: Number(avg.toFixed(2)),
       distance: Math.abs(dayDistance(requestedDeparture, slots[0].departureDate))
-        + Math.abs(dayDistance(requestedReturn, slots[0].returnDate)),
+        + (slots[0].returnDate ? Math.abs(dayDistance(requestedReturn, slots[0].returnDate)) : 0),
     });
   }
   out.sort((a, b) => a.distance - b.distance || a.totalCostEUR - b.totalCostEUR);
   return out.slice(0, limit);
 }
 
-module.exports = { combineDateOptions, MAX_DATE_OPTIONS };
+// Quién tiene algún precio en las fechas pedidas y quién no. Un fallo del
+// proveedor no cuenta como «sin precio».
+function summarizeSearchGap(origins, hits, misses, errors) {
+  const list = Array.isArray(origins) ? origins : [];
+  if (list.length < 2) return null;
+  const hit = new Set(hits || []);
+  const miss = new Set(misses || []);
+  const err = new Set(errors || []);
+  const withPrice = list.filter((o) => hit.has(o));
+  const withoutPrice = list.filter((o) => !hit.has(o) && miss.has(o) && !err.has(o));
+  if (withoutPrice.length && withPrice.length) {
+    return { withPrice, withoutPrice, noCommonDestination: false };
+  }
+  if (withoutPrice.length === list.length) {
+    return { withPrice: [], withoutPrice, noCommonDestination: false };
+  }
+  if (withPrice.length === list.length) {
+    return { withPrice, withoutPrice: [], noCommonDestination: true };
+  }
+  return null;
+}
+
+module.exports = { combineDateOptions, summarizeSearchGap, MAX_DATE_OPTIONS };
