@@ -316,10 +316,11 @@ test("getCheapestOffer: fallback ida y vuelta con fechas reales en ambos tramos"
   });
 
   const r = await tp.getCheapestOffer("MAD", "SVQ", D0, { returnDate: addDays(D0, 7) });
-  assert.equal(r.price, 180);
-  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
-  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
-  assert.equal(r.offer.itineraries.length, 2);
+  assert.equal(r, null, "un día distinto no sustituye las fechas pedidas");
+  const options = await tp.getRoundtripDateOptions("MAD", "SVQ", D0, addDays(D0, 7), {});
+  assert.equal(options[0].price, 180);
+  assert.equal(options[0].departureDate, addDays(D0, 1));
+  assert.equal(options[0].returnDate, addDays(D0, 8));
 });
 
 test("pickNeighbor: empate de distancia → el más barato", () => {
@@ -367,16 +368,17 @@ test("fallback ida y vuelta: pide el máximo de la API y encuentra el billete ce
   });
 
   const r = await tp.getCheapestOffer("MAD", "RTW", D0, { returnDate: addDays(D0, 7) });
-  assert.ok(r, "debe encontrar el billete dentro de ±2 días");
-  assert.equal(r.price, 140);
-  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
-  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
+  assert.equal(r, null, "el billete cercano no sustituye las fechas pedidas");
   assert.ok(limits.every((l) => l === 1000), `límite pedido: ${limits}`);
+  const options = await tp.getRoundtripDateOptions("MAD", "RTW", D0, addDays(D0, 7), {});
+  assert.equal(options[0].price, 140);
+  assert.equal(options[0].departureDate, addDays(D0, 1));
+  assert.equal(options[0].returnDate, addDays(D0, 8));
 
-  // 2ª búsqueda idéntica: sale de la caché de ventana, sin red
+  // 2ª lectura: sale de la caché de ventana, sin red
   const before = monthCalls;
-  const r2 = await tp.getCheapestOffer("MAD", "RTW", D0, { returnDate: addDays(D0, 7) });
-  assert.equal(r2.price, 140);
+  const again = await tp.getRoundtripDateOptions("MAD", "RTW", D0, addDays(D0, 7), {});
+  assert.equal(again[0].price, 140);
   assert.equal(monthCalls, before, "la ventana filtrada se sirve de caché");
 });
 
@@ -393,12 +395,12 @@ test("fallback ida y vuelta: otra duración con la misma salida reutiliza el mes
       ticket({ price: 10,  departure_at: `${addDays(D0, 9)}T08:00:00+02:00`, return_at: `${addDays(D0, 12)}T19:00:00+02:00` }), // salida fuera de ventana
     ]);
   });
-  const week = await tp.getCheapestOffer("MAD", "RTD", D0, { returnDate: addDays(D0, 7) });
-  assert.equal(week.price, 120, "7 noches: el billete con vuelta a ±2 días");
+  const week = await tp.getRoundtripDateOptions("MAD", "RTD", D0, addDays(D0, 7), {});
+  assert.equal(week[0].price, 120, "7 noches: el billete con vuelta a ±2 días");
   const calls = monthCalls;
-  const short = await tp.getCheapestOffer("MAD", "RTD", D0, { returnDate: addDays(D0, 3) });
-  assert.equal(short.price, 90, "3 noches: otro billete de la MISMA ventana de salida");
-  assert.equal(short.offer.dateFallback.returnDate, addDays(D0, 4));
+  const short = await tp.getRoundtripDateOptions("MAD", "RTD", D0, addDays(D0, 3), {});
+  assert.equal(short[0].price, 90, "3 noches: otro billete de la MISMA ventana de salida");
+  assert.equal(short[0].returnDate, addDays(D0, 4));
   if (addDays(D0, 7).slice(0, 7) === addDays(D0, 3).slice(0, 7)) {
     assert.equal(monthCalls, calls, "mismo mes de vuelta → sin nuevas consultas mensuales");
   }
@@ -425,13 +427,34 @@ test("ida y vuelta: si el mes no trae esas fechas, vale el precio de la semana y
   });
 
   const r = await tp.getCheapestOffer("MAD", "WKS", D0, { returnDate: addDays(D0, 7) });
-  assert.equal(r.price, 160, "elige el par más cercano, no el más barato de la semana");
-  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
-  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
-  assert.equal(r.offer.dateFallback.requestedDepartureDate, D0);
-  assert.equal(r.offer.itineraries[0].segments.length, 0, "sin hora no se inventa un horario");
+  assert.equal(r, null, "la semana no sustituye las fechas pedidas");
+  const options = await tp.getRoundtripDateOptions("MAD", "WKS", D0, addDays(D0, 7), {});
+  assert.equal(options[0].price, 160, "la opción más cercana, no la más barata");
+  assert.equal(options[0].departureDate, addDays(D0, 1));
+  assert.equal(options[0].returnDate, addDays(D0, 8));
+  assert.equal(options.some((o) => o.departureDate === D0), false);
   assert.equal(seen.some((c) => c.url.includes("week-matrix")), true);
   assert.equal(seen.some((c) => c.url.includes("prices_for_dates") && String(c.departure_at || "").length === 7), false);
+});
+
+test("ida y vuelta: el par pedido sale como resultado y no como otra fecha", async () => {
+  setTransport(async (url) => {
+    if (String(url).includes("week-matrix")) {
+      return { data: { success: true, data: [
+        { origin: "MAD", destination: "LIS", depart_date: addDays(D0, 1), return_date: addDays(D0, 8), value: 80, number_of_changes: 0 },
+        { origin: "MAD", destination: "LIS", depart_date: D0, return_date: addDays(D0, 7), value: 100, number_of_changes: 0 },
+      ] } };
+    }
+    if (String(url).includes("prices_for_dates")) return okResponse([]);
+    throw new Error("no debería consultar el mes");
+  });
+  const r = await tp.getCheapestOffer("MAD", "WKX", D0, { returnDate: addDays(D0, 7) });
+  assert.equal(r.price, 100);
+  assert.equal(r.offer.dateFallback, undefined);
+  const options = await tp.getRoundtripDateOptions("MAD", "WKX", D0, addDays(D0, 7), {});
+  assert.equal(options.length, 1);
+  assert.equal(options[0].price, 80);
+  assert.equal(options[0].departureDate, addDays(D0, 1));
 });
 
 test("ida y vuelta: un directo no usa un precio con escalas de la semana", async () => {

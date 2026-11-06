@@ -580,6 +580,85 @@ async function searchFlightOffer(origin, destination, departureDate, options = {
   return { data: offers, meta: { count: offers.length, source: "AVIASALES_CACHE" } };
 }
 
+function cheapestExact(tickets, departureDate, returnDate) {
+  return (Array.isArray(tickets) ? tickets : [])
+    .filter((t) => matchesDates(t, departureDate, returnDate) && Number.isFinite(Number(t?.price)) && Number(t.price) > 0)
+    .sort((a, b) => Number(a.price) - Number(b.price))[0] || null;
+}
+
+// Ida y vuelta: el precio devuelto es el de las fechas pedidas. Si la semana
+// ya trae otros días, no se consulta el mes para sustituirlas.
+async function exactRoundtripOrNull(origin, destination, departureDate, options) {
+  let week = [];
+  let weekFailed = false;
+  try {
+    week = await fetchWeekMatrix(origin, destination, departureDate, options.returnDate, options);
+  } catch {
+    weekFailed = true;
+  }
+  const exactWeek = cheapestExact(week, departureDate, options.returnDate);
+  if (exactWeek) {
+    const built = resultFromTicket(exactWeek, departureDate, options.returnDate, options);
+    if (built) return built;
+  }
+  if (!weekFailed && week.length > 0) return null;
+
+  let neighbor = null;
+  try {
+    neighbor = await findNeighborTicket(origin, destination, departureDate, options);
+  } catch (err) {
+    if (weekFailed) throw err;
+  }
+  if (neighbor && matchesDates(neighbor, departureDate, options.returnDate)) {
+    const built = resultFromTicket(neighbor, departureDate, options.returnDate, options);
+    if (built) return built;
+  }
+  return null;
+}
+
+function rememberChoice(seen, ticket, requestedDeparture, requestedReturn) {
+  const dep = String(ticket?.departure_at || "").slice(0, 10);
+  const ret = String(ticket?.return_at || "").slice(0, 10);
+  const price = Number(ticket?.price);
+  if (!Number.isFinite(price) || price <= 0) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep) || !/^\d{4}-\d{2}-\d{2}$/.test(ret)) return;
+  if (matchesDates(ticket, requestedDeparture, requestedReturn)) return;
+  if (Math.abs(dayDiff(requestedDeparture, dep)) > WEEK_FLEX_DAYS) return;
+  if (Math.abs(dayDiff(requestedReturn, ret)) > WEEK_FLEX_DAYS) return;
+  const today = new Date().toISOString().slice(0, 10);
+  if (dep < today) return;
+  const key = `${dep}|${ret}`;
+  const prev = seen.get(key);
+  if (!prev || price < prev.price) seen.set(key, { price, departureDate: dep, returnDate: ret });
+}
+
+// Otras fechas reales alrededor de la ida y la vuelta. No es el resultado:
+// la búsqueda solo las ofrece para que se elijan.
+async function getRoundtripDateOptions(origin, destination, departureDate, returnDate, options = {}) {
+  if (!returnDate || origin === destination) return [];
+  if (options.travelClass && options.travelClass !== "ECONOMY") return [];
+  const seen = new Map();
+  let week = [];
+  try {
+    week = await fetchWeekMatrix(origin, destination, departureDate, returnDate, options);
+  } catch {
+    week = [];
+  }
+  for (const ticket of week) rememberChoice(seen, ticket, departureDate, returnDate);
+  if (week.length === 0) {
+    try {
+      const neighbor = await findNeighborTicket(origin, destination, departureDate, { ...options, returnDate });
+      if (neighbor) rememberChoice(seen, neighbor, departureDate, returnDate);
+    } catch { /* sin otra fecha */ }
+  }
+  return [...seen.values()].sort((a, b) => {
+    const da = Math.abs(dayDiff(departureDate, a.departureDate)) + Math.abs(dayDiff(returnDate, a.returnDate));
+    const db = Math.abs(dayDiff(departureDate, b.departureDate)) + Math.abs(dayDiff(returnDate, b.returnDate));
+    if (da !== db) return da - db;
+    return a.price - b.price;
+  });
+}
+
 async function getCheapestPrice(origin, destination, departureDate, options = {}) {
   const r = await getCheapestOffer(origin, destination, departureDate, options);
   return r ? r.price : null;
@@ -611,20 +690,13 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
       return { price: Number(cheapest.price), offer };
     }
 
-    // Sin precio en la fecha exacta → fecha vecina más cercana, SIEMPRE
-    // etiquetada con su fecha real. Convierte en resultado útil el ~27% de
-    // rutas que la caché no cubre en fecha exacta.
+    // Sin precio en la fecha exacta. En un solo trayecto se devuelve la fecha
+    // vecina, etiquetada con su día real. En ida y vuelta el resultado se
+    // ciñe a las dos fechas pedidas: un día distinto no sustituye la búsqueda.
     if (DATE_FLEX_DAYS <= 0) return null;
 
-    // Ida y vuelta: primero la semana alrededor de las dos fechas. El mes
-    // ordenado por precio no trae ese par y la búsqueda se quedaba vacía.
     if (options.returnDate) {
-      try {
-        const week = await fetchWeekMatrix(origin, destination, departureDate, options.returnDate, options);
-        const picked = pickNeighbor(week, departureDate, options.returnDate, WEEK_FLEX_DAYS);
-        const built = picked && resultFromTicket(picked, departureDate, options.returnDate, options);
-        if (built) return built;
-      } catch { /* el mes sigue siendo el respaldo */ }
+      return exactRoundtripOrNull(origin, destination, departureDate, options);
     }
 
     const neighbor = await findNeighborTicket(origin, destination, departureDate, options);
@@ -779,6 +851,7 @@ module.exports = {
   searchFlightOffer,
   getCheapestPrice,
   getCheapestOffer,
+  getRoundtripDateOptions,
   getDatedPrices,
   getCheapDestinations,
   priceFlightOffer,
