@@ -571,6 +571,8 @@
     "dateFallbackBadge": "Fechas cercanas",
     "dateFallbackChip": "Precio del {{date}}",
     "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo.",
+    "dateOptionsTitle": "Otras fechas",
+    "dateOptionAria": "Buscar {{city}} del {{out}} al {{back}}. Estimación {{total}}.",
     "groupNudge": {
       "title": "¿No todos han confirmado su ciudad?",
       "text": "Conviértelo en un plan de grupo: cada uno añade su ciudad y FlyndMe busca el sitio más barato y justo para veros todos.",

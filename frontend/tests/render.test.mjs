@@ -599,3 +599,42 @@ test("toastDuration: 2,5 s los avisos cortos, más los largos, tope 8 s", async 
   assert.equal(toastDuration("x".repeat(400)), 8000);
   assert.equal(toastDuration(undefined), 2500);
 });
+
+test("render: las otras fechas salen como opción y no como el resultado", async () => {
+  const { DateOptions } = await import("../src/components/BoardPanels.jsx");
+  const { default: SearchPage } = await import("../src/components/SearchPage.jsx");
+  const noop = () => {};
+  const options = [{
+    destination: "LIS",
+    departureDate: "2026-11-16",
+    returnDate: "2026-11-23",
+    totalCostEUR: 160,
+  }];
+  const list = renderWithI18n(React.createElement(DateOptions, { options, currency: "EUR", onPick: noop }));
+  assert.ok(list.includes("Other dates") || list.includes("Otras fechas"));
+  assert.ok(list.includes("160"));
+  assert.ok(!list.includes("fm-decision"), "no se pintan como la decisión");
+  const empty = renderWithI18n(React.createElement(DateOptions, { options: [], onPick: noop }));
+  assert.equal(empty, "");
+  const form = renderWithI18n(React.createElement(SearchPage, {
+    origins: ["MAD"], setOrigins: noop,
+    tripType: "roundtrip", setTripType: noop,
+    departureDate: "2026-11-15", setDepartureDate: noop,
+    returnDate: "2026-11-22", setReturnDate: noop,
+    optimizeBy: "total", setOptimizeBy: noop,
+    budgetEnabled: false, setBudgetEnabled: noop,
+    maxBudget: 200, setMaxBudget: noop,
+    flexEnabled: false, setFlexEnabled: noop,
+    flexDays: 3, setFlexDays: noop,
+    selectedDests: [], setSelectedDests: noop,
+    passengers: [1], setPassengers: noop,
+    directOnly: false, setDirectOnly: noop,
+    cabinClass: "ECONOMY", setCabinClass: noop,
+    currency: "EUR", setCurrency: noop,
+    loading: false, error: "No shared departures for those cities and dates.",
+    dateOptions: options, onUseDateOption: noop,
+    onSubmit: noop, recentSearches: [], onLoadRecent: noop, onClearRecent: noop,
+  }));
+  assert.ok(form.includes("Other dates") || form.includes("Otras fechas"));
+  assert.ok(form.includes("No shared departures"));
+});

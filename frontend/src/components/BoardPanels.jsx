@@ -74,6 +74,39 @@ export function ZoneHead({ id, num, title, sub, variant = "explore" }) {
  * Aviso en línea, colocado junto a lo que afecta (no en un panel aparte).
  * variant: date | next | partial
  */
+/** Fechas cercanas con precio real. No sustituyen la búsqueda: hay que elegirlas. */
+export function DateOptions({ options = [], currency = "EUR", onPick }) {
+  const { t } = useI18n();
+  if (!options.length || typeof onPick !== "function") return null;
+  const short = (iso) => formatDate(iso).replace(/\s+\d{4}$/, "");
+  return (
+    <div className="fm-date-recs" role="group" aria-label={t("results.dateOptionsTitle")}>
+      <span className="fm-date-recs-label">{t("results.dateOptionsTitle")}</span>
+      {options.map((opt) => {
+        const city = cityOf(opt.destination) || opt.destination;
+        const total = money(opt.totalCostEUR, currency);
+        return (
+          <button
+            key={`${opt.destination}-${opt.departureDate}-${opt.returnDate}`}
+            type="button"
+            className="fm-date-rec"
+            aria-label={t("results.dateOptionAria", {
+              city,
+              out: formatDate(opt.departureDate),
+              back: formatDate(opt.returnDate),
+              total,
+            })}
+            onClick={() => onPick(opt)}
+          >
+            <span>{city} · {short(opt.departureDate)} – {short(opt.returnDate)}</span>
+            <span className="fm-date-rec-save">{total}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Notice({ tag, text, detail, actionLabel, onAction, disabled, variant = "date" }) {
   return (
     <div className={`fm-notice fm-notice--${variant}`} role={variant === "partial" ? "status" : undefined}>

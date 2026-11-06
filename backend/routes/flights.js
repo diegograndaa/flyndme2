@@ -21,9 +21,11 @@ const flightService = require(PROVIDER_MODULES[FLIGHT_PROVIDER] || PROVIDER_MODU
 const { getCheapestOffer, priceFlightOffer, budgetStatus } = flightService;
 const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flightService.getDatedPrices : null;
 const getCheapDestinations = typeof flightService.getCheapDestinations === "function" ? flightService.getCheapDestinations : null;
+const getRoundtripDateOptions = typeof flightService.getRoundtripDateOptions === "function" ? flightService.getRoundtripDateOptions : null;
 const { findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
 const { pickCheaperDestinations } = require("../services/cheaperDestinations");
 const { candidateNights } = require("../services/tripLength");
+const { combineDateOptions, MAX_DATE_OPTIONS } = require("../services/dateOptions");
 const EUROPE_CODES = require("../data/europeCodes.json");
 
 // Los proveedores basados en caché (travelpayouts) no pueden re-tarificar una
@@ -672,6 +674,7 @@ router.post("/multi-origin", async (req, res) => {
     const optionsBase = { nonStop, max: 5, stats: providerStats };
     if (travelClass) optionsBase.travelClass = travelClass;
     const enriched    = [];
+    const dateOptionBag = [];
     const CHUNK_SIZE  = 3;
     let destsTouched  = 0; // for logging savings vs worst case
 
@@ -724,14 +727,35 @@ router.post("/multi-origin", async (req, res) => {
               }
             }
 
-            return bestForDest;
+            // Sin precio en las fechas pedidas: las fechas cercanas no
+            // sustituyen el resultado. Se devuelven para elegirlas.
+            let options = [];
+            if (!bestForDest && tripType === "roundtrip" && returnDate && getRoundtripDateOptions) {
+              const perOrigin = await Promise.all(originList.map((origin) =>
+                getRoundtripDateOptions(origin, dest, departureDate, returnDate, optionsBase).catch(() => [])
+              ));
+              options = combineDateOptions({
+                origins: originList,
+                passengers: originPax,
+                destination: dest,
+                requestedDeparture: departureDate,
+                requestedReturn: returnDate,
+                perOrigin,
+                maxFlight: safeMaxFlight,
+                maxAvg: safeMaxAvg,
+                limit: MAX_DATE_OPTIONS,
+              });
+            }
+            return { bestForDest, options };
           })
         );
 
         for (const result of chunkResults) {
-          if (result.status === "fulfilled" && result.value && enriched.length < resultCap) {
-            enriched.push(result.value);
+          if (result.status !== "fulfilled" || !result.value) continue;
+          if (result.value.bestForDest && enriched.length < resultCap) {
+            enriched.push(result.value.bestForDest);
           }
+          if (Array.isArray(result.value.options)) dateOptionBag.push(...result.value.options);
         }
       }
 
@@ -743,6 +767,9 @@ router.post("/multi-origin", async (req, res) => {
         break tierLoop;
       }
     }
+
+    dateOptionBag.sort((a, b) => a.distance - b.distance || a.totalCostEUR - b.totalCostEUR);
+    const dateOptions = dateOptionBag.slice(0, MAX_DATE_OPTIONS).map(({ distance, ...rest }) => rest);
 
     console.log(`[search] completado en ${((Date.now() - t0) / 1000).toFixed(1)}s — ${enriched.length} resultados, ${destsTouched}/${destinationList.length} destinos consultados`);
 
@@ -761,7 +788,10 @@ router.post("/multi-origin", async (req, res) => {
           message: "El proveedor de precios no responde. Inténtalo en unos minutos.",
         });
       }
-      const payload = { flights: [], bestDestination: null, partial, provider: FLIGHT_PROVIDER };
+      const payload = {
+        flights: [], bestDestination: null, partial, provider: FLIGHT_PROVIDER,
+        ...(dateOptions.length ? { dateOptions } : {}),
+      };
       if (health === "ok") setCached(cacheKey, payload);
       const duration = Date.now() - startTime;
       res.set("X-Response-Time", `${duration}ms`);
@@ -816,6 +846,7 @@ router.post("/multi-origin", async (req, res) => {
       destinationBasis,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
+      ...(dateOptions.length ? { dateOptions } : {}),
     };
 
     // Las respuestas parciales o con fallos del proveedor no se cachean: un

@@ -34,7 +34,7 @@ const WhoPaysStrip = React.lazy(() => loadWinnerCard().then((m) => ({ default: m
 import Landing from "./components/Landing";
 import { ThemeToggle, ScrollToTopBtn, LangSelector, Toast, SearchSkeleton } from "./components/ChromeBits";
 import { CostSplitCard, PlanYourTripCTA } from "./components/ResultsPanels";
-import { FlightHeader, Notice, DeparturesBoard } from "./components/BoardPanels";
+import { FlightHeader, Notice, DeparturesBoard, DateOptions } from "./components/BoardPanels";
 import { ResultFilters } from "./components/ResultFilters";
 import { useTheme, useFavorites, useA11yPrefs, useBackendStatus } from "./hooks/useAppHooks";
 import { favoriteOpenPlan, normalizeFavoriteSearch, searchNearSave } from "./utils/favoriteOpen";
@@ -312,6 +312,7 @@ export default function App() {
   const filterAnchorRef = useRef(null);
   // Ida y vuelta sin resultados: otra duración (misma salida) que sí tiene destinos
   const [tripHint,        setTripHint]        = useState(null);
+  const [dateOptions,    setDateOptions]     = useState([]);
   // «Vigilar precio»: búsquedas guardadas en el navegador y bajadas detectadas al volver
   const [watches,         setWatches]         = useState(() => readWatches(safeStorage()));
   const [priceAlerts,     setPriceAlerts]     = useState([]);
@@ -1435,6 +1436,19 @@ export default function App() {
     setPendingResearch(true);
   };
 
+  // Una fecha cercana solo se busca si se elige. El formulario pasa a esas
+  // fechas y a ese destino, que es el que tenía precio.
+  const useDateOption = (opt) => {
+    if (!opt?.departureDate || !opt?.returnDate || !opt?.destination) return;
+    trackEvent("date_option_apply", { destination: opt.destination });
+    setDateOptions([]);
+    setDepartureDate(opt.departureDate);
+    setReturnDate(opt.returnDate);
+    setSelectedDests([normalizeCode(opt.destination)]);
+    setDestBasis("usual");
+    setPendingResearch(true);
+  };
+
   // ── Submit (with automatic retry for Render cold-starts) ────────────────────
 
   // Traduce el `code` de un 400/429 del backend (es-only, técnico) a un mensaje
@@ -1453,6 +1467,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setDateOptions([]);
     // Relanzada desde resultados («Cambiar a esta fecha», «Buscar de nuevo»):
     // el error solo se pinta en el formulario, y los resultados ya se han
     // vaciado, así que hay que volver a él o la página queda en blanco.
@@ -1586,6 +1601,8 @@ export default function App() {
           const data = await res.json();
           if (cancelled()) return;
           const arr  = Array.isArray(data.flights) ? data.flights : [];
+          const options = Array.isArray(data.dateOptions) ? data.dateOptions : [];
+          setDateOptions(options);
 
           if (!arr.length) {
             // Sin resultados: guía concreta. El multi-origen ida-y-vuelta es el
@@ -1993,6 +2010,8 @@ export default function App() {
       cabinClass={cabinClass}     setCabinClass={setCabinClass}
       currency={currency}         setCurrency={setCurrency}
       loading={loading}           error={error}
+      dateOptions={dateOptions}
+      onUseDateOption={useDateOption}
       errorHint={tripHint ? {
         tag: t("tripHint.tag"),
         text: t(tripHint.nights === 1 ? "tripHint.textOne" : "tripHint.text", {
@@ -2468,6 +2487,7 @@ export default function App() {
           {providerDegraded && (
             <Notice variant="partial" tag={t("board.tagNotice")} text={t("results.degradedNotice")} />
           )}
+          <DateOptions options={dateOptions} currency={currency} onPick={useDateOption} />
 
           {/* ── Salidas: todos los destinos encontrados en un panel de salidas
               (sustituye podio Top 3 + barra de stats + lista "otras opciones").

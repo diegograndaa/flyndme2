@@ -11,7 +11,7 @@ import {
 } from "../utils/helpers";
 import { domesticCodes, sharedCountry } from "../utils/resultFilters";
 import { FriendlyError } from "./UiBits";
-import { Notice } from "./BoardPanels";
+import { Notice, DateOptions } from "./BoardPanels";
 import { tapHaptic } from "../utils/haptics";
 import { travelerSlot } from "../utils/resultsLogic";
 import { totalPax, MAX_PAX_PER_ORIGIN, MAX_TOTAL_PAX } from "../utils/passengers";
@@ -64,6 +64,7 @@ const SearchPage = React.memo(function SearchPage({
   cabinClass, setCabinClass,
   currency, setCurrency,
   loading, error, errorHint = null, // { tag, text, detail, actionLabel, onAction }: alternativa real a un 0 resultados
+  dateOptions = [], onUseDateOption,
   onSubmit, onCreateGroup, groupBusy,
   recentSearches, onLoadRecent, onClearRecent,
   embedded = false,
@@ -677,6 +678,7 @@ const SearchPage = React.memo(function SearchPage({
             {error && <FriendlyError message={error} onRetry={onSubmit} />}
             {/* Región viva siempre presente: la sugerencia llega en segundo plano */}
             <div aria-live="polite">{error && errorHint && <Notice variant="next" {...errorHint} />}</div>
+            {error && <DateOptions options={dateOptions} currency={currency} onPick={onUseDateOption} />}
 
             {/* Traveler summary bar */}
             {headcount >= MAX_TOTAL_PAX && (
