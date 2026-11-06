@@ -30,6 +30,7 @@ function shiftDays(isoDate, days) {
  * @param {number|null} [args.tripNights=null]  round trip: nights between departure and return (kept fixed)
  * @param {number} args.currentTotalEUR         group total to beat (what the user sees)
  * @param {string} args.today                   YYYY-MM-DD; candidates must be strictly after
+ * @param {string|null} [args.horizon=null]     YYYY-MM-DD; ida y vuelta no pueden pasarlo
  * @param {number} [args.windowDays=14]         max |candidate - currentDate| in days
  * @param {number} [args.minSavingAbs=15]       min absolute group saving (EUR)
  * @param {number} [args.minSavingPct=0.05]     min relative group saving
@@ -43,6 +44,7 @@ function collectCheaperDates({
   tripNights = null,
   currentTotalEUR,
   today,
+  horizon = null,
   windowDays = 14,
   minSavingAbs = 15,
   minSavingPct = 0.05,
@@ -78,6 +80,12 @@ function collectCheaperDates({
   for (const date of candidates) {
     if (date === currentDate) continue;
     if (today && !(date > today)) continue; // strictly future
+    if (horizon && date > horizon) continue;
+    if (roundtrip) {
+      const back = shiftDays(date, tripNights);
+      if (!(back > date)) continue;
+      if (horizon && back > horizon) continue;
+    }
     if (Math.abs(daysBetween(date, currentDate)) > windowDays) continue;
     let total = 0;
     for (let i = 0; i < maps.length; i++) {

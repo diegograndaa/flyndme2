@@ -83,3 +83,24 @@ test("combineDateOptions: un tramo por encima del tope o una media alta no se of
   assert.equal(combineDateOptions({ ...shared, maxFlight: 200 }).length, 0);
   assert.equal(combineDateOptions({ ...shared, maxAvg: 100 }).length, 0);
 });
+
+test("combineDateOptions: no ofrece un día pasado, una vuelta el mismo día ni una vuelta fuera del horizonte", () => {
+  const options = combineDateOptions({
+    origins: ["MAD"],
+    passengers: [1],
+    destination: "LIS",
+    requestedDeparture: "2026-11-15",
+    requestedReturn: "2026-11-22",
+    today: "2026-11-10",
+    horizon: "2026-11-24",
+    perOrigin: [[
+      { price: 40, departureDate: "2026-11-09", returnDate: "2026-11-16" },
+      { price: 50, departureDate: "2026-11-16", returnDate: "2026-11-25" },
+      { price: 60, departureDate: "2026-11-16", returnDate: "2026-11-16" },
+      { price: 70, departureDate: "2026-11-14", returnDate: "2026-11-21" },
+    ]],
+  });
+  assert.equal(options.length, 1);
+  assert.equal(options[0].departureDate, "2026-11-14");
+  assert.equal(options[0].returnDate, "2026-11-21");
+});

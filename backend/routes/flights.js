@@ -23,7 +23,7 @@ const getDatedPrices = typeof flightService.getDatedPrices === "function" ? flig
 const getCheapDestinations = typeof flightService.getCheapDestinations === "function" ? flightService.getCheapDestinations : null;
 const getRoundtripDateOptions = typeof flightService.getRoundtripDateOptions === "function" ? flightService.getRoundtripDateOptions : null;
 const getOnewayDateOptions = typeof flightService.getOnewayDateOptions === "function" ? flightService.getOnewayDateOptions : null;
-const { findCheaperGroupDates, daysBetween } = require("../services/cheaperDate");
+const { findCheaperGroupDates, daysBetween, shiftDays } = require("../services/cheaperDate");
 const { pickCheaperDestinations } = require("../services/cheaperDestinations");
 const { candidateNights } = require("../services/tripLength");
 const { combineDateOptions, summarizeSearchGap, MAX_DATE_OPTIONS } = require("../services/dateOptions");
@@ -768,6 +768,8 @@ router.post("/multi-origin", async (req, res) => {
                 perOrigin,
                 maxFlight: safeMaxFlight,
                 maxAvg: safeMaxAvg,
+                today: todayStr,
+                horizon: horizonStr,
                 limit: MAX_DATE_OPTIONS,
               });
             } else if (!bestForDest && getOnewayDateOptions) {
@@ -783,6 +785,8 @@ router.post("/multi-origin", async (req, res) => {
                 perOrigin,
                 maxFlight: safeMaxFlight,
                 maxAvg: safeMaxAvg,
+                today: todayStr,
+                horizon: horizonStr,
                 limit: MAX_DATE_OPTIONS,
               });
             }
@@ -981,6 +985,7 @@ router.post("/cheaper-date", async (req, res) => {
       )
     );
 
+    const today = new Date().toISOString().slice(0, 10);
     const betterDates = findCheaperGroupDates({
       originList,
       originPax,
@@ -988,7 +993,8 @@ router.post("/cheaper-date", async (req, res) => {
       currentDate: departureDate,
       tripNights,
       currentTotalEUR: total,
-      today: new Date().toISOString().slice(0, 10),
+      today,
+      horizon: shiftDays(today, 360),
       limit: 3,
     });
 
