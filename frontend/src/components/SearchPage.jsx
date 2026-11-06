@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/useI18n";
 import { User, Users, ArrowUp, ArrowDown, X, GripVertical, AlertTriangle, PlaneTakeoff, Plane } from "lucide-react";
 import {
   AIRPORTS, AIRPORT_MAP, POPULAR_ORIGINS, SEARCH_POOL, CURATED_CODES, normalizeCode, cityOf, destLabel, formatEur,
-  formatDate, todayISO, addDaysISO, horizonISO, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
+  formatDate, todayISO, addDaysISO, horizonISO, departureIsPast, suggestedReturnDate, countryFlag, countryOf, searchAirports, foldText, resolveOriginCode,
   nextDestSelection, sameCodeSet,
 } from "../utils/helpers";
 import { domesticCodes, sharedCountry } from "../utils/resultFilters";
@@ -31,11 +31,7 @@ function useDateWarnings(departureDate, returnDate, tripType) {
     const warnings = [];
     if (!departureDate) return warnings;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dep = new Date(departureDate + "T00:00:00");
-
-    if (dep < today) {
+    if (departureIsPast(departureDate)) {
       warnings.push({ key: "past", text: t("search.dateWarnPast"), type: "error" });
     }
 
@@ -218,7 +214,8 @@ const SearchPage = React.memo(function SearchPage({
                           setTripType(v);
                           // Auto-suggest return date when switching to roundtrip
                           if (v === "roundtrip" && !returnDate && departureDate) {
-                            setReturnDate(addDaysISO(departureDate, 7));
+                            const suggested = suggestedReturnDate(departureDate);
+                            if (suggested) setReturnDate(suggested);
                           }
                         }} disabled={loading}><span className="fm-led" aria-hidden="true" />{l}</button>
                     ))}

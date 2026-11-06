@@ -192,6 +192,30 @@ test("lista hasta 3 fechas que abaratan el grupo, de la más barata a la más ca
   assert.equal(findCheaperGroupDate({ ...base, currentTotalEUR: 400, perOrigin }).date, "2026-09-12");
 });
 
+test("roundtrip: no sugiere un par cuya vuelta pasa el horizonte", () => {
+  const r = findCheaperGroupDate({
+    ...base,
+    today: "2026-01-01",
+    horizon: "2026-01-20",
+    currentDate: "2026-01-10",
+    tripNights: 7,
+    currentTotalEUR: 600,
+    perOrigin: [
+      [
+        { date: "2026-01-15", returnDate: "2026-01-22", price: 100 },
+        { date: "2026-01-12", returnDate: "2026-01-19", price: 200 },
+      ],
+      [
+        { date: "2026-01-15", returnDate: "2026-01-22", price: 100 },
+        { date: "2026-01-12", returnDate: "2026-01-19", price: 200 },
+      ],
+    ],
+  });
+  assert.ok(r);
+  assert.equal(r.date, "2026-01-12");
+  assert.equal(r.returnDate, "2026-01-19");
+});
+
 test("oneway: el resultado no lleva returnDate", () => {
   const r = findCheaperGroupDate({
     ...base,

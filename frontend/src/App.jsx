@@ -10,7 +10,7 @@ const CompareChart  = React.lazy(() => import("./components/CompareChart"));
 import { useI18n } from "./i18n/useI18n";
 import {
   getBaseUrl, normalizeCode, cityOf, destLabel, jsonForScript,
-  formatEur, formatDate, weekdayOf, todayISO, horizonISO, addDaysISO, copyText,
+  formatEur, formatDate, weekdayOf, todayISO, horizonISO, shiftedTripDates, copyText,
   countryFlag, countryOf, scrollBehavior, AIRPORT_MAP, resolveOriginCode, sameCodeSet
 } from "./utils/helpers";
 import { convertPrice, pickBest, buildResultsCsv, FX_SYMBOLS } from "./utils/resultsLogic";
@@ -784,10 +784,13 @@ export default function App() {
   // Fechas vecinas: la misma búsqueda, un día a un lado. Sin precios en los
   // chips (no los tenemos hasta buscar). La ida y la vuelta se mueven juntas.
   const shiftDeparture = (offset) => {
-    const iso = addDaysISO(departureDate || todayISO(), offset);
-    if (!iso || iso < todayISO() || iso > horizonISO()) return;
-    setDepartureDate(iso);
-    if (tripType === "roundtrip" && returnDate) setReturnDate(addDaysISO(returnDate, offset));
+    const next = shiftedTripDates({
+      departureDate, returnDate, tripType, offset,
+      today: todayISO(), horizon: horizonISO(),
+    });
+    if (!next) return;
+    setDepartureDate(next.departureDate);
+    if (next.returnDate) setReturnDate(next.returnDate);
     // Misma vía que «usar esta fecha»: la búsqueda se relanza en resultados.
     // Volver a la portada solo para enviar el formulario hacía parpadear el inicio.
     setPendingResearch(true);
@@ -2304,20 +2307,21 @@ export default function App() {
           />
           {(() => {
             const short = (iso) => formatDate(iso).replace(/\s+\d{4}$/, "");
-            const prevIso = addDaysISO(departureDate || todayISO(), -1);
-            const nextIso = addDaysISO(departureDate || todayISO(), 1);
-            const inRange = (iso) => iso && iso >= todayISO() && iso <= horizonISO();
+            const step = (offset) => shiftedTripDates({
+              departureDate, returnDate, tripType, offset,
+              today: todayISO(), horizon: horizonISO(),
+            });
             const label = tripType === "roundtrip" && returnDate
               ? `${weekdayOf(departureDate)} ${short(departureDate)} – ${short(returnDate)}`
               : `${weekdayOf(departureDate)} ${short(departureDate)}`;
             return (
               <nav className="fm-date-step" aria-label={t("results.tryNearbyDates")}>
-                <button type="button" className="fm-date-step-btn" disabled={!inRange(prevIso)}
+                <button type="button" className="fm-date-step-btn" disabled={!step(-1)}
                   aria-label={t("results.dayPrev")} onClick={() => shiftDeparture(-1)}>
                   <ChevronLeft size={16} aria-hidden="true" />
                 </button>
                 <span className="fm-date-step-label">{label}</span>
-                <button type="button" className="fm-date-step-btn" disabled={!inRange(nextIso)}
+                <button type="button" className="fm-date-step-btn" disabled={!step(1)}
                   aria-label={t("results.dayNext")} onClick={() => shiftDeparture(1)}>
                   <ChevronRight size={16} aria-hidden="true" />
                 </button>

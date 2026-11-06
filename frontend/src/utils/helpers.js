@@ -336,6 +336,38 @@ export function horizonISO(today = todayISO()) {
   return addDaysISO(today, MAX_HORIZON_DAYS);
 }
 
+// La ida está en el pasado respecto al mismo «hoy» que acepta la búsqueda
+// (UTC, como el backend). Comparar con la medianoche local adelanta un día
+// en España entre las 00:00 y la 01:00.
+export function departureIsPast(departureDate, today = todayISO()) {
+  return Boolean(departureDate) && Boolean(today) && departureDate < today;
+}
+
+// Al pasar a ida y vuelta, la vuelta sugerida es una semana después, pero
+// nunca más allá del horizonte: si no cabe, el último día que la búsqueda
+// acepta. Sin un día posterior a la ida, no hay sugerencia.
+export function suggestedReturnDate(departureDate, horizon = horizonISO()) {
+  const min = addDaysISO(departureDate, 1);
+  if (!min || !horizon || min > horizon) return "";
+  const week = addDaysISO(departureDate, 7);
+  if (!week || week > horizon) return horizon;
+  return week;
+}
+
+// Mover la ida (y la vuelta, si la hay) el mismo número de días. Null si la
+// ida o la vuelta salen del rango que la búsqueda acepta: un día más en la
+// ida no puede dejar la vuelta pasada de 360 días.
+export function shiftedTripDates({ departureDate, returnDate, tripType, offset, today, horizon }) {
+  const dep = addDaysISO(departureDate || today, offset);
+  if (!dep || !today || !horizon || dep < today || dep > horizon) return null;
+  if (tripType === "roundtrip" && returnDate) {
+    const ret = addDaysISO(returnDate, offset);
+    if (!ret || ret <= dep || ret > horizon) return null;
+    return { departureDate: dep, returnDate: ret };
+  }
+  return { departureDate: dep };
+}
+
 // Skyscanner affiliate ID — set via VITE_SKYSCANNER_AFFILIATE_ID env var
 const SKYSCANNER_AFFILIATE_ID = (typeof import.meta !== "undefined" && import.meta.env?.VITE_SKYSCANNER_AFFILIATE_ID) || "";
 

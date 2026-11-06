@@ -17,6 +17,8 @@ function combineDateOptions({
   perOrigin,
   maxFlight = null,
   maxAvg = null,
+  today = null,
+  horizon = null,
   limit = MAX_DATE_OPTIONS,
 }) {
   const byPair = new Map();
@@ -31,6 +33,10 @@ function combineDateOptions({
       if (wantsReturn && !/^\d{4}-\d{2}-\d{2}$/.test(ret)) continue;
       if (!wantsReturn && ret) continue;
       if (dep === requestedDeparture && (!wantsReturn || ret === requestedReturn)) continue;
+      if (today && dep < today) continue;
+      if (horizon && dep > horizon) continue;
+      if (wantsReturn && ret <= dep) continue;
+      if (wantsReturn && horizon && ret > horizon) continue;
       if (maxFlight != null && price > maxFlight) continue;
       const key = wantsReturn ? `${dep}|${ret}` : dep;
       if (!byPair.has(key)) byPair.set(key, new Array(origins.length).fill(null));
