@@ -58,6 +58,9 @@ const MAX_CACHE_SIZE       = 500;
 // la fecha pedida, se busca la fecha con datos más cercana dentro de ±N días
 // y se devuelve ETIQUETADA con su fecha real (offer.dateFallback). 0 = off.
 const DATE_FLEX_DAYS       = Number(process.env.TP_DATE_FLEX_DAYS ?? 2);
+// El calendario semanal de Aviasales cubre de 3 días antes a 4 después de
+// cada fecha. Solo se usa en ida y vuelta, cuando el par exacto no está.
+const WEEK_FLEX_DAYS       = 4;
 // Ventana del nudge "fecha más barata" (getDatedPrices consulta los meses que
 // toca). Coincide con windowDays por defecto de findCheaperGroupDate.
 const DATE_NUDGE_DAYS      = Number(process.env.TP_DATE_NUDGE_DAYS ?? 14);
@@ -240,6 +243,8 @@ function addMinutes(isoAt, minutes) {
 // sería mentir. El frontend degrada con elegancia si segments está vacío.
 function buildSegments(fromAirport, toAirport, departAt, airline, flightNumber, durationMin, transfers) {
   if (transfers !== 0) return [];
+  // Sin hora real no se inventa un «00:00». El calendario semanal solo trae el día.
+  if (!departAt || !String(departAt).includes("T")) return [];
   return [{
     departure: { iataCode: fromAirport, at: departAt },
     arrival:   { iataCode: toAirport,   at: addMinutes(departAt, durationMin) },
@@ -436,6 +441,99 @@ async function fetchRoundtripWindow(origin, destination, depMonth, retMonth, opt
   return byDeparture ? kept.filter(retOk) : kept;
 }
 
+// El calendario semanal devuelve precios REALES de los días alrededor de la
+// ida y de la vuelta. prices_for_dates con one_way=false, en cambio, ordena
+// por precio todo el mes: el par pedido queda fuera del corte y la búsqueda
+// sale vacía.
+function weekRowToTicket(row, currencyCode) {
+  const price = Number(row?.value);
+  const dep = String(row?.depart_date || "").slice(0, 10);
+  const ret = String(row?.return_date || "").slice(0, 10);
+  if (!Number.isFinite(price) || price <= 0) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dep) || !/^\d{4}-\d{2}-\d{2}$/.test(ret)) return null;
+  const stops = Number(row?.number_of_changes);
+  return {
+    origin: row.origin,
+    destination: row.destination,
+    origin_airport: row.origin,
+    destination_airport: row.destination,
+    price,
+    currency: (currencyCode || "EUR").toUpperCase(),
+    airline: row.airline || "",
+    flight_number: row.flight_number ?? null,
+    departure_at: dep,
+    return_at: ret,
+    transfers: Number.isFinite(stops) ? stops : null,
+    return_transfers: null,
+    link: row.link || null,
+  };
+}
+
+async function fetchWeekMatrix(origin, destination, departureDate, returnDate, options = {}) {
+  const currency = (options.currencyCode || "EUR").toLowerCase();
+  const direct = options.nonStop === true ? "direct" : "";
+  const key = `week|${origin}|${destination}|${departureDate}|${returnDate}|${currency}|${direct}|${MARKET}`;
+  const cached = searchCache.get(key);
+  if (cached) return cached;
+
+  const params = {
+    origin,
+    destination,
+    depart_date: departureDate,
+    return_date: returnDate,
+    currency,
+    // false = toda la caché. true dejaría solo los precios del marcador.
+    show_to_affiliates: "false",
+    one_way: "false",
+    token: TOKEN,
+  };
+  if (MARKET) params.market = MARKET;
+
+  const response = await requestWithRetry(
+    () => transport(`${BASE_URL}/v2/prices/week-matrix`, {
+      params,
+      headers: {
+        "X-Access-Token": TOKEN,
+        "Accept-Encoding": "gzip, deflate",
+      },
+    }),
+    `${origin}→${destination} semana ${departureDate}/${returnDate}`
+  );
+  const body = response?.data;
+  if (!body || body.success !== true) {
+    throw new Error("Travelpayouts: calendario semanal inválido");
+  }
+  let tickets = (Array.isArray(body.data) ? body.data : [])
+    .map((row) => weekRowToTicket(row, currency))
+    .filter(Boolean);
+  if (options.nonStop === true) tickets = tickets.filter((t) => t.transfers === 0);
+  searchCache.set(key, tickets);
+  return tickets;
+}
+
+function resultFromTicket(ticket, requestedDeparture, requestedReturn, options) {
+  const actualDep = String(ticket.departure_at).slice(0, 10);
+  const actualRet = requestedReturn ? String(ticket.return_at || "").slice(0, 10) : undefined;
+  const offer = mapTicketToOffer(ticket, {
+    departureDate: actualDep,
+    returnDate: actualRet || undefined,
+    nonStop: options.nonStop,
+    currencyCode: options.currencyCode,
+  });
+  if (!offer) return null;
+  const sameDay = actualDep === requestedDeparture && (!requestedReturn || actualRet === requestedReturn);
+  if (!sameDay) {
+    offer.dateFallback = {
+      requestedDepartureDate: requestedDeparture,
+      requestedReturnDate: requestedReturn || null,
+      departureDate: actualDep,
+      returnDate: actualRet || null,
+      offsetDays: dayDiff(requestedDeparture, actualDep),
+    };
+  }
+  return { price: Number(ticket.price), offer, ...(offer.dateFallback ? { dateFallback: offer.dateFallback } : {}) };
+}
+
 // Consulta el mes a granularidad de día (la API agrupa por fecha) y devuelve
 // el billete vecino más cercano, o null. Las consultas de mes pasan por la
 // misma caché local que las de fecha exacta (clave = mes), así que el coste
@@ -517,27 +615,21 @@ async function getCheapestOffer(origin, destination, departureDate, options = {}
     // etiquetada con su fecha real. Convierte en resultado útil el ~27% de
     // rutas que la caché no cubre en fecha exacta.
     if (DATE_FLEX_DAYS <= 0) return null;
+
+    // Ida y vuelta: primero la semana alrededor de las dos fechas. El mes
+    // ordenado por precio no trae ese par y la búsqueda se quedaba vacía.
+    if (options.returnDate) {
+      try {
+        const week = await fetchWeekMatrix(origin, destination, departureDate, options.returnDate, options);
+        const picked = pickNeighbor(week, departureDate, options.returnDate, WEEK_FLEX_DAYS);
+        const built = picked && resultFromTicket(picked, departureDate, options.returnDate, options);
+        if (built) return built;
+      } catch { /* el mes sigue siendo el respaldo */ }
+    }
+
     const neighbor = await findNeighborTicket(origin, destination, departureDate, options);
-    if (!neighbor) return null;
-
-    const actualDep = String(neighbor.departure_at).slice(0, 10);
-    const actualRet = options.returnDate ? String(neighbor.return_at).slice(0, 10) : undefined;
-    const offer = mapTicketToOffer(neighbor, {
-      departureDate: actualDep,
-      returnDate:    actualRet,
-      nonStop:       options.nonStop,
-      currencyCode:  options.currencyCode,
-    });
-    if (!offer) return null;
-
-    offer.dateFallback = {
-      requestedDepartureDate: departureDate,
-      requestedReturnDate:    options.returnDate || null,
-      departureDate:          actualDep,
-      returnDate:             actualRet || null,
-      offsetDays:             dayDiff(departureDate, actualDep),
-    };
-    return { price: Number(neighbor.price), offer, dateFallback: offer.dateFallback };
+    const built = neighbor && resultFromTicket(neighbor, departureDate, options.returnDate, options);
+    return built || null;
   } catch {
     // Contrato del proveedor: un fallo puntual en una ruta no
     // tumba la búsqueda multi-origen; el destino simplemente se descarta.

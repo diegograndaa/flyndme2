@@ -303,6 +303,7 @@ test("getCheapestOffer: con precio en fecha exacta no consulta el mes", async ()
 
 test("getCheapestOffer: fallback ida y vuelta con fechas reales en ambos tramos", async () => {
   setTransport(async (url, config) => {
+    if (String(url).includes("week-matrix")) return okResponse([]);
     if (config.params.departure_at === D0) return okResponse([]);
     return okResponse([
       ticket({
@@ -351,6 +352,7 @@ test("fallback ida y vuelta: pide el máximo de la API y encuentra el billete ce
   const limits = [];
   setTransport(async (url, config) => {
     const p = config.params;
+    if (String(url).includes("week-matrix")) return okResponse([]);
     if (p.departure_at === D0) return okResponse([]); // exacta: vacía
     monthCalls += 1;
     limits.push(p.limit);
@@ -382,6 +384,7 @@ test("fallback ida y vuelta: otra duración con la misma salida reutiliza el mes
   let monthCalls = 0;
   setTransport(async (url, config) => {
     const p = config.params;
+    if (String(url).includes("week-matrix")) return okResponse([]);
     if (/^\d{4}-\d{2}-\d{2}$/.test(p.departure_at)) return okResponse([]); // fechas exactas: vacías
     monthCalls += 1;
     return okResponse([
@@ -399,6 +402,56 @@ test("fallback ida y vuelta: otra duración con la misma salida reutiliza el mes
   if (addDays(D0, 7).slice(0, 7) === addDays(D0, 3).slice(0, 7)) {
     assert.equal(monthCalls, calls, "mismo mes de vuelta → sin nuevas consultas mensuales");
   }
+});
+
+test("ida y vuelta: si el mes no trae esas fechas, vale el precio de la semana y se etiquetan los días reales", async () => {
+  const seen = [];
+  setTransport(async (url, config) => {
+    seen.push({ url: String(url), departure_at: config.params.departure_at });
+    if (String(url).includes("week-matrix")) {
+      assert.equal(config.params.depart_date, D0);
+      assert.equal(config.params.return_date, addDays(D0, 7));
+      assert.equal(config.params.show_to_affiliates, "false");
+      assert.equal(config.params.one_way, "false");
+      return { data: { success: true, data: [
+        { origin: "MAD", destination: "LIS", depart_date: addDays(D0, 4), return_date: addDays(D0, 11), value: 90, number_of_changes: 1 },
+        { origin: "MAD", destination: "LIS", depart_date: addDays(D0, 1), return_date: addDays(D0, 8), value: 160, number_of_changes: 0 },
+      ] } };
+    }
+    if (config.params.departure_at === D0) return okResponse([]);
+    return okResponse([
+      ticket({ price: 20, departure_at: `${addDays(D0, 12)}T08:00:00+02:00`, return_at: `${addDays(D0, 19)}T19:00:00+02:00` }),
+    ]);
+  });
+
+  const r = await tp.getCheapestOffer("MAD", "WKS", D0, { returnDate: addDays(D0, 7) });
+  assert.equal(r.price, 160, "elige el par más cercano, no el más barato de la semana");
+  assert.equal(r.offer.dateFallback.departureDate, addDays(D0, 1));
+  assert.equal(r.offer.dateFallback.returnDate, addDays(D0, 8));
+  assert.equal(r.offer.dateFallback.requestedDepartureDate, D0);
+  assert.equal(r.offer.itineraries[0].segments.length, 0, "sin hora no se inventa un horario");
+  assert.equal(seen.some((c) => c.url.includes("week-matrix")), true);
+  assert.equal(seen.some((c) => c.url.includes("prices_for_dates") && String(c.departure_at || "").length === 7), false);
+});
+
+test("ida y vuelta: un directo no usa un precio con escalas de la semana", async () => {
+  let monthCalls = 0;
+  setTransport(async (url, config) => {
+    if (String(url).includes("week-matrix")) {
+      return { data: { success: true, data: [
+        { origin: "MAD", destination: "LIS", depart_date: D0, return_date: addDays(D0, 7), value: 70, number_of_changes: 1 },
+      ] } };
+    }
+    if (config.params.departure_at === D0) return okResponse([]);
+    monthCalls += 1;
+    assert.equal(config.params.direct, "true");
+    return okResponse([
+      ticket({ price: 210, departure_at: `${D0}T08:00:00+02:00`, return_at: `${addDays(D0, 7)}T19:00:00+02:00`, transfers: 0, return_transfers: 0 }),
+    ]);
+  });
+  const r = await tp.getCheapestOffer("MAD", "WKD", D0, { returnDate: addDays(D0, 7), nonStop: true });
+  assert.equal(r.price, 210);
+  assert.equal(monthCalls > 0, true, "sin directo en la semana se sigue consultando el mes");
 });
 
 test("makeCacheKey: distingue el límite de la consulta", () => {
