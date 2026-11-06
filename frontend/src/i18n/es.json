@@ -573,6 +573,7 @@
     "dateFallbackHint": "Sin precio en caché para tu fecha exacta — mostramos la fecha con datos más cercana. La fecha indicada es la real del vuelo.",
     "dateOptionsTitle": "Otras fechas",
     "dateOptionAria": "Buscar {{city}} del {{out}} al {{back}}. Estimación {{total}}.",
+    "dateOptionAriaOne": "Buscar {{city}} el {{out}}. Estimación {{total}}.",
     "groupNudge": {
       "title": "¿No todos han confirmado su ciudad?",
       "text": "Conviértelo en un plan de grupo: cada uno añade su ciudad y FlyndMe busca el sitio más barato y justo para veros todos.",
@@ -631,6 +632,9 @@
     "paxPerCity": "Como máximo {{max}} viajeros por ciudad de salida: {{city}} suma {{n}}.",
     "unknownOriginsHint": "Revisa {{codes}}: no está en nuestra lista de ciudades y puede que no tenga vuelos. Elígela de las sugerencias.",
     "noResultsRoundtripMulti": "Sin resultados de ida y vuelta para esas ciudades y fechas. Los datos de ida y vuelta para varias ciudades son más limitados, así que prueba con fechas flexibles, menos ciudades o busca solo ida.",
+    "missingOriginPrices": "No hay precio para todos en esas fechas. Sin precio: {{missing}}. Con algún precio: {{present}}.",
+    "allOriginsMiss": "Ninguna de estas ciudades tiene precio en esas fechas: {{missing}}.",
+    "noCommonDestination": "Cada ciudad tiene algún precio, pero no coinciden en el mismo destino y las mismas fechas.",
     "friendlyTitle": "Vaya, algo salió mal",
     "tryAgain": "Intentar de nuevo",
     "codes": {

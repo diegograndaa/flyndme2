@@ -85,20 +85,29 @@ export function DateOptions({ options = [], currency = "EUR", onPick }) {
       {options.map((opt) => {
         const city = cityOf(opt.destination) || opt.destination;
         const total = money(opt.totalCostEUR, currency);
+        const when = opt.returnDate
+          ? `${short(opt.departureDate)} – ${short(opt.returnDate)}`
+          : short(opt.departureDate);
         return (
           <button
-            key={`${opt.destination}-${opt.departureDate}-${opt.returnDate}`}
+            key={`${opt.destination}-${opt.departureDate}-${opt.returnDate || "ow"}`}
             type="button"
             className="fm-date-rec"
-            aria-label={t("results.dateOptionAria", {
-              city,
-              out: formatDate(opt.departureDate),
-              back: formatDate(opt.returnDate),
-              total,
-            })}
+            aria-label={opt.returnDate
+              ? t("results.dateOptionAria", {
+                city,
+                out: formatDate(opt.departureDate),
+                back: formatDate(opt.returnDate),
+                total,
+              })
+              : t("results.dateOptionAriaOne", {
+                city,
+                out: formatDate(opt.departureDate),
+                total,
+              })}
             onClick={() => onPick(opt)}
           >
-            <span>{city} · {short(opt.departureDate)} – {short(opt.returnDate)}</span>
+            <span>{city} · {when}</span>
             <span className="fm-date-rec-save">{total}</span>
           </button>
         );

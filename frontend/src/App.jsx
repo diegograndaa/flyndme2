@@ -1439,11 +1439,11 @@ export default function App() {
   // Una fecha cercana solo se busca si se elige. El formulario pasa a esas
   // fechas y a ese destino, que es el que tenía precio.
   const useDateOption = (opt) => {
-    if (!opt?.departureDate || !opt?.returnDate || !opt?.destination) return;
+    if (!opt?.departureDate || !opt?.destination) return;
     trackEvent("date_option_apply", { destination: opt.destination });
     setDateOptions([]);
     setDepartureDate(opt.departureDate);
-    setReturnDate(opt.returnDate);
+    if (opt.returnDate) setReturnDate(opt.returnDate);
     setSelectedDests([normalizeCode(opt.destination)]);
     setDestBasis("usual");
     setPendingResearch(true);
@@ -1608,11 +1608,24 @@ export default function App() {
             // Sin resultados: guía concreta. El multi-origen ida-y-vuelta es el
             // caso más escaso (la caché roundtrip de varias ciudades es más fina),
             // así que ahí explicamos por qué y qué probar.
+            const gap = data.searchGap;
+            const place = (codes) => (Array.isArray(codes) ? codes : [])
+              .map((code) => cityOf(code) || code)
+              .join(", ");
             const noResMsg = budgetEnabled
               ? t("errors.noBudgetResults")
-              : (tripType === "roundtrip" && cleanOrigins.length >= 2)
-                ? t("errors.noResultsRoundtripMulti")
-                : t("errors.noResults");
+              : gap?.noCommonDestination
+                ? t("errors.noCommonDestination")
+                : (gap?.withoutPrice?.length && gap?.withPrice?.length)
+                  ? t("errors.missingOriginPrices", {
+                    missing: place(gap.withoutPrice),
+                    present: place(gap.withPrice),
+                  })
+                  : (gap?.withoutPrice?.length)
+                    ? t("errors.allOriginsMiss", { missing: place(gap.withoutPrice) })
+                    : (tripType === "roundtrip" && cleanOrigins.length >= 2)
+                      ? t("errors.noResultsRoundtripMulti")
+                      : t("errors.noResults");
             // Un código que no está en nuestra lista suele ser una errata, y basta
             // un origen sin precios para descartar todos los destinos.
             const unknown = cleanOrigins.filter((o) => !AIRPORT_MAP[o]);

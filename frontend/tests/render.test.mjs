@@ -637,4 +637,11 @@ test("render: las otras fechas salen como opción y no como el resultado", async
   }));
   assert.ok(form.includes("Other dates") || form.includes("Otras fechas"));
   assert.ok(form.includes("No shared departures"));
+  const oneWay = renderWithI18n(React.createElement(DateOptions, {
+    options: [{ destination: "LIS", departureDate: "2026-11-16", returnDate: null, totalCostEUR: 90 }],
+    currency: "EUR",
+    onPick: noop,
+  }));
+  assert.ok(oneWay.includes("90"));
+  assert.ok(!oneWay.includes("–"));
 });
