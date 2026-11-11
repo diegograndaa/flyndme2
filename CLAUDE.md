@@ -85,7 +85,10 @@ Límites: 300 peticiones cada 10 min por IP en todo `/api` (`/ping` exento), 60 
 
 - Claro: crema `#F5F3EF`, papel `#FBF9F5`, tinta `#1A1A1A`. Oscuro: `#121316`, texto hueso `#E6E8EC`. Prohibido navy, violeta y degradados.
 - Un solo acento: amarillo de señalética `#FFC20E` (`--sign`), siempre con tinta encima y en los mismos sitios en los dos temas. `--primary` es tinta en claro y hueso en oscuro, nunca amarillo.
-- El relleno amarillo en resultados es solo para «Reservar» y el botón principal.
+- El relleno amarillo en resultados es solo para «Reservar» y el botón principal. «Reservar» va a su ancho en escritorio (ancho completo solo en móvil); la cifra más grande de la pantalla es el total del grupo.
+- Nada de filas de iconos sin nombre: bajo cada vuelo, enlaces con texto (aerolínea, Skyscanner, Google Flights, Copiar); bajo la tarjeta, «Compartir» (despliega los canales, o abre la hoja del sistema) y «Vigilar precio».
+- Los filtros van plegados en todos los anchos: el botón «Filtros» abre el panel lateral. En escritorio la decisión ocupa el centro a 1040 px.
+- Portada en escritorio: los tres pasos van bajo el mapa; la sección «en 3 pasos» queda para el móvil.
 - Un color por viajero (`--trav-1…8`), siempre junto al código de la ciudad.
 - La equidad no se comunica en negativo: barras «quién paga qué» y un dato neutro.
 - Texto mínimo 12 px, campos a 16 px (iOS hace zoom por debajo), dianas táctiles de 40 px o más.

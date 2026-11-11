@@ -309,11 +309,21 @@
   border: 1px solid var(--card-line); border-radius: var(--radius-sm); background: var(--dm-sea);
 }
 @media (max-width: 600px) { .fm-route-map { height: 220px; } }
+/* En escritorio el hueco es muy apaisado: con más alto cabe el grupo entero. */
+@media (min-width: 900px) { .fm-route-map { height: 400px; } }
 .dm-wrap.dm-wrap--inline { position: absolute; inset: 0; padding: 0; border: 0; border-radius: 0; background: var(--dm-sea); overflow: visible; }
 .dm-wrap--inline .dm-container { position: absolute; inset: 0; border: 0; border-radius: 0; overflow: visible; }
 .dm-wrap--inline .dm-svg { width: 100%; height: 100%; }
 .dm-wrap--inline .dm-grat-labels, .dm-wrap--inline .dm-compass { display: none; }
 .dm-inline-loading { position: absolute; inset: 0; background: var(--white); }
+/* Bajo las salidas el hueco es más apaisado que Europa: el mapa va centrado a
+   su proporción y se funde con el mar por los lados (sin esto, la tierra
+   acababa en un corte recto). */
+.fm-route-map .dm-wrap--inline .dm-svg {
+  width: auto; max-width: 100%; margin: 0 auto;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
 .dm-origin-dot[class*="trav-c"] { stroke: var(--trav); }
 @media (max-width: 767.98px) {
   .wc-top--map { grid-template-columns: minmax(0, 1fr); }
@@ -788,3 +798,94 @@
 /* Aviso de estimación en el panel de salidas */
 .fm-board-note { text-transform: none; letter-spacing: normal; font-family: var(--font); font-weight: 400; margin: 4px 0 0; max-width: 60ch; font-size: 12px; line-height: 1.4; color: var(--slate-500); }
 .wc-cta-letter { font: 700 15px/1 var(--font-mono); }
+
+/* ══ Revisión estética (11-nov-2026) ═══════════════════════════════════════
+   El amarillo es escaso: «Reservar» va a su ancho y el total del grupo manda.
+   Lo que eran iconos sueltos ahora lleva nombre. */
+
+/* El total del grupo es la cifra más grande de la pantalla */
+.wc-card .wc-total-price.wc-total-price { font-size: 46px; }
+@media (max-width: 600px) {
+  .wc-card .wc-total-price.wc-total-price { font-size: 38px; }
+}
+
+/* Cada vuelo: enlaces con nombre a la izquierda, Reservar a la derecha */
+.wc-card .wc-buy .wc-flight-ctas.wc-flight-ctas {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+}
+.wc-card .wc-buy .wc-flight-ctas .wc-cta--book.wc-cta--book {
+  order: 2; flex: 0 0 auto; min-width: 180px; padding: 10px 22px; justify-content: center;
+}
+.wc-flight-links { order: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; min-width: 0; margin-left: -10px; }
+.wc-flight-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 0 10px;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+  color: var(--slate-700); font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+  text-decoration: underline; text-decoration-color: var(--panel-line); text-decoration-thickness: 1px; text-underline-offset: 4px;
+  cursor: pointer;
+}
+.wc-flight-link:hover { color: var(--navy); text-decoration-color: currentColor; }
+.wc-flight-link:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+.wc-flight-link--copy { text-decoration: none; }
+.wc-flight-link--copy:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .wc-card .wc-buy .wc-flight-ctas .wc-cta--book.wc-cta--book { order: 1; flex: 1 1 100%; min-width: 0; padding: 11px 12px; }
+  /* Una sola fila: los tres enlaces con nombre y, al final, copiar como icono
+     (lleva su nombre para el lector de pantalla). Un nombre de aerolínea largo
+     se acorta antes que partir la fila. */
+  .wc-flight-links { order: 2; width: 100%; margin-left: -8px; flex-wrap: nowrap; gap: 0; }
+  .wc-flight-link { padding: 0 7px; flex: 0 0 auto; }
+  /* «Google» a secas: con «Flights» la fila no cabe en un teléfono */
+  .wc-flight-link-long { display: none; }
+  .wc-flight-link--airline { flex: 0 1 auto; min-width: 0; display: block; line-height: 40px; overflow: hidden; text-overflow: ellipsis; }
+  .wc-flight-link--copy { margin-left: auto; margin-right: -8px; width: 40px; padding: 0; justify-content: center; }
+  .wc-flight-link--copy .wc-flight-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 360px) {
+  .wc-flight-link { padding: 0 6px; font-size: 12px; }
+}
+
+/* Compartir y vigilar: dos botones con nombre; los canales, al desplegar */
+.wc-card .wc-actions.wc-actions { display: block; }
+.wc-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.wc-act,
+.wc-share-opt {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--panel-line); border-radius: var(--radius-sm);
+  background: var(--panel-bg); color: var(--navy);
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.wc-act { min-height: 44px; padding: 0 16px; font-size: 14px; }
+.wc-share-opt { min-height: 40px; padding: 0 12px; font-size: 13px; font-weight: 600; }
+.wc-act:hover,
+.wc-share-opt:hover { border-color: var(--primary); }
+.wc-act:focus-visible,
+.wc-share-opt:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
+.wc-act--on { background: var(--primary); border-color: var(--primary); color: var(--on-solid); }
+.wc-act-chev { transition: transform .15s ease; }
+.wc-act[aria-expanded="true"] .wc-act-chev { transform: rotate(180deg); }
+.wc-share-menu { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+@media (max-width: 600px) {
+  .wc-acts { display: grid; grid-template-columns: 1fr 1fr; }
+  .wc-acts > :only-child { grid-column: 1 / -1; }
+  .wc-act { padding: 0 8px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wc-act-chev { transition: none; }
+}
+
+/* Portada en escritorio: los tres pasos van bajo el mapa (columna derecha) y
+   la sección «en 3 pasos» de abajo queda solo para el móvil. */
+.hm-steps {
+  list-style: none; margin: 14px 0 0; padding: 12px 0 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;
+  border-top: 1px solid var(--line);
+}
+.hm-step { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hm-step-n { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--slate-500); }
+.hm-step-text { font-size: 13px; line-height: 1.35; color: var(--slate-700); }
+@media (min-width: 861px) {
+  .lp-how { display: none; }
+}
+

@@ -39,9 +39,12 @@ function fitView(points, aspect) {
   minX -= pad; maxX += pad; minY -= pad * 1.15; maxY += pad * 0.85;
   let w = Math.max(maxX - minX, 260);
   let h = Math.max(maxY - minY, 260 / aspect);
+  const needH = h;
   if (w / h > aspect) h = w / aspect; else w = h * aspect;
-  // No mostrar más que el mapa entero en ninguna dimensión
-  if (w > SVG_W) { w = SVG_W; h = w / aspect; }
+  // No mostrar más que el mapa entero en ninguna dimensión. En un hueco muy
+  // apaisado el ancho topa antes: el alto no baja del que piden los puntos
+  // (si no, la ciudad más al sur se salía del encuadre) y sobra mar a los lados.
+  if (w > SVG_W) { w = SVG_W; h = Math.max(w / aspect, needH); }
   if (h > SVG_H) { h = SVG_H; w = Math.min(SVG_W, h * aspect); }
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;

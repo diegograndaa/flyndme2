@@ -69,17 +69,11 @@ export function ResultFilters({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [wide, setWide] = useState(false);
   const closeRef = useRef(null);
+  // Plegados en todos los anchos: el botón abre el panel. En escritorio eran
+  // una columna fija que le quitaba un quinto del ancho a la decisión.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 900px)");
-    const apply = () => setWide(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-  useEffect(() => {
-    if (!open || wide) return undefined;
+    if (!open) return undefined;
     closeRef.current?.focus();
     const onKey = (e) => {
       if (e.key !== "Escape") return;
@@ -94,7 +88,7 @@ export function ResultFilters({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, wide]);
+  }, [open]);
   const airlines = airlinesIn(flights);
   const steps = durationSteps(flights);
   const departs = departFloors(flights);
@@ -152,7 +146,7 @@ export function ResultFilters({
     });
   };
 
-  const drawer = open && !wide;
+  const drawer = open;
   const groups = (
       <div className="fm-filters-body">
         <div className="fm-filters-head">

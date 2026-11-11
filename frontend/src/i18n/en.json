@@ -498,7 +498,9 @@
     "durHM": "{{h}} h {{m}} min",
     "durH": "{{h}} h",
     "durM": "{{m}} min",
-    "stops": "{{n}} stop(s)",
+    "stops": "{{n}} stops",
+    "stopsOne": "1 stop",
+    "copyShort": "Copy",
     "outbound": "Outbound",
     "returnLeg": "Return",
     "disclaimer": "Estimate based on recent searches. The final fare is the airline's when you book, or the issuable fare plus FlyndMe's commission if you buy the group here.",
@@ -755,6 +757,8 @@
     "offline": "Offline"
   },
   "share": {
+    "email": "Email",
+    "copyLink": "Copy link",
     "title": "FlyndMe · Recommended destination: {{dest}}",
     "totalAvg": "Group total: {{total}} · Average: {{avg}}",
     "fairness": "Fairness: {{score}}/100",

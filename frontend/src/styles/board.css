@@ -785,8 +785,7 @@
   .fm-date-recs { gap: 6px; }
 }
 
-/* Filtros en barra izquierda, como un buscador de vuelos. En escritorio
-   están siempre a la vista. En el móvil el botón abre esa misma barra. */
+/* Filtros plegados en todos los anchos: el botón abre el panel lateral. */
 .fm-results-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1028,26 +1027,15 @@
 .fm-filter-reset:hover { border-color: var(--primary); }
 .fm-filter-reset:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 @media (min-width: 900px) {
-  .fm-results-layout:has(.fm-filters) {
-    grid-template-columns: 232px minmax(0, 1fr);
-    column-gap: 28px;
+  /* Sin columna de filtros: la decisión ocupa el centro, a un ancho de lectura */
+  .fm-results-layout { max-width: 1040px; margin-left: auto; margin-right: auto; }
+  .fm-filters-toggle {
+    padding: 0 14px;
+    border: 1px solid var(--panel-line);
+    background: var(--panel-bg);
   }
-  .fm-filters {
-    position: sticky;
-    top: 64px;
-    max-height: calc(100dvh - 80px);
-    overflow: auto;
-    padding: 2px 0 16px;
-  }
-  .fm-filters-toggle,
-  .fm-filters-close,
-  .fm-filters-layer { display: none; }
-  .fm-filters-body { display: flex; gap: 16px; }
-  .fm-filter-block { gap: 4px; }
-  .fm-filter-opts { gap: 4px; }
-  .fm-check { font-size: 13px; gap: 8px; padding: 2px 0; }
-  .fm-filter-opt-n { font-size: 12px; }
-  .fm-filter-reset { font-size: 12px; padding: 6px 8px; }
+  .fm-filters-toggle:hover { border-color: var(--primary); }
+  .fm-filters--drawer { width: 340px; }
   .fm-results-main > .fm-sticky-bar { margin-left: 0; margin-right: 0; }
 }
 .fm-results-main { min-width: 0; }

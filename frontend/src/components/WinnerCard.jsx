@@ -60,7 +60,7 @@ function LegStrip({ kicker, schedule, t }) {
   const { from, to, dep, arr, stops, carrier, duration } = schedule;
   const dur = durationLabel(duration, t);
   const name = airlineName(carrier) || carrier;
-  const stopsLabel = stops == null ? "" : (stops === 0 ? t("results.direct") : t("results.stops", { n: stops }));
+  const stopsLabel = stops == null ? "" : (stops === 0 ? t("results.direct") : stops === 1 ? t("results.stopsOne") : t("results.stops", { n: stops }));
   if (!dep && !arr && !dur && stops == null && !name && !from && !to) return null;
   return (
     <div className="wc-leg">
@@ -131,6 +131,7 @@ const WinnerCard = React.memo(function WinnerCard({
       : null
   ));
   const [copied, setCopied] = useState(null); // { origin, ok } del último «copiar vuelo»
+  const [shareOpen, setShareOpen] = useState(false);
   useEffect(() => {
     if (!copied) return undefined;
     const id = setTimeout(() => setCopied(null), 2000);
@@ -527,6 +528,8 @@ const WinnerCard = React.memo(function WinnerCard({
                     )}
                     <LegStrip schedule={out} t={t} />
                     {back && <LegStrip kicker={t("results.returnLeg")} schedule={back} t={t} />}
+                    {/* Reservar es el único botón; lo demás son enlaces con su
+                        nombre (antes eran iconos sueltos: lupa, «G», copiar). */}
                     <div className="wc-flight-ctas">
                       {book && (
                         <a href={book.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--book"
@@ -536,39 +539,37 @@ const WinnerCard = React.memo(function WinnerCard({
                           {t("results.bookCta")}
                         </a>
                       )}
-                      {airlineSecondary && (
-                        <a href={airlineSecondary.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--airline"
-                          aria-label={airlineSecondary.airlineName} title={airlineSecondary.airlineName}
-                          onClick={() => track("book_click", { provider: "airline", airline: airlineSecondary.airlineName, dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
-                        </a>
-                      )}
-                      {ssUrl && book?.provider !== "skyscanner" && (
-                        <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon"
-                          aria-label="Skyscanner" title="Skyscanner"
-                          onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon"><Search size={16} aria-hidden="true" /></span>
-                        </a>
-                      )}
-                      {gfUrl && (
-                        <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--google"
-                          aria-label="Google Flights" title="Google Flights"
-                          onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
-                          {/* Una letra, no otro avión: el de al lado es la web de la aerolínea. */}
-                          <span className="wc-cta-icon wc-cta-letter" aria-hidden="true">G</span>
-                        </a>
-                      )}
-                      <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
-                        const when = (out?.dep || out?.arr)
-                          ? [out.dep, out.from, "→", out.arr, out.to].filter(Boolean).join(" ")
-                          : "";
-                        const txt = `${originCity || origin} → ${destCity}${when ? ` · ${when}` : ""} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
-                        setCopied({ origin, ok: await copyText(txt) });
-                      }} title={t("results.copyFlight")} aria-label={t("results.copyFlight")}>
-                        {copied?.origin === origin && copied.ok
-                          ? <Check size={15} aria-hidden="true" />
-                          : <Copy size={15} aria-hidden="true" />}
-                      </button>
+                      <div className="wc-flight-links">
+                        {airlineSecondary && (
+                          <a href={airlineSecondary.url} target="_blank" rel="noreferrer" className="wc-flight-link wc-flight-link--airline"
+                            onClick={() => track("book_click", { provider: "airline", airline: airlineSecondary.airlineName, dest: code, origin, where: "winner" })}>
+                            {airlineSecondary.airlineName}
+                          </a>
+                        )}
+                        {ssUrl && book?.provider !== "skyscanner" && (
+                          <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-flight-link wc-flight-link--skyscanner"
+                            onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
+                            Skyscanner
+                          </a>
+                        )}
+                        {gfUrl && (
+                          <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-flight-link wc-flight-link--google"
+                            onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
+                            Google<span className="wc-flight-link-long"> Flights</span>
+                          </a>
+                        )}
+                        <button type="button" className="wc-flight-link wc-flight-link--copy" onClick={async () => {
+                          const when = (out?.dep || out?.arr)
+                            ? [out.dep, out.from, "→", out.arr, out.to].filter(Boolean).join(" ")
+                            : "";
+                          const txt = `${originCity || origin} → ${destCity}${when ? ` · ${when}` : ""} · ${typeof price === "number" ? (currency === "EUR" ? formatEur(price, 0) : convertPrice(price, currency)) : "—"}${durationText ? ` · ${durationText}` : ""} (${t("board.estimateNote")})`;
+                          setCopied({ origin, ok: await copyText(txt) });
+                        }} aria-label={t("results.copyFlight")}>
+                          {copied?.origin === origin && copied.ok
+                            ? <><Check size={14} aria-hidden="true" /> <span className="wc-flight-link-text">{t("results.copied")}</span></>
+                            : <><Copy size={14} aria-hidden="true" /> <span className="wc-flight-link-text">{t("results.copyShort")}</span></>}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -581,43 +582,50 @@ const WinnerCard = React.memo(function WinnerCard({
       {/* Body */}
       <div className="wc-body">
         {/* Actions */}
+        {/* Dos acciones con nombre. Sin hoja de compartir del sistema, «Compartir»
+            despliega los canales (antes eran seis iconos seguidos). */}
         <div className="wc-actions">
-          {/* Baja al panel de salidas (solo si hay más de un destino). "Cambiar
-              búsqueda" ya está en la cabecera del vuelo y en la barra fija. */}
-          {canNativeShare ? (
-            <button type="button" className="wc-action-btn wc-action-btn--share" onClick={onShareNative} aria-label={t("results.share")}>
-              <Share2 size={16} aria-hidden="true" />
-            </button>
-          ) : (
-            <button type="button" className="wc-action-btn" onClick={onShare}
-              aria-label={shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("results.share")}>
-              {shareStatus === "ok" ? <Check size={16} aria-hidden="true" /> : <Share2 size={16} aria-hidden="true" />}
-            </button>
-          )}
-          <button type="button" className="wc-action-btn wc-action-btn--whatsapp" onClick={onShareWhatsApp} aria-label="WhatsApp">
-            <span className="wc-wa-icon"><MessageCircle size={16} aria-hidden="true" /></span>
-          </button>
-          {!canNativeShare && (
-            <>
-              <button type="button" className="wc-action-btn" onClick={onShareTelegram} aria-label="Telegram">
-                <Send size={16} aria-hidden="true" />
+          <div className="wc-acts">
+            {canNativeShare ? (
+              <button type="button" className="wc-act wc-act--share" onClick={onShareNative}>
+                <Share2 size={16} aria-hidden="true" /> {t("results.share")}
               </button>
-              <button type="button" className="wc-action-btn" onClick={onShareEmail} aria-label="Email">
-                <Mail size={16} aria-hidden="true" />
+            ) : (
+              <button type="button" className="wc-act wc-act--share" aria-expanded={shareOpen} aria-controls="wc-share-menu"
+                onClick={() => setShareOpen((v) => !v)}>
+                <Share2 size={16} aria-hidden="true" /> {t("results.share")}
+                <ChevronDown size={14} className="wc-act-chev" aria-hidden="true" />
               </button>
-            </>
-          )}
-          {onCopySearchLink && (
-            <button type="button" className="wc-action-btn wc-action-btn--link" onClick={onCopySearchLink} aria-label={t("results.copySearchLink")}>
-              <Link2 size={16} aria-hidden="true" />
-            </button>
-          )}
-          {onToggleWatch && (
-            <button type="button" className={`wc-action-btn wc-action-btn--watch${watched ? " wc-action-btn--on" : ""}`}
-              onClick={onToggleWatch} aria-pressed={watched}
-              aria-label={watched ? t("watch.on") : t("watch.cta")}>
-              {watched ? <BellRing size={16} aria-hidden="true" /> : <Bell size={16} aria-hidden="true" />}
-            </button>
+            )}
+            {onToggleWatch && (
+              <button type="button" className={`wc-act wc-act--watch${watched ? " wc-act--on" : ""}`}
+                onClick={onToggleWatch} aria-pressed={watched}>
+                {watched ? <BellRing size={16} aria-hidden="true" /> : <Bell size={16} aria-hidden="true" />}
+                {watched ? t("watch.on") : t("watch.cta")}
+              </button>
+            )}
+          </div>
+          {!canNativeShare && shareOpen && (
+            <div id="wc-share-menu" className="wc-share-menu" role="group" aria-label={t("results.share")}>
+              <button type="button" className="wc-share-opt" onClick={onShareWhatsApp}>
+                <MessageCircle size={15} aria-hidden="true" /> WhatsApp
+              </button>
+              <button type="button" className="wc-share-opt" onClick={onShareTelegram}>
+                <Send size={15} aria-hidden="true" /> Telegram
+              </button>
+              <button type="button" className="wc-share-opt" onClick={onShareEmail}>
+                <Mail size={15} aria-hidden="true" /> {t("share.email")}
+              </button>
+              <button type="button" className="wc-share-opt" onClick={onShare}>
+                {shareStatus === "ok" ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+                {shareStatus === "ok" ? t("results.copied") : shareStatus === "fail" ? t("results.copyFailed") : t("share.copyLink")}
+              </button>
+              {onCopySearchLink && (
+                <button type="button" className="wc-share-opt" onClick={onCopySearchLink}>
+                  <Search size={15} aria-hidden="true" /> {t("results.copySearchLink")}
+                </button>
+              )}
+            </div>
           )}
         </div>
 

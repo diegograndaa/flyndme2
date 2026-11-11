@@ -498,7 +498,9 @@
     "durHM": "{{h}} h {{m}} min",
     "durH": "{{h}} h",
     "durM": "{{m}} min",
-    "stops": "{{n}} escala(s)",
+    "stops": "{{n}} escalas",
+    "stopsOne": "1 escala",
+    "copyShort": "Copiar",
     "outbound": "Ida",
     "returnLeg": "Vuelta",
     "disclaimer": "Estimación basada en búsquedas recientes. La tarifa final es la de la aerolínea al reservar, o la tarifa emitible más la comisión de FlyndMe si compras el grupo aquí.",
@@ -755,6 +757,8 @@
     "offline": "Sin conexión"
   },
   "share": {
+    "email": "Correo",
+    "copyLink": "Copiar enlace",
     "title": "FlyndMe · Destino recomendado: {{dest}}",
     "totalAvg": "Total del grupo: {{total}} · Media: {{avg}}",
     "fairness": "Equidad: {{score}}/100",

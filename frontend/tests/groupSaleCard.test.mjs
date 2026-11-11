@@ -58,7 +58,7 @@ test("Reservar abre Aviasales y la web de la aerolínea queda como acceso secund
   assert.equal(book.length, 2);
   assert.ok(book[0].includes("https://www.aviasales.com/search/MAD1510LTN1"), book[0]);
   assert.ok(book[1].includes("https://www.aviasales.com/search/BCN1510LTN1"), book[1]);
-  const airline = anchors.filter((a) => a.includes("wc-cta--airline"));
+  const airline = anchors.filter((a) => a.includes("wc-flight-link--airline"));
   assert.equal(airline.length, 2);
   assert.ok(airline[0].includes("https://www.wizzair.com/en-gb/booking/select-flight/MAD/LTN/2026-10-15/null/1/0/0/null"), airline[0]);
   assert.ok(airline[1].includes("https://www.easyjet.com/en/buy/flights?") && airline[1].includes("origin=BCN"), airline[1]);
@@ -128,7 +128,7 @@ test("sin enlace de Aviasales ni web de la aerolínea, Reservar abre Skyscanner 
   const anchors = [...html.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]);
   const bookToSky = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("skyscanner.es/transport/flights/mad/ltn/261015/"));
   const bookToEasy = anchors.filter((a) => a.includes("wc-cta--book") && a.includes("easyjet.com"));
-  const compareSky = anchors.filter((a) => a.includes("wc-cta--icon") && a.includes("skyscanner.es"));
+  const compareSky = anchors.filter((a) => a.includes("wc-flight-link--skyscanner") && a.includes("skyscanner.es"));
   assert.equal(bookToSky.length, 1);
   assert.equal(bookToEasy.length, 1);
   assert.equal(compareSky.length, 1, "Skyscanner aparte solo en el vuelo que ya abre su aerolínea");

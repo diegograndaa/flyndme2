@@ -80,6 +80,19 @@ const Landing = React.memo(function Landing({ searchForm, origins = [] }) {
           </div>
           <aside className="hm-home-map">
             <MapSlot origins={mapOrigins} idSuffix="-d" />
+            {/* Los tres pasos, bajo el mapa: en escritorio ese hueco quedaba
+                vacío y la explicación caía fuera de la primera pantalla. En
+                móvil sigue la sección de abajo. */}
+            {Array.isArray(steps) && (
+              <ol className="hm-steps" aria-label={t("landing.howTitle")}>
+                {steps.map((s, i) => (
+                  <li key={i} className="hm-step">
+                    <span className="hm-step-n" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="hm-step-text">{s}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
           </aside>
         </div>
       </section>
