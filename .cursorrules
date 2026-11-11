@@ -1,8 +1,8 @@
 # FlyndMe — reglas para Cursor
 
 Fuente de verdad del producto y la arquitectura: `CLAUDE.md`.
-`MEJORAS.md` y `README.md` están parcialmente obsoletos (hablan de Amadeus);
-ante conflicto, manda `CLAUDE.md`.
+`docs/HISTORIAL.md` y `MEJORAS.md` son históricos; ante conflicto, manda
+`CLAUDE.md`.
 
 ## Producto
 
@@ -24,6 +24,12 @@ grandes no pedidos, o tocar variables de prod (Render/Vercel).
 - Backend: Node + Express (CommonJS). Deploy Render.
 - Datos: Travelpayouts/Aviasales en prod; SerpAPI (capa 2) solo verifica el
   ganador. Amadeus está eliminado — no resucitarlo.
+- Cuentas en `backend/routes/auth.js` (correo por Brevo). Venta con Duffel en
+  `backend/services/groupSale.js`, **apagada** salvo `SALE_ENABLED=true`: no
+  abrirla con dinero real hasta cerrar los bloqueantes del cobro (ver
+  `CLAUDE.md`).
+- Fuentes IBM Plex servidas desde `frontend/public/fonts/`. No volver a
+  Google Fonts.
 - `App.jsx` es el orquestador (estado + `fetch`). Componentes presentacionales:
   props in, eventos out. Sin react-router, sin Redux, sin axios en el front.
 

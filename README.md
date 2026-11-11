@@ -20,24 +20,26 @@ entre viajeros (fairness score).
 ```
 frontend/   React 18 + Vite + Bootstrap (PWA, i18n EN/ES)  → Vercel
 backend/    Node + Express                                  → Render
-            ├── routes/flights.js   búsqueda multi-origen por tiers, /verify, /cheaper-date
+            ├── routes/flights.js   búsqueda multi-origen, /verify, /cheaper-date, venta de grupo
+            ├── routes/auth.js      cuentas: correo y contraseña, Google/Apple/Facebook, enlaces de correo
             ├── routes/share.js     enlaces compartibles (TTL 48h)
             ├── routes/groups.js    planificación de grupo (TTL 14 días)
             ├── services/travelpayoutsService.js  Aviasales Data API (rate limit, retry, cache)
-            ├── services/serpapiService.js        verificación bajo demanda (Google Flights)
+            ├── services/serpapiService.js        comprobación en vivo (Google Flights)
+            ├── services/groupSale.js             venta con Duffel (apagada salvo SALE_ENABLED=true)
             ├── services/mockFlightService.js     fixtures deterministas (USE_MOCK=true)
             └── utils/kvStore.js    store con TTL: Upstash Redis o memoria
 ```
 
-El backend busca por niveles (tiers) de destinos y corta en cuanto alcanza
-`TARGET_RESULTS`. Los precios de Travelpayouts son una caché de búsquedas
-recientes: se muestran como estimación (`verificationStatus: "skipped"`) y el
-usuario puede comprobar el precio del ganador en vivo (`POST /api/flights/verify`,
-SerpAPI / Google Flights, con cupo vigilado). Nunca se re-ordena por la
-verificación.
+El backend consulta los 24 destinos de su lista y devuelve los mejores ya
+ordenados. Los precios de Travelpayouts son una caché de búsquedas recientes:
+se muestran como estimación. El destino de la tarjeta se comprueba en vivo
+(`POST /api/flights/verify`, SerpAPI / Google Flights, con cupo vigilado) y,
+si la comprobación es completa, ese precio pasa a ser el mostrado. Nunca se
+reordena por la verificación.
 
-La documentación viva del proyecto (arquitectura, decisiones, backlog) está en
-`CLAUDE.md`.
+La documentación viva del proyecto está en `CLAUDE.md`. El registro de
+sesiones anteriores, en `docs/HISTORIAL.md`.
 
 ## Desarrollo local
 
