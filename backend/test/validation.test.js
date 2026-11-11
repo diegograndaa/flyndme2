@@ -273,7 +273,7 @@ test("share: ids malformados → 404 y /og redirige a la portada", async () => {
   assert.equal(og.status, 302);
 });
 
-test("search: destBasis cheaper usa la lista corta; una lista a mano no", async () => {
+test("search: destBasis cheaper consulta la lista corta y las habituales; una lista a mano no", async () => {
   const { pickCheaperDestinations } = require("../services/cheaperDestinations");
   const EUROPE = require("../data/europeCodes.json");
   const mock = require("../services/mockFlightService");
@@ -298,22 +298,24 @@ test("search: destBasis cheaper usa la lista corta; una lista a mano no", async 
   assert.equal(cheap.body.destinationBasis, "cheaper");
   assert.equal(cheap.body.cheapPrices, undefined);
   const got = cheap.body.flights.map((f) => f.destination).sort();
-  // Se consulta la lista corta entera y se devuelven las 6 más baratas.
+  // Se consulta la lista corta y, detrás, las 24 habituales: se devuelven las
+  // 6 más baratas del conjunto. Sola, la lista corta podía dejar un destino.
+  const POOL = ["LON","PAR","ROM","AMS","MIL","LIS","BER","MAD","BCN","DUB","VIE","PRG","ATH","BUD","OPO","CPH","IST","AGP","PMI","NCE","DBV","MLA","NAP","ZRH"];
+  const union = [...new Set([...picked, ...POOL])].filter((c) => !origins.includes(c));
   assert.ok(got.length >= 6 && got.length <= 7, "las 6 más baratas y, si no está entre ellas, la más equitativa");
-  for (const code of got) assert.ok(picked.includes(code), `${code} sale de la lista corta`);
+  for (const code of got) assert.ok(union.includes(code), `${code} sale de la lista corta o de las habituales`);
   const all = await post("/api/flights/multi-origin", {
-    origins, departureDate, tripType: "oneway", optimizeBy: "total", destinations: [...picked].reverse(),
+    origins, departureDate, tripType: "oneway", optimizeBy: "total", destinations: [...union].reverse(),
   });
   assert.equal(all.status, 200);
   assert.deepEqual(
     cheap.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
     all.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
-    "las devueltas son las más baratas de toda la lista, no las primeras consultadas",
+    "las devueltas son las más baratas de todo el conjunto, no las primeras consultadas",
   );
-  assert.notEqual(
-    got.join(","),
-    usual.body.flights.map((f) => f.destination).sort().join(","),
-    "la lista personalizada no repite las ciudades habituales",
+  assert.ok(
+    cheap.body.flights[0].totalCostEUR <= usual.body.flights[0].totalCostEUR,
+    "con la lista corta delante nunca sale un ganador más caro que con las habituales solas",
   );
   for (const flight of cheap.body.bestDestination.flights) {
     assert.equal(typeof flight.price, "number");

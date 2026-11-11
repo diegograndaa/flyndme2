@@ -403,9 +403,18 @@ function buildSearchTiers(customDestinations, originList, { ranked = false } = {
       .map((d) => String(d || "").trim().toUpperCase())
       .filter(isValidIata);
     const filtered = dropOrigins([...new Set(list)]);
-    // ranked: lista corta ya ordenada. Se corta al llegar a TARGET_RESULTS,
-    // igual que el pool habitual. Una lista pedida a mano se consulta entera.
-    return { tiers: filtered.length ? [filtered] : [], explicit: filtered.length > 0 && !ranked };
+    // ranked: lista corta de tarifas recientes. Va primero y detrás las 24
+    // habituales que no estén ya: sola dejaba búsquedas con un único destino
+    // cuando en la fecha pedida casi ninguna de las 12 tenía precio para todos
+    // (MAD+LON daba solo Barcelona; con las habituales salen ocho).
+    if (ranked) {
+      const rest = DEFAULT_DESTINATION_TIERS
+        .map((tier) => dropOrigins(tier).filter((d) => !filtered.includes(d)))
+        .filter((tier) => tier.length > 0);
+      return { tiers: [...(filtered.length ? [filtered] : []), ...rest], explicit: false };
+    }
+    // Una lista pedida a mano se consulta entera.
+    return { tiers: filtered.length ? [filtered] : [], explicit: filtered.length > 0 };
   }
 
   return {

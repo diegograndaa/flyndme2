@@ -40,6 +40,7 @@ Este archivo describe el proyecto **como está hoy** (rehecho el 11-nov-2026). E
 - **SerpAPI / Google Flights** (`serpapiService.js`, `POST /api/flights/verify`): comprueba **solo el destino de la tarjeta**, contra el aeropuerto real del billete. Si la comprobación es completa, ese precio pasa a ser el mostrado; nunca se reordena.
   - El frontend la lanza **sola** en cada búsqueda (`App.jsx`, `handleVerifyWinner`). Gasta una consulta por origen y el plan gratuito da 250 al mes: unas 80 búsquedas de tres orígenes. Pendiente decidir si se pasa a bajo demanda o se amplía el plan.
 - **La búsqueda** (`POST /api/flights/multi-origin`) consulta los 24 destinos del pool (`DEFAULT_DESTINATION_TIERS`) y devuelve los 6 mejores ya ordenados, más el mejor según el otro criterio si no está entre ellos. Tope de tiempo de 25 s (`partial: true`).
+  - La pantalla pide por defecto `destBasis: "cheaper"`: una lista corta de 12 ciudades con tarifas recientes bajas (`cheaperDestinations.js`) que se consulta **primero**, y detrás las 24 habituales que no estén ya. Sola, la lista corta dejaba búsquedas con un único destino.
 - **Mock:** `USE_MOCK=true` en el backend. Lo usan los tests y el desarrollo local.
 
 ## Cuentas (`backend/routes/auth.js`, `frontend/src/hooks/useAccount.js`)
