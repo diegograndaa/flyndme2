@@ -167,6 +167,9 @@ export default function App() {
   const { favs, toggle: toggleFav, isFav, replace: replaceFavs, remember: rememberFavoriteSearch } = useFavorites();
   const account = useAccount(API_BASE);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("in");
+  // Token del enlace «nueva contraseña» del correo. Sale de la URL al leerlo.
+  const mailLinkRef = useRef("");
   useEffect(() => {
     if (account.user) setAuthOpen(false);
   }, [account.user]);
@@ -590,6 +593,50 @@ export default function App() {
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Enlaces del correo de la cuenta (?reset= / ?verify=) ───────────────
+  // El token se quita de la URL nada más leerlo: no debe quedar en el
+  // historial ni salir en un enlace copiado.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reset = params.get("reset");
+    const verify = params.get("verify");
+    if (!reset && !verify) return;
+    params.delete("reset");
+    params.delete("verify");
+    const rest = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${rest ? `?${rest}` : ""}`);
+    const valid = (v) => /^[A-Za-z0-9_-]{40,64}$/.test(v || "");
+    if (valid(reset)) {
+      mailLinkRef.current = reset;
+      account.clearError();
+      setAuthMode("reset");
+      setAuthOpen(true);
+    } else if (valid(verify)) {
+      account.manage("verify", { token: verify }).then((ok) => {
+        setToast({ message: t(ok ? "auth.verified" : "auth.linkExpired"), type: ok ? "success" : "error" });
+        account.clearError();
+      });
+    }
+  // Solo al cargar: el enlace se lee una vez.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const manageAccount = async (what) => {
+    account.clearError();
+    if (what === "export") {
+      const data = await account.manage("export");
+      if (data && typeof data === "object") {
+        downloadText("flyndme-mis-datos.json", JSON.stringify(data, null, 2), { mime: "application/json;charset=utf-8", bom: false });
+      } else {
+        setToast({ message: t("auth.failed"), type: "error" });
+      }
+      account.clearError();
+      return;
+    }
+    setAuthMode(what);
+    setAuthOpen(true);
+  };
 
   // ── Load a collaborative group plan from URL (?group=ID) ───────────────
   // Keep the ?group param in the URL (unlike ?share) so a refresh re-loads the
@@ -2081,9 +2128,10 @@ export default function App() {
               user={account.user}
               restoring={account.restoring}
               savedCount={favs.length}
-              onSignIn={() => { account.clearError(); warmProvider("google"); account.loadProviders(); setAuthOpen(true); }}
+              onSignIn={() => { account.clearError(); warmProvider("google"); account.loadProviders(); setAuthMode("in"); setAuthOpen(true); }}
               onOpenSaved={() => setShowFavPanel(true)}
               onLogout={account.logout}
+              onManage={manageAccount}
             />
           </div>
         </div>
@@ -2151,10 +2199,24 @@ export default function App() {
         busy={account.busy}
         error={account.error}
         providers={account.providers}
+        user={account.user}
+        startMode={authMode}
         onClose={() => { setAuthOpen(false); account.clearError(); }}
         onSubmit={async (fields) => {
+          if (fields.mode === "forgot") return account.manage("forgot", fields);
+          if (fields.mode === "reset") {
+            const ok = await account.manage("reset", { token: mailLinkRef.current, password: fields.password });
+            if (ok) { mailLinkRef.current = ""; setAuthOpen(false); setToast({ message: t("auth.passwordSaved"), type: "success" }); }
+            return ok;
+          }
+          if (fields.mode === "password" || fields.mode === "delete") {
+            const ok = await account.manage(fields.mode, fields);
+            if (ok) { setAuthOpen(false); setToast({ message: t(fields.mode === "delete" ? "auth.deleted" : "auth.passwordSaved"), type: "success" }); }
+            return ok;
+          }
           const ok = await account.submit(fields);
           if (ok) setAuthOpen(false);
+          return ok;
         }}
         onSocial={async (provider, fields) => {
           const ok = await account.signInSocial(provider, fields);

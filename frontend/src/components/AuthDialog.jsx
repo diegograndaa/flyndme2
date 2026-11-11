@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/useI18n";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { accountInitial, accountLabel } from "../utils/account";
 
-export function AccountButton({ user, restoring, savedCount = 0, onSignIn, onLogout, onOpenSaved, initialMenu = false }) {
+export function AccountButton({ user, restoring, savedCount = 0, onSignIn, onLogout, onOpenSaved, onManage, initialMenu = false }) {
   const { t } = useI18n();
   const [menu, setMenu] = useState(initialMenu);
   const menuRef = useFocusTrap(menu, () => setMenu(false));
@@ -42,6 +42,15 @@ export function AccountButton({ user, restoring, savedCount = 0, onSignIn, onLog
             <button type="button" className="fm-auth-saved" onClick={() => { setMenu(false); onOpenSaved?.(); }}>
               {savedCount === 1 ? t("auth.savedOne") : t("auth.savedMany", { count: savedCount })}
             </button>
+            <button type="button" className="fm-auth-manage" onClick={() => { setMenu(false); onManage?.("password"); }}>
+              {user.hasPassword === false ? t("auth.setPassword") : t("auth.changePassword")}
+            </button>
+            <button type="button" className="fm-auth-manage" onClick={() => { setMenu(false); onManage?.("export"); }}>
+              {t("auth.exportData")}
+            </button>
+            <button type="button" className="fm-auth-manage fm-auth-manage--danger" onClick={() => { setMenu(false); onManage?.("delete"); }}>
+              {t("auth.deleteAccount")}
+            </button>
             <button type="button" className="fm-auth-signout" onClick={() => { setMenu(false); onLogout(); }}>
               {t("auth.signOut")}
             </button>
@@ -64,31 +73,70 @@ export function AccountButton({ user, restoring, savedCount = 0, onSignIn, onLog
   );
 }
 
-export function AuthDialog({ open, busy, error, providers, onClose, onSubmit, onSocial }) {
+// Modos: in / up (entrar y crear), forgot → sent (pedir el enlace), reset
+// (contraseña nueva desde el enlace), password (cambiarla con la sesión
+// abierta) y delete (borrar la cuenta).
+const TITLES = {
+  in: "auth.title",
+  up: "auth.createTitle",
+  forgot: "auth.forgotTitle",
+  sent: "auth.forgotTitle",
+  reset: "auth.resetTitle",
+  password: "auth.changePassword",
+  delete: "auth.deleteAccount",
+};
+const LEADS = {
+  in: "auth.lead",
+  up: "auth.lead",
+  forgot: "auth.forgotLead",
+  sent: "auth.forgotSent",
+  reset: "auth.resetLead",
+  password: "auth.passwordLead",
+  delete: "auth.deleteLead",
+};
+
+export function AuthDialog({ open, busy, error, providers, user = null, startMode = "in", onClose, onSubmit, onSocial }) {
   const { t } = useI18n();
-  const [mode, setMode] = useState("in");
+  const [mode, setMode] = useState(startMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [current, setCurrent] = useState("");
   const [name, setName] = useState("");
   const [remember, setRemember] = useState(true);
   const trapRef = useFocusTrap(open, onClose);
 
   useEffect(() => {
+    setMode(open ? startMode : "in");
     if (open) return;
-    setMode("in");
     setEmail("");
     setPassword("");
+    setCurrent("");
     setName("");
     setRemember(true);
-  }, [open]);
+  }, [open, startMode]);
 
   if (!open) return null;
 
-  const submit = (e) => {
+  const entering = mode === "in" || mode === "up";
+  const hasPassword = !user || user.hasPassword !== false;
+  const askEmail = entering || mode === "forgot";
+  const askCurrent = (mode === "password" || mode === "delete") && hasPassword;
+  const askNew = entering || mode === "reset" || mode === "password";
+  const title = mode === "password" && !hasPassword ? "auth.setPassword" : TITLES[mode];
+  const lead = mode === "delete" && !hasPassword ? "auth.deleteLeadNoPassword" : LEADS[mode];
+
+  const submit = async (e) => {
     e.preventDefault();
     if (busy) return;
-    onSubmit({ email, password, name, remember, mode });
+    const done = await onSubmit({ email, password, current, name, remember, mode });
+    if (done && mode === "forgot") setMode("sent");
   };
+
+  const action = mode === "up" ? "auth.create"
+    : mode === "forgot" ? "auth.forgotSend"
+    : mode === "reset" || mode === "password" ? "auth.savePassword"
+    : mode === "delete" ? "auth.deleteConfirm"
+    : "auth.continue";
 
   return (
     <>
@@ -100,9 +148,9 @@ export function AuthDialog({ open, busy, error, providers, onClose, onSubmit, on
         aria-labelledby="fm-auth-title"
         ref={trapRef}
       >
-        <h2 id="fm-auth-title" className="fm-auth-title">{mode === "up" ? t("auth.createTitle") : t("auth.title")}</h2>
-        <p className="fm-auth-lead">{t("auth.lead")}</p>
-        {(providers && (providers.google || providers.apple || providers.facebook)) ? (
+        <h2 id="fm-auth-title" className="fm-auth-title">{t(title)}</h2>
+        <p className="fm-auth-lead" role={mode === "sent" ? "status" : undefined}>{t(lead)}</p>
+        {entering && (providers && (providers.google || providers.apple || providers.facebook)) ? (
           <div className="fm-auth-social">
             {providers.google ? (
               <button type="button" className="fm-auth-provider" disabled={busy} onClick={() => onSocial?.("google", { remember })}>
@@ -125,68 +173,106 @@ export function AuthDialog({ open, busy, error, providers, onClose, onSubmit, on
             <p className="fm-auth-or">{t("auth.or")}</p>
           </div>
         ) : null}
-        <form onSubmit={submit}>
-          <label className="fm-auth-field">
-            <span>{t("auth.email")}</span>
-            <input
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck="false"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("auth.emailPlaceholder")}
-              required
-            />
-          </label>
-          {mode === "up" && (
-            <label className="fm-auth-field">
-              <span>{t("auth.name")}</span>
-              <input
-                type="text"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("auth.namePlaceholder")}
-                maxLength={40}
-              />
-            </label>
-          )}
-          <label className="fm-auth-field">
-            <span>{t("auth.password")}</span>
-            <input
-              type="password"
-              autoComplete={mode === "up" ? "new-password" : "current-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              maxLength={72}
-            />
-          </label>
+        {mode !== "sent" && (
+          <form onSubmit={submit}>
+            {askEmail && (
+              <label className="fm-auth-field">
+                <span>{t("auth.email")}</span>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck="false"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("auth.emailPlaceholder")}
+                  required
+                />
+              </label>
+            )}
+            {mode === "up" && (
+              <label className="fm-auth-field">
+                <span>{t("auth.name")}</span>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("auth.namePlaceholder")}
+                  maxLength={40}
+                />
+              </label>
+            )}
+            {askCurrent && (
+              <label className="fm-auth-field">
+                <span>{t("auth.currentPassword")}</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  required
+                  maxLength={72}
+                />
+              </label>
+            )}
+            {askNew && (
+              <label className="fm-auth-field">
+                <span>{entering ? t("auth.password") : t("auth.newPassword")}</span>
+                <input
+                  type="password"
+                  autoComplete={mode === "in" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  maxLength={72}
+                />
+              </label>
+            )}
+            {entering && (
+              <button
+                type="button"
+                className={`fm-auth-remember${remember ? " fm-auth-remember--on" : ""}`}
+                role="switch"
+                aria-checked={remember}
+                onClick={() => setRemember((v) => !v)}
+              >
+                <span className="fm-auth-led" aria-hidden="true" />
+                {t("auth.remember")}
+              </button>
+            )}
+            {error && <p className="fm-auth-error" role="alert">{t(error === "auth.invalid" && askCurrent ? "auth.wrongCurrent" : error)}</p>}
+            <button type="submit" className={`fm-auth-continue${mode === "delete" ? " fm-auth-continue--danger" : ""}`} disabled={busy}>
+              {busy ? t("auth.busy") : t(action)}
+            </button>
+            {mode === "up" && (
+              <p className="fm-auth-legal">
+                {t("auth.legalBefore")} <a href="/privacidad/" target="_blank" rel="noopener">{t("auth.legalLink")}</a>.
+              </p>
+            )}
+          </form>
+        )}
+        {mode === "in" && (
+          <button type="button" className="fm-auth-switch" onClick={() => setMode("forgot")}>
+            {t("auth.forgot")}
+          </button>
+        )}
+        {entering && (
           <button
             type="button"
-            className={`fm-auth-remember${remember ? " fm-auth-remember--on" : ""}`}
-            role="switch"
-            aria-checked={remember}
-            onClick={() => setRemember((v) => !v)}
+            className="fm-auth-switch"
+            onClick={() => setMode((m) => (m === "up" ? "in" : "up"))}
           >
-            <span className="fm-auth-led" aria-hidden="true" />
-            {t("auth.remember")}
+            {mode === "up" ? t("auth.haveAccount") : t("auth.needAccount")}
           </button>
-          {error && <p className="fm-auth-error" role="alert">{t(error)}</p>}
-          <button type="submit" className="fm-auth-continue" disabled={busy}>
-            {busy ? t("auth.busy") : mode === "up" ? t("auth.create") : t("auth.continue")}
+        )}
+        {(mode === "forgot" || mode === "sent") && (
+          <button type="button" className="fm-auth-switch" onClick={() => setMode("in")}>
+            {t("auth.backToSignIn")}
           </button>
-        </form>
-        <button
-          type="button"
-          className="fm-auth-switch"
-          onClick={() => setMode((m) => (m === "up" ? "in" : "up"))}
-        >
-          {mode === "up" ? t("auth.haveAccount") : t("auth.needAccount")}
-        </button>
+        )}
         <button type="button" className="fm-auth-close" onClick={onClose} aria-label={t("a11y.close")}>
           <X size={18} aria-hidden="true" />
         </button>

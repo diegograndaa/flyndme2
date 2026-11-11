@@ -12,6 +12,11 @@ const ERROR_KEYS = {
   AUTH_WEAK_PASSWORD: "auth.weak",
   AUTH_BAD_EMAIL: "auth.badEmail",
   RATE_LIMITED: "auth.rate",
+  AUTH_LOCKED: "auth.locked",
+  AUTH_MAIL_OFF: "auth.mailOff",
+  AUTH_LINK_EXPIRED: "auth.linkExpired",
+  AUTH_UNAVAILABLE: "auth.failed",
+  AUTH_REQUIRED: "auth.sessionEnded",
   AUTH_NO_EMAIL: "auth.noEmail",
   AUTH_PROVIDER_FAILED: "auth.providerFailed",
   AUTH_PROVIDER_OFF: "auth.providerFailed",
@@ -147,6 +152,7 @@ export function useAccount(apiBase) {
           password,
           name,
           remember: Boolean(remember),
+          lang: typeof document !== "undefined" ? document.documentElement.lang : "",
         },
       });
       const data = await res.json().catch(() => ({}));
@@ -258,8 +264,62 @@ export function useAccount(apiBase) {
 
   const clearError = useCallback(() => setError(""), []);
 
+  // Recuperar, cambiar, confirmar, descargar y borrar. Devuelve true si salió bien.
+  const manage = useCallback(async (action, fields = {}) => {
+    setBusy(true);
+    setError("");
+    const lang = typeof document !== "undefined" ? document.documentElement.lang : "";
+    try {
+      const token = readToken();
+      let res;
+      if (action === "forgot") {
+        res = await authRequest(apiBase, "/forgot", { method: "POST", body: { email: fields.email, lang } });
+      } else if (action === "reset") {
+        res = await authRequest(apiBase, "/reset", { method: "POST", body: { token: fields.token, password: fields.password, remember: true } });
+      } else if (action === "verify") {
+        res = await authRequest(apiBase, "/verify", { method: "POST", body: { token: fields.token } });
+      } else if (action === "password") {
+        res = await authRequest(apiBase, "/password", { method: "POST", token, body: { current: fields.current, password: fields.password } });
+      } else if (action === "delete") {
+        res = await authRequest(apiBase, "/me", { method: "DELETE", token, body: { password: fields.current } });
+      } else if (action === "export") {
+        res = await authRequest(apiBase, "/export", { token });
+      } else {
+        return false;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(errorKey(data));
+        return false;
+      }
+      if (action === "reset") {
+        epoch.current += 1;
+        writeToken(data.token, true);
+        acceptSession(data);
+      } else if (action === "password") {
+        writeToken(data.token, true);
+        setUser(data.user || null);
+      } else if (action === "verify") {
+        setUser((u) => (u ? { ...u, emailVerified: true } : u));
+      } else if (action === "delete") {
+        epoch.current += 1;
+        clearToken();
+        setUser(null);
+        setPersonal(null);
+      } else if (action === "export") {
+        return data;
+      }
+      return true;
+    } catch (err) {
+      setError(err && err.message === "offline" ? "auth.offline" : "auth.failed");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [apiBase, acceptSession]);
+
   return {
     user, personal, restoring, busy, error, providers,
-    loadProviders, submit, signInSocial, logout, savePersonal, clearError,
+    loadProviders, submit, signInSocial, logout, savePersonal, clearError, manage,
   };
 }
