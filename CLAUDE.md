@@ -77,7 +77,7 @@ Límites: 300 peticiones cada 10 min por IP en todo `/api` (`/ping` exento), 60 
 
 - `App.jsx` (unas 2.700 líneas) es dueño del estado y de casi todas las llamadas; los componentes son de presentación. La cuenta vive en `hooks/useAccount.js`.
 - Pantallas: portada con formulario y mapa vivo, resultados (tarjeta de decisión, «Salidas», comparar), plan de grupo (`?group=`), caja de pago (`?caja=`), y páginas estáticas `/privacidad/`, `/quedar/…` y `/meet/…` (generadas con `npm run seo:build`).
-- **Estilos:** los tokens y casi todo lo vigente están en `styles/board.css` y `styles/revision.css`. `App.css`, `theme-stitch.css` y `results-simple.css` vienen de diseños anteriores y siguen cargándose: antes de borrar nada ahí, comprobar en navegador.
+- **Estilos:** los tokens y casi todo lo vigente están en `styles/board.css` y `styles/revision.css`. `App.css`, `theme-stitch.css` y `results-simple.css` vienen de diseños anteriores y siguen cargándose. El 11-nov-2026 se quitaron las reglas de 178 clases que ya no usa ningún componente (comparando capturas antes y después); lo que queda ahí está en uso o pisa a Bootstrap: antes de borrar nada más, comprobar en navegador.
 - **Fuentes:** IBM Plex Sans y Mono servidas desde `public/fonts/` (`plex.css`). No volver a Google Fonts.
 
 ## Diseño: «terminal de aeropuerto»
@@ -106,5 +106,5 @@ Límites: 300 peticiones cada 10 min por IP en todo `/api` (`/ping` exento), 60 
 
 - **Claves antiguas de Amadeus en el historial de git** (`backend/.env`, primeros commits). El repo es público: darlas por comprometidas y confirmar que están revocadas.
 - La política CSP completa está en modo informe (`frontend/vercel.json`); solo se aplican `frame-ancestors`, `object-src` y `base-uri`. Para aplicarla entera hay que probar los tres accesos sociales.
-- Código que ya no se ejecuta: la rama `dateFallback` (backend, frontend y `/verify`), y `verifyDestination` / `priceFlightOffer` (se conservan a propósito para un proveedor que sepa re-tarifar). Unas 200 claves de traducción sin uso.
+- Código que ya no se ejecuta: la rama `dateFallback` (backend, frontend y `/verify`), y `verifyDestination` / `priceFlightOffer` (se conservan a propósito para un proveedor que sepa re-tarifar).
 - `README.md` describe lo general; `MEJORAS.md` es histórico.

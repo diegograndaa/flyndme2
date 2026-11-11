@@ -29,41 +29,21 @@
 .btn-fm-primary.btn-fm-primary:active { transform: scale(.97); }
 
 /* ── Landing / hero ────────────────────────────────────────────── */
-.lp-hero.lp-hero {
-  background: linear-gradient(135deg, var(--bg) 0%, var(--slate-100) 100%);
-}
 .lp-h1.lp-h1 {
   color: var(--navy);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-.lp-h1-accent { color: var(--primary); }
-.lp-eyebrow.lp-eyebrow { color: var(--primary); }
-.lp-lead.lp-lead { color: var(--slate-700); } /* AA sobre el degradado lavanda */
+.lp-h1-accent { color: var(--primary); } /* AA sobre el degradado lavanda */
 .lp-card.lp-card,
-.lp-usecase-card.lp-usecase-card,
-.lp-faq-item.lp-faq-item,
-.lp-testimonial-card.lp-testimonial-card,
-.lp-route-card.lp-route-card {
+.lp-faq-item.lp-faq-item {
   background: var(--white);
   border: none;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   transition: transform .2s ease, box-shadow .2s ease;
 }
-.lp-usecase-card.lp-usecase-card:hover,
-.lp-route-card.lp-route-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-}
-.lp-chip.lp-chip {
-  background: var(--slate-100);
-  color: var(--slate-700);
-  border: none;
-  border-radius: var(--radius-full);
-}
 .lp-step-num.lp-step-num { background: var(--primary-light); color: var(--primary-deep); }
-.lp-example-result.lp-example-result { border-radius: var(--radius-md); }
 
 /* ── Formulario de búsqueda ────────────────────────────────────── */
 .sf-form.sf-form {
@@ -72,7 +52,6 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
-.sf-title.sf-title { color: var(--navy); font-weight: 800; letter-spacing: -0.01em; }
 .sf-label.sf-label {
   color: var(--slate-500);
   text-transform: uppercase;
@@ -157,12 +136,6 @@
    miniatura de 72px); se apilan a ancho completo */
 
 /* Ahorro del grupo: tinte coral suave */
-.fm-group-savings.fm-group-savings {
-  background: var(--primary-50);
-  border: 1px solid var(--primary-light);
-  color: var(--navy);
-  border-radius: var(--radius-md);
-}
 
 /* Reparto de costes: avatar por viajero */
 .fm-split-avatar {
@@ -208,12 +181,6 @@
   box-shadow: var(--shadow-md);
 }
 [data-theme="dark"] .fm-sticky-bar.fm-sticky-bar { background: rgba(23,25,29,.85); }
-.fm-stats-bar.fm-stats-bar {
-  background: var(--slate-100);
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--slate-700); /* AA sobre lavanda */
-}
 
 /* Banner de destino */
 
@@ -232,20 +199,6 @@
 }
 
 /* Búsqueda rápida fechas vecinas */
-.fm-quick-research.fm-quick-research {
-  background: var(--white);
-  border: none;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-.fm-quick-research-btn.fm-quick-research-btn {
-  background: var(--slate-100);
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--slate-700);
-  font-weight: 600;
-}
-.fm-quick-research-btn.fm-quick-research-btn:hover { background: var(--secondary-light); color: var(--secondary); }
 
 /* ── Footer ────────────────────────────────────────────────────── */
 .app-footer.app-footer {
@@ -263,7 +216,6 @@
   text-align: left;
 }
 .lp-hero--merged .lp-h1 { max-width: 720px; }
-.lp-hero--merged .lp-lead { max-width: 560px; margin-bottom: 0; }
 .lp-search-section { padding: 8px 0 16px; }
 .lp-how { padding: 32px 0 8px; }
 @media (max-width: 768px) {

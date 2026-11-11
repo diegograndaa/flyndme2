@@ -40,7 +40,6 @@
   font-family: var(--font-mono); font-size: 12px; font-weight: 600;
   letter-spacing: .04em; color: var(--panel-muted, var(--slate-500));
 }
-.trav-legend--inline { display: inline-flex; margin-left: 12px; vertical-align: middle; }
 
 /* Barras "quién paga qué": una por viajero, misma escala en todas las filas */
 .pay { display: grid; gap: 4px; width: 100%; min-width: 0; }
@@ -74,9 +73,7 @@
 }
 .hm-home-main { min-width: 0; }
 .hm-home-text { margin-bottom: 16px; }
-.hm-home .lp-eyebrow.lp-eyebrow { margin-bottom: 10px; }
 .hm-home .lp-h1.lp-h1 { font-size: clamp(30px, 3.1vw, 44px); line-height: 1.06; margin: 0 0 10px; max-width: none; }
-.hm-home .lp-lead.lp-lead { font-size: 15.5px; line-height: 1.5; margin: 0; max-width: 520px; }
 .hm-home-map { position: sticky; top: 84px; min-width: 0; padding-top: 6px; }
 .hm-home-map-m { display: none; }
 .hm-home-form.lp-search-section { padding: 0; }
@@ -85,13 +82,10 @@
 
 /* Formulario más compacto dentro de la columna */
 .hm-home-form .sf-form.sf-form { padding: 20px 20px 16px; }
-.hm-home-form .sf-title { font-size: 18px; margin-bottom: 2px; }
-.hm-home-form .sf-sub { font-size: 13px; margin-bottom: 12px; }
 .hm-home-form .sf-section { padding: 0; margin-bottom: 16px; border: 0; background: transparent; }
 .hm-home-form .sf-origin-row { margin-bottom: 8px; }
 .hm-home-form .sf-advanced-toggle { margin: 2px 0 8px; }
 .hm-home-form .sf-submit-wrap { margin-top: 8px; }
-.hm-home-form .sf-footnote { margin-top: 10px; }
 
 /* Tipo de billete y fecha en la misma fila */
 .sf-when { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: end; }
@@ -131,10 +125,6 @@
 
 /* Ejemplo animado de los campos: «p. ej.» fijo delante + ciudad en cursiva,
    para que no parezca un valor ya rellenado */
-.sf-typing-placeholder.sf-typing-placeholder { display: inline-flex; align-items: baseline; gap: 5px; color: var(--slate-400); font-style: italic; border-right: 0; animation: none; }
-.sf-typing-lead { font-style: normal; font-size: 12px; letter-spacing: .02em; }
-.sf-typing-word { border-right: 2px solid transparent; padding-right: 1px; }
-.sf-typing-word--active { animation: none; }
 
 /* El grupo: enlace secundario bajo el botón (fuera de la barra fija) */
 .sf-form .sf-group-cta { margin-top: 8px; }
@@ -149,11 +139,9 @@
   .hm-home-map-m { display: block; margin: 0 0 14px; }
   .hm-home-text { margin-bottom: 12px; }
   .hm-home .lp-h1.lp-h1 { font-size: 28px; }
-  .hm-home .lp-lead.lp-lead { font-size: 14.5px; }
   .hm-home-form .sf-wrap.sf-wrap { max-width: 720px !important; margin: 0 auto; }
 }
-@media (max-width: 600px) {
-  .hm-home .lp-lead.lp-lead { display: none; }   /* el titular basta: la acción primero */
+@media (max-width: 600px) {   /* el titular basta: la acción primero */
   .sf-when { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .sf-when-dates--two { grid-template-columns: minmax(0, 1fr); }
   .hm-home-form .sf-form.sf-form { padding: 16px 14px 0; }
@@ -163,7 +151,6 @@
   }
   .hm-home-form .sf-submit-wrap .btn-fm-primary.btn-fm-primary { padding-top: 13px !important; padding-bottom: 13px !important; }
   .sf-form .sf-group-cta { margin: 12px 0 0; }
-  .hm-home-form .sf-footnote { padding-bottom: 14px; }
 }
 
 /* ══ 28. Mapa vivo de la portada ═══════════════════════════════════════════ */
@@ -235,16 +222,7 @@
 .hm-state--live { color: var(--navy); border-color: var(--navy); }
 .hm-state--live .hm-state-dot { background: #1baf7a; }
 @keyframes hm-live { 50% { opacity: .35; } }
-
-.hm-foot { display: grid; gap: 6px; margin-top: 10px; }
-.hm-meet { display: inline-flex; align-items: center; gap: 8px; }
-.hm-meet-label { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--slate-700); }
-.hm-meet-q { font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--slate-500); margin-left: -3px; }
-.hm-note { font-size: 12.5px; line-height: 1.45; color: var(--slate-500); margin: 0; }
 .hm--compact .hm-state { top: auto; left: auto; right: 8px; bottom: 8px; }
-.hm--compact .hm-foot { margin-top: 6px; }
-.hm--compact .hm-note { display: none; }
-.hm--compact .hm-meet-label { letter-spacing: .08em; }
 .hm--loading .hm-stage { background: var(--white); }
 
 /* ══ 29. Selector de fecha propio + casillas con estilo de la casa ════════ */
@@ -334,11 +312,6 @@
 .dm-wrap.dm-wrap--inline { position: absolute; inset: 0; padding: 0; border: 0; border-radius: 0; background: var(--dm-sea); overflow: visible; }
 .dm-wrap--inline .dm-container { position: absolute; inset: 0; border: 0; border-radius: 0; overflow: visible; }
 .dm-wrap--inline .dm-svg { width: 100%; height: 100%; }
-.dm-inline-hint {
-  position: absolute; left: 8px; bottom: 8px; padding: 3px 7px; border-radius: 3px; pointer-events: none;
-  background: var(--white); border: 1px solid var(--line); color: var(--slate-500);
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
-}
 .dm-wrap--inline .dm-grat-labels, .dm-wrap--inline .dm-compass { display: none; }
 .dm-inline-loading { position: absolute; inset: 0; background: var(--white); }
 .dm-origin-dot[class*="trav-c"] { stroke: var(--trav); }
@@ -351,18 +324,11 @@
 .wc-flight-code .trav-dot { margin-right: 6px; vertical-align: 1px; }
 
 /* Panel de salidas: miniatura + ciudad + quién paga qué + precio */
-.dep-cols, .dep-row {
+.dep-row {
   display: grid; grid-template-columns: 96px minmax(110px, .9fr) minmax(220px, 1.5fr) minmax(104px, auto) 20px;
   column-gap: 16px; align-items: center;
 }
-.dep--single .dep-cols, .dep--single .dep-row { grid-template-columns: 96px minmax(0, 1fr) minmax(104px, auto) 20px; }
-.dep-cols {
-  padding: 0 12px 8px 15px; border-bottom: 1px solid var(--panel-line);
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--panel-faint);
-}
-.dep-cols > span:first-child { grid-column: 1 / 3; }
-.dep-col-pay { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px 0; }
-.dep-col-price { text-align: right; }
+.dep--single .dep-row { grid-template-columns: 96px minmax(0, 1fr) minmax(104px, auto) 20px; }
 .dep-rows { list-style: none; margin: 0; padding: 0; }
 .dep-rows > li { animation: board-rise .5s var(--ease-out-expo) backwards; animation-delay: calc(.08s + var(--i, 0) * .07s); }
 .dep-row {
@@ -384,21 +350,13 @@
 .dep-dest { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
 .dep-dest .flap--sm { font-size: 15px; flex: 0 0 auto; }
 .dep-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dep-now {
-  flex: 0 0 auto; padding: 2px 6px; border: 1px solid var(--panel-ink); border-radius: 3px;
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--panel-ink);
-}
 .dep-pay { min-width: 0; }
 .dep-price { display: grid; justify-items: end; gap: 1px; text-align: right; }
 .dep-price-main { display: grid; justify-items: end; gap: 1px; }
 .dep-price-v { font-family: var(--font-mono); font-size: 18px; font-weight: 700; letter-spacing: -.02em; color: var(--panel-ink); font-variant-numeric: tabular-nums; }
-.dep-price-u { font-size: 12px; color: var(--panel-faint); }
-.dep-spread { font-family: var(--font-mono); font-size: 12px; color: var(--panel-muted); }
-.dep-spread--even { color: var(--panel-good); font-weight: 600; }
 .dep-go { display: inline-flex; justify-content: flex-end; color: var(--panel-faint); transition: transform .25s var(--ease-out-expo), color .2s ease; }
 .dep-row:hover .dep-go { color: var(--panel-ink); transform: translateX(3px); }
 @media (max-width: 767.98px) {
-  .dep-cols { display: none; }
   .dep-row, .dep--single .dep-row {
     grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-areas: "thumb dest price" "pay pay pay";
     column-gap: 12px; row-gap: 10px; padding: 12px 8px 12px 6px;
@@ -409,7 +367,6 @@
   .dep-dest { grid-area: dest; }
   .dep-price { display: contents; }
   .dep-price-main { grid-area: price; }
-  .dep-spread { grid-area: spread; text-align: left; margin-top: -4px; }
   .dep-pay { grid-area: pay; }
   .dep-go { display: none; }
   .dep-city { font-size: 14px; }
@@ -447,14 +404,8 @@
 /* El marco de la decisión y la caja del total siguen la tinta del tema
    (carbón de día, hueso de noche). Un filete más claro de noche los
    hacía desaparecer contra la pantalla. */
-.wc-card .wc-badge-winner.wc-badge-winner { background: var(--board-cell-bot, #18191C); color: #fff; border-radius: 3px; box-shadow: var(--ficha-canto); }
-.wc-total-hint.wc-total-hint { background: transparent; border: 1px dashed var(--slate-300); border-left: 1px dashed var(--slate-300); }
-.wc-total-hint-btn.wc-total-hint-btn { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
-:root:not([data-theme="dark"]) .wc-total-hint-btn.wc-total-hint-btn { color: var(--navy); }
 /* El :root:not(oscuro) de arriba pesa más que este :hover: hay que repetirlo,
    si no en claro el texto queda del mismo color que el fondo. */
-.wc-total-hint-btn.wc-total-hint-btn:hover,
-:root:not([data-theme="dark"]) .wc-total-hint-btn.wc-total-hint-btn:hover { background: var(--navy); color: var(--white); }
 .fm-notice.fm-notice { border-left: 1px solid var(--line); }
 .fm-notice-tag.fm-notice-tag { color: var(--slate-700); background: transparent; box-shadow: inset 0 0 0 1px var(--slate-300); }
 .fm-notice-tag .fm-announce-dot { background: var(--slate-500); animation: none; }
@@ -480,13 +431,7 @@
 
 /* Texto mínimo de 12 px: rótulos y etiquetas que iban a 9,5–11,5 px. (El
    sello de la tarjeta es decorativo y conserva su tamaño de sello.) */
-.sf-form .sf-label, .sf-origin-row .sf-badge, .lp-card-meta span, .app-footer-seo-title,
-.fm-board-label, .wc-card .wc-badge-winner, .wc-card .wc-verify-chip, .wc-card .wc-savings-chip,
-.wc-card .wc-trip-days-chip, .wc-buy-kicker, .wc-flight-meta-item, .wc-airline-badge, .wc-perf-text,
-.wc-disclaimer, .fm-split-summary-tag, .wc-fs-title, .wc-ils-scale span, .wc-ils-scale-mid,
-.fm-split-avatar, .fm-split-note, .fm-notice-tag, .fm-board-note, .dm-legend-item, .wc-ils-hint,
-.wc-total-label, .fm-flight-head-badge, .wc-flight-pax-badge, .sf-hint, .sf-input-city, .sf-summary-chip,
-.fm-zone-num, .wc-twr-tag, .gp-eyebrow, .sf-footnote span { font-size: 12px !important; }
+.sf-form .sf-label, .sf-origin-row .sf-badge, .fm-board-label, .wc-card .wc-verify-chip, .wc-card .wc-trip-days-chip, .wc-flight-meta-item, .fm-split-summary-tag, .wc-fs-title, .wc-ils-scale span, .wc-ils-scale-mid, .fm-split-avatar, .fm-notice-tag, .fm-board-note, .dm-legend-item, .wc-total-label, .fm-flight-head-badge, .wc-flight-pax-badge, .sf-input-city, .sf-summary-chip, .fm-zone-num, .wc-twr-tag { font-size: 12px !important; }
 
 /* Dianas táctiles: mínimo 40 px en pantallas táctiles y móviles */
 @media (pointer: coarse), (max-width: 600px) {
@@ -497,8 +442,8 @@
   .theme-toggle { min-width: 40px; min-height: 40px; }
   .app-header .btn-group-sm > .btn { min-height: 40px; min-width: 42px !important; }
   .fm-currency-btn { min-width: 40px; min-height: 40px; }
-  .fm-sticky-btn, .fm-split-pill, .wc-fs-row, .fm-flight-head-btn, .wc-total-hint-btn, .wc-action-btn, .fm-notice-btn { min-height: 40px; }
-  .app-footer-link, .app-footer-seo-link { display: inline-flex; align-items: center; min-height: 40px; padding-left: 8px; padding-right: 8px; }
+  .fm-sticky-btn, .fm-split-pill, .wc-fs-row, .fm-flight-head-btn, .wc-action-btn, .fm-notice-btn { min-height: 40px; }
+  .app-footer-link { display: inline-flex; align-items: center; min-height: 40px; padding-left: 8px; padding-right: 8px; }
   .wc-cta { min-height: 42px; }
   .scroll-top-btn.scroll-top-btn { width: 44px; height: 44px; }
 }
@@ -528,17 +473,14 @@
 .fm-explore.fm-explore > .fm-zone-head + * { margin-top: calc(var(--rhythm) / 2); }
 .fm-decision.fm-decision > .wc-card + * { margin-top: var(--rhythm); }
 .fm-explore.fm-explore > .fm-board + * { margin-top: calc(var(--rhythm) * .75); }
-.fm-zone-perf.fm-zone-perf { margin: 40px 8px 36px; }
 @media (max-width: 600px) {
   .fm-decision, .fm-explore { --rhythm: 10px; }
-  .fm-zone-perf.fm-zone-perf { margin: 30px 6px 26px; }
 }
 
 /* ══ 34. Vigilar precio ════════════════════════════════════════════════════
    Activo = relleno de tinta (carbón / hueso según el tema), nunca amarillo:
    el amarillo en resultados es solo para reservar. */
 .wc-actions .wc-action-btn.wc-action-btn--watch.wc-action-btn--on { background: var(--primary); color: var(--on-solid); border-color: var(--primary); }
-.wc-watch-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
 .fm-price-alerts { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 .fm-price-alerts .fm-notice { margin: 0; }
 
@@ -554,7 +496,6 @@
 .gp-member-remove.gp-member-remove,
 .gp-pax-btn.gp-pax-btn { width: 40px; height: 40px; }
 .gp-exit.gp-exit { min-height: 40px; padding: 8px 12px; }
-.gp-eyebrow.gp-eyebrow,
 .gp-roster-title.gp-roster-title,
 .gp-add-label.gp-add-label,
 .gp-invite-label.gp-invite-label { font-size: 12px; }

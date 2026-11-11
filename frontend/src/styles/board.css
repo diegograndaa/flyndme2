@@ -251,40 +251,12 @@
 /* ══ 3. Hero ═════════════════════════════════════════════════════════════ */
 /* Fuera los orbes difuminados genéricos: retícula de puntos tipo carta
    aeronáutica que se desvanece hacia los bordes. */
-.lp-hero.lp-hero--merged {
-  background: var(--bg);
-  border-bottom: none;
-}
-.lp-hero.lp-hero--merged::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  top: 0; right: 0; left: 0; bottom: 0;
-  width: auto; height: auto;
-  border-radius: 0;
-  background-image: radial-gradient(rgba(var(--primary-rgb), .20) 1px, transparent 1.3px);
-  background-size: 22px 22px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
-          mask-image: radial-gradient(ellipse 70% 80% at 72% 45%, #000 0%, transparent 72%);
-  animation: none;
-  pointer-events: none;
-}
-.lp-hero.lp-hero--merged::after { display: none; }
 .lp-hero--merged > .container { position: relative; z-index: 1; }
 
 /* Eyebrow como etiqueta de billete */
-.lp-hero--merged .lp-eyebrow.lp-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-}
 
 /* Entrada escalonada del texto del hero (HTML, no SVG) */
-.lp-hero--merged .lp-eyebrow { animation: board-rise .7s var(--ease-out-expo) .05s backwards; }
 .lp-hero--merged .lp-h1      { animation: board-rise .8s var(--ease-out-expo) .14s backwards; }
-.lp-hero--merged .lp-lead    { animation: board-rise .8s var(--ease-out-expo) .26s backwards; }
 .lp-search-section           { animation: board-rise .8s var(--ease-out-expo) .36s backwards; }
 
 /* Palabra acento: trazo de rotulador amarillo que se traza tras la entrada */
@@ -383,7 +355,6 @@
   box-shadow: 0 0 0 6px var(--white);
 }
 .lp-leg-text { color: var(--slate-700); line-height: 1.5; }
-.lp-how .lp-card-meta { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
 @media (max-width: 600px) {
   .lp-legs.lp-legs { grid-template-columns: 1fr; gap: 14px; }
   .lp-legs.lp-legs::before, .lp-legs.lp-legs::after { display: none; }
@@ -392,30 +363,6 @@
 }
 
 /* FAQ editorial: lista con reglas finas, sin "tarjetas flotantes" */
-.lp-faq .lp-faq-item.lp-faq-item {
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  border-bottom: 1px solid var(--slate-200);
-}
-.lp-faq .lp-faq-item.lp-faq-item:hover { transform: none; box-shadow: none; }
-.lp-faq .lp-faq-q { padding: 20px 4px; font-size: 16px; }
-.lp-faq .lp-faq-chevron {
-  display: inline-grid;
-  place-items: center;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  border: 1.5px solid var(--slate-300);
-  font-size: 16px;
-  transition: transform .35s var(--ease-out-expo), background .2s ease, color .2s ease, border-color .2s ease;
-}
-.lp-faq .lp-faq-item--open .lp-faq-chevron {
-  transform: rotate(180deg);
-  background: var(--primary);
-  border-color: var(--primary);
-  color: var(--on-solid);
-}
-.lp-faq .lp-faq-a { padding-left: 4px; padding-right: 40px; }
 
 /* Bajo el itinerario: las preguntas, en dos columnas. */
 .lp-lower {
@@ -500,7 +447,6 @@
   gap: 14px;
 }
 .fm-searching-board-origins { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.fm-searching-board-arrow { color: var(--sign-line); font-size: 22px; font-weight: 800; }
 .fm-searching-cancel {
   pointer-events: auto;
   display: inline-flex;
@@ -536,56 +482,7 @@
 }
 
 /* Troquel: muescas del color de la página + línea perforada + código de barras */
-.wc-perf {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 32px 4px;
-  background-color: var(--white);
-  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
-  background-size: 12px 2px;
-  background-repeat: repeat-x;
-  background-position: 0 0;
-}
-.wc-perf::before,
-.wc-perf::after {
-  content: "";
-  position: absolute;
-  top: -13px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--bg);
-}
-.wc-perf::before { left: -13px; }
-.wc-perf::after  { right: -13px; }
-.wc-perf-text {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  color: var(--slate-500);
-}
-.wc-perf-barcode {
-  flex: 0 0 auto;
-  width: 112px;
-  height: 20px;
-  opacity: .7;
-  background: repeating-linear-gradient(90deg,
-    var(--navy) 0 2px, transparent 2px 4px,
-    var(--navy) 4px 5px, transparent 5px 8px,
-    var(--navy) 8px 11px, transparent 11px 12px,
-    var(--navy) 12px 13px, transparent 13px 16px);
-}
 .wc-card .wc-body.wc-body { padding-top: 16px; }
-@media (max-width: 480px) {
-  .wc-perf { padding: 14px 22px 2px; }
-  .wc-perf-text { font-size: 9.5px; letter-spacing: .08em; }
-  .wc-perf-barcode { display: none; }
-}
 
 /* Tarjetas por origen: entran escalonadas y el avión "rueda" por la pista */
 .wc-card .wc-booking-cards > .wc-flight-card { animation: board-rise .6s var(--ease-out-expo) backwards; }
@@ -612,8 +509,6 @@
 .wc-card .wc-cta:active { transform: translateY(0) scale(.97); }
 
 /* ══ 8. Resto de resultados: cifras de panel + podio vivo ════════════════ */
-.fm-stats-bar strong,
-.fm-split-amount,
 .cmp-price { font-family: var(--font-mono); letter-spacing: -.02em; }
 .rv-tab.rv-tab { transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .18s var(--ease-out-expo); }
 .rv-tab.rv-tab:hover { transform: translateY(-1px); }
@@ -624,15 +519,9 @@
   .lp-how .lp-card,
   .lp-leg.lp-leg,
   .lp-faq-title,
-  .lp-faq .lp-faq-item,
-  .app-footer-seo,
-  .fm-group-nudge,
-  .fm-group-savings,
-  .fm-stats-bar,
   .fm-split-card,
   .fm-arrival-spread,
-  .fm-plan-trip,
-  .fm-quick-research {
+  .fm-plan-trip {
     animation: board-rise linear backwards;
     animation-timeline: view();
     animation-range: entry 0% entry 55%;
@@ -642,9 +531,7 @@
 /* ══ 10. Movimiento reducido: todo quieto ═════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   .flap-cell,
-  .lp-hero--merged .lp-eyebrow,
   .lp-hero--merged .lp-h1,
-  .lp-hero--merged .lp-lead,
   .lp-search-section,
   .fm-searching-board,
   .fm-searching-board-dot,
@@ -654,7 +541,7 @@
   .btn-fm-primary.btn-fm-primary::after { animation: none !important; }
   .lp-h1-accent.lp-h1-accent { animation: none; background-size: 100% 100%; }
   .lp-legs.lp-legs::after { display: none; }
-  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .lp-faq .lp-faq-item, .app-footer-seo, .fm-group-nudge, .fm-group-savings, .fm-stats-bar, .fm-split-card, .fm-arrival-spread, .fm-plan-trip, .fm-quick-research { animation: none !important; }
+  .lp-how .lp-card, .lp-leg.lp-leg, .lp-faq-title, .fm-split-card, .fm-arrival-spread, .fm-plan-trip { animation: none !important; }
 }
 
 /* Fix (previo a este rediseño): el stepper del skeleton de búsqueda
@@ -821,69 +708,6 @@
 /* Tira de días bajo la cabecera, y al lado las fechas que abaratan el grupo.
    El día buscado es cartel de posición («estás aquí»); los vecinos relanzan
    la misma búsqueda, sin precio. Las recomendadas sí llevan el total real. */
-.fm-date-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0 0 8px;
-}
-.fm-date-strip {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-}
-.fm-date-strip-label {
-  flex: 0 1 auto;
-  max-width: none;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  line-height: 1.25;
-  color: var(--panel-muted);
-}
-.fm-date-strip-days {
-  display: flex;
-  gap: 4px;
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.fm-date-strip-days::-webkit-scrollbar { display: none; }
-.fm-date-strip-day {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
-  padding: 2px 4px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  color: var(--navy);
-  font-family: var(--font-mono);
-  line-height: 1.1;
-}
-button.fm-date-strip-day { cursor: pointer; }
-button.fm-date-strip-day:hover { border-color: var(--primary); }
-button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
-.fm-date-strip-wd { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: capitalize; }
-.fm-date-strip-n { font-size: 13px; font-weight: 700; }
 .fm-date-recs {
   position: relative;
   display: flex;
@@ -1050,19 +874,9 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   color: var(--panel-muted);
 }
 .fm-filter-count { font-family: var(--font-mono); font-size: 12px; color: var(--panel-muted); }
-.fm-filter-hint { margin: 0; font-size: 12px; line-height: 1.35; color: var(--slate-500); }
 .fm-filter-block { display: flex; flex-direction: column; gap: 6px; }
 .fm-filter-block + .fm-filter-block { padding-top: 12px; border-top: 1px solid var(--line); }
-.fm-filter-opts, .fm-filter-airlines { display: flex; flex-direction: column; gap: 6px; }
-.fm-filter-airlines { flex-direction: row; flex-wrap: wrap; }
-.fm-filter-gaps { display: flex; flex-wrap: wrap; gap: 4px; }
-.fm-filter-gaps .fm-filter-opt {
-  flex: 1 1 calc(50% - 4px);
-  min-height: 40px;
-  justify-content: space-between;
-  font-size: 12px;
-  padding: 6px 8px;
-}
+.fm-filter-opts { display: flex; flex-direction: column; gap: 6px; }
 .fm-arr { display: flex; flex-direction: column; gap: 4px; }
 .fm-arr-scale {
   display: flex;
@@ -1180,22 +994,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .fm-check--on .fm-check-box { background: var(--navy); }
 .fm-check-label { min-width: 0; line-height: 1.2; }
 .fm-check:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
-.fm-filter-opt {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  color: var(--navy);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-}
 .fm-filter-opt-n {
   margin-left: auto;
   font-family: var(--font-mono);
@@ -1203,18 +1001,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   font-weight: 700;
   color: var(--panel-muted);
 }
-.fm-filter-opt--air {
-  justify-content: space-between;
-  min-width: 64px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
-.fm-filter-opt--air:not(.fm-filter-opt--picked) {
-  color: var(--slate-500);
-  background: transparent;
-}
-.fm-filter-opt:hover { border-color: var(--primary); }
-.fm-filter-opt:focus-visible { outline: 2px solid var(--sign-line); outline-offset: 2px; }
 .fm-filter-badge {
   margin-left: auto;
   min-width: 20px;
@@ -1259,15 +1045,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   .fm-filters-body { display: flex; gap: 16px; }
   .fm-filter-block { gap: 4px; }
   .fm-filter-opts { gap: 4px; }
-  .fm-filter-opt {
-    min-height: 40px;
-    padding: 6px 8px;
-    gap: 6px;
-    font-size: 12px;
-    line-height: 1.2;
-  }
   .fm-check { font-size: 13px; gap: 8px; padding: 2px 0; }
-  .fm-filter-opt > span:first-child { min-width: 0; }
   .fm-filter-opt-n { font-size: 12px; }
   .fm-filter-reset { font-size: 12px; padding: 6px 8px; }
   .fm-results-main > .fm-sticky-bar { margin-left: 0; margin-right: 0; }
@@ -1290,7 +1068,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   color: var(--slate-400);
   font-weight: 400;
 }
-.fm-flight-head-arrow { color: var(--sign-line); font-weight: 800; font-size: 14px; }
 .fm-flight-head-meta {
   display: inline-flex;
   align-items: center;
@@ -1369,83 +1146,11 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   letter-spacing: .18em;
   color: var(--panel-accent);
 }
-.fm-board-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--panel-muted); }
-.fm-board-savings {
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--panel-good);
-  background: rgba(82,222,162,.1);
-  border: 1px solid rgba(82,222,162,.25);
-  border-radius: var(--radius-full);
-}
-.fm-board-cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 190px 104px;
-  align-items: center;
-  gap: 20px;
-}
-.fm-board-cols--single { grid-template-columns: minmax(0, 1fr) 110px 104px; }
-.fm-board-cols {
-  padding: 0 12px 8px;
-  border-bottom: 1px solid var(--panel-line);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  color: var(--panel-faint);
-}
-.fm-board-col-price { text-align: right; }
-.fm-board-dest { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
-.fm-board-dest .flap--sm { font-size: 16px; flex: 0 0 auto; }
-.fm-board-city { font-weight: 700; font-size: 15px; color: var(--panel-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fm-board-price {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--panel-ink);
-  font-variant-numeric: tabular-nums;
-}
-.fm-board-fair {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-.fm-board-fair--good { color: var(--panel-good); }
-.fm-board-fair--mid  { color: var(--panel-mid); }
-.fm-board-fair--bad  { color: var(--panel-bad); }
-.fm-board-go { display: inline-flex; justify-content: flex-end; color: var(--panel-faint); transition: transform .25s var(--ease-out-expo), color .2s ease; }
-.fm-board-now {
-  padding: 3px 7px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: #1A1A1A;
-  background: var(--coral);
-  border-radius: 5px;
-  white-space: nowrap;
-}
 @media (max-width: 600px) {
   .fm-board { padding: 16px 12px 8px; }
-  .fm-board-cols { display: none; }
-  .fm-board-dest { grid-area: dest; }
-  .fm-board-price { grid-area: price; }
-  .fm-board-fair { grid-area: fair; padding-left: 2px; }
-  .fm-board-go { grid-area: go; }
-  .fm-board-dest .flap--sm { font-size: 14px; }
-  .fm-board-city { font-size: 14px; }
 }
 
 /* Reparto del grupo: tarjeta + llegadas como un solo bloque */
-.fm-group-block { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
-.fm-group-block .fm-split-card,
-.fm-group-block .fm-arrival-spread { margin: 0; }
 .fm-split-card .fm-split-title.fm-split-title {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -1457,8 +1162,7 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 /* Pestañas (Mapa · Comparar · Más opciones) y panel "Más opciones" */
 .rv-tabs.rv-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
 .fm-more { display: flex; flex-direction: column; gap: 12px; }
-.fm-more .fm-plan-trip,
-.fm-more .fm-quick-research { margin: 0; }
+.fm-more .fm-plan-trip { margin: 0; }
 .fm-more-csv {
   align-self: flex-start;
   display: inline-flex;
@@ -1496,7 +1200,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .sf-form .sf-label.sf-label { font-family: var(--font-mono); letter-spacing: .1em; }
 
 /* Vista de grupo: lista de pasajeros */
-.gp-eyebrow.gp-eyebrow,
 .gp-roster-title.gp-roster-title,
 .gp-add-label.gp-add-label,
 .gp-invite-label.gp-invite-label {
@@ -1532,9 +1235,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 /* Matriz de la tarjeta de embarque (precio · comprobar · quién paga qué):
    papel en claro, navy en oscuro. Antes era navy fijo en ambos temas. */
 .wc-card .wc-verify-status.wc-verify-status { color: var(--panel-muted); }
-.wc-card .wc-verify-btn.wc-verify-btn { color: var(--panel-ink); background: transparent; border-color: var(--slate-300); }
-.wc-card .wc-verify-btn.wc-verify-btn:hover { background: var(--panel-hover); border-color: var(--panel-ink); }
-.wc-card .wc-verify-btn.wc-verify-btn:focus-visible { outline-color: var(--panel-ink); }
 
 /* Paneles en claro: borde fino de papel en vez de bloque oscuro */
 .fm-board.fm-board,
@@ -1558,7 +1258,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 
 /* Títulos en Plex: un poco más apretados en tamaños grandes */
 .lp-h1.lp-h1 { letter-spacing: -0.025em; font-weight: 700; }
-.sf-title.sf-title,
 .lp-card-title.lp-card-title,
 .lp-faq-title.lp-faq-title,
 .gp-title.gp-title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.015em; }
@@ -1580,7 +1279,6 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
   .wc-card .wc-image-label.wc-image-label { left: 18px; bottom: 50px; }
   .wc-card .wc-chips-overlay.wc-chips-overlay { left: 18px; bottom: 14px; right: 18px; }
 }
-.wc-card .wc-dest-city.wc-dest-city { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: .16em; opacity: .85; }
 
 /* ══ 16. Jerarquía plana (spec terminal v2) ══════════════════════════════
    Radios mínimos (fichas, no burbujas), cero sombras flotantes borrosas y
@@ -1600,11 +1298,9 @@ button.fm-date-strip-day:focus-visible { outline: 2px solid var(--sign-line); ou
 .wc-card.wc-card,
 .fm-card.fm-card,
 .fm-split-card.fm-split-card,
-.fm-quick-research.fm-quick-research,
 .fm-plan-trip.fm-plan-trip,
 .gp.gp { border: 1px solid var(--card-line); box-shadow: none; }
 .sf-section.sf-section { border: 0; background: transparent; }
-.wc-card .wc-booking.wc-booking,
 .wc-card .wc-flight-card.wc-flight-card { box-shadow: none; }
 .wc-card .wc-flight-card.wc-flight-card:hover,
 .wc-card.wc-card:hover { box-shadow: none; transform: none; }
@@ -1649,7 +1345,6 @@ button,
 /* Márgenes seguros */
 .app-header.app-header { padding-top: calc(12px + env(safe-area-inset-top)); }
 .app-footer.app-footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
-.pwa-banner { padding-bottom: env(safe-area-inset-bottom); }
 .fm-searching-dock { bottom: calc(18px + env(safe-area-inset-bottom)); }
 .fm-toast { bottom: calc(28px + env(safe-area-inset-bottom)); }
 .scroll-top-btn { bottom: calc(24px + env(safe-area-inset-bottom)); }
@@ -1679,7 +1374,6 @@ button,
   box-shadow: inset 0 0 0 2px var(--pos-bg), inset 0 0 0 3px var(--sign) !important;
 }
 .lp-leg .lp-step-num.lp-step-num,
-.lp-faq .lp-faq-item--open .lp-faq-chevron,
 .sk-step--active .sk-step-dot,
 .cmp-row--best .cmp-rank {
   background: var(--pos-bg) !important;
@@ -1696,9 +1390,6 @@ button,
 .wc-card .wc-cta--book.wc-cta--book { background: var(--sign); border-color: var(--sign); color: var(--on-sign); }
 .btn-fm-primary.btn-fm-primary:hover:not(:disabled) { background: var(--coral-dark); }
 /* Carta aeronáutica del hero: en oscuro puntos neutros (no amarillos) */
-[data-theme="dark"] .lp-hero.lp-hero--merged::before {
-  background-image: radial-gradient(rgba(230,232,236,.13) 1px, transparent 1.3px);
-}
 
 /* Luces de aterrizaje: al aparecer la tarjeta de embarque su marco se
    enciende en amarillo y se apaga (antes: degradado animado estilo IA). */
@@ -1813,39 +1504,10 @@ button,
 
 /* f) Sello de embarque en el troquel: se estampa al aparecer la tarjeta (y
       otra vez al cambiar de destino). Datos reales: código + fecha. */
-.wc-stamp {
-  flex: 0 0 auto;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  margin-left: auto;
-  padding: 4px 9px 3px;
-  font-family: var(--font-mono);
-  font-weight: 800;
-  text-transform: uppercase;
-  line-height: 1.05;
-  color: rgba(26,26,26,.78);
-  border: 2px solid currentColor;
-  outline: 1px solid currentColor;
-  outline-offset: 2px;
-  border-radius: 4px;
-  rotate: -7deg;
-  mix-blend-mode: multiply;
-  animation: fm-stamp .5s cubic-bezier(.3, 1.6, .5, 1) 1.15s backwards;
-}
-[data-theme="dark"] .wc-stamp { color: rgba(230,232,236,.8); mix-blend-mode: normal; }
-.wc-stamp-label { font-size: 7.5px; letter-spacing: .16em; }
-.wc-stamp-code { font-size: 15px; letter-spacing: .12em; }
-.wc-stamp-date { font-size: 8.5px; letter-spacing: .1em; }
 @keyframes fm-stamp {
   0%   { opacity: 0; scale: 1.9; }
   60%  { opacity: 1; scale: .94; }
   100% { opacity: 1; scale: 1; }
-}
-@media (max-width: 480px) {
-  .wc-stamp { padding: 3px 7px 2px; }
-  .wc-stamp-code { font-size: 13px; }
 }
 
 /* g) Pestaña activa: marca de "estás aquí" que se enciende al elegirla */
@@ -1925,7 +1587,6 @@ button,
   .fm-announce-dot.fm-announce-dot,
   .fm-rabbit i,
   .btn-fm-primary:disabled .sf-cta-plane,
-  .wc-stamp,
   .rv-tab.rv-tab--active,
   .scroll-top-btn--launch .scroll-top-arrow,
   .fm-toast-icon::after,
@@ -1989,7 +1650,6 @@ button,
   letter-spacing: .16em;
   color: var(--navy);
 }
-.dm-sub { margin: 4px 0 0; font-size: 13px; color: var(--slate-500); }
 .dm-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .dm-legend-item {
   display: inline-flex; align-items: center; gap: 6px;
@@ -2109,15 +1769,6 @@ button,
 .dm-tooltip-price { font-family: var(--font-mono); font-weight: 800; font-size: 15px; color: var(--sign); margin: 2px 0; }
 .dm-tooltip-price small { font-family: var(--font); font-size: 11px; font-weight: 600; color: #9AA0AA; }
 .dm-tooltip-row { color: #C9CDD4; }
-.dm-tooltip-hint { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #3A3E47; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #9AA0AA; }
-.dm-note {
-  margin: 8px 0 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--slate-500);
-}
 @media (max-width: 600px) {
   .dm-wrap { padding: 14px 12px 10px; }
   .dm-legend { gap: 4px 10px; }
@@ -2214,7 +1865,6 @@ button,
 /* Recibe el foco por programa tras buscar (tabIndex -1): no es un control */
 .fm-decision:focus { outline: none; }
 .fm-decision .wc-card.wc-card { margin: 0; }
-.fm-decision .fm-group-block { margin: 14px 0 0; }
 .fm-zone-head { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 8px; }
 .fm-zone-num {
   flex: 0 0 auto;
@@ -2241,29 +1891,9 @@ button,
 .fm-zone-head--decision .fm-zone-sub { color: var(--slate-700); }
 
 /* Troquel entre zonas: línea perforada con muescas del color de página */
-.fm-zone-perf {
-  position: relative;
-  height: 2px;
-  margin: 30px 8px 26px;
-  background-image: linear-gradient(90deg, var(--slate-300) 55%, transparent 0);
-  background-size: 12px 2px;
-}
-.fm-zone-perf::before,
-.fm-zone-perf::after {
-  content: "";
-  position: absolute;
-  top: -7px;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--bg);
-  box-shadow: inset 0 0 0 2px var(--slate-300);
-}
-.fm-zone-perf::before { left: -16px; }
-.fm-zone-perf::after { right: -16px; }
 
 .fm-explore .fm-board { margin-top: 12px; }
 .fm-explore > .fm-notice { margin-bottom: 12px; }
-.fm-explore-note { margin: 0 0 14px; font-size: 13px; line-height: 1.4; color: var(--slate-500); }
 
 /* Avisos en línea (junto a lo que afectan) */
 .fm-notice {
@@ -2308,7 +1938,6 @@ button,
   .fm-zone-title { font-size: 12px; letter-spacing: .08em; }
   .fm-zone-num { min-width: 32px; height: 24px; }
   .fm-notice-btn { width: 100%; }
-  .fm-zone-perf { margin: 24px 6px 20px; }
 }
 
 /* ══ 23. La decisión = el total del grupo y, debajo, cada viajero ═══════
@@ -2316,13 +1945,7 @@ button,
    después. El reparto sigue plegado. */
 .wc-card .wc-buy { padding: 22px 28px 20px; background: var(--white); }
 .wc-buy-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; margin-bottom: 14px; }
-.wc-buy-heading { min-width: 0; }
-.wc-buy-kicker {
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
-  text-transform: uppercase; letter-spacing: .14em; color: var(--slate-500);
-}
 .wc-buy-title { margin: 4px 0 2px; font-size: 18px; font-weight: 700; letter-spacing: -.015em; color: var(--navy); }
-.wc-buy-sub { margin: 0; font-size: 13px; color: var(--slate-500); }
 .wc-buy .wc-criterion-pills { flex: 0 0 auto; }
 .wc-card .wc-buy .wc-booking-cards { display: flex; flex-direction: column; gap: 10px; overflow: visible; }
 
@@ -2337,10 +1960,6 @@ button,
 }
 .wc-total-main { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .wc-total-figure { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; }
-.wc-total-savings {
-  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
-  color: var(--slate-500); text-align: right; line-height: 1.3;
-}
 .wc-total-label {
   font-family: var(--font-mono); font-size: 12px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .16em; color: var(--navy);
@@ -2366,29 +1985,12 @@ button,
   font-family: var(--font-mono); font-size: 12px; color: var(--slate-500);
 }
 .wc-total-meta > span + span::before { content: "·"; margin: 0 8px; color: var(--slate-300); }
-.wc-total-hint {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-top: 12px; padding: 10px 12px;
-  background: rgba(var(--sign-rgb), .16);
-  border-left: 3px solid var(--sign);
-  border-radius: 4px;
-  font-size: 13.5px; font-weight: 600; color: var(--navy);
-}
-.wc-total-hint svg { flex: 0 0 auto; color: var(--navy); }
-.wc-total-hint-text { flex: 1 1 220px; min-width: 0; }
-.wc-total-hint-btn {
-  flex: 0 0 auto; padding: 7px 12px;
-  background: var(--primary); color: var(--on-solid);
-  border: none; border-radius: 4px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
-}
-:root:not([data-theme="dark"]) .wc-total-hint-btn { color: #FFFFFF; }
 .wc-total-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap;
   margin-top: 12px; padding-top: 10px;
   border-top: 1px dashed var(--slate-300);
 }
 .wc-total-foot .wc-verify-caption { font-size: 12px; color: var(--slate-500); }
-.wc-total .wc-fx-note { margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: var(--slate-500); }
 .wc-sale { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--slate-300); }
 .wc-sale-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -2400,7 +2002,7 @@ button,
 .wc-sale-btn:disabled { opacity: .65; }
 .caja-home { margin-top: 16px; max-width: 360px; }
 .wc-sale-btn--ghost { background: transparent; color: var(--navy); border-color: var(--navy); }
-.wc-sale-hint, .wc-sale-note, .wc-sale-kicker {
+.wc-sale-note, .wc-sale-kicker {
   margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--slate-500);
 }
 .wc-sale-kicker { font-weight: 700; color: var(--navy); }
@@ -2674,7 +2276,6 @@ button,
   border: 1px solid var(--line); border-radius: 4px;
   background: var(--white); color: var(--navy);
 }
-.wc-sale-field-hint { font-size: 12px; font-weight: 500; color: var(--slate-500); }
 .wc-sale-flights { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .wc-sale-flights li { font-family: var(--font-mono); font-size: 13px; color: var(--navy); }
 .wc-sale-else { margin-top: 12px; display: grid; gap: 8px; }
@@ -2682,13 +2283,6 @@ button,
 .wc-sale-else-row p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--navy); }
 .caja-card .wc-sale-person, .caja-card .wc-sale-field { min-width: 0; }
 .wc-total-foot .wc-verify-status { font-size: 12.5px; color: var(--slate-700); display: inline-flex; align-items: center; gap: 6px; }
-.wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  min-height: 40px; padding: 6px 10px; font-size: 12.5px; font-weight: 700;
-  color: var(--navy); background: transparent;
-  border: 1px solid var(--slate-300); border-radius: 4px;
-}
-.wc-card .wc-total-foot .wc-verify-btn.wc-verify-btn:hover { border-color: var(--navy); }
 @media (max-width: 600px) {
   .wc-card .wc-buy { padding: 14px 14px 16px; }
   .wc-buy-title { font-size: 16px; }
@@ -2699,11 +2293,9 @@ button,
   .wc-total-main { flex-direction: column; align-items: flex-start; gap: 2px; }
   .wc-total-label { letter-spacing: .08em; }
   .wc-total-figure { align-items: flex-start; }
-  .wc-total-savings { order: 2; text-align: left; }
   .wc-card .wc-total-price.wc-total-price { order: 1; font-size: 32px; }
   .wc-total-sum { order: 2; margin-left: 0; justify-content: flex-start; }
   .wc-total-foot .wc-total-meta { margin-left: 0; }
-  .wc-total-hint-btn { width: 100%; }
 }
 
 /* Reparto del grupo, plegado con resumen de una línea */
@@ -2726,22 +2318,6 @@ button,
   text-transform: uppercase; letter-spacing: .1em;
   color: var(--navy); border: 1.5px solid var(--navy); border-radius: 4px;
 }
-.fm-split-summary-text { flex: 1 1 260px; min-width: 0; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--navy); }
-.fm-split-summary-sep { color: var(--slate-400); }
-.fm-split-summary-more {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12.5px; font-weight: 700; color: var(--slate-700);
-}
-.fm-split-summary-more::after {
-  content: ""; width: 7px; height: 7px;
-  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
-  transform: rotate(45deg) translateY(-2px);
-  transition: transform .25s var(--ease-out-expo);
-}
-.fm-split-details[open] .fm-split-summary-more::after { transform: rotate(-135deg) translateY(-2px); }
-.fm-split-summary-close { display: none; }
-.fm-split-details[open] .fm-split-summary-open { display: none; }
-.fm-split-details[open] .fm-split-summary-close { display: inline; }
 .fm-split-body { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px; animation: board-fade .25s ease; }
 .fm-split-body .fm-split-card, .fm-split-body .fm-arrival-spread { margin: 0; }
 /* "Quién paga qué" fuera de la tarjeta: mismos tonos de panel que dentro */
@@ -2752,7 +2328,6 @@ button,
 :root:not([data-theme="dark"]) .fm-split-details .wc-fs { --fair-high: #15803D; --fair-mid: #1F7A5C; --fair-low: #A34A07; --fair-bad: #C81E1E; }
 @media (prefers-reduced-motion: reduce) {
   .fm-split-body { animation: none; }
-  .fm-split-summary-more::after { transition: none; }
 }
 
 /* Foto más baja: los vuelos a comprar entran antes en pantalla */
@@ -2798,10 +2373,6 @@ button,
 /* La pantalla del radar sobresale de la carta: en móvil el remate no tiene un
    contenedor que recorte, así que se corta en horizontal (sin scroll lateral)
    sin tocar el vertical. */
-.lp-hero-visual-m { overflow-x: clip; }
-@supports not (overflow: clip) {
-  .lp-hero-visual-m { overflow: hidden; }
-}
 
 /* ── 24.2 Odómetro de cabina (cifras que se deslizan como una cinta) ───── */
 .odo {
@@ -2972,7 +2543,6 @@ button,
 .wc-twr-say { font-weight: 600; }
 .wc-twr-each { font-weight: 400; color: rgba(230,232,236,.7); }
 @keyframes twr-in { from { opacity: 0; transform: translateY(-4px); } }
-.wc-ils-hint { margin-top: 8px; font-size: 12px; color: var(--panel-muted); }
 @media (max-width: 600px) {
   .wc-ils { --ils-code: 58px; --ils-price: 58px; --ils-gap: 8px; }
   .wc-ils-scale { flex-wrap: wrap; margin-left: 0; margin-right: 0; font-size: 9.5px; }
@@ -3278,26 +2848,9 @@ button,
 }
 
 /* Cómo se eligen las ciudades a comparar: dos mitades, diana de 44 px. */
-.sf-basis.sf-basis { margin-top: 4px; }
-.sf-basis .sf-pills.sf-pills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 100%;
-}
 .sf-gap .sf-pill {
   min-height: 44px;
 }
-.sf-basis .sf-pill.sf-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 8px 10px;
-  text-align: center;
-  white-space: normal;
-  line-height: 1.2;
-}
-.sf-basis .sf-hint { margin-top: 6px; }
 
 /* ══ 26. Móvil compacto (oct-2026) ════════════════════════════════════════
    El formulario perdía 150 px de 390 en márgenes anidados (tarjeta → sección
@@ -3309,7 +2862,6 @@ button,
 @media (max-width: 600px) {
   /* Menos cajas dentro de cajas */
   .sf-form.sf-form { padding: 20px 14px 14px; }
-  .sf-form .sf-title { font-size: 22px; }
   .sf-form .sf-section.sf-section { padding: 14px 12px; margin-bottom: 12px; }
 
   /* Campos a 16 px: por debajo iOS hace zoom al enfocar y descoloca la página */
@@ -3362,7 +2914,6 @@ button,
      dejaba 40 px para escribir "BARCELONA") */
   .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 88px !important; }
   .sf-origin-row .sf-input-city { right: 5px; max-width: 78px; padding: 3px 5px; font-size: 12px; }
-  .sf-origin-row .sf-typing-placeholder { font-size: 16px; }
   /* Mientras se escribe se ve lo que se escribe: ni la ficha ni el aviso de
      "no reconocido" pisan el texto (vuelven al salir del campo) */
   .sf-origin-row .sf-input:focus ~ .sf-input-unknown,
@@ -3426,8 +2977,6 @@ button,
   .sf-group-cta.sf-group-cta { margin-top: 4px; padding: 12px; font-size: 13.5px; font-weight: 600; text-align: left; justify-content: flex-start; border-width: 1px; }
   .sf-group-cta .lucide { flex: 0 0 auto; }
   /* Pie: en táctil no hay tecla Enter que anunciar */
-  .sf-footnote { justify-content: center; gap: 2px 14px; text-align: center; }
-  .sf-footnote .sf-kbd-hint { display: none; }
 
   /* Botón de subir más pequeño; en la portada sobra (página corta, cabecera
      fija) y pisaba la barra inferior del formulario */

@@ -26,20 +26,8 @@
   background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.25) 45%, transparent 75%);
 }
 
-.wc-card .wc-badge-winner.wc-badge-winner {
-  background: var(--coral);
-  color: #1A1A1A; /* AA: blanco sobre coral no llega a 4.5:1 en texto pequeño */
-  border: none;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  letter-spacing: .02em;
-  box-shadow: var(--shadow-sm);
-  text-transform: none;
-}
-
 /* Chips sobre la imagen: colores literales, el fondo es la foto en ambos
    temas (var(--navy) se invierte en dark y quedaba claro sobre claro) */
-.wc-card .wc-savings-chip.wc-savings-chip,
 .wc-card .wc-trip-days-chip.wc-trip-days-chip {
   background: rgba(255,255,255,.92);
   color: #1A1A1A;
@@ -68,15 +56,8 @@
   color: var(--on-solid);
   border-color: var(--primary);
 }
-.wc-card .wc-body .wc-stats-mini { color: var(--slate-500); }
 
 /* Sección de reserva y tarjetas por origen */
-.wc-card .wc-booking.wc-booking {
-  background: var(--slate-50);
-  background-image: none;
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-}
 
 .wc-card .wc-flight-card.wc-flight-card {
   background: var(--white);
@@ -90,7 +71,6 @@
   box-shadow: var(--shadow-sm);
 }
 .wc-card .wc-flight-code  { color: var(--navy); }
-.wc-card .wc-flight-city  { color: var(--slate-500); }
 .wc-card .wc-flight-price-tag.wc-flight-price-tag {
   background: transparent;
   color: var(--navy);
@@ -103,9 +83,7 @@
   border-radius: var(--radius-full);
 }
 /* Estados semánticos contenidos */
-.wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: #006C48; background: #E6F7EF; border: none; }
 .wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #92400E; background: #FFF6E6; border: none; }
-[data-theme="dark"] .wc-card .wc-flight-meta--direct.wc-flight-meta--direct { color: var(--panel-good); background: rgba(82,222,162,.12); }
 [data-theme="dark"] .wc-card .wc-flight-meta--stops.wc-flight-meta--stops   { color: #FBBF24; background: rgba(251,191,36,.12); }
 
 /* CTAs de reserva: primario granate + secundarios neutros */
@@ -131,19 +109,12 @@
   border-radius: var(--radius-sm);
   box-shadow: none;
 }
-.wc-card .wc-action-btn--primary.wc-action-btn--primary {
-  background: var(--primary);
-  color: var(--on-solid);
-  border-color: var(--primary);
-}
-.wc-card .wc-disclaimer { color: var(--slate-500); }
 
 /* ─── Modo oscuro: tinta sobre --primary ─────────────────────────────────────
    En oscuro --primary pasa a rosa claro (#FF7A45): el texto blanco de los
    botones primarios deja de contrastar. Mismo tratamiento que el coral del
    CTA: tinta #1A1A1A encima. */
 [data-theme="dark"] .wc-card .wc-body .wc-criterion-pill--active,
-[data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book,
-[data-theme="dark"] .wc-card .wc-action-btn--primary.wc-action-btn--primary {
+[data-theme="dark"] .wc-card .wc-cta--book.wc-cta--book {
   color: var(--on-sign);
 }
