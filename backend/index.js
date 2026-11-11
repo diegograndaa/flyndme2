@@ -264,9 +264,24 @@ app.get("/api/health", async (_req, res) => {
     commit: VERSION.commitShort,
     timestamp: Date.now(),
     payments: require("./services/groupSale").paymentsMode(),
+    sale: require("./services/groupSale").saleOpen() ? "open" : "closed",
     mail: require("./services/saleMail").configured(),
   });
 });
+
+// Tope general suave para todo /api salvo el ping del keep-alive. Las lecturas
+// de cuenta, grupos, enlaces y /health no tenían límite y cada una gasta
+// comandos de Upstash: un bucle podía agotar el cupo. Los límites propios de
+// búsqueda, registro, grupos y enlaces siguen siendo los estrictos.
+const generalLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: Number(process.env.API_GENERAL_LIMIT || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === "/ping",
+  message: { code: "RATE_LIMITED", message: "Demasiadas peticiones. Por favor espera unos minutos." },
+});
+app.use("/api", generalLimiter);
 
 app.use("/api/flights", searchLimiter, flightsRoutes);
 app.use("/api/share", shareRoutes);

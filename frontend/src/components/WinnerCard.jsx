@@ -538,21 +538,21 @@ const WinnerCard = React.memo(function WinnerCard({
                       )}
                       {airlineSecondary && (
                         <a href={airlineSecondary.url} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--airline"
-                          aria-label={airlineSecondary.airlineName}
+                          aria-label={airlineSecondary.airlineName} title={airlineSecondary.airlineName}
                           onClick={() => track("book_click", { provider: "airline", airline: airlineSecondary.airlineName, dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
                         </a>
                       )}
                       {ssUrl && book?.provider !== "skyscanner" && (
                         <a href={ssUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon"
-                          aria-label="Skyscanner"
+                          aria-label="Skyscanner" title="Skyscanner"
                           onClick={() => track("book_click", { provider: "skyscanner", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Search size={16} aria-hidden="true" /></span>
                         </a>
                       )}
                       {gfUrl && (
                         <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--google"
-                          aria-label="Google Flights"
+                          aria-label="Google Flights" title="Google Flights"
                           onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
                           <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
                         </a>

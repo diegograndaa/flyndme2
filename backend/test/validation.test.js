@@ -298,7 +298,18 @@ test("search: destBasis cheaper usa la lista corta; una lista a mano no", async 
   assert.equal(cheap.body.destinationBasis, "cheaper");
   assert.equal(cheap.body.cheapPrices, undefined);
   const got = cheap.body.flights.map((f) => f.destination).sort();
-  assert.deepEqual(got, picked.slice(0, 6).sort());
+  // Se consulta la lista corta entera y se devuelven las 6 más baratas.
+  assert.ok(got.length >= 6 && got.length <= 7, "las 6 más baratas y, si no está entre ellas, la más equitativa");
+  for (const code of got) assert.ok(picked.includes(code), `${code} sale de la lista corta`);
+  const all = await post("/api/flights/multi-origin", {
+    origins, departureDate, tripType: "oneway", optimizeBy: "total", destinations: [...picked].reverse(),
+  });
+  assert.equal(all.status, 200);
+  assert.deepEqual(
+    cheap.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
+    all.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
+    "las devueltas son las más baratas de toda la lista, no las primeras consultadas",
+  );
   assert.notEqual(
     got.join(","),
     usual.body.flights.map((f) => f.destination).sort().join(","),
@@ -315,6 +326,28 @@ test("search: destBasis cheaper usa la lista corta; una lista a mano no", async 
   assert.equal(pinned.status, 200);
   assert.equal(pinned.body.destinationBasis, "usual");
   assert.equal(pinned.body.bestDestination.destination, "LIS");
+});
+
+test("search: el pool por defecto consulta los 24 destinos y devuelve los más baratos", async () => {
+  const origins = ["MAD", "LON"];
+  const departureDate = futureDate(71);
+  const usual = await post("/api/flights/multi-origin", { origins, departureDate, tripType: "oneway", optimizeBy: "total" });
+  assert.equal(usual.status, 200);
+  const everything = await post("/api/flights/multi-origin", {
+    origins, departureDate, tripType: "oneway", optimizeBy: "total",
+    destinations: ["ZRH","NAP","MLA","DBV","NCE","PMI","AGP","IST","CPH","OPO","BUD","ATH","PRG","VIE","DUB","BCN","BER","LIS","MIL","AMS","ROM","PAR"],
+  });
+  assert.equal(everything.status, 200);
+  assert.ok(everything.body.flights.length > 6, "el mock da precio a más de 6 destinos");
+  assert.deepEqual(
+    usual.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
+    everything.body.flights.slice(0, 6).map((f) => f.totalCostEUR),
+  );
+  assert.ok(usual.body.flights.length <= 7);
+  // El más equitativo de todos sigue disponible aunque no sea de los 6 baratos.
+  const fairest = [...everything.body.flights].sort((a, b) => b.fairnessScore - a.fairnessScore)[0];
+  const best = Math.max(...usual.body.flights.map((f) => f.fairnessScore));
+  assert.equal(best, fairest.fairnessScore);
 });
 
 test("share: el enlace caduca a las 48 h", async () => {

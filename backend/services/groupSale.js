@@ -20,8 +20,11 @@ const PAID_STATUSES = new Set(["succeeded", "captured", "confirmed", "paid"]);
 const AIRLINE_SITE = new Set(["FR", "RK", "AL", "RR", "W6", "W9", "W4", "5W"]);
 
 const quotes = new Map();
+// strict: una venta que no se puede guardar en Redis no sigue adelante. En
+// memoria se perdería al reiniciar, con el cobro ya hecho.
 const saleStore = createStore({
   namespace: "sale",
+  strict: true,
   ttlMs: SALE_KEEP_MS,
   maxSize: 500,
   sweepEveryMs: 60 * 60 * 1000,
@@ -36,6 +39,13 @@ function paymentsMode() {
   const value = token();
   if (!value) return "off";
   return value.startsWith("duffel_test_") ? "test" : "live";
+}
+
+// Interruptor de la venta. Con el token puesto pero sin SALE_ENABLED=true no
+// se abre ningún presupuesto nuevo y la búsqueda no ofrece «Comprar». Las
+// ventas ya abiertas (pagar, completar, consultar) siguen su curso.
+function saleOpen() {
+  return Boolean(token()) && String(process.env.SALE_ENABLED || "").trim().toLowerCase() === "true";
 }
 
 function markupRate() {
@@ -267,8 +277,9 @@ function purgeQuotes() {
 }
 
 async function saveQuote(quote, ttlMs) {
-  quotes.set(quote.quoteId, quote);
+  purgeQuotes();
   await saleStore.set(quote.quoteId, quote, { ttlMs });
+  quotes.set(quote.quoteId, quote);
   return quote;
 }
 
@@ -387,7 +398,7 @@ function sumParts(parts) {
 }
 
 async function quoteLegs(rawLegs, today) {
-  if (!token()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
+  if (!saleOpen()) return { available: false, code: "BOOKING_NOT_CONFIGURED" };
   const checked = validateLegs(rawLegs, today);
   if (checked.code) return { available: false, code: checked.code };
   const rate = markupRate();
@@ -731,6 +742,7 @@ module.exports = {
   startPayment,
   completeSale,
   paymentsMode,
+  saleOpen,
   priceLeg,
   offerMatches,
   pickOffer,

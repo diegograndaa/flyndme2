@@ -2785,7 +2785,9 @@ button,
   .wc-total-meta { gap: 2px 14px; }
 }
 @media (max-width: 400px) {
-  .wc-card .wc-buy .wc-cta:not(.wc-cta--book):not(.wc-cta--copy) .wc-cta-icon { display: none; }
+  /* Los enlaces de solo icono (aerolínea, Skyscanner, Google) no tienen texto:
+     sin el icono quedaban como tres botones en blanco. */
+  .wc-card .wc-buy .wc-cta:not(.wc-cta--book):not(.wc-cta--copy):not(.wc-cta--icon) .wc-cta-icon { display: none; }
 }
 
 /* ══ 24. Instrumentos lúdicos (HUD de cabina) ════════════════════════════
@@ -3433,13 +3435,15 @@ button,
   .scroll-top-btn .scroll-top-ring { width: 40px; height: 40px; }
   .app-root:has(.sf-submit-wrap) .scroll-top-btn { display: none; }
 }
-/* Móviles anchos: la ficha de ciudad puede enseñar nombres más largos */
-@media (min-width: 385px) and (max-width: 600px) {
+/* Móviles anchos: la ficha de ciudad puede enseñar nombres más largos. Desde
+   430 px: a 390 la ficha de 98 px dejaba 18 px al código y «MAD» se leía «M». */
+@media (min-width: 430px) and (max-width: 600px) {
   .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 108px !important; }
   .sf-origin-row .sf-input-city { max-width: 98px; }
 }
-/* Pantallas muy estrechas (< 360 px): la ficha enseña solo la bandera */
-@media (max-width: 359px) {
+/* Por debajo de 390 px no caben código y nombre: la ficha enseña solo la
+   bandera (a 360 quedaban 6 px para el código). */
+@media (max-width: 389px) {
   .sf-origin-row .sf-input-cityname { display: none; }
   .sf-origin-row--set .sf-input-wrap .sf-input.sf-input { padding-right: 40px !important; }
 }

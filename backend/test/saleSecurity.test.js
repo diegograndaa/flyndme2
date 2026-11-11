@@ -6,6 +6,7 @@ const { test, beforeEach, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 process.env.DUFFEL_ACCESS_TOKEN = "duffel_test_token";
+process.env.SALE_ENABLED = "true";
 process.env.BOOKING_MARKUP_PERCENT = "5";
 process.env.DUFFEL_PAYMENTS_FEE = "0.029";
 

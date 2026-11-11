@@ -3,6 +3,7 @@ const { test, beforeEach, describe } = require("node:test");
 const assert = require("node:assert/strict");
 
 process.env.DUFFEL_ACCESS_TOKEN = "duffel_test_token";
+process.env.SALE_ENABLED = "true";
 process.env.BOOKING_MARKUP_PERCENT = "5";
 process.env.DUFFEL_PAYMENTS_FEE = "0.029";
 
@@ -90,6 +91,20 @@ test("sin token no hay presupuesto ni cobro", async () => {
   } finally {
     process.env.DUFFEL_ACCESS_TOKEN = previous;
   }
+});
+
+test("con el token puesto pero la venta apagada no se abre ningún presupuesto", async () => {
+  const previous = process.env.SALE_ENABLED;
+  delete process.env.SALE_ENABLED;
+  try {
+    assert.equal(sale.saleOpen(), false);
+    const quote = await sale.quoteLegs([leg(), leg({ origin: "BCN", flightNumber: "50" })], TODAY);
+    assert.equal(quote.available, false);
+    assert.equal(quote.code, "BOOKING_NOT_CONFIGURED");
+  } finally {
+    process.env.SALE_ENABLED = previous;
+  }
+  assert.equal(sale.saleOpen(), true);
 });
 
 test("si el vuelo de la tarjeta no está, se emite la tarifa que sí se puede vender", async () => {

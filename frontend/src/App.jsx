@@ -338,6 +338,8 @@ export default function App() {
   const [flights,         setFlights]         = useState([]);
   const [partialResults,  setPartialResults]  = useState(false);
   const [providerDegraded, setProviderDegraded] = useState(false);
+  // «Comprar» solo se ofrece si el servidor dice que la venta está abierta.
+  const [saleOpen, setSaleOpen] = useState(false);
   const [bestByCriterion, setBestByCriterion] = useState({ total: null, fairness: null });
   const [uiCriterion,     setUiCriterion]     = useState("total");
   const [showAlt,         setShowAlt]         = useState(false);
@@ -1648,6 +1650,7 @@ export default function App() {
           setPartialResults(Boolean(data.partial));
           setResultBasis(data.destinationBasis === "cheaper" ? "cheaper" : "usual");
           setProviderDegraded(Boolean(data.degraded));
+          setSaleOpen(data.sale === true);
           setBestByCriterion({ total: pickBest(adjusted, "total"), fairness: pickBest(adjusted, "fairness") });
           setUiCriterion(optimizeBy);
           // Preload top destination images for smoother results UX
@@ -2422,6 +2425,7 @@ export default function App() {
             onToggleWatch={() => toggleWatch(displayDest)}
             onRequestSale={requestGroupSale}
             sale={groupSale}
+            saleEnabled={saleOpen}
             revealDetails={revealDetails}
           />
           </Suspense>

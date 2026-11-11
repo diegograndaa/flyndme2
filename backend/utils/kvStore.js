@@ -56,7 +56,24 @@ function createMemoryStore({ namespace, ttlMs, maxSize, sweepEveryMs }) {
   };
 }
 
-function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: injected }) {
+// Los ids de cuentas y sesiones son correos y tokens: en el log va solo una
+// huella corta, suficiente para seguir un fallo sin copiar el dato.
+function idTag(id) {
+  return require("crypto").createHash("sha256").update(String(id)).digest("hex").slice(0, 8);
+}
+
+function storeDown(namespace, cause) {
+  const err = new Error(`store ${namespace} unavailable`);
+  err.code = "STORE_UNAVAILABLE";
+  err.cause = cause;
+  return err;
+}
+
+// strict: cuentas, sesiones, identidades y ventas. Ahí un fallo de Redis NO
+// puede leerse como «no existe» (el registro crearía una cuenta encima de la
+// de otra persona) ni guardarse solo en memoria (un cobro sin rastro tras un
+// reinicio): se lanza STORE_UNAVAILABLE y la ruta responde 503.
+function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: injected, strict = false }) {
   // require perezoso: el módulo solo se carga (y solo hace falta en
   // node_modules) cuando el backend upstash está configurado. dev/tests no lo
   // necesitan ni lo importan (los tests inyectan un cliente falso).
@@ -83,8 +100,10 @@ function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: in
       try {
         const v = await redis.get(key(id)); // @upstash/redis (de)serializa JSON
         if (v != null) return v;
+        if (strict) return null; // Redis respondió: de verdad no existe
       } catch (err) {
-        console.error(`[kv:${namespace}] get(${id}) falló: ${err.message}`);
+        console.error(`[kv:${namespace}] get(#${idTag(id)}) falló: ${err.message}`);
+        if (strict) throw storeDown(namespace, err);
       }
       return fallback.get(id); // null si tampoco está: "no encontrado"
     },
@@ -95,9 +114,13 @@ function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: in
       try {
         await redis.set(key(id), value, { ex }); // TTL nativo: sin barrido manual
         // Si una versión anterior vivía en el respaldo, que no quede obsoleta
-        if (await fallback.get(id)) await fallback.set(id, value);
+        if (!strict && await fallback.get(id)) await fallback.set(id, value);
       } catch (err) {
-        console.error(`[kv:${namespace}] set(${id}) falló: ${err.message} — guardado en memoria`);
+        if (strict) {
+          console.error(`[kv:${namespace}] set(#${idTag(id)}) falló: ${err.message}`);
+          throw storeDown(namespace, err);
+        }
+        console.error(`[kv:${namespace}] set(#${idTag(id)}) falló: ${err.message} — guardado en memoria`);
         await fallback.set(id, value);
       }
       return value;
@@ -107,7 +130,8 @@ function createUpstashStore({ namespace, ttlMs, maxSize, sweepEveryMs, redis: in
       try {
         removed = (await redis.del(key(id))) > 0 || removed;
       } catch (err) {
-        console.error(`[kv:${namespace}] del(${id}) falló: ${err.message}`);
+        console.error(`[kv:${namespace}] del(#${idTag(id)}) falló: ${err.message}`);
+        if (strict) throw storeDown(namespace, err);
       }
       return removed;
     },

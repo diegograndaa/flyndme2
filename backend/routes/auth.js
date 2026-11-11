@@ -21,12 +21,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const accounts = createStore({
   namespace: "account",
+  strict: true,
   ttlMs: ACCOUNT_TTL_MS,
   maxSize: 5000,
   sweepEveryMs: 60 * 60 * 1000,
 });
 const sessions = createStore({
   namespace: "session",
+  strict: true,
   ttlMs: REMEMBER_TTL_MS,
   maxSize: 20000,
   sweepEveryMs: 60 * 60 * 1000,
@@ -35,6 +37,7 @@ const sessions = createStore({
 // aunque el proveedor cambie el correo que enseña.
 const identities = createStore({
   namespace: "identity",
+  strict: true,
   ttlMs: ACCOUNT_TTL_MS,
   maxSize: 20000,
   sweepEveryMs: 60 * 60 * 1000,
@@ -313,13 +316,28 @@ async function readSession(req) {
     if (session) await sessions.delete(token);
     return null;
   }
-  return { token, email: normalizeEmail(session.email) };
+  return { token, email: normalizeEmail(session.email), issuedAt: Number(session.issuedAt) || 0 };
+}
+
+// Sesión + cuenta. Una sesión abierta antes de `sessionsAfter` ya no vale:
+// así se cierran las de quien registró el correo antes que su dueño.
+async function sessionUser(req) {
+  const session = await readSession(req);
+  if (!session) return null;
+  const user = await accounts.get(session.email);
+  if (!user) return null;
+  if (Number(user.sessionsAfter) > 0 && session.issuedAt < Number(user.sessionsAfter)) {
+    await sessions.delete(session.token);
+    return null;
+  }
+  return { session, user };
 }
 
 async function issueSession(email, remember) {
   const token = crypto.randomBytes(32).toString("base64url");
   const ttl = remember ? REMEMBER_TTL_MS : SESSION_TTL_MS;
-  await sessions.set(token, { email, expiresAt: Date.now() + ttl }, { ttlMs: ttl });
+  const now = Date.now();
+  await sessions.set(token, { email, issuedAt: now, expiresAt: now + ttl }, { ttlMs: ttl });
   return token;
 }
 
@@ -334,6 +352,7 @@ async function saveAccount(user) {
     recent: sanitizeRecent(user.recent),
     watches: sanitizeWatches(user.watches),
     createdAt: user.createdAt,
+    ...(Number(user.sessionsAfter) > 0 ? { sessionsAfter: Number(user.sessionsAfter) } : {}),
   };
   await accounts.set(user.email, stored, { ttlMs: ACCOUNT_TTL_MS });
   return stored;
@@ -427,11 +446,16 @@ async function establishSocialSession({ profile, name, remember, favorites }) {
   }
   const created = !user;
   const providers = { ...(user && user.providers), [provider]: sub };
+  // El correo de una cuenta con contraseña nunca se comprobó: pudo crearla
+  // otra persona. Cuando el dueño lo demuestra con su proveedor por primera
+  // vez, esa contraseña y las sesiones abiertas con ella dejan de valer.
+  const takeover = Boolean(user && user.hash && !(user.providers && user.providers[provider]));
   const stored = await saveAccount({
     email,
     name: (user && user.name) || cleanName(name) || cleanName(profile.name),
-    salt: user && user.salt,
-    hash: user && user.hash,
+    salt: takeover ? "" : user && user.salt,
+    hash: takeover ? "" : user && user.hash,
+    sessionsAfter: takeover ? Date.now() : user && user.sessionsAfter,
     providers,
     favorites: mergeFavorites(user && user.favorites, favorites),
     recent: user && user.recent,
@@ -475,10 +499,9 @@ router.post("/social", attemptLimiter, asyncH(async (req, res) => {
 }));
 
 router.get("/me", asyncH(async (req, res) => {
-  const session = await readSession(req);
-  if (!session) return res.status(401).json({ code: "AUTH_REQUIRED" });
-  const user = await accounts.get(session.email);
-  if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const found = await sessionUser(req);
+  if (!found) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const { user } = found;
   return res.json({ user: publicUser(user), ...personalOf(user) });
 }));
 
@@ -489,10 +512,9 @@ router.post("/logout", asyncH(async (req, res) => {
 }));
 
 router.post("/favorites", asyncH(async (req, res) => {
-  const session = await readSession(req);
-  if (!session) return res.status(401).json({ code: "AUTH_REQUIRED" });
-  const user = await accounts.get(session.email);
-  if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const found = await sessionUser(req);
+  if (!found) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const { user } = found;
   user.favorites = sanitizeFavorites(req.body && req.body.favorites);
   const stored = await saveAccount(user);
   return res.json({ favorites: stored.favorites });
@@ -501,10 +523,9 @@ router.post("/favorites", asyncH(async (req, res) => {
 // Solo toca las listas que vienen en el cuerpo. Así guardar favoritos no
 // borra las búsquedas, ni al revés.
 router.post("/personal", asyncH(async (req, res) => {
-  const session = await readSession(req);
-  if (!session) return res.status(401).json({ code: "AUTH_REQUIRED" });
-  const user = await accounts.get(session.email);
-  if (!user) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const found = await sessionUser(req);
+  if (!found) return res.status(401).json({ code: "AUTH_REQUIRED" });
+  const { user } = found;
   const body = req.body && typeof req.body === "object" ? req.body : {};
   if (Object.prototype.hasOwnProperty.call(body, "favorites")) user.favorites = body.favorites;
   if (Object.prototype.hasOwnProperty.call(body, "recent")) user.recent = body.recent;
@@ -512,6 +533,12 @@ router.post("/personal", asyncH(async (req, res) => {
   const stored = await saveAccount(user);
   return res.json(personalOf(stored));
 }));
+
+// Redis caído: 503, nunca «no existe».
+router.use((err, _req, res, next) => {
+  if (err && err.code === "STORE_UNAVAILABLE") return res.status(503).json({ code: "AUTH_UNAVAILABLE" });
+  return next(err);
+});
 
 module.exports = router;
 module.exports.normalizeEmail = normalizeEmail;

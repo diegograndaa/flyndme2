@@ -190,6 +190,28 @@ test("Facebook no entra en una cuenta que ya tiene contraseña; Google verificad
     assert.equal(linked.status, 200);
     assert.equal(linked.user.email, email);
 
+    // Quien registró el correo antes que su dueño se queda fuera: ni su
+    // contraseña ni la sesión que abrió con ella valen ya.
+    const oldToken = (await created.json()).token;
+    const me = (token) => fetch(`http://127.0.0.1:${port}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal((await me(oldToken)).status, 401);
+    assert.equal((await me(loginBody.token)).status, 401);
+    assert.equal((await me(linked.token)).status, 200);
+    const relogin = await fetch(`http://127.0.0.1:${port}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    assert.equal(relogin.status, 401);
+    assert.equal((await relogin.json()).code, "AUTH_USE_PROVIDER");
+    // Volver a entrar con Google no cierra la sesión de Google ya abierta.
+    await new Promise((r) => setTimeout(r, 5));
+    const again = await establishSocialSession({
+      profile: { provider: "google", sub: "google-victim", email, emailVerified: true, name: "Victor" },
+    });
+    assert.equal((await me(linked.token)).status, 200);
+    assert.equal((await me(again.token)).status, 200);
+
     const fresh = await establishSocialSession({
       profile: { provider: "facebook", sub: "fb-new-only", email: `nueva-${Date.now()}@flynd.me`, emailVerified: false, name: "Nueva" },
     });

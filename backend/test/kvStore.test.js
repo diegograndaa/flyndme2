@@ -108,3 +108,36 @@ test("kvStore(upstash): si Redis falla al leer, consulta el respaldo y si no, nu
   await s.set("x", { a: 1 });
   assert.deepEqual(await s.get("x"), { a: 1 });
 });
+
+test("kvStore(upstash, strict): un fallo de Redis no se lee como «no existe» ni se guarda en memoria", async () => {
+  const down = createUpstashStore({ namespace: "account", ttlMs: 10_000, strict: true, redis: fakeRedis({ failSet: true, failGet: true }) });
+  await assert.rejects(() => down.get("a@b.co"), (err) => err.code === "STORE_UNAVAILABLE");
+  await assert.rejects(() => down.set("a@b.co", { hash: "x" }), (err) => err.code === "STORE_UNAVAILABLE");
+
+  // Redis se cae al escribir y vuelve: lo que no llegó a Redis no existe.
+  const redis = fakeRedis({ failSet: true });
+  const flaky = createUpstashStore({ namespace: "session", ttlMs: 10_000, strict: true, redis });
+  await assert.rejects(() => flaky.set("tok", { email: "victima@flynd.me" }));
+  assert.equal(await flaky.get("tok"), null);
+
+  const up = createUpstashStore({ namespace: "account", ttlMs: 10_000, strict: true, redis: fakeRedis() });
+  assert.equal(await up.get("nadie@flynd.me"), null);
+  await up.set("a@b.co", { hash: "x" });
+  assert.deepEqual(await up.get("a@b.co"), { hash: "x" });
+});
+
+test("kvStore(upstash): el log de un fallo no lleva el id en claro", async () => {
+  const lines = [];
+  const prev = console.error;
+  console.error = (...args) => lines.push(args.join(" "));
+  try {
+    const s = createUpstashStore({ namespace: "share", ttlMs: 10_000, redis: fakeRedis({ failSet: true, failGet: true }) });
+    await s.get("persona@correo.es");
+    await s.set("token-secreto-123", { a: 1 });
+  } finally {
+    console.error = prev;
+  }
+  assert.equal(lines.length, 2);
+  assert.equal(lines.join("\n").includes("persona@correo.es"), false);
+  assert.equal(lines.join("\n").includes("token-secreto-123"), false);
+});

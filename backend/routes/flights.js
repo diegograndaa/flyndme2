@@ -50,8 +50,9 @@ const serpapi = require("../services/serpapiService");
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 // Default destination set, structured as explicit tiers. The search loop
-// processes tier-by-tier and stops as soon as enriched.length >= TARGET_RESULTS,
-// so Tier 2/3 are only touched when Tier 1/2 don't yield enough results.
+// processes tier-by-tier. Por defecto se consultan los tres (TARGET_RESULTS=0)
+// y se devuelven los MAX_RETURNED mejores; el orden solo decide qué se pierde
+// si se agota el tope de tiempo.
 // Trimmed from 35 → 24 destinations: keeps every major hub and the most
 // popular leisure spots, drops the long tail (Sofia, Tirana, Marrakech, etc.).
 const DEFAULT_DESTINATION_TIERS = [
@@ -67,8 +68,13 @@ const MAX_ORIGINS           = 8;
 const MAX_PAX_PER_ORIGIN    = 9;
 const TOTAL_PAX_CAP         = 16;
 const MAX_COMBINATIONS      = 1200; // sanity cap; tier early-break does the real saving in practice
-// 6 destinations is enough for the user to decide and saves ~33% of quota vs 9.
-const TARGET_RESULTS        = Number(process.env.SEARCH_TARGET_RESULTS || 6);
+// Tope de resultados del pool por defecto. 0 = sin tope: se consultan los 24
+// destinos y se ordena al final. Cortar al llegar a 6 dejaba fuera destinos
+// más baratos de los grupos 2 y 3 (Málaga, Niza…) que nunca se consultaban, y
+// el proveedor no cobra por consulta. El tope de tiempo sigue mandando.
+const TARGET_RESULTS        = Math.max(0, Number(process.env.SEARCH_TARGET_RESULTS || 0)) || 0;
+// Cuántos destinos se devuelven del pool por defecto, ya ordenados. 0 = todos.
+const MAX_RETURNED          = Math.max(0, Number(process.env.SEARCH_MAX_RETURNED || 6)) || 0;
 // Don't spend quota on verification when the remaining budget is this low.
 const VERIFY_MIN_BUDGET     = 10;
 const CACHE_TTL_MS          = 10 * 60 * 1000;
@@ -623,8 +629,8 @@ router.post("/multi-origin", async (req, res) => {
     );
     const destinationList = searchTiers.flat(); // used only for combination guard + logging
     // Lista pedida por el usuario: se consultan todas (sigue el tope de tiempo).
-    // El pool por defecto sigue cortando al llegar a TARGET_RESULTS.
-    const resultCap = explicitDestinations ? Infinity : TARGET_RESULTS;
+    // El pool por defecto solo corta antes si SEARCH_TARGET_RESULTS > 0.
+    const resultCap = explicitDestinations || TARGET_RESULTS <= 0 ? Infinity : TARGET_RESULTS;
 
     if (destinationList.length === 0) {
       return res.status(400).json({
@@ -640,7 +646,7 @@ router.post("/multi-origin", async (req, res) => {
     const cacheKey = JSON.stringify({
       originList, originPax, destinationList, departureDate, returnDate,
       tripType, dateMode, flexDays, nonStop, travelClass, optimizeBy, safeMaxAvg, safeMaxFlight,
-      destinationBasis,
+      destinationBasis, explicitDestinations,
     });
     const cached = getCached(cacheKey);
     if (cached) {
@@ -700,7 +706,7 @@ router.post("/multi-origin", async (req, res) => {
     const CHUNK_SIZE  = 3;
     let destsTouched  = 0; // for logging savings vs worst case
 
-    console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas (worst case ${combinations} llamadas, target ${TARGET_RESULTS} resultados)`);
+    console.log(`[search] ${originList.length} orígenes × ${destinationList.length} destinos × ${dateCandidates.length} fechas (worst case ${combinations} llamadas, tope ${Number.isFinite(resultCap) ? resultCap : "sin"} resultados)`);
     const t0 = searchStarted;
 
     // Tier-aware processing: tier N is only entered if previous tiers yielded
@@ -803,7 +809,7 @@ router.post("/multi-origin", async (req, res) => {
         }
       }
 
-      if (!explicitDestinations && enriched.length >= TARGET_RESULTS) {
+      if (Number.isFinite(resultCap) && enriched.length >= resultCap) {
         const skipped = searchTiers.slice(tierIdx + 1).reduce((s, t) => s + t.length, 0);
         if (skipped > 0) {
           console.log(`[search] target ${TARGET_RESULTS} alcanzado en tier ${tierIdx + 1}, omitidos ${skipped} destinos de tiers posteriores`);
@@ -854,6 +860,22 @@ router.post("/multi-origin", async (req, res) => {
       return a.totalCostEUR - b.totalCostEUR;
     });
 
+    // Se consultan todos los destinos, pero se devuelven los mejores: la lista
+    // completa no cabe en un enlace compartido y no ayuda a decidir. El mejor
+    // según el OTRO criterio se conserva, porque la pantalla deja cambiarlo.
+    if (!explicitDestinations && MAX_RETURNED > 0 && enriched.length > MAX_RETURNED) {
+      const dropped = enriched.slice(MAX_RETURNED);
+      const other = optimizeBy === "fairness"
+        ? dropped.reduce((best, r) => (!best || r.totalCostEUR < best.totalCostEUR ? r : best), null)
+        : dropped.reduce((best, r) => (!best || r.fairnessScore > best.fairnessScore ? r : best), null);
+      const kept = enriched.slice(0, MAX_RETURNED);
+      const beatsKept = other && (optimizeBy === "fairness"
+        ? kept.every((r) => other.totalCostEUR < r.totalCostEUR)
+        : kept.every((r) => other.fairnessScore > r.fairnessScore));
+      enriched.length = MAX_RETURNED;
+      if (beatsKept) enriched.push(other);
+    }
+
     // Verify the winner before responding (re-prices its N legs via the provider).
     // Only the winner is verified to keep quota usage bounded. Failures degrade
     // gracefully: the original search price is shown with verificationStatus tag.
@@ -891,6 +913,8 @@ router.post("/multi-origin", async (req, res) => {
       // Parte de las consultas al proveedor falló: puede faltar algún destino.
       ...(health !== "ok" ? { degraded: true } : {}),
       provider:         FLIGHT_PROVIDER,
+      // Solo con la venta abierta la pantalla ofrece «Comprar».
+      sale:             groupSale.saleOpen(),
       destinationBasis,
       appliedMaxBudgetPerTraveler: safeMaxAvg,
       appliedMaxBudgetPerFlight:   safeMaxFlight,
