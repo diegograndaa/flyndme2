@@ -555,7 +555,7 @@ const WinnerCard = React.memo(function WinnerCard({
                         {gfUrl && (
                           <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-flight-link wc-flight-link--google"
                             onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
-                            Google<span className="wc-flight-link-long"> Flights</span>
+                            <span>Google<span className="wc-flight-link-long"> Flights</span></span>
                           </a>
                         )}
                         <button type="button" className="wc-flight-link wc-flight-link--copy" onClick={async () => {
