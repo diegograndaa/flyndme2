@@ -10,9 +10,7 @@
   <link rel="canonical" href="https://flyndme.com/privacidad/">
   <link rel="icon" href="/favicon.ico?v=6">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/fonts/plex.css">
   <style>
     :root { --bg:#F5F3EF; --card:#FBF9F5; --ink:#1A1A1A; --muted:#524F49; --line:#E5E0D8; --sign:#FFC20E; }
     @media (prefers-color-scheme: dark) {
@@ -42,8 +40,12 @@
     </header>
     <article class="card">
       <h1>Política de privacidad</h1>
-      <p class="date">22 de octubre de 2026</p>
+      <p class="date">11 de noviembre de 2026</p>
       <p>FlyndMe, en <a href="https://flyndme.com">flyndme.com</a>, ayuda a un grupo a encontrar un destino común. Puedes buscar sin crear una cuenta. Para privacidad escribe a <a href="mailto:diego@flyndme.com">diego@flyndme.com</a>.</p>
+
+      <h2>Quién responde de tus datos</h2>
+      <p>FlyndMe es un proyecto personal. El responsable del tratamiento es su titular, con quien se contacta en <a href="mailto:diego@flyndme.com">diego@flyndme.com</a>.</p>
+      <p>Tratamos los datos de la búsqueda, del plan de grupo y del enlace compartido para prestarte el servicio que pides. Los de la cuenta y los de una compra, para cumplir lo que contratas al crearla o al pagar. Las visitas se cuentan por nuestro interés en saber si la web funciona, sin identificarte.</p>
 
       <h2>La búsqueda</h2>
       <p>Al buscar enviamos al servidor las ciudades de salida, las fechas, cuántas personas viajan, el tipo de billete y los filtros. Con eso se piden precios en caché a Travelpayouts (Aviasales). El destino que queda primero puede comprobarse después con Google Flights, a través de SerpAPI. Esos precios son una estimación, no una reserva.</p>
@@ -51,6 +53,7 @@
       <h2>La cuenta</h2>
       <p>Si creas una cuenta guardamos el correo, el nombre si lo escribes y la contraseña solo como un hash, nunca en claro. Si entras con Google, Apple o Facebook guardamos el identificador que nos da ese servicio y el correo que confirma. También guardamos los destinos que marques (código, ciudad, precio estimado, cuándo y la búsqueda con la que los guardaste: ciudades, fechas y viajeros), las búsquedas recientes (ciudades, fechas, viajeros, tipo de billete y filtros, sin nombre) y las vigilancias de precio (ruta, fechas, total estimado y cuándo). Una vigilancia no envía ningún correo.</p>
       <p>La cuenta se conserva hasta 400 días desde la última vez que se guarda. Si marcas «Recordarme», la sesión dura 30 días. Si no, dura 12 horas.</p>
+      <p>Al crear la cuenta con correo y contraseña te enviamos un enlace para confirmar que el correo es tuyo, válido 7 días. Si pides cambiar la contraseña, te enviamos otro, válido una hora. De esos enlaces guardamos solo una huella, no el enlace. Durante una hora contamos las contraseñas falladas y los correos pedidos de cada cuenta, para frenar a quien prueba contraseñas.</p>
 
       <h2>En tu navegador</h2>
       <p>En el propio dispositivo se quedan el idioma, el tema y una copia de esas listas, y, si lo pides, la sesión. Vigilar un precio no crea una cuenta por sí solo: si has iniciado sesión, esa vigilancia queda en la cuenta. Se borra del navegador al limpiar los datos del sitio.</p>
@@ -59,7 +62,7 @@
       <p>Un plan de grupo guarda el nombre que escribe cada persona, su ciudad, cuántos viajan y las fechas, durante 14 días. Un resultado compartido guarda esa búsqueda durante 48 horas.</p>
 
       <h2>Si compras el billete aquí</h2>
-      <p>Para emitir el billete hacen falta nombre, apellidos, fecha de nacimiento, sexo, tratamiento, correo y teléfono. Esos datos van a Duffel, que emite el billete, y FlyndMe también los guarda 14 días junto con la ruta, el importe y el estado, para completar el billete o pedir la devolución si no se emite. El número de tarjeta se escribe en el formulario de pago de Duffel (Stripe) y no pasa por los servidores de FlyndMe.</p>
+      <p>Para emitir el billete hacen falta nombre, apellidos, fecha de nacimiento, sexo, tratamiento, correo y teléfono. Esos datos van a Duffel, que emite el billete, y FlyndMe también los guarda 14 días junto con la ruta, el importe y el estado, para completar el billete o pedir la devolución si no se emite. Se guardan al pulsar el botón de pagar, también si después no terminas el pago. Si la compra se completa, la confirmación con los nombres de los viajeros y los localizadores se envía al correo que indiques. El número de tarjeta se escribe en el formulario de pago de Duffel (Stripe) y no pasa por los servidores de FlyndMe.</p>
 
       <h2>Visitas</h2>
       <p>Vercel Web Analytics cuenta visitas y acciones: que hubo una búsqueda, cuántos orígenes tenía, el código del destino y, si se pulsa un enlace de reserva, la aerolínea y el código de la ciudad de salida. No le enviamos tu correo ni tu nombre.</p>
@@ -71,22 +74,29 @@
         <li>SerpAPI / Google Flights, para comprobar el destino ganador.</li>
         <li>Google, Apple o Facebook, solo si pulsas ese botón para entrar.</li>
         <li>Duffel y Stripe, solo si pagas el billete aquí.</li>
+        <li>Brevo, que envía nuestros correos: el enlace para confirmar el correo o cambiar la contraseña y, si compras, la confirmación. Recibe tu dirección y el texto de ese mensaje.</li>
+        <li>Unsplash, Wikimedia y los servidores de logotipos de Aviasales y Kiwi, de donde tu navegador carga las fotos de las ciudades y los logos de las aerolíneas. Como cualquier web que visitas, ven tu dirección IP.</li>
         <li>La web de la aerolínea, Skyscanner, Google Flights o Booking, si sales a reservar o a ver hoteles.</li>
         <li>Vercel aloja la web. Render aloja el servidor. Upstash guarda cuentas, sesiones, grupos y ventas cuando está configurado.</li>
       </ul>
+      <p>Varios de estos servicios tienen su sede o sus servidores fuera del Espacio Económico Europeo, sobre todo en Estados Unidos.</p>
 
-      <h2>Borrar la cuenta</h2>
-      <p>No hay un botón para borrar la cuenta. Si escribes a <a href="mailto:diego@flyndme.com">diego@flyndme.com</a>, se borra del servidor la cuenta y lo que esté guardado a tu nombre. FlyndMe no está pensado para menores.</p>
+      <h2>Tus derechos</h2>
+      <p>Desde el menú de la cuenta puedes descargar una copia de lo que guarda («Descargar mis datos»), cambiar la contraseña y borrar la cuenta. Al borrarla se eliminan del servidor la cuenta y sus destinos, búsquedas y vigilancias.</p>
+      <p>Puedes pedir además acceder a tus datos, corregirlos, borrarlos, llevártelos, limitar su uso u oponerte a él escribiendo a <a href="mailto:diego@flyndme.com">diego@flyndme.com</a>. Si crees que no hemos atendido bien tu petición, puedes reclamar ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" rel="noopener">aepd.es</a>).</p>
+      <p>FlyndMe no está pensado para menores.</p>
 
       <section class="en" lang="en">
         <h2>Privacy policy</h2>
-        <p class="date">22 October 2026</p>
+        <p class="date">11 November 2026</p>
         <p>FlyndMe at flyndme.com helps a group find one place to meet. You can search without an account. Privacy requests: <a href="mailto:diego@flyndme.com">diego@flyndme.com</a>.</p>
+        <p>FlyndMe is a personal project. Its owner is the data controller and can be reached at that address. Search, group plan and shared link data are used to provide the service you ask for; account and purchase data, to do what you sign up or pay for; visits are counted, without identifying you, because we need to know whether the site works.</p>
         <p>A search sends departure cities, dates, traveller counts, ticket type and filters to our server. Prices come from the Travelpayouts (Aviasales) cache. The winning destination may then be checked with Google Flights through SerpAPI. Those prices are estimates, not a booking.</p>
-        <p>An account stores your email, a name if you type one, and the password only as a hash. Google, Apple or Facebook sign-in stores the identifier that service gives us and the email it confirms. It also stores saved destinations (code, city, estimated price, when, and the search they came from: cities, dates and travellers), recent searches (cities, dates, travellers, ticket type and filters, with no name) and price watches (route, dates, estimated total and when). A price watch does not send any email. The account is kept for up to 400 days after the last save. “Remember me” lasts 30 days; otherwise the session lasts 12 hours.</p>
+        <p>An account stores your email, a name if you type one, and the password only as a hash. Google, Apple or Facebook sign-in stores the identifier that service gives us and the email it confirms. It also stores saved destinations (code, city, estimated price, when, and the search they came from: cities, dates and travellers), recent searches (cities, dates, travellers, ticket type and filters, with no name) and price watches (route, dates, estimated total and when). A price watch does not send any email. The account is kept for up to 400 days after the last save. “Remember me” lasts 30 days; otherwise the session lasts 12 hours. When you create an account with email and password we send a link to confirm the email is yours, valid for 7 days; if you ask to change the password we send another, valid for one hour. We keep only a fingerprint of those links. For one hour we count failed passwords and requested emails per account, to slow down password guessing.</p>
         <p>The browser on your device keeps language, theme, a copy of those lists and, if you ask, the session. A price watch does not by itself create an account; once you are signed in, that watch stays on the account. A group plan keeps each person’s name, city, traveller count and dates for 14 days. A shared result keeps that search for 48 hours.</p>
-        <p>Buying a ticket here needs given name, family name, date of birth, sex, title, email and phone. Those go to Duffel, which issues the ticket, and FlyndMe also keeps them for 14 days with the route, amount and status, so the ticket can be finished or the charge undone if it is not issued. The card number is entered in Duffel’s payment form (Stripe) and does not pass through FlyndMe’s servers.</p>
-        <p>Vercel Web Analytics counts visits and actions such as a search or a booking click, including a destination code, and on a booking click the airline and the departure city code. It does not receive your email or your name. We do not sell your data. Other services receive it only for the step you asked for: Travelpayouts, SerpAPI, Google, Apple, Facebook, Duffel, Stripe, an airline or hotel site you open, plus Vercel, Render and Upstash, which host the site, the server and the stored records. There is no button to delete an account. Email diego@flyndme.com and it is removed from the server. FlyndMe is not meant for children.</p>
+        <p>Buying a ticket here needs given name, family name, date of birth, sex, title, email and phone. Those go to Duffel, which issues the ticket, and FlyndMe also keeps them for 14 days with the route, amount and status, so the ticket can be finished or the charge undone if it is not issued. They are stored when you press the pay button, even if you do not finish paying. If the purchase completes, the confirmation with traveller names and booking references is emailed to the address you give. The card number is entered in Duffel’s payment form (Stripe) and does not pass through FlyndMe’s servers.</p>
+        <p>Vercel Web Analytics counts visits and actions such as a search or a booking click, including a destination code, and on a booking click the airline and the departure city code. It does not receive your email or your name. We do not sell your data. Other services receive it only for the step you asked for: Travelpayouts, SerpAPI, Google, Apple, Facebook, Duffel, Stripe, an airline or hotel site you open, plus Vercel, Render and Upstash, which host the site, the server and the stored records. Brevo sends our emails (the confirmation or password link and, if you buy, the purchase confirmation) and receives your address and that message. City photos and airline logos load in your browser from Unsplash, Wikimedia and the Aviasales and Kiwi logo servers, which see your IP address like any site you visit. Several of these services are based or hosted outside the European Economic Area, mainly in the United States.</p>
+        <p>From the account menu you can download a copy of what the account stores, change the password and delete the account; deleting it removes the account and its destinations, searches and watches from the server. You can also ask to access, correct, erase, export, restrict or object to the use of your data by writing to diego@flyndme.com, and you can complain to the Spanish Data Protection Agency (aepd.es). FlyndMe is not meant for children.</p>
       </section>
     </article>
   </div>

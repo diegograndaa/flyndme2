@@ -843,3 +843,7 @@
   }
 }
 
+
+/* Aviso de estimación en el panel de salidas */
+.fm-board-note { text-transform: none; letter-spacing: normal; font-family: var(--font); font-weight: 400; margin: 4px 0 0; max-width: 60ch; font-size: 12px; line-height: 1.4; color: var(--slate-500); }
+.wc-cta-letter { font: 700 15px/1 var(--font-mono); }

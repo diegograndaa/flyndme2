@@ -183,6 +183,12 @@ export const DeparturesBoard = React.memo(function DeparturesBoard({
       <div className="fm-board-top">
         <div>
           <h2 id="fm-board-title" className="fm-board-title">{t("board.departures")}</h2>
+          {/* La estimación no se repite aquí salvo cuando hace falta: si el
+              destino de la tarjeta ya está comprobado en vivo, se compara con
+              precios de caché y hay que decirlo donde se comparan. */}
+          {(current?.verificationStatus === "verified" || current?.verificationStatus === "changed") && (
+            <p className="fm-board-note">{t("board.estimateLong")}</p>
+          )}
         </div>
       </div>
 

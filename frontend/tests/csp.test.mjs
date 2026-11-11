@@ -35,3 +35,22 @@ test("CSP: sin 'unsafe-inline' ni 'unsafe-eval' en script-src", () => {
   const scriptSrc = cspValue().split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src"));
   assert.ok(!/unsafe-(inline|eval)/.test(scriptSrc), scriptSrc);
 });
+
+// La política completa sigue en modo informe hasta probarla con los accesos de
+// Google, Apple y Facebook. Lo que no puede romper nada ya se aplica.
+test("CSP: nadie puede enmarcar la web (política aplicada, no solo informe)", () => {
+  const headers = (vercel.headers || []).flatMap((rule) => rule.headers || []);
+  const enforced = headers.find((h) => /^content-security-policy$/i.test(h.key));
+  assert.ok(enforced, "hay una Content-Security-Policy aplicada");
+  assert.match(enforced.value, /frame-ancestors 'none'/);
+  assert.match(enforced.value, /object-src 'none'/);
+  assert.match(enforced.value, /base-uri 'self'/);
+  const xfo = headers.find((h) => /^x-frame-options$/i.test(h.key));
+  assert.equal(xfo && xfo.value, "DENY");
+});
+
+test("CSP: las fuentes se sirven desde el propio sitio", () => {
+  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(JSON.stringify(vercel)));
+  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html));
+  assert.match(html, /href="\/fonts\/plex\.css"/);
+});

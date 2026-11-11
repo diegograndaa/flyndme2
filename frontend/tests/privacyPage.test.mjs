@@ -14,7 +14,12 @@ test("privacidad: es una página pública con contacto y sin guardar la tarjeta"
   assert.ok(page.includes("mailto:diego@flyndme.com"));
   assert.ok(page.includes("FlyndMe también los guarda 14 días"));
   assert.ok(page.includes("no pasa por los servidores de FlyndMe"));
-  assert.ok(page.includes("No hay un botón para borrar la cuenta"));
+  assert.ok(page.includes("borrar la cuenta"));
+  assert.ok(page.includes("Descargar mis datos"));
+  assert.ok(page.includes("aepd.es"));
+  assert.ok(page.includes("Brevo"));
+  assert.ok(!page.includes("No hay un botón para borrar la cuenta"), "el botón ya existe");
+  assert.ok(!/fonts\.googleapis/.test(page), "las fuentes no salen de Google");
   assert.ok(page.includes("does not pass through FlyndMe"));
   assert.ok(page.includes("No vendemos tus datos"));
   assert.ok(app.includes('href="/privacidad/"'));

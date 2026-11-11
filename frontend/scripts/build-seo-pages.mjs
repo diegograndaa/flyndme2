@@ -589,9 +589,7 @@ function renderPage(page, lang, flights) {
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/fonts/plex.css">
 
   <script type="application/ld+json">${jsonLd(faqLd)}</script>
   <script type="application/ld+json">${jsonLd(breadcrumbLd)}</script>

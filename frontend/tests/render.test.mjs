@@ -56,6 +56,22 @@ test("render: DeparturesBoard lista los destinos y marca el de la tarjeta", asyn
   assert.equal((html.match(/class="pay-row trav-c2"/g) || []).length, 2, "LON lleva el color 2 en las dos filas");
   // La equidad ya no se comunica en negativo (ni "Unequal" ni "Desigual")
   assert.ok(!/Unequal|Desigual/i.test(html), "sin etiquetas de equidad en negativo");
+  // La tarjeta del fixture está comprobada en vivo y las demás filas no: ahí
+  // (y solo ahí) Salidas dice que el resto son estimaciones.
+  assert.equal((html.match(/fm-board-note/g) || []).length, 1);
+});
+
+test("render: sin comprobar en vivo, la estimación no se repite en Salidas", async () => {
+  const { DeparturesBoard } = await import("../src/components/BoardPanels.jsx");
+  const cached = { ...FIXTURE_DEST, verificationStatus: "skipped" };
+  const html = renderWithI18n(React.createElement(DeparturesBoard, {
+    flights: [cached, { ...FIXTURE_DEST, destination: "LIS", totalCostEUR: 280, averageCostPerTraveler: 140 }],
+    current: cached,
+    criterion: "total",
+    currency: "EUR",
+    origins: ["MAD", "LON"],
+    onSelect: () => {},
+  }));
   assert.ok(!html.includes("fm-board-note"), "la estimación no se repite en Salidas");
 });
 

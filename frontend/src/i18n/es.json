@@ -636,6 +636,7 @@
     "select": "Ver {{city}}",
     "more": "Más opciones",
     "estimateNote": "Estimación",
+    "estimateLong": "Solo el destino de tu tarjeta está comprobado en vivo. Los demás son estimaciones de búsquedas recientes.",
     "exportCsv": "Descargar CSV"
   },
   "fairness": {

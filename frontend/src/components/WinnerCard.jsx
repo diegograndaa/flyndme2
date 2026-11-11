@@ -554,7 +554,8 @@ const WinnerCard = React.memo(function WinnerCard({
                         <a href={gfUrl} target="_blank" rel="noreferrer" className="wc-cta wc-cta--icon wc-cta--google"
                           aria-label="Google Flights" title="Google Flights"
                           onClick={() => track("book_click", { provider: "google", dest: code, origin, where: "winner" })}>
-                          <span className="wc-cta-icon"><Plane size={16} aria-hidden="true" /></span>
+                          {/* Una letra, no otro avión: el de al lado es la web de la aerolínea. */}
+                          <span className="wc-cta-icon wc-cta-letter" aria-hidden="true">G</span>
                         </a>
                       )}
                       <button type="button" className="wc-cta wc-cta--copy" onClick={async () => {
